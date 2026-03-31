@@ -41,23 +41,13 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
           : 'border-gray-700 bg-gray-900 hover:border-gray-500'
       }`}
     >
-      {/* Dimension indicator for personality cards */}
-      {dimMeta && !compact && (
-        <div className="flex items-center gap-1">
-          <div
-            className="w-2 h-2 rounded-full"
-            style={{ backgroundColor: dimMeta.colorHex }}
-          />
-          <span className="text-[8px]" style={{ color: dimMeta.colorHex }}>
-            {dimMeta.name}
-          </span>
-        </div>
-      )}
+      {/* Dummy card indicator only — personality cards show NO dimension hint */}
       {dummy && !compact && (
         <div className="flex items-center gap-1">
           <span className="text-[8px] text-gray-500">💡 冷知识</span>
         </div>
       )}
+      {!dummy && !compact && <div />}
 
       <p className={`${compact ? 'text-[7px] leading-tight' : 'text-[10px] leading-relaxed'} ${
         dummy ? 'text-gray-500 italic' : 'text-gray-300'
