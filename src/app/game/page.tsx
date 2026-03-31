@@ -46,6 +46,9 @@ export default function GamePage() {
   // DECLARE selection state
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
 
+  // DECLARE result feedback
+  const [declareResult, setDeclareResult] = useState<{ success: boolean; message: string } | null>(null);
+
   // Arrow state
   const [arrowFrom, setArrowFrom] = useState<{ x: number; y: number } | null>(null);
   const [arrowColor, setArrowColor] = useState('#a855f7');
@@ -141,37 +144,13 @@ export default function GamePage() {
     }
   }, [game, bigFiveScores, router]);
 
-  // Auto-run AI turns
-  const runAITurns = useCallback(async () => {
+  // Manual AI turn — one at a time, triggered by button
+  const runOneAITurn = useCallback(async () => {
     if (aiRunningRef.current) return;
     aiRunningRef.current = true;
-
-    let currentGame = useGameStore.getState().game;
-    if (!currentGame) {
-      aiRunningRef.current = false;
-      return;
-    }
-
-    while (
-      currentGame &&
-      (currentGame.phase === 'declaring' || currentGame.phase === 'drawing') &&
-      !currentGame.players[currentGame.currentPlayerIndex].isHuman
-    ) {
-      await executeAITurn();
-      currentGame = useGameStore.getState().game!;
-    }
-
+    await executeAITurn();
     aiRunningRef.current = false;
   }, [executeAITurn]);
-
-  useEffect(() => {
-    if (!game) return;
-    if (game.phase === 'game-over') return;
-    const currentPlayer = game.players[game.currentPlayerIndex];
-    if (!currentPlayer.isHuman && (game.phase === 'declaring' || game.phase === 'drawing')) {
-      runAITurns();
-    }
-  }, [game?.phase, game?.currentPlayerIndex, runAITurns, game]);
 
   // Draw pile hover
   const handleDrawPileHover = useCallback((hovering: boolean) => {
@@ -240,10 +219,28 @@ export default function GamePage() {
     );
   }, []);
 
-  // Handle DECLARE
+  // Handle DECLARE with feedback
   const handleDeclare = useCallback((dimension: Dimension, cardIds: number[]) => {
+    const beforeGame = useGameStore.getState().game;
     playerDeclare(dimension, cardIds);
+    const afterGame = useGameStore.getState().game;
     setSelectedCardIds([]);
+
+    if (beforeGame && afterGame) {
+      const lastAction = afterGame.actionLog[afterGame.actionLog.length - 1];
+      if (lastAction?.type === 'declare-success') {
+        setDeclareResult({
+          success: true,
+          message: `DECLARE ${DIMENSION_META[dimension].name} 成功！${cardIds.length} 张牌已摆出`,
+        });
+      } else if (lastAction?.type === 'declare-fail') {
+        setDeclareResult({
+          success: false,
+          message: `DECLARE 失败！${cardIds.length} 张牌被弃掉，下轮跳过`,
+        });
+      }
+      setTimeout(() => setDeclareResult(null), 3000);
+    }
   }, [playerDeclare]);
 
   // Handle skip declare
@@ -274,6 +271,17 @@ export default function GamePage() {
     <div className="flex flex-1 flex-col px-4 py-4 max-w-6xl mx-auto w-full">
       {/* Arrow overlay */}
       <ArrowOverlay from={arrowFrom} color={arrowColor} />
+
+      {/* DECLARE result banner */}
+      {declareResult && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl text-sm font-bold shadow-2xl animate-bounce ${
+          declareResult.success
+            ? 'bg-emerald-500/90 text-white border border-emerald-400'
+            : 'bg-red-500/90 text-white border border-red-400'
+        }`}>
+          {declareResult.success ? '✅' : '❌'} {declareResult.message}
+        </div>
+      )}
 
       {/* Flying card animations */}
       {flyingCards.map((f) => (
@@ -401,12 +409,18 @@ export default function GamePage() {
           />
         </div>
 
-        {/* Status hint */}
+        {/* AI turn button */}
         {!isHumanTurn && game.phase !== 'game-over' && (
-          <p className="text-center text-sm text-gray-600">
-            {game.players[game.currentPlayerIndex].avatar}{' '}
-            {game.players[game.currentPlayerIndex].name} 正在思考...
-          </p>
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={runOneAITurn}
+              disabled={aiRunningRef.current}
+              className="px-6 py-2 rounded-lg bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 text-sm font-medium hover:bg-yellow-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {game.players[game.currentPlayerIndex].avatar}{' '}
+              {game.players[game.currentPlayerIndex].name} 的回合 — 点击执行
+            </button>
+          </div>
         )}
         {isHumanActive && (
           <div className="flex items-center justify-center gap-2">
