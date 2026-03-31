@@ -9,13 +9,30 @@ import { DIMENSION_META } from '@/data/dimensions';
 import { useHydrated } from '@/stores/useHydration';
 import { QuestionCard } from '@/components/assessment/QuestionCard';
 import { ProgressBar } from '@/components/assessment/ProgressBar';
-import { LikertScore } from '@/types';
+import { LikertScore, Question } from '@/types';
+import { shuffle } from '@/lib/utils';
+
+type QuestionOrder = 'sequential' | 'shuffled';
+
+function getOrderedQuestions(mode: QuestionOrder): Question[] {
+  if (mode === 'shuffled') return shuffle(QUESTIONS);
+  return QUESTIONS;
+}
 
 export default function AssessmentPage() {
   const router = useRouter();
   const hydrated = useHydrated();
   const { answers, setAnswer, calculateScores, getProgress, isComplete, bigFiveScores } = useAssessmentStore();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [orderMode, setOrderMode] = useState<QuestionOrder>('sequential');
+  const [orderedQuestions, setOrderedQuestions] = useState<Question[]>(QUESTIONS);
+
+  const toggleOrder = () => {
+    const newMode = orderMode === 'sequential' ? 'shuffled' : 'sequential';
+    setOrderMode(newMode);
+    setOrderedQuestions(getOrderedQuestions(newMode));
+    setCurrentIndex(0);
+  };
 
   // Wait for hydration
   if (!hydrated) {
@@ -32,21 +49,22 @@ export default function AssessmentPage() {
     return null;
   }
 
-  const safeIndex = Math.min(currentIndex, QUESTIONS.length - 1);
-  const question = QUESTIONS[safeIndex];
+  const total = orderedQuestions.length;
+  const safeIndex = Math.min(currentIndex, total - 1);
+  const question = orderedQuestions[safeIndex];
   const progress = getProgress();
-  const isLast = safeIndex === QUESTIONS.length - 1;
+  const isLast = safeIndex === total - 1;
 
   const handleSelect = (score: LikertScore) => {
     setAnswer(question.id, score);
 
     setTimeout(() => {
       const currentProgress = useAssessmentStore.getState().getProgress();
-      if (isLast && currentProgress >= QUESTIONS.length) {
+      if (isLast && currentProgress >= total) {
         calculateScores();
         router.push('/results');
-      } else if (safeIndex < QUESTIONS.length - 1) {
-        setCurrentIndex((i) => Math.min(i + 1, QUESTIONS.length - 1));
+      } else if (safeIndex < total - 1) {
+        setCurrentIndex((i) => Math.min(i + 1, total - 1));
       }
     }, 300);
   };
@@ -56,7 +74,7 @@ export default function AssessmentPage() {
   };
 
   const handleNext = () => {
-    if (currentIndex < QUESTIONS.length - 1) setCurrentIndex((i) => i + 1);
+    if (currentIndex < total - 1) setCurrentIndex((i) => i + 1);
   };
 
   return (
@@ -89,8 +107,18 @@ export default function AssessmentPage() {
             上一题
           </button>
           <button
+            onClick={toggleOrder}
+            className={`rounded-lg px-3 py-1.5 text-xs transition border ${
+              orderMode === 'shuffled'
+                ? 'border-pink-500/50 bg-pink-500/10 text-pink-400'
+                : 'border-gray-700 text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            {orderMode === 'sequential' ? '🔀 打乱顺序' : '📋 按类型排列'}
+          </button>
+          <button
             onClick={handleNext}
-            disabled={currentIndex === QUESTIONS.length - 1}
+            disabled={currentIndex === total - 1}
             className="rounded-lg px-4 py-2 text-sm text-gray-400 transition hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             下一题
@@ -104,7 +132,7 @@ export default function AssessmentPage() {
             <span>{progress}/60 已作答</span>
           </div>
           <div className="grid grid-cols-12 gap-1">
-            {QUESTIONS.map((q, i) => {
+            {orderedQuestions.map((q, i) => {
               const isAnswered = answers[q.id] !== undefined;
               const isCurrent = i === safeIndex;
               const dimMeta = DIMENSION_META[q.dimension];
