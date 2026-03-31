@@ -6,17 +6,24 @@ import {
   GameCard,
   PlayerId,
   GameAction,
+  Dimension,
+  DIMENSIONS,
+  isPersonalityCard,
+  PersonalityCard,
 } from '@/types';
 import { AI_PERSONAS } from '@/data/ai-personas';
-import { generateAIScores, calculateHandScore } from './scoring';
-import { createShuffledDeck, dealCards } from './card-engine';
+import { generateAIScores, calculateFinalScore, getTargetCounts } from './scoring';
+import { createShuffledDeck, dealCardsVariable } from './card-engine';
 
 export function initializeGame(
   humanScores: BigFiveScores,
   settings: GameSettings
 ): GameState {
+  const aiScoresList = AI_PERSONAS.map(() => generateAIScores());
+  const allScores = [humanScores, ...aiScoresList];
+
   const deck = createShuffledDeck();
-  const { hands, remaining } = dealCards(deck, 4, 5);
+  const { hands, remaining } = dealCardsVariable(deck, allScores);
 
   const players: Player[] = [
     {
@@ -26,6 +33,8 @@ export function initializeGame(
       hand: hands[0],
       isHuman: true,
       bigFiveScores: humanScores,
+      declaredSets: [],
+      skipNextTurn: false,
     },
     ...AI_PERSONAS.map((persona, i) => ({
       id: persona.id as PlayerId,
@@ -33,12 +42,14 @@ export function initializeGame(
       avatar: persona.avatar,
       hand: hands[i + 1],
       isHuman: false,
-      bigFiveScores: generateAIScores(),
+      bigFiveScores: aiScoresList[i],
+      declaredSets: [],
+      skipNextTurn: false,
     })),
   ];
 
   return {
-    phase: 'drawing',
+    phase: 'declaring',
     settings,
     players,
     drawPile: remaining,
@@ -51,16 +62,157 @@ export function initializeGame(
   };
 }
 
+// Check if a player has declared all 5 dimensions
+export function hasWon(player: Player): boolean {
+  const declaredDims = new Set(player.declaredSets.map((s) => s.dimension));
+  return DIMENSIONS.every((d) => declaredDims.has(d));
+}
+
+// Get declared dimensions for a player
+export function getDeclaredDimensions(player: Player): Set<Dimension> {
+  return new Set(player.declaredSets.map((s) => s.dimension));
+}
+
+// DECLARE cards for a dimension
+export function declareCards(
+  state: GameState,
+  dimension: Dimension,
+  cardIds: number[]
+): GameState {
+  const playerIndex = state.currentPlayerIndex;
+  const player = state.players[playerIndex];
+  const targets = getTargetCounts(player.bigFiveScores);
+  const targetCount = targets[dimension];
+
+  // Check if already declared this dimension
+  if (getDeclaredDimensions(player).has(dimension)) {
+    return state;
+  }
+
+  // Get selected cards from hand
+  const selectedCards = player.hand.filter((c) => cardIds.includes(c.id));
+
+  // Validate: must select >= target count
+  if (selectedCards.length < targetCount) {
+    return state;
+  }
+
+  // Check if ALL selected cards are personality cards of the correct dimension
+  const allCorrect = selectedCards.every(
+    (c) => isPersonalityCard(c) && c.dimension === dimension
+  );
+
+  if (allCorrect) {
+    // SUCCESS: move cards to declaredSets
+    const declaredCards = selectedCards.filter(isPersonalityCard) as PersonalityCard[];
+    const newHand = player.hand.filter((c) => !cardIds.includes(c.id));
+    const newDeclaredSets = [
+      ...player.declaredSets,
+      { dimension, cards: declaredCards, round: state.currentRound },
+    ];
+
+    const newPlayers = state.players.map((p, i) =>
+      i === playerIndex
+        ? { ...p, hand: newHand, declaredSets: newDeclaredSets }
+        : p
+    );
+
+    const action: GameAction = {
+      round: state.currentRound,
+      playerId: player.id,
+      type: 'declare-success',
+      dimension,
+      cardCount: declaredCards.length,
+      timestamp: Date.now(),
+    };
+
+    // Check if this player won
+    const updatedPlayer = newPlayers[playerIndex];
+    if (hasWon(updatedPlayer)) {
+      return {
+        ...state,
+        players: newPlayers,
+        actionLog: [...state.actionLog, action],
+        phase: 'game-over',
+        winner: player.id,
+      };
+    }
+
+    // Continue to drawing phase
+    return {
+      ...state,
+      players: newPlayers,
+      actionLog: [...state.actionLog, action],
+      phase: player.isHuman ? 'drawing' : 'ai-turn',
+    };
+  } else {
+    // FAILURE: discard all selected cards + skip next turn
+    const newHand = player.hand.filter((c) => !cardIds.includes(c.id));
+
+    const newPlayers = state.players.map((p, i) =>
+      i === playerIndex
+        ? { ...p, hand: newHand, skipNextTurn: true }
+        : p
+    );
+
+    const action: GameAction = {
+      round: state.currentRound,
+      playerId: player.id,
+      type: 'declare-fail',
+      dimension,
+      cardCount: selectedCards.length,
+      timestamp: Date.now(),
+    };
+
+    // Advance to next player
+    const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+      playerIndex,
+      state.currentRound,
+      state.settings.totalRounds
+    );
+
+    return {
+      ...state,
+      players: newPlayers,
+      discardPile: [...state.discardPile, ...selectedCards],
+      actionLog: [...state.actionLog, action],
+      currentPlayerIndex: nextPlayerIndex,
+      currentRound: nextRound,
+      phase: isGameOver ? 'game-over' : 'declaring',
+      winner: isGameOver ? determineWinner(newPlayers) : null,
+    };
+  }
+}
+
+// Skip DECLARE phase, go to drawing
+export function skipDeclare(state: GameState): GameState {
+  const player = state.players[state.currentPlayerIndex];
+  return {
+    ...state,
+    phase: player.isHuman ? 'drawing' : 'ai-turn',
+  };
+}
+
 export function drawCard(state: GameState): GameState {
   let drawPile = state.drawPile;
   let discardPile = state.discardPile;
 
   if (drawPile.length === 0) {
     if (discardPile.length === 0) {
-      // No cards left anywhere — skip draw, keep current state
-      return state;
+      // No cards left — skip draw/discard, advance to next player
+      const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+        state.currentPlayerIndex,
+        state.currentRound,
+        state.settings.totalRounds
+      );
+      return {
+        ...state,
+        currentPlayerIndex: nextPlayerIndex,
+        currentRound: nextRound,
+        phase: isGameOver ? 'game-over' : 'declaring',
+        winner: isGameOver ? determineWinner(state.players) : null,
+      };
     }
-    // Reshuffle discard pile into draw pile
     drawPile = [...discardPile];
     for (let i = drawPile.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -94,7 +246,6 @@ export function discardCard(state: GameState, cardId: number): GameState {
   const player = state.players[playerIndex];
   const drawnCard = state.drawnCard;
 
-  // All 6 cards: current hand + drawn card
   const allCards = [...player.hand, drawnCard];
   const cardToDiscard = allCards.find((c) => c.id === cardId)!;
   const newHand = allCards.filter((c) => c.id !== cardId);
@@ -111,11 +262,11 @@ export function discardCard(state: GameState, cardId: number): GameState {
     i === playerIndex ? { ...p, hand: newHand } : p
   );
 
-  // Advance to next player or next round
-  const nextPlayerIndex = (playerIndex + 1) % 4;
-  const isRoundEnd = nextPlayerIndex === 0;
-  const nextRound = isRoundEnd ? state.currentRound + 1 : state.currentRound;
-  const isGameOver = isRoundEnd && nextRound > state.settings.totalRounds;
+  const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+    playerIndex,
+    state.currentRound,
+    state.settings.totalRounds
+  );
 
   return {
     ...state,
@@ -124,33 +275,40 @@ export function discardCard(state: GameState, cardId: number): GameState {
     drawnCard: null,
     currentPlayerIndex: nextPlayerIndex,
     currentRound: nextRound,
-    phase: isGameOver ? 'game-over' : 'drawing',
+    phase: isGameOver ? 'game-over' : 'declaring',
     actionLog: [...state.actionLog, action],
     winner: isGameOver ? determineWinner(newPlayers) : null,
   };
 }
 
+function advancePlayer(
+  currentIndex: number,
+  currentRound: number,
+  totalRounds: number
+): { nextPlayerIndex: number; nextRound: number; isGameOver: boolean } {
+  const nextPlayerIndex = (currentIndex + 1) % 4;
+  const isRoundEnd = nextPlayerIndex === 0;
+  const nextRound = isRoundEnd ? currentRound + 1 : currentRound;
+  const isGameOver = isRoundEnd && nextRound > totalRounds;
+  return { nextPlayerIndex, nextRound, isGameOver };
+}
+
 function determineWinner(players: Player[]): PlayerId {
-  let bestPlayer = players[0];
-  let bestScore = calculateHandScore(bestPlayer.hand, bestPlayer.bigFiveScores);
-
-  for (let i = 1; i < players.length; i++) {
-    const score = calculateHandScore(players[i].hand, players[i].bigFiveScores);
-    if (score > bestScore) {
-      bestScore = score;
-      bestPlayer = players[i];
-    }
-  }
-
-  return bestPlayer.id;
+  // Winner = most declared dimensions; tiebreak = fewer remaining cards
+  const ranked = getRankings(players);
+  return ranked[0].id;
 }
 
 export function getPlayerScore(player: Player): number {
-  return calculateHandScore(player.hand, player.bigFiveScores);
+  return calculateFinalScore(player.declaredSets.length, player.hand);
 }
 
 export function getRankings(players: Player[]): Player[] {
-  return [...players].sort(
-    (a, b) => getPlayerScore(b) - getPlayerScore(a)
-  );
+  return [...players].sort((a, b) => {
+    // Primary: more declared dimensions is better
+    const declDiff = b.declaredSets.length - a.declaredSets.length;
+    if (declDiff !== 0) return declDiff;
+    // Secondary: fewer remaining cards is better
+    return a.hand.length - b.hand.length;
+  });
 }

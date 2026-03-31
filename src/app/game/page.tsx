@@ -4,9 +4,10 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/stores/useGameStore';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
-import { getPlayerScore } from '@/lib/game-logic';
 import { DIMENSION_META } from '@/data/dimensions';
-import { DIMENSIONS } from '@/types';
+import { DIMENSIONS, Dimension } from '@/types';
+import { getTargetCounts } from '@/lib/scoring';
+import { getDeclaredDimensions, getRankings } from '@/lib/game-logic';
 import { PlayerHand } from '@/components/game/PlayerHand';
 import { OpponentHand } from '@/components/game/OpponentHand';
 import { DrawPile } from '@/components/game/DrawPile';
@@ -15,6 +16,8 @@ import { GameLog } from '@/components/game/GameLog';
 import { GameOverModal } from '@/components/game-results/GameOverModal';
 import { ArrowOverlay } from '@/components/game/ArrowOverlay';
 import { FlyingCard } from '@/components/game/FlyingCard';
+import { DeclarePanel } from '@/components/game/DeclarePanel';
+import { DeclaredArea } from '@/components/game/DeclaredArea';
 
 interface FlyingAnim {
   id: number;
@@ -25,11 +28,23 @@ interface FlyingAnim {
 
 export default function GamePage() {
   const router = useRouter();
-  const { game, playerDraw, playerDiscard, executeAITurn, initGame, resetGame } = useGameStore();
+  const {
+    game,
+    playerDraw,
+    playerDiscard,
+    playerDeclare,
+    playerSkipDeclare,
+    executeAITurn,
+    initGame,
+    resetGame,
+  } = useGameStore();
   const { bigFiveScores } = useAssessmentStore();
   const aiRunningRef = useRef(false);
   const [timer, setTimer] = useState(30);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // DECLARE selection state
+  const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
 
   // Arrow state
   const [arrowFrom, setArrowFrom] = useState<{ x: number; y: number } | null>(null);
@@ -42,8 +57,51 @@ export default function GamePage() {
   const drawPileRef = useRef<HTMLDivElement>(null);
   const handAreaRef = useRef<HTMLDivElement>(null);
 
-  // Timer for human turn
+  // Timer for human turn (drawing + discarding phases)
   const isHumanActive = game?.currentPlayerIndex === 0 && (game?.phase === 'drawing' || game?.phase === 'discarding');
+
+  // Clear selection when phase changes
+  useEffect(() => {
+    if (game?.phase !== 'declaring') {
+      setSelectedCardIds([]);
+    }
+  }, [game?.phase]);
+
+  // Auto-skip human turn when skipNextTurn is true
+  useEffect(() => {
+    if (!game || game.phase !== 'declaring') return;
+    const currentPlayer = game.players[game.currentPlayerIndex];
+    if (currentPlayer.isHuman && currentPlayer.skipNextTurn) {
+      // Auto-advance: clear skip flag and move to next player
+      const skipAction = {
+        round: game.currentRound,
+        playerId: currentPlayer.id,
+        type: 'skip' as const,
+        timestamp: Date.now(),
+      };
+      const newPlayers = game.players.map((p, i) =>
+        i === game.currentPlayerIndex ? { ...p, skipNextTurn: false } : p
+      );
+      const nextPlayerIndex = (game.currentPlayerIndex + 1) % 4;
+      const isRoundEnd = nextPlayerIndex === 0;
+      const nextRound = isRoundEnd ? game.currentRound + 1 : game.currentRound;
+      const isGameOver = isRoundEnd && nextRound > game.settings.totalRounds;
+
+      setTimeout(() => {
+        useGameStore.setState({
+          game: {
+            ...game,
+            players: newPlayers,
+            currentPlayerIndex: nextPlayerIndex,
+            currentRound: nextRound,
+            phase: isGameOver ? 'game-over' : 'declaring',
+            actionLog: [...game.actionLog, skipAction],
+            winner: isGameOver ? getRankings(newPlayers)[0].id : null,
+          },
+        });
+      }, 500);
+    }
+  }, [game?.phase, game?.currentPlayerIndex, game]);
 
   useEffect(() => {
     if (isHumanActive) {
@@ -88,16 +146,15 @@ export default function GamePage() {
     if (aiRunningRef.current) return;
     aiRunningRef.current = true;
 
-    const { game } = useGameStore.getState();
-    if (!game) {
+    let currentGame = useGameStore.getState().game;
+    if (!currentGame) {
       aiRunningRef.current = false;
       return;
     }
 
-    let currentGame = game;
     while (
       currentGame &&
-      currentGame.phase === 'drawing' &&
+      (currentGame.phase === 'declaring' || currentGame.phase === 'drawing') &&
       !currentGame.players[currentGame.currentPlayerIndex].isHuman
     ) {
       await executeAITurn();
@@ -109,15 +166,14 @@ export default function GamePage() {
 
   useEffect(() => {
     if (!game) return;
-    if (
-      game.phase === 'drawing' &&
-      !game.players[game.currentPlayerIndex].isHuman
-    ) {
+    if (game.phase === 'game-over') return;
+    const currentPlayer = game.players[game.currentPlayerIndex];
+    if (!currentPlayer.isHuman && (game.phase === 'declaring' || game.phase === 'drawing')) {
       runAITurns();
     }
   }, [game?.phase, game?.currentPlayerIndex, runAITurns, game]);
 
-  // Draw pile hover → arrow from draw pile follows mouse
+  // Draw pile hover
   const handleDrawPileHover = useCallback((hovering: boolean) => {
     if (!drawPileRef.current) return;
     if (hovering && game?.phase === 'drawing' && game.currentPlayerIndex === 0) {
@@ -129,7 +185,7 @@ export default function GamePage() {
     }
   }, [game?.phase, game?.currentPlayerIndex]);
 
-  // Card hover during discard → arrow from card follows mouse
+  // Card hover during discard
   const handleCardHover = useCallback((cardEl: HTMLElement | null) => {
     if (!cardEl) {
       setArrowFrom(null);
@@ -140,16 +196,14 @@ export default function GamePage() {
     setArrowColor('#ef4444');
   }, []);
 
-  // Click card to discard with flying animation
+  // Discard card with flying animation
   const handleDiscardCard = useCallback((cardId: number) => {
-    // Find the card element and discard pile for animation
     const g = useGameStore.getState().game;
     if (!g) return;
     const allCards = [...g.players[0].hand, ...(g.drawnCard ? [g.drawnCard] : [])];
     const card = allCards.find((c) => c.id === cardId);
 
     if (discardPileRef.current && card) {
-      // Find the clicked card's DOM element
       const cardEls = handAreaRef.current?.querySelectorAll('[data-card-id]');
       let fromRect: DOMRect | null = null;
       cardEls?.forEach((el) => {
@@ -179,6 +233,25 @@ export default function GamePage() {
     setFlyingCards((prev) => prev.filter((f) => f.id !== id));
   }, []);
 
+  // Toggle card selection for DECLARE
+  const handleToggleSelect = useCallback((cardId: number) => {
+    setSelectedCardIds((prev) =>
+      prev.includes(cardId) ? prev.filter((id) => id !== cardId) : [...prev, cardId]
+    );
+  }, []);
+
+  // Handle DECLARE
+  const handleDeclare = useCallback((dimension: Dimension, cardIds: number[]) => {
+    playerDeclare(dimension, cardIds);
+    setSelectedCardIds([]);
+  }, [playerDeclare]);
+
+  // Handle skip declare
+  const handleSkipDeclare = useCallback(() => {
+    playerSkipDeclare();
+    setSelectedCardIds([]);
+  }, [playerSkipDeclare]);
+
   if (!game) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -192,7 +265,10 @@ export default function GamePage() {
   const isHumanTurn = game.currentPlayerIndex === 0;
   const canDraw = isHumanTurn && game.phase === 'drawing';
   const isDiscarding = isHumanTurn && game.phase === 'discarding';
+  const isDeclaring = isHumanTurn && game.phase === 'declaring' && !humanPlayer.skipNextTurn;
   const topDiscard = game.discardPile.length > 0 ? game.discardPile[game.discardPile.length - 1] : null;
+  const targets = getTargetCounts(humanPlayer.bigFiveScores);
+  const declaredDims = getDeclaredDimensions(humanPlayer);
 
   return (
     <div className="flex flex-1 flex-col px-4 py-4 max-w-6xl mx-auto w-full">
@@ -242,7 +318,7 @@ export default function GamePage() {
 
       {/* Human player hand + personality panel */}
       <div className="space-y-3">
-        {/* My personality scores */}
+        {/* Row 1: My personality scores */}
         <div className="flex items-center justify-center gap-3 flex-wrap">
           <span className="text-xs text-gray-600 mr-1">我的人格:</span>
           {DIMENSIONS.map((d) => {
@@ -259,18 +335,68 @@ export default function GamePage() {
               </div>
             );
           })}
+        </div>
+
+        {/* Row 2: DECLARE targets */}
+        <div className="flex items-center justify-center gap-3 flex-wrap">
+          <span className="text-xs text-gray-600 mr-1">DECLARE 目标:</span>
+          {DIMENSIONS.map((d) => {
+            const meta = DIMENSION_META[d];
+            const target = targets[d];
+            const isDone = declaredDims.has(d);
+            return (
+              <div
+                key={d}
+                className={`flex items-center gap-1 rounded-lg px-2 py-1 ${
+                  isDone ? 'ring-1' : ''
+                }`}
+                style={{
+                  backgroundColor: isDone ? meta.colorHex + '25' : 'rgba(75,75,75,0.3)',
+                  // @ts-expect-error -- Tailwind ring-color via CSS custom property
+                  '--tw-ring-color': isDone ? meta.colorHex : undefined,
+                }}
+              >
+                <span className="text-[10px]" style={{ color: isDone ? meta.colorHex : '#9ca3af' }}>
+                  {meta.name}
+                </span>
+                <span className={`text-xs font-bold ${isDone ? '' : 'text-gray-400'}`} style={isDone ? { color: meta.colorHex } : undefined}>
+                  {isDone ? '✓' : `${target}张`}
+                </span>
+              </div>
+            );
+          })}
           <div className="rounded-lg bg-gray-800 px-2 py-1">
-            <span className="text-[10px] text-gray-500">总分 </span>
-            <span className="text-xs font-bold text-gray-300">{getPlayerScore(humanPlayer).toFixed(1)}</span>
+            <span className="text-[10px] text-gray-500">已完成 </span>
+            <span className="text-xs font-bold text-emerald-400">{humanPlayer.declaredSets.length}/5</span>
           </div>
         </div>
+
+        {/* Declared sets display */}
+        {humanPlayer.declaredSets.length > 0 && (
+          <div className="flex justify-center">
+            <DeclaredArea declaredSets={humanPlayer.declaredSets} />
+          </div>
+        )}
+
+        {/* DECLARE panel (when it's declaring phase) */}
+        {isDeclaring && (
+          <DeclarePanel
+            player={humanPlayer}
+            selectedCardIds={selectedCardIds}
+            onDeclare={handleDeclare}
+            onSkip={handleSkipDeclare}
+          />
+        )}
 
         <div ref={handAreaRef}>
           <PlayerHand
             cards={humanPlayer.hand}
             drawnCard={isHumanTurn ? game.drawnCard : null}
             isDiscarding={isDiscarding}
+            isDeclaring={isDeclaring}
+            selectedCardIds={selectedCardIds}
             onDiscardCard={handleDiscardCard}
+            onToggleSelect={handleToggleSelect}
             onCardHover={handleCardHover}
           />
         </div>
@@ -294,6 +420,11 @@ export default function GamePage() {
             </span>
           </div>
         )}
+
+        {/* Round info */}
+        <div className="text-center text-xs text-gray-600">
+          第 {game.currentRound} / {game.settings.totalRounds} 轮
+        </div>
       </div>
 
       {/* Game Over Modal */}

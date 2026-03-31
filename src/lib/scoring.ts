@@ -1,4 +1,4 @@
-import { BigFiveScores, Dimension, LikertScore, Question } from '@/types';
+import { BigFiveScores, Dimension, DIMENSIONS, LikertScore, Question, GameCard, isPersonalityCard } from '@/types';
 
 export function calculateBigFiveScores(
   answers: Record<number, LikertScore>,
@@ -27,24 +27,60 @@ export function calculateBigFiveScores(
   };
 }
 
+export function getTargetCounts(scores: BigFiveScores): Record<Dimension, number> {
+  return {
+    O: Math.round(scores.O),
+    C: Math.round(scores.C),
+    E: Math.round(scores.E),
+    A: Math.round(scores.A),
+    N: Math.round(scores.N),
+  };
+}
+
+export function getTotalTarget(scores: BigFiveScores): number {
+  const targets = getTargetCounts(scores);
+  return DIMENSIONS.reduce((sum, d) => sum + targets[d], 0);
+}
+
+export function getInitialHandSize(scores: BigFiveScores): number {
+  return getTotalTarget(scores) - 1;
+}
+
 export function calculateHandScore(
-  hand: { dimension: Dimension }[],
+  hand: GameCard[],
   scores: BigFiveScores
 ): number {
   return Math.round(
-    hand.reduce((total, card) => total + scores[card.dimension], 0) * 10
+    hand.reduce((total, card) => {
+      if (isPersonalityCard(card)) {
+        return total + scores[card.dimension];
+      }
+      return total;
+    }, 0) * 10
   ) / 10;
 }
 
+export function calculatePenaltyScore(hand: GameCard[]): number {
+  return -hand.length;
+}
+
+export function calculateFinalScore(
+  declaredCount: number,
+  remainingHand: GameCard[]
+): number {
+  return declaredCount * 10 + calculatePenaltyScore(remainingHand);
+}
+
 export function generateAIScores(): BigFiveScores {
+  // Range 2.0-4.0 to keep hand sizes reasonable (targets 2-4, hand 9-19)
   const rand = (min: number, max: number) =>
     Math.round((min + Math.random() * (max - min)) * 10) / 10;
 
   return {
-    O: rand(1.5, 4.5),
-    C: rand(1.5, 4.5),
-    E: rand(1.5, 4.5),
-    A: rand(1.5, 4.5),
-    N: rand(1.5, 4.5),
+    O: rand(2.0, 4.0),
+    C: rand(2.0, 4.0),
+    E: rand(2.0, 4.0),
+    A: rand(2.0, 4.0),
+    N: rand(2.0, 4.0),
   };
 }

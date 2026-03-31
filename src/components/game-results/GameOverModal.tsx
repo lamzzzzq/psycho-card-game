@@ -1,9 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Player } from '@/types';
-import { getPlayerScore } from '@/lib/game-logic';
+import { Player, DIMENSIONS, isPersonalityCard } from '@/types';
+import { getRankings } from '@/lib/game-logic';
 import { DIMENSION_META } from '@/data/dimensions';
+import { calculatePenaltyScore } from '@/lib/scoring';
+import { DeclaredArea } from '@/components/game/DeclaredArea';
 
 interface GameOverModalProps {
   players: Player[];
@@ -12,9 +14,10 @@ interface GameOverModalProps {
 }
 
 export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverModalProps) {
-  const ranked = [...players].sort((a, b) => getPlayerScore(b) - getPlayerScore(a));
+  const ranked = getRankings(players);
   const winner = ranked[0];
   const isHumanWinner = winner.isHuman;
+  const hasFullWinner = winner.declaredSets.length === 5;
 
   return (
     <motion.div
@@ -34,38 +37,46 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverM
             {isHumanWinner ? '你赢了！' : `${winner.name} 获胜`}
           </h2>
           <p className="text-sm text-gray-500">
-            {isHumanWinner ? '你的心理学知识帮你赢得了这场博弈' : '下次加油，看穿对手的心理！'}
+            {hasFullWinner
+              ? `${isHumanWinner ? '你' : winner.name}成功 DECLARE 了所有人格维度！`
+              : '回合结束！按 DECLARE 进度和剩余手牌排名'}
           </p>
         </div>
 
         <div className="space-y-2">
           {ranked.map((player, i) => {
-            const score = getPlayerScore(player);
+            const declaredCount = player.declaredSets.length;
+            const penalty = calculatePenaltyScore(player.hand);
             const medals = ['🥇', '🥈', '🥉', ''];
             return (
               <div
                 key={player.id}
-                className={`flex items-center justify-between rounded-xl p-3 ${
+                className={`rounded-xl p-3 space-y-2 ${
                   i === 0 ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-gray-800/50'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">{medals[i] || `#${i + 1}`}</span>
-                  <span>{player.avatar}</span>
-                  <div>
-                    <div className={`text-sm font-medium ${player.isHuman ? 'text-purple-400' : 'text-gray-300'}`}>
-                      {player.name}
-                    </div>
-                    <div className="flex gap-1 text-[9px] text-gray-600">
-                      {player.hand.map((card) => (
-                        <span key={card.id} style={{ color: DIMENSION_META[card.dimension].colorHex }}>
-                          {card.dimension}
-                        </span>
-                      ))}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{medals[i] || `#${i + 1}`}</span>
+                    <span>{player.avatar}</span>
+                    <div>
+                      <div className={`text-sm font-medium ${player.isHuman ? 'text-purple-400' : 'text-gray-300'}`}>
+                        {player.name}
+                      </div>
                     </div>
                   </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-gray-200">
+                      {declaredCount}/5 DECLARE
+                    </div>
+                    {player.hand.length > 0 && (
+                      <div className="text-[10px] text-red-400">
+                        剩余 {player.hand.length} 张 ({penalty})
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <span className="text-lg font-bold text-gray-200">{score.toFixed(1)}</span>
+                <DeclaredArea declaredSets={player.declaredSets} />
               </div>
             );
           })}

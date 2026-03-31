@@ -1,4 +1,15 @@
-import { GameCard, Player, GameAction, AIDifficulty, Dimension, DIMENSIONS } from '@/types';
+import {
+  GameCard,
+  Player,
+  GameAction,
+  AIDifficulty,
+  Dimension,
+  DIMENSIONS,
+  isPersonalityCard,
+  isDummyCard,
+} from '@/types';
+import { getTargetCounts } from './scoring';
+import { getDeclaredDimensions } from './game-logic';
 
 interface AIContext {
   discardPile: GameCard[];
@@ -10,6 +21,103 @@ interface AIContext {
 interface AIDecision {
   cardToDiscard: GameCard;
   thinkingMs: number;
+}
+
+export interface AIDeclareDecision {
+  shouldDeclare: boolean;
+  dimension?: Dimension;
+  cardIds?: number[];
+  thinkingMs: number;
+}
+
+// Decide whether AI should DECLARE
+export function makeAIDeclareDecision(
+  player: Player,
+  difficulty: AIDifficulty,
+  context: AIContext
+): AIDeclareDecision {
+  const targets = getTargetCounts(player.bigFiveScores);
+  const declaredDims = getDeclaredDimensions(player);
+
+  // Count personality cards by dimension in hand
+  const handByDim: Record<Dimension, GameCard[]> = { O: [], C: [], E: [], A: [], N: [] };
+  for (const card of player.hand) {
+    if (isPersonalityCard(card)) {
+      handByDim[card.dimension].push(card);
+    }
+  }
+
+  // Find dimensions that can be declared (have >= target cards, not already declared)
+  const declarable: { dim: Dimension; cards: GameCard[]; surplus: number }[] = [];
+  for (const d of DIMENSIONS) {
+    if (declaredDims.has(d)) continue;
+    const count = handByDim[d].length;
+    if (count >= targets[d]) {
+      declarable.push({ dim: d, cards: handByDim[d], surplus: count - targets[d] });
+    }
+  }
+
+  if (declarable.length === 0) {
+    return { shouldDeclare: false, thinkingMs: 200 };
+  }
+
+  switch (difficulty) {
+    case 'easy': {
+      // Easy AI: 60% chance to declare if possible, picks first available
+      if (Math.random() < 0.6) {
+        const pick = declarable[0];
+        const cardIds = pick.cards.slice(0, targets[pick.dim]).map((c) => c.id);
+        return {
+          shouldDeclare: true,
+          dimension: pick.dim,
+          cardIds,
+          thinkingMs: 500 + Math.random() * 500,
+        };
+      }
+      return { shouldDeclare: false, thinkingMs: 300 };
+    }
+
+    case 'medium': {
+      // Medium AI: always declare if exact match, prefer dimensions with no surplus
+      const exact = declarable.filter((d) => d.surplus === 0);
+      const pick = exact.length > 0 ? exact[0] : declarable[0];
+      const cardIds = pick.cards.slice(0, targets[pick.dim]).map((c) => c.id);
+      return {
+        shouldDeclare: true,
+        dimension: pick.dim,
+        cardIds,
+        thinkingMs: 800 + Math.random() * 600,
+      };
+    }
+
+    case 'hard': {
+      // Hard AI: strategic — declare dimensions where surplus is 0 first
+      // If late game, declare even with surplus
+      const isLateGame = context.currentRound > context.totalRounds * 0.6;
+      const exact = declarable.filter((d) => d.surplus === 0);
+
+      let pick;
+      if (exact.length > 0) {
+        // Prefer dimension with highest target (harder to re-collect if lost)
+        exact.sort((a, b) => targets[b.dim] - targets[a.dim]);
+        pick = exact[0];
+      } else if (isLateGame && declarable.length > 0) {
+        // Late game: declare even with surplus, pick smallest surplus
+        declarable.sort((a, b) => a.surplus - b.surplus);
+        pick = declarable[0];
+      } else {
+        return { shouldDeclare: false, thinkingMs: 400 };
+      }
+
+      const cardIds = pick.cards.slice(0, targets[pick.dim]).map((c) => c.id);
+      return {
+        shouldDeclare: true,
+        dimension: pick.dim,
+        cardIds,
+        thinkingMs: 1200 + Math.random() * 800,
+      };
+    }
+  }
 }
 
 export function makeAIDecision(
@@ -30,87 +138,102 @@ export function makeAIDecision(
   }
 }
 
-function cardValue(card: GameCard, player: Player): number {
-  return player.bigFiveScores[card.dimension];
+function cardKeepValue(card: GameCard, player: Player): number {
+  if (isDummyCard(card)) return -10; // Always discard dummy cards first
+  const targets = getTargetCounts(player.bigFiveScores);
+  const declaredDims = getDeclaredDimensions(player);
+  // If this dimension is already declared, card is useless
+  if (declaredDims.has(card.dimension)) return -5;
+  // Higher target = more valuable to keep cards of this dimension
+  return targets[card.dimension];
 }
 
-// Easy AI: discard lowest value card
 function easyAI(cards: GameCard[], player: Player): AIDecision {
-  const sorted = [...cards].sort((a, b) => cardValue(a, player) - cardValue(b, player));
+  const sorted = [...cards].sort((a, b) => cardKeepValue(a, player) - cardKeepValue(b, player));
   return {
     cardToDiscard: sorted[0],
     thinkingMs: 500 + Math.random() * 500,
   };
 }
 
-// Medium AI: consider remaining cards and optimize expected value
 function mediumAI(cards: GameCard[], player: Player, context: AIContext): AIDecision {
-  const { discardPile } = context;
+  const targets = getTargetCounts(player.bigFiveScores);
+  const declaredDims = getDeclaredDimensions(player);
 
-  // Count how many cards of each dimension are still in play
-  const discardedByDim: Record<Dimension, number> = { O: 0, C: 0, E: 0, A: 0, N: 0 };
-  for (const card of discardPile) {
-    discardedByDim[card.dimension]++;
+  // Count cards by dimension in hand (excluding drawn card which is part of cards)
+  const handByDim: Record<Dimension, number> = { O: 0, C: 0, E: 0, A: 0, N: 0 };
+  for (const card of cards) {
+    if (isPersonalityCard(card) && !declaredDims.has(card.dimension)) {
+      handByDim[card.dimension]++;
+    }
   }
 
-  // For each card, calculate a "keep score" factoring in scarcity
   const keepScores = cards.map((card) => {
-    const baseValue = cardValue(card, player);
-    const totalInDim = 12;
-    const discarded = discardedByDim[card.dimension];
-    const remaining = totalInDim - discarded;
-    // If few remaining in this dimension, keeping it is more valuable
-    const scarcityBonus = remaining <= 3 ? 0.5 : 0;
-    return { card, score: baseValue + scarcityBonus };
+    const baseValue = cardKeepValue(card, player);
+    if (isDummyCard(card)) return { card, score: baseValue };
+    if (declaredDims.has(card.dimension)) return { card, score: -5 };
+
+    // Bonus if we're close to target for this dimension
+    const needed = targets[card.dimension];
+    const have = handByDim[card.dimension];
+    const progressBonus = have >= needed ? -1 : (have / needed) * 2;
+    return { card, score: baseValue + progressBonus };
   });
 
   keepScores.sort((a, b) => a.score - b.score);
-
   return {
     cardToDiscard: keepScores[0].card,
     thinkingMs: 1000 + Math.random() * 800,
   };
 }
 
-// Hard AI: infer opponent scores from discard patterns + defensive play
 function hardAI(cards: GameCard[], player: Player, context: AIContext): AIDecision {
   const { actionLog } = context;
+  const targets = getTargetCounts(player.bigFiveScores);
+  const declaredDims = getDeclaredDimensions(player);
 
-  // Build opponent profile from their discards
+  const handByDim: Record<Dimension, number> = { O: 0, C: 0, E: 0, A: 0, N: 0 };
+  for (const card of cards) {
+    if (isPersonalityCard(card) && !declaredDims.has(card.dimension)) {
+      handByDim[card.dimension]++;
+    }
+  }
+
+  // Track opponent declare patterns
   const opponentDiscards: Record<string, Record<Dimension, number>> = {};
   for (const action of actionLog) {
     if (action.type === 'discard' && action.card && action.playerId !== player.id) {
       if (!opponentDiscards[action.playerId]) {
         opponentDiscards[action.playerId] = { O: 0, C: 0, E: 0, A: 0, N: 0 };
       }
-      opponentDiscards[action.playerId][action.card.dimension]++;
+      if (isPersonalityCard(action.card)) {
+        opponentDiscards[action.playerId][action.card.dimension]++;
+      }
     }
   }
 
-  // Infer: dimensions opponents discard most are likely their LOW-scoring dims
-  // So their HIGH-scoring dims are the ones they rarely discard
   const opponentStrongDims = new Set<Dimension>();
   for (const pid of Object.keys(opponentDiscards)) {
     const discards = opponentDiscards[pid];
     const sorted = DIMENSIONS.slice().sort((a, b) => discards[a] - discards[b]);
-    // Top 2 least-discarded dims are likely their strong dims
     opponentStrongDims.add(sorted[0]);
     opponentStrongDims.add(sorted[1]);
   }
 
-  // Evaluate cards: base value + defensive consideration
   const keepScores = cards.map((card) => {
-    const baseValue = cardValue(card, player);
-    // Penalty for discarding cards that opponents might want
+    if (isDummyCard(card)) return { card, score: -10 };
+    if (declaredDims.has(card.dimension)) return { card, score: -5 };
+
+    const needed = targets[card.dimension];
+    const have = handByDim[card.dimension];
+    const progressBonus = have >= needed ? -0.5 : (have / needed) * 3;
     const defensiveValue = opponentStrongDims.has(card.dimension) ? -0.3 : 0;
-    // Prefer discarding cards that opponents DON'T need
-    return { card, score: baseValue + defensiveValue };
+
+    return { card, score: needed + progressBonus + defensiveValue };
   });
 
-  // Sort ascending — discard lowest score
   keepScores.sort((a, b) => a.score - b.score);
 
-  // Hard AI twist: sometimes discard a slightly better card to mislead opponents
   const shouldBluff = Math.random() < 0.15;
   const discardIndex = shouldBluff && keepScores.length > 1 ? 1 : 0;
 

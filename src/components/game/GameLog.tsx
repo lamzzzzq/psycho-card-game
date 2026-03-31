@@ -1,6 +1,6 @@
 'use client';
 
-import { GameAction, Player } from '@/types';
+import { GameAction, Player, isPersonalityCard } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 
 interface GameLogProps {
@@ -25,12 +25,11 @@ export function GameLog({ actions, players }: GameLogProps) {
             return (
               <div key={`${action.timestamp}-${action.type}`} className="text-xs text-gray-500 flex gap-1">
                 <span className="text-gray-400">{player.avatar}</span>
-                {action.type === 'draw' ? (
-                  <span>抽了一张牌</span>
-                ) : (
+                {action.type === 'draw' && <span>抽了一张牌</span>}
+                {action.type === 'discard' && (
                   <span>
                     弃了{' '}
-                    {action.card ? (
+                    {action.card && isPersonalityCard(action.card) ? (
                       <span style={{ color: DIMENSION_META[action.card.dimension].colorHex }}>
                         [{DIMENSION_META[action.card.dimension].name}]
                       </span>
@@ -38,6 +37,19 @@ export function GameLog({ actions, players }: GameLogProps) {
                       '一张牌'
                     )}
                   </span>
+                )}
+                {action.type === 'declare-success' && action.dimension && (
+                  <span style={{ color: DIMENSION_META[action.dimension].colorHex }}>
+                    DECLARE {DIMENSION_META[action.dimension].name} 成功！({action.cardCount}张)
+                  </span>
+                )}
+                {action.type === 'declare-fail' && action.dimension && (
+                  <span className="text-red-400">
+                    DECLARE {DIMENSION_META[action.dimension].name} 失败！(-{action.cardCount}张)
+                  </span>
+                )}
+                {action.type === 'skip' && (
+                  <span className="text-gray-600">跳过本轮</span>
                 )}
               </div>
             );

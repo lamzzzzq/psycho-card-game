@@ -2,7 +2,7 @@
 
 import { Player } from '@/types';
 import { Card } from './Card';
-import { getPlayerScore } from '@/lib/game-logic';
+import { DeclaredArea } from './DeclaredArea';
 
 interface OpponentHandProps {
   player: Player;
@@ -11,8 +11,6 @@ interface OpponentHandProps {
 }
 
 export function OpponentHand({ player, isCurrentTurn, infoMode }: OpponentHandProps) {
-  const score = getPlayerScore(player);
-
   return (
     <div className={`flex flex-col items-center gap-2 rounded-xl p-3 transition ${
       isCurrentTurn ? 'bg-yellow-500/10 ring-1 ring-yellow-500/30' : ''
@@ -22,10 +20,16 @@ export function OpponentHand({ player, isCurrentTurn, infoMode }: OpponentHandPr
         <div className="text-left">
           <div className="text-sm font-medium text-gray-300">{player.name}</div>
           <div className="text-xs text-gray-500">
-            {isCurrentTurn && <span className="text-yellow-400">思考中...</span>}
+            {player.skipNextTurn && <span className="text-red-400">跳过中</span>}
+            {isCurrentTurn && !player.skipNextTurn && <span className="text-yellow-400">思考中...</span>}
           </div>
         </div>
       </div>
+
+      {/* Declared dimensions */}
+      {player.declaredSets.length > 0 && (
+        <DeclaredArea declaredSets={player.declaredSets} compact />
+      )}
 
       <div className="flex gap-1">
         {player.hand.map((card) => (

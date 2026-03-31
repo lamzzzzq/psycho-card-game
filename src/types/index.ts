@@ -35,11 +35,28 @@ export interface BigFiveScores {
 }
 
 // ===== Cards =====
-export interface GameCard {
+export interface PersonalityCard {
   id: number;
   dimension: Dimension;
   text: string;
   facet: string;
+  isDummy?: false;
+}
+
+export interface DummyCard {
+  id: number;
+  text: string;
+  isDummy: true;
+}
+
+export type GameCard = PersonalityCard | DummyCard;
+
+export function isPersonalityCard(card: GameCard): card is PersonalityCard {
+  return !card.isDummy;
+}
+
+export function isDummyCard(card: GameCard): card is DummyCard {
+  return card.isDummy === true;
 }
 
 // ===== Players =====
@@ -55,6 +72,12 @@ export interface AIPersona {
   difficulty: AIDifficulty;
 }
 
+export interface DeclaredSet {
+  dimension: Dimension;
+  cards: PersonalityCard[];
+  round: number;
+}
+
 export interface Player {
   id: PlayerId;
   name: string;
@@ -62,10 +85,13 @@ export interface Player {
   hand: GameCard[];
   isHuman: boolean;
   bigFiveScores: BigFiveScores;
+  declaredSets: DeclaredSet[];
+  skipNextTurn: boolean;
 }
 
 // ===== Game State =====
 export type GamePhase =
+  | 'declaring'
   | 'drawing'
   | 'discarding'
   | 'ai-turn'
@@ -75,8 +101,10 @@ export type GamePhase =
 export interface GameAction {
   round: number;
   playerId: PlayerId;
-  type: 'draw' | 'discard';
+  type: 'draw' | 'discard' | 'declare-success' | 'declare-fail' | 'skip';
   card?: GameCard;
+  dimension?: Dimension;
+  cardCount?: number;
   timestamp: number;
 }
 
