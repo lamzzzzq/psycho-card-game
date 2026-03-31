@@ -31,16 +31,24 @@ export function OpponentHand({ player, isCurrentTurn, infoMode }: OpponentHandPr
         <DeclaredArea declaredSets={player.declaredSets} compact />
       )}
 
-      <div className="flex gap-1">
-        {player.hand.map((card) => (
-          <Card
+      <div className="relative flex items-center" style={{ height: 52 }}>
+        {player.hand.map((card, i) => (
+          <div
             key={card.id}
-            card={card}
-            faceUp={infoMode === 'public'}
-            compact
-          />
+            className="absolute"
+            style={{ left: i * 16, zIndex: i }}
+          >
+            <Card
+              card={card}
+              faceUp={infoMode === 'public'}
+              compact
+            />
+          </div>
         ))}
+        {/* Reserve width for stacked cards */}
+        <div style={{ width: Math.max(56, (player.hand.length - 1) * 16 + 56) }} />
       </div>
+      <div className="text-[10px] text-gray-600">{player.hand.length} 张</div>
 
       {infoMode === 'public' && (
         <div className="flex gap-1 text-[9px] text-gray-600">
