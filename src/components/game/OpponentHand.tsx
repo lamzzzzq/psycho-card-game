@@ -48,7 +48,6 @@ export function OpponentHand({ player, isCurrentTurn, infoMode }: OpponentHandPr
         {/* Reserve width for stacked cards */}
         <div style={{ width: Math.max(56, (player.hand.length - 1) * 16 + 56) }} />
       </div>
-      <div className="text-[10px] text-gray-600">{player.hand.length} 张</div>
 
       {infoMode === 'public' && (
         <div className="flex gap-1 text-[9px] text-gray-600">

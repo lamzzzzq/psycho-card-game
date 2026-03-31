@@ -19,23 +19,7 @@ export function DeclarePanel({ player, selectedCardIds, onDeclare, onSkip }: Dec
   const targets = getTargetCounts(player.bigFiveScores);
   const declaredDims = getDeclaredDimensions(player);
 
-  // Count personality cards by dimension in hand
-  const handByDim: Record<Dimension, number> = { O: 0, C: 0, E: 0, A: 0, N: 0 };
-  for (const card of player.hand) {
-    if (isPersonalityCard(card)) {
-      handByDim[card.dimension]++;
-    }
-  }
-
-  // Count how many selected cards match the chosen dimension
-  const matchingCount = selectedDim
-    ? selectedCardIds.filter((id) => {
-        const card = player.hand.find((c) => c.id === id);
-        return card && isPersonalityCard(card) && card.dimension === selectedDim;
-      }).length
-    : 0;
-  const wrongCount = selectedCardIds.length - matchingCount;
-
+  // Only check count — don't reveal which cards match (that's the challenge!)
   const canDeclare = selectedDim !== null &&
     !declaredDims.has(selectedDim) &&
     selectedCardIds.length >= targets[selectedDim];
@@ -56,7 +40,6 @@ export function DeclarePanel({ player, selectedCardIds, onDeclare, onSkip }: Dec
         {DIMENSIONS.map((d) => {
           const meta = DIMENSION_META[d];
           const isDeclared = declaredDims.has(d);
-          const hasEnough = handByDim[d] >= targets[d];
           const isSelected = selectedDim === d;
 
           return (
@@ -68,10 +51,8 @@ export function DeclarePanel({ player, selectedCardIds, onDeclare, onSkip }: Dec
                 isDeclared
                   ? 'bg-gray-800 text-gray-600 line-through cursor-not-allowed'
                   : isSelected
-                  ? 'ring-2 ring-offset-1 ring-offset-gray-950'
-                  : hasEnough
-                  ? 'hover:opacity-80 cursor-pointer'
-                  : 'opacity-40 cursor-pointer'
+                  ? 'ring-2 ring-offset-1 ring-offset-gray-950 hover:opacity-80 cursor-pointer'
+                  : 'hover:opacity-80 cursor-pointer'
               }`}
               style={{
                 backgroundColor: isDeclared ? undefined : meta.colorHex + '20',
@@ -80,7 +61,7 @@ export function DeclarePanel({ player, selectedCardIds, onDeclare, onSkip }: Dec
                 '--tw-ring-color': isSelected ? meta.colorHex : undefined,
               }}
             >
-              {meta.name} {isDeclared ? '✓' : `${handByDim[d]}/${targets[d]}`}
+              {meta.name} {isDeclared ? '✓' : `≥${targets[d]}`}
             </button>
           );
         })}
@@ -95,11 +76,6 @@ export function DeclarePanel({ player, selectedCardIds, onDeclare, onSkip }: Dec
               {selectedCardIds.length < targets[selectedDim] && (
                 <span className="text-yellow-400 ml-1">
                   (需要 ≥ {targets[selectedDim]} 张)
-                </span>
-              )}
-              {wrongCount > 0 && (
-                <span className="text-red-400 ml-1">
-                  (⚠ {wrongCount} 张不是{DIMENSION_META[selectedDim].name}！)
                 </span>
               )}
             </>
