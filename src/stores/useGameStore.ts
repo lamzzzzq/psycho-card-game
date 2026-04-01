@@ -8,16 +8,17 @@ import {
   discardCard,
   declareCards,
   skipDeclare,
+  claimCard,
+  skipClaim,
   getPlayerScore,
   getRankings,
 } from '@/lib/game-logic';
-import { makeAIDecision, makeAIDeclareDecision } from '@/lib/ai-engine';
+import { makeAIDecision, makeAIDeclareDecision, makeAIClaimDecision } from '@/lib/ai-engine';
 import { delay } from '@/lib/utils';
 
 interface GameStore {
   game: GameState | null;
 
-  // Setup
   initGame: (humanScores: BigFiveScores, settings: GameSettings) => void;
 
   // Turn actions
@@ -25,6 +26,9 @@ interface GameStore {
   playerSkipDeclare: () => void;
   playerDraw: () => void;
   playerDiscard: (cardId: number) => void;
+  playerClaim: (dimension: Dimension, handCardIds: number[]) => void;
+  playerSkipClaim: () => void;
+  resolveClaimWindow: () => Promise<void>;
   executeAITurn: () => Promise<void>;
 
   // Queries
@@ -32,7 +36,6 @@ interface GameStore {
   getScore: (id: PlayerId) => number;
   getPlayerRankings: () => Player[];
 
-  // Reset
   resetGame: () => void;
 }
 
@@ -46,8 +49,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   playerDeclare: (dimension, cardIds) => {
     const { game } = get();
     if (!game || game.phase !== 'declaring') return;
-    const newState = declareCards(game, dimension, cardIds);
-    set({ game: newState });
+    set({ game: declareCards(game, dimension, cardIds) });
   },
 
   playerSkipDeclare: () => {
@@ -65,8 +67,59 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   playerDiscard: (cardId) => {
     const { game } = get();
     if (!game || game.phase !== 'discarding' || !game.drawnCard) return;
-    const newState = discardCard(game, cardId);
-    set({ game: newState });
+    set({ game: discardCard(game, cardId) });
+  },
+
+  playerClaim: (dimension, handCardIds) => {
+    const { game } = get();
+    if (!game || game.phase !== 'claim-window') return;
+    // Human is always index 0
+    set({ game: claimCard(game, 0, dimension, handCardIds) });
+  },
+
+  playerSkipClaim: () => {
+    const { game } = get();
+    if (!game || game.phase !== 'claim-window') return;
+    set({ game: skipClaim(game) });
+  },
+
+  // Let AI players evaluate claim, called manually via button
+  resolveClaimWindow: async () => {
+    const { game } = get();
+    if (!game || game.phase !== 'claim-window' || !game.pendingDiscard) return;
+
+    const pendingCard = game.pendingDiscard;
+    const discardedBy = game.discardedByIndex;
+
+    // Check AI players in order (closest to discarder first)
+    for (let offset = 1; offset < 4; offset++) {
+      const idx = (discardedBy + offset) % 4;
+      const player = game.players[idx];
+
+      // Skip human (they have their own UI), skip the discarder
+      if (player.isHuman || idx === discardedBy) continue;
+
+      const decision = makeAIClaimDecision(
+        player,
+        pendingCard,
+        game.settings.aiDifficulty
+      );
+
+      if (decision.shouldClaim && decision.dimension && decision.handCardIds) {
+        await delay(500);
+        const currentGame = get().game;
+        if (!currentGame || currentGame.phase !== 'claim-window') return;
+
+        set({ game: claimCard(currentGame, idx, decision.dimension, decision.handCardIds) });
+        return;
+      }
+    }
+
+    // No AI wants to claim — skip
+    await delay(300);
+    const latestGame = get().game;
+    if (!latestGame || latestGame.phase !== 'claim-window') return;
+    set({ game: skipClaim(latestGame) });
   },
 
   executeAITurn: async () => {
@@ -132,9 +185,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
         );
         set({ game: afterDeclare });
 
-        // If game over after declare, stop
         if (afterDeclare.phase === 'game-over') return;
-        // If declare failed (player index advanced), stop
         if (afterDeclare.currentPlayerIndex !== game.currentPlayerIndex) return;
 
         currentState = afterDeclare;
@@ -169,6 +220,12 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     if (!latestGame || !latestGame.drawnCard) return;
     const afterDiscard = discardCard(latestGame, decision.cardToDiscard.id);
     set({ game: afterDiscard });
+
+    // If discard triggered claim-window, resolve AI claims
+    if (afterDiscard.phase === 'claim-window') {
+      // Don't auto-resolve — let the UI handle it (human might want to claim)
+      // The claim window will be resolved by the UI (button click)
+    }
   },
 
   getCurrentPlayer: () => {

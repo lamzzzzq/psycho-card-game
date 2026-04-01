@@ -95,13 +95,14 @@ export type GamePhase =
   | 'drawing'
   | 'discarding'
   | 'ai-turn'
+  | 'claim-window'
   | 'round-end'
   | 'game-over';
 
 export interface GameAction {
   round: number;
   playerId: PlayerId;
-  type: 'draw' | 'discard' | 'declare-success' | 'declare-fail' | 'skip';
+  type: 'draw' | 'discard' | 'declare-success' | 'declare-fail' | 'claim-success' | 'claim-fail' | 'skip';
   card?: GameCard;
   dimension?: Dimension;
   cardCount?: number;
@@ -126,5 +127,7 @@ export interface GameState {
   currentRound: number;
   actionLog: GameAction[];
   drawnCard: GameCard | null;
+  pendingDiscard: GameCard | null;
+  discardedByIndex: number;
   winner: PlayerId | null;
 }

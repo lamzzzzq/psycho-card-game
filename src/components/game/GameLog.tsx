@@ -48,6 +48,16 @@ export function GameLog({ actions, players }: GameLogProps) {
                     DECLARE {DIMENSION_META[action.dimension].name} 失败！(-{action.cardCount}张)
                   </span>
                 )}
+                {action.type === 'claim-success' && action.dimension && (
+                  <span style={{ color: DIMENSION_META[action.dimension].colorHex }}>
+                    碰！{DIMENSION_META[action.dimension].name} 成功！({action.cardCount}张)
+                  </span>
+                )}
+                {action.type === 'claim-fail' && action.dimension && (
+                  <span className="text-red-400">
+                    碰失败！{DIMENSION_META[action.dimension].name} (-{action.cardCount}张)
+                  </span>
+                )}
                 {action.type === 'skip' && (
                   <span className="text-gray-600">跳过本轮</span>
                 )}

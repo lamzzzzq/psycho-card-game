@@ -242,3 +242,58 @@ function hardAI(cards: GameCard[], player: Player, context: AIContext): AIDecisi
     thinkingMs: 1500 + Math.random() * 1000,
   };
 }
+
+// AI claim (碰) decision — should AI claim a pending discard?
+export interface AIClaimDecision {
+  shouldClaim: boolean;
+  dimension?: Dimension;
+  handCardIds?: number[];
+}
+
+export function makeAIClaimDecision(
+  player: Player,
+  pendingCard: GameCard,
+  difficulty: AIDifficulty
+): AIClaimDecision {
+  if (!isPersonalityCard(pendingCard)) {
+    return { shouldClaim: false };
+  }
+
+  const targets = getTargetCounts(player.bigFiveScores);
+  const declaredDims = getDeclaredDimensions(player);
+  const pendingDim = pendingCard.dimension;
+
+  // Can't claim for already-declared dimension
+  if (declaredDims.has(pendingDim)) {
+    return { shouldClaim: false };
+  }
+
+  // Count hand cards of this dimension
+  const dimCards = player.hand.filter(
+    (c) => isPersonalityCard(c) && c.dimension === pendingDim
+  );
+  const totalWithPending = dimCards.length + 1; // +1 for the pending card
+  const needed = targets[pendingDim];
+
+  if (totalWithPending < needed) {
+    return { shouldClaim: false };
+  }
+
+  // Have enough — decide based on difficulty
+  const handCardIds = dimCards.slice(0, needed - 1).map((c) => c.id);
+
+  switch (difficulty) {
+    case 'easy':
+      // 50% chance to claim even if eligible
+      if (Math.random() < 0.5) return { shouldClaim: false };
+      return { shouldClaim: true, dimension: pendingDim, handCardIds };
+
+    case 'medium':
+      // Always claim if exact match (no surplus)
+      return { shouldClaim: true, dimension: pendingDim, handCardIds };
+
+    case 'hard':
+      // Always claim — strategic advantage
+      return { shouldClaim: true, dimension: pendingDim, handCardIds };
+  }
+}

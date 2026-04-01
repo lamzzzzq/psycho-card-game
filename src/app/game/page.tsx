@@ -18,6 +18,7 @@ import { ArrowOverlay } from '@/components/game/ArrowOverlay';
 import { FlyingCard } from '@/components/game/FlyingCard';
 import { DeclarePanel } from '@/components/game/DeclarePanel';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
+import { ClaimPanel } from '@/components/game/ClaimPanel';
 
 interface FlyingAnim {
   id: number;
@@ -34,6 +35,9 @@ export default function GamePage() {
     playerDiscard,
     playerDeclare,
     playerSkipDeclare,
+    playerClaim,
+    playerSkipClaim,
+    resolveClaimWindow,
     executeAITurn,
     initGame,
     resetGame,
@@ -65,7 +69,7 @@ export default function GamePage() {
 
   // Clear selection when phase changes
   useEffect(() => {
-    if (game?.phase !== 'declaring') {
+    if (game?.phase !== 'declaring' && game?.phase !== 'claim-window') {
       setSelectedCardIds([]);
     }
   }, [game?.phase]);
@@ -252,6 +256,52 @@ export default function GamePage() {
     setSelectedCardIds([]);
   }, [playerSkipDeclare]);
 
+  // Handle claim (碰)
+  const handleClaim = useCallback((dimension: Dimension, handCardIds: number[]) => {
+    const beforeGame = useGameStore.getState().game;
+    playerClaim(dimension, handCardIds);
+    const afterGame = useGameStore.getState().game;
+    setSelectedCardIds([]);
+
+    if (beforeGame && afterGame) {
+      const lastAction = afterGame.actionLog[afterGame.actionLog.length - 1];
+      if (lastAction?.type === 'claim-success') {
+        setDeclareResult({
+          success: true,
+          message: `碰！${DIMENSION_META[dimension].name} DECLARE 成功！`,
+        });
+      } else if (lastAction?.type === 'claim-fail') {
+        setDeclareResult({
+          success: false,
+          message: `碰失败！牌被弃掉，下轮跳过`,
+        });
+      }
+      setTimeout(() => setDeclareResult(null), 3000);
+    }
+  }, [playerClaim]);
+
+  // Handle skip claim → let AI evaluate
+  const handleSkipClaim = useCallback(async () => {
+    setSelectedCardIds([]);
+    setAiRunning(true);
+    try {
+      await resolveClaimWindow();
+    } finally {
+      setAiRunning(false);
+    }
+  }, [resolveClaimWindow]);
+
+  // Handle resolve AI claim (auto-timeout)
+  const handleResolveAI = useCallback(async () => {
+    setSelectedCardIds([]);
+    setAiRunning(true);
+    try {
+      await resolveClaimWindow();
+    } finally {
+      setAiRunning(false);
+    }
+  }, [resolveClaimWindow]);
+
   if (!game) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -266,6 +316,7 @@ export default function GamePage() {
   const canDraw = isHumanTurn && game.phase === 'drawing';
   const isDiscarding = isHumanTurn && game.phase === 'discarding';
   const isDeclaring = isHumanTurn && game.phase === 'declaring' && !humanPlayer.skipNextTurn;
+  const isClaimWindow = game.phase === 'claim-window' && game.pendingDiscard !== null;
   const topDiscard = game.discardPile.length > 0 ? game.discardPile[game.discardPile.length - 1] : null;
   const targets = getTargetCounts(humanPlayer.bigFiveScores);
   const declaredDims = getDeclaredDimensions(humanPlayer);
@@ -392,6 +443,19 @@ export default function GamePage() {
           />
         )}
 
+        {/* Claim panel (碰牌窗口) */}
+        {isClaimWindow && game.pendingDiscard && (
+          <ClaimPanel
+            pendingCard={game.pendingDiscard}
+            player={humanPlayer}
+            discardedByName={game.players[game.discardedByIndex]?.name ?? ''}
+            selectedCardIds={selectedCardIds}
+            onClaim={handleClaim}
+            onSkip={handleSkipClaim}
+            onResolveAI={handleResolveAI}
+          />
+        )}
+
         {/* Hand + Declared cards side by side */}
         <div className="flex items-start justify-center gap-4">
           {/* Declared sets on the left */}
@@ -407,7 +471,7 @@ export default function GamePage() {
               cards={humanPlayer.hand}
               drawnCard={isHumanTurn ? game.drawnCard : null}
               isDiscarding={isDiscarding}
-              isDeclaring={isDeclaring}
+              isDeclaring={isDeclaring || isClaimWindow}
               selectedCardIds={selectedCardIds}
               onDiscardCard={handleDiscardCard}
               onToggleSelect={handleToggleSelect}

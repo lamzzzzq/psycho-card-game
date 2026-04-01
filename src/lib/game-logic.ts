@@ -9,6 +9,7 @@ import {
   Dimension,
   DIMENSIONS,
   isPersonalityCard,
+  isDummyCard,
   PersonalityCard,
 } from '@/types';
 import { AI_PERSONAS } from '@/data/ai-personas';
@@ -58,17 +59,17 @@ export function initializeGame(
     currentRound: 1,
     actionLog: [],
     drawnCard: null,
+    pendingDiscard: null,
+    discardedByIndex: -1,
     winner: null,
   };
 }
 
-// Check if a player has declared all 5 dimensions
 export function hasWon(player: Player): boolean {
   const declaredDims = new Set(player.declaredSets.map((s) => s.dimension));
   return DIMENSIONS.every((d) => declaredDims.has(d));
 }
 
-// Get declared dimensions for a player
 export function getDeclaredDimensions(player: Player): Set<Dimension> {
   return new Set(player.declaredSets.map((s) => s.dimension));
 }
@@ -84,26 +85,21 @@ export function declareCards(
   const targets = getTargetCounts(player.bigFiveScores);
   const targetCount = targets[dimension];
 
-  // Check if already declared this dimension
   if (getDeclaredDimensions(player).has(dimension)) {
     return state;
   }
 
-  // Get selected cards from hand
   const selectedCards = player.hand.filter((c) => cardIds.includes(c.id));
 
-  // Validate: must select >= target count
   if (selectedCards.length < targetCount) {
     return state;
   }
 
-  // Check if ALL selected cards are personality cards of the correct dimension
   const allCorrect = selectedCards.every(
     (c) => isPersonalityCard(c) && c.dimension === dimension
   );
 
   if (allCorrect) {
-    // SUCCESS: move cards to declaredSets
     const declaredCards = selectedCards.filter(isPersonalityCard) as PersonalityCard[];
     const newHand = player.hand.filter((c) => !cardIds.includes(c.id));
     const newDeclaredSets = [
@@ -126,7 +122,6 @@ export function declareCards(
       timestamp: Date.now(),
     };
 
-    // Check if this player won
     const updatedPlayer = newPlayers[playerIndex];
     if (hasWon(updatedPlayer)) {
       return {
@@ -138,7 +133,6 @@ export function declareCards(
       };
     }
 
-    // Continue to drawing phase
     return {
       ...state,
       players: newPlayers,
@@ -146,7 +140,6 @@ export function declareCards(
       phase: player.isHuman ? 'drawing' : 'ai-turn',
     };
   } else {
-    // FAILURE: discard all selected cards + skip next turn
     const newHand = player.hand.filter((c) => !cardIds.includes(c.id));
 
     const newPlayers = state.players.map((p, i) =>
@@ -164,7 +157,6 @@ export function declareCards(
       timestamp: Date.now(),
     };
 
-    // Advance to next player
     const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
       playerIndex,
       state.currentRound,
@@ -184,7 +176,6 @@ export function declareCards(
   }
 }
 
-// Skip DECLARE phase, go to drawing
 export function skipDeclare(state: GameState): GameState {
   const player = state.players[state.currentPlayerIndex];
   return {
@@ -199,7 +190,6 @@ export function drawCard(state: GameState): GameState {
 
   if (drawPile.length === 0) {
     if (discardPile.length === 0) {
-      // No cards left — skip draw/discard, advance to next player
       const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
         state.currentPlayerIndex,
         state.currentRound,
@@ -239,6 +229,7 @@ export function drawCard(state: GameState): GameState {
   };
 }
 
+// Modified: personality cards trigger claim window instead of going directly to discard pile
 export function discardCard(state: GameState, cardId: number): GameState {
   if (!state.drawnCard) return state;
 
@@ -262,6 +253,20 @@ export function discardCard(state: GameState, cardId: number): GameState {
     i === playerIndex ? { ...p, hand: newHand } : p
   );
 
+  // If personality card → enter claim window; dummy card → straight to discard pile
+  if (isPersonalityCard(cardToDiscard)) {
+    return {
+      ...state,
+      players: newPlayers,
+      drawnCard: null,
+      pendingDiscard: cardToDiscard,
+      discardedByIndex: playerIndex,
+      phase: 'claim-window',
+      actionLog: [...state.actionLog, action],
+    };
+  }
+
+  // Dummy card — no claim window
   const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
     playerIndex,
     state.currentRound,
@@ -281,6 +286,142 @@ export function discardCard(state: GameState, cardId: number): GameState {
   };
 }
 
+// Claim (碰) a pending discard card to DECLARE a dimension
+export function claimCard(
+  state: GameState,
+  claimerIndex: number,
+  dimension: Dimension,
+  handCardIds: number[]
+): GameState {
+  if (!state.pendingDiscard || state.phase !== 'claim-window') return state;
+
+  const claimer = state.players[claimerIndex];
+  const pendingCard = state.pendingDiscard;
+  const targets = getTargetCounts(claimer.bigFiveScores);
+  const targetCount = targets[dimension];
+
+  if (getDeclaredDimensions(claimer).has(dimension)) return state;
+
+  // All cards for declare = hand cards + the pending discard
+  const selectedHandCards = claimer.hand.filter((c) => handCardIds.includes(c.id));
+  const allDeclareCards = [...selectedHandCards, pendingCard];
+
+  if (allDeclareCards.length < targetCount) return state;
+
+  const allCorrect = allDeclareCards.every(
+    (c) => isPersonalityCard(c) && c.dimension === dimension
+  );
+
+  const discardedByIndex = state.discardedByIndex;
+  const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+    discardedByIndex,
+    state.currentRound,
+    state.settings.totalRounds
+  );
+
+  if (allCorrect) {
+    const declaredCards = allDeclareCards.filter(isPersonalityCard) as PersonalityCard[];
+    const newHand = claimer.hand.filter((c) => !handCardIds.includes(c.id));
+    const newDeclaredSets = [
+      ...claimer.declaredSets,
+      { dimension, cards: declaredCards, round: state.currentRound },
+    ];
+
+    const newPlayers = state.players.map((p, i) =>
+      i === claimerIndex
+        ? { ...p, hand: newHand, declaredSets: newDeclaredSets }
+        : p
+    );
+
+    const action: GameAction = {
+      round: state.currentRound,
+      playerId: claimer.id,
+      type: 'claim-success',
+      dimension,
+      cardCount: declaredCards.length,
+      timestamp: Date.now(),
+    };
+
+    const updatedClaimer = newPlayers[claimerIndex];
+    if (hasWon(updatedClaimer)) {
+      return {
+        ...state,
+        players: newPlayers,
+        pendingDiscard: null,
+        discardedByIndex: -1,
+        actionLog: [...state.actionLog, action],
+        phase: 'game-over',
+        winner: claimer.id,
+      };
+    }
+
+    return {
+      ...state,
+      players: newPlayers,
+      pendingDiscard: null,
+      discardedByIndex: -1,
+      currentPlayerIndex: nextPlayerIndex,
+      currentRound: nextRound,
+      phase: isGameOver ? 'game-over' : 'declaring',
+      actionLog: [...state.actionLog, action],
+      winner: isGameOver ? determineWinner(newPlayers) : null,
+    };
+  } else {
+    // Claim failed — hand cards discarded + skip next turn (pending card also goes to discard)
+    const newHand = claimer.hand.filter((c) => !handCardIds.includes(c.id));
+
+    const newPlayers = state.players.map((p, i) =>
+      i === claimerIndex
+        ? { ...p, hand: newHand, skipNextTurn: true }
+        : p
+    );
+
+    const action: GameAction = {
+      round: state.currentRound,
+      playerId: claimer.id,
+      type: 'claim-fail',
+      dimension,
+      cardCount: allDeclareCards.length,
+      timestamp: Date.now(),
+    };
+
+    return {
+      ...state,
+      players: newPlayers,
+      discardPile: [...state.discardPile, pendingCard, ...selectedHandCards],
+      pendingDiscard: null,
+      discardedByIndex: -1,
+      currentPlayerIndex: nextPlayerIndex,
+      currentRound: nextRound,
+      phase: isGameOver ? 'game-over' : 'declaring',
+      actionLog: [...state.actionLog, action],
+      winner: isGameOver ? determineWinner(newPlayers) : null,
+    };
+  }
+}
+
+// No one claims — pending card goes to discard pile, advance to next player
+export function skipClaim(state: GameState): GameState {
+  if (!state.pendingDiscard || state.phase !== 'claim-window') return state;
+
+  const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+    state.discardedByIndex,
+    state.currentRound,
+    state.settings.totalRounds
+  );
+
+  return {
+    ...state,
+    discardPile: [...state.discardPile, state.pendingDiscard],
+    pendingDiscard: null,
+    discardedByIndex: -1,
+    currentPlayerIndex: nextPlayerIndex,
+    currentRound: nextRound,
+    phase: isGameOver ? 'game-over' : 'declaring',
+    winner: isGameOver ? determineWinner(state.players) : null,
+  };
+}
+
 function advancePlayer(
   currentIndex: number,
   currentRound: number,
@@ -294,7 +435,6 @@ function advancePlayer(
 }
 
 function determineWinner(players: Player[]): PlayerId {
-  // Winner = most declared dimensions; tiebreak = fewer remaining cards
   const ranked = getRankings(players);
   return ranked[0].id;
 }
@@ -305,10 +445,8 @@ export function getPlayerScore(player: Player): number {
 
 export function getRankings(players: Player[]): Player[] {
   return [...players].sort((a, b) => {
-    // Primary: more declared dimensions is better
     const declDiff = b.declaredSets.length - a.declaredSets.length;
     if (declDiff !== 0) return declDiff;
-    // Secondary: fewer remaining cards is better
     return a.hand.length - b.hand.length;
   });
 }
