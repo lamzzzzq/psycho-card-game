@@ -39,7 +39,7 @@ export default function GamePage() {
     resetGame,
   } = useGameStore();
   const { bigFiveScores } = useAssessmentStore();
-  const aiRunningRef = useRef(false);
+  const [aiRunning, setAiRunning] = useState(false);
   const [timer, setTimer] = useState(30);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -146,11 +146,14 @@ export default function GamePage() {
 
   // Manual AI turn — one at a time, triggered by button
   const runOneAITurn = useCallback(async () => {
-    if (aiRunningRef.current) return;
-    aiRunningRef.current = true;
-    await executeAITurn();
-    aiRunningRef.current = false;
-  }, [executeAITurn]);
+    if (aiRunning) return;
+    setAiRunning(true);
+    try {
+      await executeAITurn();
+    } finally {
+      setAiRunning(false);
+    }
+  }, [executeAITurn, aiRunning]);
 
   // Draw pile hover
   const handleDrawPileHover = useCallback((hovering: boolean) => {
@@ -414,7 +417,7 @@ export default function GamePage() {
           <div className="flex flex-col items-center gap-2">
             <button
               onClick={runOneAITurn}
-              disabled={aiRunningRef.current}
+              disabled={aiRunning}
               className="px-6 py-2 rounded-lg bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 text-sm font-medium hover:bg-yellow-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {game.players[game.currentPlayerIndex].avatar}{' '}
