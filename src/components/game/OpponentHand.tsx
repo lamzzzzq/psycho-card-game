@@ -1,8 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { Player } from '@/types';
-import { Card } from './Card';
-import { DeclaredArea } from './DeclaredArea';
+import { DIMENSION_META } from '@/data/dimensions';
 
 interface OpponentHandProps {
   player: Player;
@@ -11,6 +11,8 @@ interface OpponentHandProps {
 }
 
 export function OpponentHand({ player, isCurrentTurn, infoMode }: OpponentHandProps) {
+  const [expandedDim, setExpandedDim] = useState<string | null>(null);
+
   return (
     <div className={`flex flex-col items-center gap-2 rounded-xl p-3 transition ${
       isCurrentTurn ? 'bg-yellow-500/10 ring-1 ring-yellow-500/30' : ''
@@ -26,11 +28,59 @@ export function OpponentHand({ player, isCurrentTurn, infoMode }: OpponentHandPr
         </div>
       </div>
 
-      {/* Declared dimensions */}
+      {/* Declared sets — click to expand */}
       {player.declaredSets.length > 0 && (
-        <DeclaredArea declaredSets={player.declaredSets} compact />
+        <div className="flex flex-col items-center gap-1 w-full">
+          <div className="flex gap-1 flex-wrap justify-center">
+            {player.declaredSets.map((set) => {
+              const meta = DIMENSION_META[set.dimension];
+              const isExpanded = expandedDim === set.dimension;
+              return (
+                <button
+                  key={set.dimension}
+                  onClick={() => setExpandedDim(isExpanded ? null : set.dimension)}
+                  className="flex items-center gap-0.5 rounded px-1.5 py-0.5 transition hover:opacity-80 cursor-pointer"
+                  style={{
+                    backgroundColor: meta.colorHex + '25',
+                    border: `1px solid ${meta.colorHex}40`,
+                  }}
+                >
+                  <span className="text-[8px]" style={{ color: meta.colorHex }}>
+                    {meta.name} ✓{set.cards.length}
+                  </span>
+                  <span className="text-[7px] text-gray-600">{isExpanded ? '▲' : '▼'}</span>
+                </button>
+              );
+            })}
+          </div>
+          {/* Expanded cards */}
+          {expandedDim && (() => {
+            const set = player.declaredSets.find((s) => s.dimension === expandedDim);
+            if (!set) return null;
+            const meta = DIMENSION_META[set.dimension];
+            return (
+              <div className="flex gap-0.5 flex-wrap justify-center mt-1">
+                {set.cards.map((card) => (
+                  <div
+                    key={card.id}
+                    className="w-10 h-14 rounded-md border flex items-center justify-center p-0.5"
+                    style={{
+                      backgroundColor: meta.colorHex + '15',
+                      borderColor: meta.colorHex + '40',
+                    }}
+                  >
+                    <p className="text-[5px] leading-tight text-gray-400 text-center line-clamp-3">
+                      {card.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
       )}
 
+      {/* Stacked hand cards */}
       <div className="relative flex items-center" style={{ height: 36 }}>
         {player.hand.map((card, i) => (
           <div
