@@ -62,7 +62,7 @@ export function PongPanel({
   }).length;
 
   const neededFromHand = targets[pendingDim] - 1; // -1 because pending card counts
-  const canConfirmClaim = selectedCardIds.length >= neededFromHand;
+  const canConfirmClaim = selectedCorrectCount >= neededFromHand;
 
   return (
     <motion.div

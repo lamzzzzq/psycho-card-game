@@ -73,9 +73,15 @@ export default function GamePage() {
   }, [game?.phase]);
 
   // Auto-skip human turn when skipNextTurn is true
+  // Only trigger when it's a NEW turn (not right after Hu fail in same turn)
   useEffect(() => {
     if (!game || game.phase !== 'drawing') return;
     const currentPlayer = game.players[game.currentPlayerIndex];
+    // Check if last action was hu-fail by this player — if so, don't skip yet (current turn continues)
+    const lastAction = game.actionLog[game.actionLog.length - 1];
+    const justFailedHu = lastAction?.type === 'hu-fail' && lastAction.playerId === currentPlayer.id;
+    if (justFailedHu) return;
+
     if (currentPlayer.isHuman && currentPlayer.skipNextTurn) {
       const skipAction = {
         round: game.currentRound,
@@ -408,7 +414,7 @@ export default function GamePage() {
         {/* Action buttons */}
         <div className="flex items-center justify-center gap-3">
           {/* Hu button — always visible on human turn */}
-          {isHumanTurn && game.phase !== 'game-over' && !humanPlayer.skipNextTurn && (
+          {isHumanTurn && game.phase !== 'game-over' && game.phase !== 'claim-window' && !humanPlayer.skipNextTurn && (
             <button
               onClick={handleHu}
               className="px-5 py-2 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 text-white text-sm font-bold hover:opacity-90 transition shadow-lg"

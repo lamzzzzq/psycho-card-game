@@ -152,17 +152,11 @@ export function drawCard(state: GameState): GameState {
 
   if (drawPile.length === 0) {
     if (discardPile.length === 0) {
-      const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
-        state.currentPlayerIndex,
-        state.currentRound,
-        state.settings.totalRounds
-      );
+      // No cards left anywhere — force game over to prevent infinite loop
       return {
         ...state,
-        currentPlayerIndex: nextPlayerIndex,
-        currentRound: nextRound,
-        phase: isGameOver ? 'game-over' : 'drawing',
-        winner: isGameOver ? determineWinner(state.players) : null,
+        phase: 'game-over',
+        winner: determineWinner(state.players),
       };
     }
     drawPile = [...discardPile];
