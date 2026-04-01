@@ -1,6 +1,6 @@
 'use client';
 
-import { DeclaredSet, DIMENSIONS, Dimension } from '@/types';
+import { DeclaredSet, DIMENSIONS } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 
 interface DeclaredAreaProps {
@@ -11,34 +11,57 @@ interface DeclaredAreaProps {
 export function DeclaredArea({ declaredSets, compact = false }: DeclaredAreaProps) {
   if (declaredSets.length === 0) return null;
 
-  const declaredDims = new Set(declaredSets.map((s) => s.dimension));
-
-  return (
-    <div className={`flex gap-1.5 ${compact ? 'flex-wrap' : ''}`}>
-      {DIMENSIONS.map((d) => {
-        const meta = DIMENSION_META[d];
-        const set = declaredSets.find((s) => s.dimension === d);
-        if (!set && compact) return null;
-
-        return (
-          <div
-            key={d}
-            className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 ${
-              set ? '' : 'opacity-20'
-            }`}
-            style={{
-              backgroundColor: set ? meta.colorHex + '25' : 'transparent',
-              border: `1px solid ${set ? meta.colorHex + '40' : 'transparent'}`,
-            }}
-          >
-            <span className="text-[9px]" style={{ color: meta.colorHex }}>
-              {meta.name}
-            </span>
-            {set && (
-              <span className="text-[9px] font-bold" style={{ color: meta.colorHex }}>
-                ✓{set.cards.length}
+  if (compact) {
+    // Compact mode for opponents — just badges
+    return (
+      <div className="flex gap-1 flex-wrap">
+        {declaredSets.map((set) => {
+          const meta = DIMENSION_META[set.dimension];
+          return (
+            <div
+              key={set.dimension}
+              className="flex items-center gap-0.5 rounded px-1 py-0.5"
+              style={{
+                backgroundColor: meta.colorHex + '25',
+                border: `1px solid ${meta.colorHex}40`,
+              }}
+            >
+              <span className="text-[8px]" style={{ color: meta.colorHex }}>
+                {meta.name} ✓{set.cards.length}
               </span>
-            )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Full mode for human player — show actual mini cards grouped by dimension
+  return (
+    <div className="flex gap-3 flex-wrap justify-center">
+      {declaredSets.map((set) => {
+        const meta = DIMENSION_META[set.dimension];
+        return (
+          <div key={set.dimension} className="flex flex-col items-center gap-1">
+            <span className="text-[9px] font-medium" style={{ color: meta.colorHex }}>
+              {meta.name} ✓
+            </span>
+            <div className="flex gap-0.5">
+              {set.cards.map((card) => (
+                <div
+                  key={card.id}
+                  className="w-10 h-14 rounded-md border flex items-center justify-center p-0.5"
+                  style={{
+                    backgroundColor: meta.colorHex + '15',
+                    borderColor: meta.colorHex + '40',
+                  }}
+                >
+                  <p className="text-[6px] leading-tight text-gray-400 text-center line-clamp-3">
+                    {card.text}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         );
       })}

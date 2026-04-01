@@ -382,13 +382,6 @@ export default function GamePage() {
           </div>
         </div>
 
-        {/* Declared sets display */}
-        {humanPlayer.declaredSets.length > 0 && (
-          <div className="flex justify-center">
-            <DeclaredArea declaredSets={humanPlayer.declaredSets} />
-          </div>
-        )}
-
         {/* DECLARE panel (when it's declaring phase) */}
         {isDeclaring && (
           <DeclarePanel
@@ -399,17 +392,28 @@ export default function GamePage() {
           />
         )}
 
-        <div ref={handAreaRef}>
-          <PlayerHand
-            cards={humanPlayer.hand}
-            drawnCard={isHumanTurn ? game.drawnCard : null}
-            isDiscarding={isDiscarding}
-            isDeclaring={isDeclaring}
-            selectedCardIds={selectedCardIds}
-            onDiscardCard={handleDiscardCard}
-            onToggleSelect={handleToggleSelect}
-            onCardHover={handleCardHover}
-          />
+        {/* Hand + Declared cards side by side */}
+        <div className="flex items-start justify-center gap-4">
+          {/* Declared sets on the left */}
+          {humanPlayer.declaredSets.length > 0 && (
+            <div className="flex-shrink-0">
+              <DeclaredArea declaredSets={humanPlayer.declaredSets} />
+            </div>
+          )}
+
+          {/* Hand cards */}
+          <div ref={handAreaRef} className="flex-1 min-w-0">
+            <PlayerHand
+              cards={humanPlayer.hand}
+              drawnCard={isHumanTurn ? game.drawnCard : null}
+              isDiscarding={isDiscarding}
+              isDeclaring={isDeclaring}
+              selectedCardIds={selectedCardIds}
+              onDiscardCard={handleDiscardCard}
+              onToggleSelect={handleToggleSelect}
+              onCardHover={handleCardHover}
+            />
+          </div>
         </div>
 
         {/* AI turn button */}
