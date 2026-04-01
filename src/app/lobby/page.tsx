@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useGameStore } from '@/stores/useGameStore';
 import { AI_PERSONAS } from '@/data/ai-personas';
-import { AIDifficulty, InfoMode } from '@/types';
+import { AIDifficulty } from '@/types';
 
 export default function LobbyPage() {
   const router = useRouter();
@@ -14,7 +14,6 @@ export default function LobbyPage() {
   const { initGame } = useGameStore();
 
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
-  const [infoMode, setInfoMode] = useState<InfoMode>('hidden');
   const [totalRounds, setTotalRounds] = useState(10);
 
   if (!bigFiveScores) {
@@ -34,7 +33,7 @@ export default function LobbyPage() {
   }
 
   const handleStart = () => {
-    initGame(bigFiveScores, { totalRounds, aiDifficulty: difficulty, infoMode });
+    initGame(bigFiveScores, { totalRounds, aiDifficulty: difficulty });
     router.push('/game');
   };
 
@@ -42,6 +41,13 @@ export default function LobbyPage() {
     { value: 'easy', label: '简单', desc: '凭直觉出牌' },
     { value: 'medium', label: '中等', desc: '会记牌分析' },
     { value: 'hard', label: '困难', desc: '推测你的心理' },
+  ];
+
+  const roundOptions = [
+    { value: 5, label: '5 轮', desc: '快速' },
+    { value: 10, label: '10 轮', desc: '标准' },
+    { value: 15, label: '15 轮', desc: '持久' },
+    { value: 0, label: '∞ 无限', desc: '直到有人胡' },
   ];
 
   return (
@@ -77,53 +83,22 @@ export default function LobbyPage() {
           </div>
         </div>
 
-        {/* Info Mode */}
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-gray-300">信息模式</label>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => setInfoMode('hidden')}
-              className={`rounded-xl border-2 p-3 text-center transition ${
-                infoMode === 'hidden'
-                  ? 'border-purple-500 bg-purple-500/10'
-                  : 'border-gray-800 hover:border-gray-600'
-              }`}
-            >
-              <div className="text-sm font-medium text-gray-200">🕵️ 隐藏</div>
-              <div className="text-xs text-gray-500 mt-1">推测对手性格</div>
-            </button>
-            <button
-              onClick={() => setInfoMode('public')}
-              className={`rounded-xl border-2 p-3 text-center transition ${
-                infoMode === 'public'
-                  ? 'border-purple-500 bg-purple-500/10'
-                  : 'border-gray-800 hover:border-gray-600'
-              }`}
-            >
-              <div className="text-sm font-medium text-gray-200">📊 公开</div>
-              <div className="text-xs text-gray-500 mt-1">所有分数可见</div>
-            </button>
-          </div>
-        </div>
-
         {/* Rounds */}
         <div className="space-y-3">
           <label className="text-sm font-medium text-gray-300">游戏轮数</label>
-          <div className="grid grid-cols-3 gap-2">
-            {[5, 10, 15].map((r) => (
+          <div className="grid grid-cols-4 gap-2">
+            {roundOptions.map((r) => (
               <button
-                key={r}
-                onClick={() => setTotalRounds(r)}
+                key={r.value}
+                onClick={() => setTotalRounds(r.value)}
                 className={`rounded-xl border-2 p-3 text-center transition ${
-                  totalRounds === r
+                  totalRounds === r.value
                     ? 'border-purple-500 bg-purple-500/10'
                     : 'border-gray-800 hover:border-gray-600'
                 }`}
               >
-                <div className="text-sm font-medium text-gray-200">{r} 轮</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {r === 5 ? '快速' : r === 10 ? '标准' : '持久'}
-                </div>
+                <div className="text-sm font-medium text-gray-200">{r.label}</div>
+                <div className="text-xs text-gray-500 mt-1">{r.desc}</div>
               </button>
             ))}
           </div>

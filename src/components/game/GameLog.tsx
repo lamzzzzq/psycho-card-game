@@ -23,7 +23,7 @@ export function GameLog({ actions, players }: GameLogProps) {
             const player = getPlayer(action.playerId);
             if (!player) return null;
             return (
-              <div key={`${action.timestamp}-${action.type}`} className="text-xs text-gray-500 flex gap-1">
+              <div key={`${action.timestamp}-${action.type}-${i}`} className="text-xs text-gray-500 flex gap-1">
                 <span className="text-gray-400">{player.avatar}</span>
                 {action.type === 'draw' && <span>抽了一张牌</span>}
                 {action.type === 'discard' && (
@@ -38,24 +38,20 @@ export function GameLog({ actions, players }: GameLogProps) {
                     )}
                   </span>
                 )}
-                {action.type === 'declare-success' && action.dimension && (
+                {action.type === 'hu-success' && (
+                  <span className="text-emerald-400 font-bold">胡了！🀄 游戏结束</span>
+                )}
+                {action.type === 'hu-fail' && (
+                  <span className="text-red-400">胡失败！手牌公开，跳过下轮</span>
+                )}
+                {action.type === 'pong-success' && action.dimension && (
                   <span style={{ color: DIMENSION_META[action.dimension].colorHex }}>
-                    DECLARE {DIMENSION_META[action.dimension].name} 成功！({action.cardCount}张)
+                    碰！{DIMENSION_META[action.dimension].name} ({action.cardCount}张)
                   </span>
                 )}
-                {action.type === 'declare-fail' && action.dimension && (
+                {action.type === 'pong-fail' && action.dimension && (
                   <span className="text-red-400">
-                    DECLARE {DIMENSION_META[action.dimension].name} 失败！(-{action.cardCount}张)
-                  </span>
-                )}
-                {action.type === 'claim-success' && action.dimension && (
-                  <span style={{ color: DIMENSION_META[action.dimension].colorHex }}>
-                    碰！{DIMENSION_META[action.dimension].name} 成功！({action.cardCount}张)
-                  </span>
-                )}
-                {action.type === 'claim-fail' && action.dimension && (
-                  <span className="text-red-400">
-                    碰失败！{DIMENSION_META[action.dimension].name} (-{action.cardCount}张)
+                    碰失败！{DIMENSION_META[action.dimension].name} 手牌公开
                   </span>
                 )}
                 {action.type === 'skip' && (

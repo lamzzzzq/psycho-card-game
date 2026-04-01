@@ -13,6 +13,7 @@ interface AssessmentState {
 
   setAnswer: (questionId: number, score: LikertScore) => void;
   calculateScores: () => BigFiveScores;
+  setManualScores: (scores: BigFiveScores) => void;
   reset: () => void;
   getProgress: () => number;
   isComplete: () => boolean;
@@ -36,6 +37,10 @@ export const useAssessmentStore = create<AssessmentState>()(
         const scores = calculateBigFiveScores(get().answers, QUESTIONS);
         set({ bigFiveScores: scores, completedAt: new Date().toISOString() });
         return scores;
+      },
+
+      setManualScores: (scores) => {
+        set({ bigFiveScores: scores, completedAt: new Date().toISOString() });
       },
 
       reset: () => {

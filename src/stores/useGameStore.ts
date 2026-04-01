@@ -6,14 +6,13 @@ import {
   initializeGame,
   drawCard,
   discardCard,
-  declareCards,
-  skipDeclare,
-  claimCard,
-  skipClaim,
+  attemptHu,
+  pongCard,
+  skipPong,
   getPlayerScore,
   getRankings,
 } from '@/lib/game-logic';
-import { makeAIDecision, makeAIDeclareDecision, makeAIClaimDecision } from '@/lib/ai-engine';
+import { makeAIDecision, makeAIHuDecision, makeAIPongDecision } from '@/lib/ai-engine';
 import { delay } from '@/lib/utils';
 
 interface GameStore {
@@ -22,13 +21,12 @@ interface GameStore {
   initGame: (humanScores: BigFiveScores, settings: GameSettings) => void;
 
   // Turn actions
-  playerDeclare: (dimension: Dimension, cardIds: number[]) => void;
-  playerSkipDeclare: () => void;
+  playerHu: () => void;
   playerDraw: () => void;
   playerDiscard: (cardId: number) => void;
-  playerClaim: (dimension: Dimension, handCardIds: number[]) => void;
-  playerSkipClaim: () => void;
-  resolveClaimWindow: () => Promise<void>;
+  playerPong: (dimension: Dimension, handCardIds: number[]) => void;
+  playerSkipPong: () => void;
+  resolvePongWindow: () => Promise<void>;
   executeAITurn: () => Promise<void>;
 
   // Queries
@@ -46,16 +44,12 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     set({ game: initializeGame(humanScores, settings) });
   },
 
-  playerDeclare: (dimension, cardIds) => {
+  playerHu: () => {
     const { game } = get();
-    if (!game || game.phase !== 'declaring') return;
-    set({ game: declareCards(game, dimension, cardIds) });
-  },
-
-  playerSkipDeclare: () => {
-    const { game } = get();
-    if (!game || game.phase !== 'declaring') return;
-    set({ game: skipDeclare(game) });
+    if (!game || game.phase === 'game-over' || game.phase === 'claim-window') return;
+    // Human is always index 0, can only Hu on their own turn
+    if (game.currentPlayerIndex !== 0) return;
+    set({ game: attemptHu(game, 0) });
   },
 
   playerDraw: () => {
@@ -70,56 +64,46 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     set({ game: discardCard(game, cardId) });
   },
 
-  playerClaim: (dimension, handCardIds) => {
+  playerPong: (dimension, handCardIds) => {
     const { game } = get();
     if (!game || game.phase !== 'claim-window') return;
-    // Human is always index 0
-    set({ game: claimCard(game, 0, dimension, handCardIds) });
+    set({ game: pongCard(game, 0, dimension, handCardIds) });
   },
 
-  playerSkipClaim: () => {
+  playerSkipPong: () => {
     const { game } = get();
     if (!game || game.phase !== 'claim-window') return;
-    set({ game: skipClaim(game) });
+    set({ game: skipPong(game) });
   },
 
-  // Let AI players evaluate claim, called manually via button
-  resolveClaimWindow: async () => {
+  resolvePongWindow: async () => {
     const { game } = get();
     if (!game || game.phase !== 'claim-window' || !game.pendingDiscard) return;
 
     const pendingCard = game.pendingDiscard;
     const discardedBy = game.discardedByIndex;
 
-    // Check AI players in order (closest to discarder first)
     for (let offset = 1; offset < 4; offset++) {
       const idx = (discardedBy + offset) % 4;
       const player = game.players[idx];
 
-      // Skip human (they have their own UI), skip the discarder
       if (player.isHuman || idx === discardedBy) continue;
 
-      const decision = makeAIClaimDecision(
-        player,
-        pendingCard,
-        game.settings.aiDifficulty
-      );
+      const decision = makeAIPongDecision(player, pendingCard, game.settings.aiDifficulty);
 
-      if (decision.shouldClaim && decision.dimension && decision.handCardIds) {
+      if (decision.shouldPong && decision.dimension && decision.handCardIds) {
         await delay(500);
         const currentGame = get().game;
         if (!currentGame || currentGame.phase !== 'claim-window') return;
-
-        set({ game: claimCard(currentGame, idx, decision.dimension, decision.handCardIds) });
+        set({ game: pongCard(currentGame, idx, decision.dimension, decision.handCardIds) });
         return;
       }
     }
 
-    // No AI wants to claim — skip
     await delay(300);
     const latestGame = get().game;
     if (!latestGame || latestGame.phase !== 'claim-window') return;
-    set({ game: skipClaim(latestGame) });
+    set({ game: skipPong(latestGame) });
   },
 
   executeAITurn: async () => {
@@ -128,7 +112,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
     const currentPlayer = game.players[game.currentPlayerIndex];
 
-    // Handle skip turn
+    // Handle skip turn — also clear revealedHand
     if (currentPlayer.skipNextTurn) {
       const skipAction: GameAction = {
         round: game.currentRound,
@@ -137,12 +121,12 @@ export const useGameStore = create<GameStore>()((set, get) => ({
         timestamp: Date.now(),
       };
       const newPlayers = game.players.map((p, i) =>
-        i === game.currentPlayerIndex ? { ...p, skipNextTurn: false } : p
+        i === game.currentPlayerIndex ? { ...p, skipNextTurn: false, revealedHand: false } : p
       );
       const nextPlayerIndex = (game.currentPlayerIndex + 1) % 4;
       const isRoundEnd = nextPlayerIndex === 0;
       const nextRound = isRoundEnd ? game.currentRound + 1 : game.currentRound;
-      const isGameOver = isRoundEnd && nextRound > game.settings.totalRounds;
+      const isGameOver = game.settings.totalRounds > 0 && isRoundEnd && nextRound > game.settings.totalRounds;
 
       await delay(500);
       set({
@@ -151,7 +135,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
           players: newPlayers,
           currentPlayerIndex: nextPlayerIndex,
           currentRound: nextRound,
-          phase: isGameOver ? 'game-over' : 'declaring',
+          phase: isGameOver ? 'game-over' : 'drawing',
           actionLog: [...game.actionLog, skipAction],
           winner: isGameOver ? getRankings(newPlayers)[0].id : null,
         },
@@ -159,44 +143,18 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       return;
     }
 
-    // DECLARE phase for AI
-    if (game.phase === 'declaring') {
-      const declareDecision = makeAIDeclareDecision(
-        currentPlayer,
-        game.settings.aiDifficulty,
-        {
-          discardPile: game.discardPile,
-          actionLog: game.actionLog,
-          currentRound: game.currentRound,
-          totalRounds: game.settings.totalRounds,
-        }
-      );
-
-      await delay(declareDecision.thinkingMs);
-
-      let currentState = get().game;
+    // AI Hu check
+    const huDecision = makeAIHuDecision(currentPlayer, game.settings.aiDifficulty);
+    if (huDecision.shouldHu) {
+      await delay(huDecision.thinkingMs);
+      const currentState = get().game;
       if (!currentState) return;
-
-      if (declareDecision.shouldDeclare && declareDecision.dimension && declareDecision.cardIds) {
-        const afterDeclare = declareCards(
-          currentState,
-          declareDecision.dimension,
-          declareDecision.cardIds
-        );
-        set({ game: afterDeclare });
-
-        if (afterDeclare.phase === 'game-over') return;
-        if (afterDeclare.currentPlayerIndex !== game.currentPlayerIndex) return;
-
-        currentState = afterDeclare;
-      } else {
-        const afterSkip = skipDeclare(currentState);
-        set({ game: afterSkip });
-        currentState = afterSkip;
-      }
+      const afterHu = attemptHu(currentState, currentState.currentPlayerIndex);
+      set({ game: afterHu });
+      if (afterHu.phase === 'game-over') return;
     }
 
-    // Draw phase for AI
+    // Draw phase
     const latestForDraw = get().game;
     if (!latestForDraw || latestForDraw.phase === 'game-over') return;
 
@@ -220,12 +178,6 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     if (!latestGame || !latestGame.drawnCard) return;
     const afterDiscard = discardCard(latestGame, decision.cardToDiscard.id);
     set({ game: afterDiscard });
-
-    // If discard triggered claim-window, resolve AI claims
-    if (afterDiscard.phase === 'claim-window') {
-      // Don't auto-resolve — let the UI handle it (human might want to claim)
-      // The claim window will be resolved by the UI (button click)
-    }
   },
 
   getCurrentPlayer: () => {

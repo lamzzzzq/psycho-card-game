@@ -9,7 +9,7 @@ import { DIMENSION_META } from '@/data/dimensions';
 import { useHydrated } from '@/stores/useHydration';
 import { QuestionCard } from '@/components/assessment/QuestionCard';
 import { ProgressBar } from '@/components/assessment/ProgressBar';
-import { LikertScore, Question } from '@/types';
+import { LikertScore, Question, BigFiveScores, DIMENSIONS } from '@/types';
 import { shuffle } from '@/lib/utils';
 
 type QuestionOrder = 'sequential' | 'shuffled';
@@ -22,10 +22,12 @@ function getOrderedQuestions(mode: QuestionOrder): Question[] {
 export default function AssessmentPage() {
   const router = useRouter();
   const hydrated = useHydrated();
-  const { answers, setAnswer, calculateScores, getProgress, isComplete, bigFiveScores } = useAssessmentStore();
+  const { answers, setAnswer, calculateScores, setManualScores, getProgress, isComplete, bigFiveScores } = useAssessmentStore();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [orderMode, setOrderMode] = useState<QuestionOrder>('sequential');
   const [orderedQuestions, setOrderedQuestions] = useState<Question[]>(QUESTIONS);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualScores, setManualInputScores] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
 
   const toggleOrder = () => {
     const newMode = orderMode === 'sequential' ? 'shuffled' : 'sequential';
@@ -84,6 +86,58 @@ export default function AssessmentPage() {
         animate={{ opacity: 1 }}
         className="w-full max-w-xl space-y-8"
       >
+        {/* Skip assessment button */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowManualInput(!showManualInput)}
+            className="text-xs text-gray-500 hover:text-gray-300 transition underline"
+          >
+            {showManualInput ? '返回测评' : '跳过测评，手动输入分数'}
+          </button>
+        </div>
+
+        {/* Manual input panel */}
+        {showManualInput ? (
+          <div className="space-y-4 rounded-xl border border-gray-700 bg-gray-900/50 p-6">
+            <h3 className="text-sm font-medium text-gray-300">手动输入 Big Five 分数 (1.0 - 5.0)</h3>
+            <div className="space-y-3">
+              {DIMENSIONS.map((d) => {
+                const meta = DIMENSION_META[d];
+                return (
+                  <div key={d} className="flex items-center gap-3">
+                    <span className="text-sm w-16" style={{ color: meta.colorHex }}>{meta.name}</span>
+                    <input
+                      type="number"
+                      min="1.0"
+                      max="5.0"
+                      step="0.1"
+                      value={manualScores[d]}
+                      onChange={(e) => setManualInputScores({ ...manualScores, [d]: Math.min(5, Math.max(1, parseFloat(e.target.value) || 1)) })}
+                      className="w-20 rounded-lg bg-gray-800 border border-gray-700 px-3 py-1.5 text-sm text-gray-200 text-center"
+                    />
+                    <div className="flex-1 h-2 rounded-full bg-gray-800">
+                      <div
+                        className="h-2 rounded-full transition-all"
+                        style={{ width: `${((manualScores[d] - 1) / 4) * 100}%`, backgroundColor: meta.colorHex }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => {
+                setManualScores(manualScores);
+                router.push('/results');
+              }}
+              className="w-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 py-2.5 font-semibold text-white transition hover:opacity-90"
+            >
+              确认分数，进入游戏
+            </button>
+          </div>
+        ) : (
+        <>
+
         <ProgressBar
           current={progress}
           total={QUESTIONS.length}
@@ -163,6 +217,8 @@ export default function AssessmentPage() {
             <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded bg-white ring-1 ring-white" /> 当前</span>
           </div>
         </div>
+        </>
+        )}
       </motion.div>
     </div>
   );

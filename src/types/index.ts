@@ -87,34 +87,30 @@ export interface Player {
   bigFiveScores: BigFiveScores;
   declaredSets: DeclaredSet[];
   skipNextTurn: boolean;
+  revealedHand: boolean;
 }
 
 // ===== Game State =====
 export type GamePhase =
-  | 'declaring'
   | 'drawing'
   | 'discarding'
   | 'ai-turn'
   | 'claim-window'
-  | 'round-end'
   | 'game-over';
 
 export interface GameAction {
   round: number;
   playerId: PlayerId;
-  type: 'draw' | 'discard' | 'declare-success' | 'declare-fail' | 'claim-success' | 'claim-fail' | 'skip';
+  type: 'draw' | 'discard' | 'hu-success' | 'hu-fail' | 'pong-success' | 'pong-fail' | 'skip';
   card?: GameCard;
   dimension?: Dimension;
   cardCount?: number;
   timestamp: number;
 }
 
-export type InfoMode = 'hidden' | 'public';
-
 export interface GameSettings {
-  totalRounds: number;
+  totalRounds: number; // 0 = unlimited (play until someone wins)
   aiDifficulty: AIDifficulty;
-  infoMode: InfoMode;
 }
 
 export interface GameState {

@@ -16,6 +16,22 @@ import { AI_PERSONAS } from '@/data/ai-personas';
 import { generateAIScores, calculateFinalScore, getTargetCounts } from './scoring';
 import { createShuffledDeck, dealCardsVariable } from './card-engine';
 
+function createPlayer(
+  id: PlayerId,
+  name: string,
+  avatar: string,
+  hand: GameCard[],
+  isHuman: boolean,
+  bigFiveScores: BigFiveScores
+): Player {
+  return {
+    id, name, avatar, hand, isHuman, bigFiveScores,
+    declaredSets: [],
+    skipNextTurn: false,
+    revealedHand: false,
+  };
+}
+
 export function initializeGame(
   humanScores: BigFiveScores,
   settings: GameSettings
@@ -27,30 +43,14 @@ export function initializeGame(
   const { hands, remaining } = dealCardsVariable(deck, allScores);
 
   const players: Player[] = [
-    {
-      id: 'human',
-      name: '你',
-      avatar: '🧑',
-      hand: hands[0],
-      isHuman: true,
-      bigFiveScores: humanScores,
-      declaredSets: [],
-      skipNextTurn: false,
-    },
-    ...AI_PERSONAS.map((persona, i) => ({
-      id: persona.id as PlayerId,
-      name: persona.name,
-      avatar: persona.avatar,
-      hand: hands[i + 1],
-      isHuman: false,
-      bigFiveScores: aiScoresList[i],
-      declaredSets: [],
-      skipNextTurn: false,
-    })),
+    createPlayer('human', '你', '🧑', hands[0], true, humanScores),
+    ...AI_PERSONAS.map((persona, i) =>
+      createPlayer(persona.id as PlayerId, persona.name, persona.avatar, hands[i + 1], false, aiScoresList[i])
+    ),
   ];
 
   return {
-    phase: 'declaring',
+    phase: 'drawing',
     settings,
     players,
     drawPile: remaining,
@@ -74,114 +74,76 @@ export function getDeclaredDimensions(player: Player): Set<Dimension> {
   return new Set(player.declaredSets.map((s) => s.dimension));
 }
 
-// DECLARE cards for a dimension
-export function declareCards(
-  state: GameState,
-  dimension: Dimension,
-  cardIds: number[]
-): GameState {
-  const playerIndex = state.currentPlayerIndex;
+// Hu (胡) — attempt to declare ALL remaining undeclared dimensions at once
+export function attemptHu(state: GameState, playerIndex: number): GameState {
   const player = state.players[playerIndex];
   const targets = getTargetCounts(player.bigFiveScores);
-  const targetCount = targets[dimension];
+  const declaredDims = getDeclaredDimensions(player);
 
-  if (getDeclaredDimensions(player).has(dimension)) {
-    return state;
+  // Count personality cards by dimension in hand
+  const handByDim: Record<Dimension, PersonalityCard[]> = { O: [], C: [], E: [], A: [], N: [] };
+  for (const card of player.hand) {
+    if (isPersonalityCard(card)) {
+      handByDim[card.dimension].push(card);
+    }
   }
 
-  const selectedCards = player.hand.filter((c) => cardIds.includes(c.id));
+  // Check ALL undeclared dimensions have enough cards
+  const allSatisfied = DIMENSIONS.every((d) => {
+    if (declaredDims.has(d)) return true;
+    return handByDim[d].length >= targets[d];
+  });
 
-  if (selectedCards.length < targetCount) {
-    return state;
-  }
+  if (allSatisfied) {
+    // HU SUCCESS — declare all remaining dimensions
+    const newDeclaredSets = [...player.declaredSets];
+    const usedCardIds = new Set<number>();
 
-  const allCorrect = selectedCards.every(
-    (c) => isPersonalityCard(c) && c.dimension === dimension
-  );
-
-  if (allCorrect) {
-    const declaredCards = selectedCards.filter(isPersonalityCard) as PersonalityCard[];
-    const newHand = player.hand.filter((c) => !cardIds.includes(c.id));
-    const newDeclaredSets = [
-      ...player.declaredSets,
-      { dimension, cards: declaredCards, round: state.currentRound },
-    ];
-
-    const newPlayers = state.players.map((p, i) =>
-      i === playerIndex
-        ? { ...p, hand: newHand, declaredSets: newDeclaredSets }
-        : p
-    );
-
-    const action: GameAction = {
-      round: state.currentRound,
-      playerId: player.id,
-      type: 'declare-success',
-      dimension,
-      cardCount: declaredCards.length,
-      timestamp: Date.now(),
-    };
-
-    const updatedPlayer = newPlayers[playerIndex];
-    if (hasWon(updatedPlayer)) {
-      return {
-        ...state,
-        players: newPlayers,
-        actionLog: [...state.actionLog, action],
-        phase: 'game-over',
-        winner: player.id,
-      };
+    for (const d of DIMENSIONS) {
+      if (declaredDims.has(d)) continue;
+      const cards = handByDim[d].slice(0, targets[d]);
+      newDeclaredSets.push({ dimension: d, cards, round: state.currentRound });
+      cards.forEach((c) => usedCardIds.add(c.id));
     }
 
-    return {
-      ...state,
-      players: newPlayers,
-      actionLog: [...state.actionLog, action],
-      phase: player.isHuman ? 'drawing' : 'ai-turn',
-    };
-  } else {
-    const newHand = player.hand.filter((c) => !cardIds.includes(c.id));
-
+    const newHand = player.hand.filter((c) => !usedCardIds.has(c.id));
     const newPlayers = state.players.map((p, i) =>
-      i === playerIndex
-        ? { ...p, hand: newHand, skipNextTurn: true }
-        : p
+      i === playerIndex ? { ...p, hand: newHand, declaredSets: newDeclaredSets } : p
     );
 
     const action: GameAction = {
       round: state.currentRound,
       playerId: player.id,
-      type: 'declare-fail',
-      dimension,
-      cardCount: selectedCards.length,
+      type: 'hu-success',
       timestamp: Date.now(),
     };
-
-    const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
-      playerIndex,
-      state.currentRound,
-      state.settings.totalRounds
-    );
 
     return {
       ...state,
       players: newPlayers,
-      discardPile: [...state.discardPile, ...selectedCards],
       actionLog: [...state.actionLog, action],
-      currentPlayerIndex: nextPlayerIndex,
-      currentRound: nextRound,
-      phase: isGameOver ? 'game-over' : 'declaring',
-      winner: isGameOver ? determineWinner(newPlayers) : null,
+      phase: 'game-over',
+      winner: player.id,
+    };
+  } else {
+    // HU FAIL — skip next turn + reveal hand
+    const newPlayers = state.players.map((p, i) =>
+      i === playerIndex ? { ...p, skipNextTurn: true, revealedHand: true } : p
+    );
+
+    const action: GameAction = {
+      round: state.currentRound,
+      playerId: player.id,
+      type: 'hu-fail',
+      timestamp: Date.now(),
+    };
+
+    return {
+      ...state,
+      players: newPlayers,
+      actionLog: [...state.actionLog, action],
     };
   }
-}
-
-export function skipDeclare(state: GameState): GameState {
-  const player = state.players[state.currentPlayerIndex];
-  return {
-    ...state,
-    phase: player.isHuman ? 'drawing' : 'ai-turn',
-  };
 }
 
 export function drawCard(state: GameState): GameState {
@@ -199,7 +161,7 @@ export function drawCard(state: GameState): GameState {
         ...state,
         currentPlayerIndex: nextPlayerIndex,
         currentRound: nextRound,
-        phase: isGameOver ? 'game-over' : 'declaring',
+        phase: isGameOver ? 'game-over' : 'drawing',
         winner: isGameOver ? determineWinner(state.players) : null,
       };
     }
@@ -229,7 +191,6 @@ export function drawCard(state: GameState): GameState {
   };
 }
 
-// Modified: personality cards trigger claim window instead of going directly to discard pile
 export function discardCard(state: GameState, cardId: number): GameState {
   if (!state.drawnCard) return state;
 
@@ -253,7 +214,7 @@ export function discardCard(state: GameState, cardId: number): GameState {
     i === playerIndex ? { ...p, hand: newHand } : p
   );
 
-  // If personality card → enter claim window; dummy card → straight to discard pile
+  // Personality card → claim window; dummy card → straight to discard pile
   if (isPersonalityCard(cardToDiscard)) {
     return {
       ...state,
@@ -280,35 +241,34 @@ export function discardCard(state: GameState, cardId: number): GameState {
     drawnCard: null,
     currentPlayerIndex: nextPlayerIndex,
     currentRound: nextRound,
-    phase: isGameOver ? 'game-over' : 'declaring',
+    phase: isGameOver ? 'game-over' : 'drawing',
     actionLog: [...state.actionLog, action],
     winner: isGameOver ? determineWinner(newPlayers) : null,
   };
 }
 
-// Claim (碰) a pending discard card to DECLARE a dimension
-export function claimCard(
+// Pong (碰) — claim a pending discard to complete a dimension
+export function pongCard(
   state: GameState,
-  claimerIndex: number,
+  pongerIndex: number,
   dimension: Dimension,
   handCardIds: number[]
 ): GameState {
   if (!state.pendingDiscard || state.phase !== 'claim-window') return state;
 
-  const claimer = state.players[claimerIndex];
+  const ponger = state.players[pongerIndex];
   const pendingCard = state.pendingDiscard;
-  const targets = getTargetCounts(claimer.bigFiveScores);
+  const targets = getTargetCounts(ponger.bigFiveScores);
   const targetCount = targets[dimension];
 
-  if (getDeclaredDimensions(claimer).has(dimension)) return state;
+  if (getDeclaredDimensions(ponger).has(dimension)) return state;
 
-  // All cards for declare = hand cards + the pending discard
-  const selectedHandCards = claimer.hand.filter((c) => handCardIds.includes(c.id));
-  const allDeclareCards = [...selectedHandCards, pendingCard];
+  const selectedHandCards = ponger.hand.filter((c) => handCardIds.includes(c.id));
+  const allPongCards = [...selectedHandCards, pendingCard];
 
-  if (allDeclareCards.length < targetCount) return state;
+  if (allPongCards.length < targetCount) return state;
 
-  const allCorrect = allDeclareCards.every(
+  const allCorrect = allPongCards.every(
     (c) => isPersonalityCard(c) && c.dimension === dimension
   );
 
@@ -320,30 +280,31 @@ export function claimCard(
   );
 
   if (allCorrect) {
-    const declaredCards = allDeclareCards.filter(isPersonalityCard) as PersonalityCard[];
-    const newHand = claimer.hand.filter((c) => !handCardIds.includes(c.id));
+    // PONG SUCCESS
+    const declaredCards = allPongCards.filter(isPersonalityCard) as PersonalityCard[];
+    const newHand = ponger.hand.filter((c) => !handCardIds.includes(c.id));
     const newDeclaredSets = [
-      ...claimer.declaredSets,
+      ...ponger.declaredSets,
       { dimension, cards: declaredCards, round: state.currentRound },
     ];
 
     const newPlayers = state.players.map((p, i) =>
-      i === claimerIndex
+      i === pongerIndex
         ? { ...p, hand: newHand, declaredSets: newDeclaredSets }
         : p
     );
 
     const action: GameAction = {
       round: state.currentRound,
-      playerId: claimer.id,
-      type: 'claim-success',
+      playerId: ponger.id,
+      type: 'pong-success',
       dimension,
       cardCount: declaredCards.length,
       timestamp: Date.now(),
     };
 
-    const updatedClaimer = newPlayers[claimerIndex];
-    if (hasWon(updatedClaimer)) {
+    const updatedPonger = newPlayers[pongerIndex];
+    if (hasWon(updatedPonger)) {
       return {
         ...state,
         players: newPlayers,
@@ -351,7 +312,7 @@ export function claimCard(
         discardedByIndex: -1,
         actionLog: [...state.actionLog, action],
         phase: 'game-over',
-        winner: claimer.id,
+        winner: ponger.id,
       };
     }
 
@@ -362,46 +323,45 @@ export function claimCard(
       discardedByIndex: -1,
       currentPlayerIndex: nextPlayerIndex,
       currentRound: nextRound,
-      phase: isGameOver ? 'game-over' : 'declaring',
+      phase: isGameOver ? 'game-over' : 'drawing',
       actionLog: [...state.actionLog, action],
       winner: isGameOver ? determineWinner(newPlayers) : null,
     };
   } else {
-    // Claim failed — hand cards discarded + skip next turn (pending card also goes to discard)
-    const newHand = claimer.hand.filter((c) => !handCardIds.includes(c.id));
-
+    // PONG FAIL — cards stay in hand, hand is revealed, skip next turn
     const newPlayers = state.players.map((p, i) =>
-      i === claimerIndex
-        ? { ...p, hand: newHand, skipNextTurn: true }
+      i === pongerIndex
+        ? { ...p, skipNextTurn: true, revealedHand: true }
         : p
     );
 
     const action: GameAction = {
       round: state.currentRound,
-      playerId: claimer.id,
-      type: 'claim-fail',
+      playerId: ponger.id,
+      type: 'pong-fail',
       dimension,
-      cardCount: allDeclareCards.length,
+      cardCount: allPongCards.length,
       timestamp: Date.now(),
     };
 
+    // Pending card goes to discard pile since pong failed
     return {
       ...state,
       players: newPlayers,
-      discardPile: [...state.discardPile, pendingCard, ...selectedHandCards],
+      discardPile: [...state.discardPile, pendingCard],
       pendingDiscard: null,
       discardedByIndex: -1,
       currentPlayerIndex: nextPlayerIndex,
       currentRound: nextRound,
-      phase: isGameOver ? 'game-over' : 'declaring',
+      phase: isGameOver ? 'game-over' : 'drawing',
       actionLog: [...state.actionLog, action],
       winner: isGameOver ? determineWinner(newPlayers) : null,
     };
   }
 }
 
-// No one claims — pending card goes to discard pile, advance to next player
-export function skipClaim(state: GameState): GameState {
+// No one pongs — pending card goes to discard pile
+export function skipPong(state: GameState): GameState {
   if (!state.pendingDiscard || state.phase !== 'claim-window') return state;
 
   const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
@@ -417,7 +377,7 @@ export function skipClaim(state: GameState): GameState {
     discardedByIndex: -1,
     currentPlayerIndex: nextPlayerIndex,
     currentRound: nextRound,
-    phase: isGameOver ? 'game-over' : 'declaring',
+    phase: isGameOver ? 'game-over' : 'drawing',
     winner: isGameOver ? determineWinner(state.players) : null,
   };
 }
@@ -430,7 +390,8 @@ function advancePlayer(
   const nextPlayerIndex = (currentIndex + 1) % 4;
   const isRoundEnd = nextPlayerIndex === 0;
   const nextRound = isRoundEnd ? currentRound + 1 : currentRound;
-  const isGameOver = isRoundEnd && nextRound > totalRounds;
+  // totalRounds = 0 means unlimited
+  const isGameOver = totalRounds > 0 && isRoundEnd && nextRound > totalRounds;
   return { nextPlayerIndex, nextRound, isGameOver };
 }
 

@@ -8,7 +8,7 @@ import { getTargetCounts } from '@/lib/scoring';
 import { getDeclaredDimensions } from '@/lib/game-logic';
 import { Card } from './Card';
 
-interface ClaimPanelProps {
+interface PongPanelProps {
   pendingCard: GameCard;
   player: Player;
   discardedByName: string;
@@ -18,7 +18,7 @@ interface ClaimPanelProps {
   onResolveAI: () => void;
 }
 
-export function ClaimPanel({
+export function PongPanel({
   pendingCard,
   player,
   discardedByName,
@@ -26,7 +26,7 @@ export function ClaimPanel({
   onClaim,
   onSkip,
   onResolveAI,
-}: ClaimPanelProps) {
+}: PongPanelProps) {
   const [countdown, setCountdown] = useState(5);
   const targets = getTargetCounts(player.bigFiveScores);
   const declaredDims = getDeclaredDimensions(player);
