@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameCard } from '@/types';
 import { Card } from './Card';
@@ -26,6 +27,16 @@ export function PlayerHand({
   onCardHover,
 }: PlayerHandProps) {
   const allCards = drawnCard ? [...cards, drawnCard] : cards;
+
+  // Cheat mode: hold Shift to reveal dimensions
+  const [cheatMode, setCheatMode] = useState(false);
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => { if (e.key === 'Shift') setCheatMode(true); };
+    const up = (e: KeyboardEvent) => { if (e.key === 'Shift') setCheatMode(false); };
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
+  }, []);
 
   return (
     <div className="space-y-3">
@@ -74,6 +85,7 @@ export function PlayerHand({
                 <Card
                   card={card}
                   selected={isSelected}
+                  showDimension={cheatMode}
                   onClick={
                     isDeclaring && onToggleSelect
                       ? () => onToggleSelect(card.id)
