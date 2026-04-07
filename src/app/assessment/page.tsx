@@ -28,6 +28,7 @@ export default function AssessmentPage() {
   const [orderedQuestions, setOrderedQuestions] = useState<Question[]>(QUESTIONS);
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualScores, setManualInputScores] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
+  const [rawInputs, setRawInputs] = useState<Record<string, string>>({ O: '3', C: '3', E: '3', A: '3', N: '3' });
 
   const toggleOrder = () => {
     const newMode = orderMode === 'sequential' ? 'shuffled' : 'sequential';
@@ -111,12 +112,18 @@ export default function AssessmentPage() {
                       min="1"
                       max="5"
                       step="0.1"
-                      value={manualScores[d]}
+                      value={rawInputs[d]}
                       onChange={(e) => {
                         const raw = e.target.value;
-                        if (raw === '') { setManualInputScores({ ...manualScores, [d]: 1 }); return; }
+                        setRawInputs(prev => ({ ...prev, [d]: raw }));
                         const val = parseFloat(raw);
-                        if (!isNaN(val)) setManualInputScores({ ...manualScores, [d]: Math.min(5, Math.max(1, val)) });
+                        if (!isNaN(val)) setManualInputScores({ ...manualScores, [d]: val });
+                      }}
+                      onBlur={() => {
+                        const val = parseFloat(rawInputs[d]);
+                        const clamped = isNaN(val) ? 3 : Math.min(5, Math.max(1, val));
+                        setManualInputScores({ ...manualScores, [d]: clamped });
+                        setRawInputs(prev => ({ ...prev, [d]: String(clamped) }));
                       }}
                       className="w-20 rounded-lg bg-gray-800 border border-gray-700 px-3 py-1.5 text-sm text-gray-200 text-center"
                     />

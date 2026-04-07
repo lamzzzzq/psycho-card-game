@@ -55,27 +55,24 @@ export default function Home() {
           >
             联机对战
           </button>
-          {hasResults ? (
-            <>
-              <button
-                onClick={() => router.push('/lobby')}
-                className="block w-full rounded-full border border-gray-700 py-3 px-6 font-medium text-gray-300 transition hover:bg-gray-900 cursor-pointer"
-              >
-                单机对战（vs AI）
-              </button>
-              <button
-                onClick={() => router.push('/results')}
-                className="block w-full rounded-full border border-gray-700 py-3 px-6 font-medium text-gray-300 transition hover:bg-gray-900 cursor-pointer"
-              >
-                查看人格报告
-              </button>
-            </>
-          ) : (
+          <button
+            onClick={() => hasResults ? router.push('/lobby') : router.push('/assessment')}
+            className="block w-full rounded-full border border-gray-700 py-3 px-6 font-medium text-gray-300 transition hover:bg-gray-900 cursor-pointer"
+          >
+            单机对战（vs AI）{!hasResults && <span className="ml-2 text-xs text-yellow-500">需先测评</span>}
+          </button>
+          <button
+            onClick={() => router.push('/assessment')}
+            className="block w-full rounded-full border border-gray-700 py-3 px-6 font-medium text-gray-300 transition hover:bg-gray-900 cursor-pointer"
+          >
+            {progress > 0 ? `继续测评 (${progress}/60)` : hasResults ? '重新测评' : '开始测评'}
+          </button>
+          {hasResults && (
             <button
-              onClick={() => router.push('/assessment')}
+              onClick={() => router.push('/results')}
               className="block w-full rounded-full border border-gray-700 py-3 px-6 font-medium text-gray-300 transition hover:bg-gray-900 cursor-pointer"
             >
-              {progress > 0 ? `继续测评 (${progress}/60)` : '开始测评'}
+              查看人格报告
             </button>
           )}
           <button
