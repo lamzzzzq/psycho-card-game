@@ -11,9 +11,10 @@ interface CardProps {
   onClick?: () => void;
   compact?: boolean;
   showDimension?: boolean;
+  tagDimension?: import('@/types').Dimension | null;
 }
 
-export function Card({ card, faceUp = true, selected = false, onClick, compact = false, showDimension = false }: CardProps) {
+export function Card({ card, faceUp = true, selected = false, onClick, compact = false, showDimension = false, tagDimension = null }: CardProps) {
   if (!faceUp) {
     return (
       <div
@@ -62,8 +63,22 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
         {compact ? (card.text.length > 12 ? card.text.slice(0, 12) + '...' : card.text) : card.text}
       </p>
 
-      {/* Bottom spacer */}
-      <div />
+      {/* Tag indicator */}
+      {tagDimension && !compact ? (
+        <div className="flex justify-end">
+          <span
+            className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full"
+            style={{
+              backgroundColor: DIMENSION_META[tagDimension].colorHex + '33',
+              color: DIMENSION_META[tagDimension].colorHex,
+            }}
+          >
+            {DIMENSION_META[tagDimension].name}
+          </span>
+        </div>
+      ) : (
+        <div />
+      )}
     </motion.div>
   );
 }

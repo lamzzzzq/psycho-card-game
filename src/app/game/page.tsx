@@ -282,7 +282,7 @@ export default function GamePage() {
   const isHumanTurn = game.currentPlayerIndex === 0;
   const canDraw = isHumanTurn && game.phase === 'drawing';
   const isDiscarding = isHumanTurn && game.phase === 'discarding';
-  const isPongWindow = game.phase === 'claim-window' && game.pendingDiscard !== null;
+  const isPongWindow = game.phase === 'claim-window' && game.pendingDiscard !== null && game.discardedByIndex !== 0;
   const topDiscard = game.discardPile.length > 0 ? game.discardPile[game.discardPile.length - 1] : null;
   const targets = getTargetCounts(humanPlayer.bigFiveScores);
   const declaredDims = getDeclaredDimensions(humanPlayer);
@@ -403,6 +403,7 @@ export default function GamePage() {
               drawnCard={isHumanTurn ? game.drawnCard : null}
               isDiscarding={isDiscarding}
               isDeclaring={isPongWindow}
+              isMyTurn={isHumanTurn}
               selectedCardIds={selectedCardIds}
               onDiscardCard={handleDiscardCard}
               onToggleSelect={handleToggleSelect}

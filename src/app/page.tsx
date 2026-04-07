@@ -49,13 +49,19 @@ export default function Home() {
         </div>
 
         <div className="space-y-3">
+          <button
+            onClick={() => router.push('/pvp')}
+            className="block w-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 py-3 px-6 font-semibold text-white transition hover:opacity-90 cursor-pointer"
+          >
+            联机对战
+          </button>
           {hasResults ? (
             <>
               <button
                 onClick={() => router.push('/lobby')}
-                className="block w-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 py-3 px-6 font-semibold text-white transition hover:opacity-90 cursor-pointer"
+                className="block w-full rounded-full border border-gray-700 py-3 px-6 font-medium text-gray-300 transition hover:bg-gray-900 cursor-pointer"
               >
-                开始对战
+                单机对战（vs AI）
               </button>
               <button
                 onClick={() => router.push('/results')}
@@ -67,11 +73,17 @@ export default function Home() {
           ) : (
             <button
               onClick={() => router.push('/assessment')}
-              className="block w-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 py-3 px-6 font-semibold text-white transition hover:opacity-90 cursor-pointer"
+              className="block w-full rounded-full border border-gray-700 py-3 px-6 font-medium text-gray-300 transition hover:bg-gray-900 cursor-pointer"
             >
               {progress > 0 ? `继续测评 (${progress}/60)` : '开始测评'}
             </button>
           )}
+          <button
+            onClick={() => router.push('/stats')}
+            className="block w-full rounded-full border border-gray-700 py-3 px-6 font-medium text-gray-300 transition hover:bg-gray-900 cursor-pointer text-sm"
+          >
+            数据统计
+          </button>
         </div>
       </motion.div>
     </div>

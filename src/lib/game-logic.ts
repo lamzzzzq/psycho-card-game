@@ -225,7 +225,8 @@ export function discardCard(state: GameState, cardId: number): GameState {
   const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
     playerIndex,
     state.currentRound,
-    state.settings.totalRounds
+    state.settings.totalRounds,
+    state.players.length
   );
 
   return {
@@ -270,7 +271,8 @@ export function pongCard(
   const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
     discardedByIndex,
     state.currentRound,
-    state.settings.totalRounds
+    state.settings.totalRounds,
+    state.players.length
   );
 
   if (allCorrect) {
@@ -361,7 +363,8 @@ export function skipPong(state: GameState): GameState {
   const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
     state.discardedByIndex,
     state.currentRound,
-    state.settings.totalRounds
+    state.settings.totalRounds,
+    state.players.length
   );
 
   return {
@@ -379,9 +382,10 @@ export function skipPong(state: GameState): GameState {
 function advancePlayer(
   currentIndex: number,
   currentRound: number,
-  totalRounds: number
+  totalRounds: number,
+  playerCount: number = 4
 ): { nextPlayerIndex: number; nextRound: number; isGameOver: boolean } {
-  const nextPlayerIndex = (currentIndex + 1) % 4;
+  const nextPlayerIndex = (currentIndex + 1) % playerCount;
   const isRoundEnd = nextPlayerIndex === 0;
   const nextRound = isRoundEnd ? currentRound + 1 : currentRound;
   // totalRounds = 0 means unlimited

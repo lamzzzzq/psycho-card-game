@@ -108,11 +108,16 @@ export default function AssessmentPage() {
                     <span className="text-sm w-16" style={{ color: meta.colorHex }}>{meta.name}</span>
                     <input
                       type="number"
-                      min="1.0"
-                      max="5.0"
+                      min="1"
+                      max="5"
                       step="0.1"
                       value={manualScores[d]}
-                      onChange={(e) => setManualInputScores({ ...manualScores, [d]: Math.min(5, Math.max(1, parseFloat(e.target.value) || 1)) })}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === '') { setManualInputScores({ ...manualScores, [d]: 1 }); return; }
+                        const val = parseFloat(raw);
+                        if (!isNaN(val)) setManualInputScores({ ...manualScores, [d]: Math.min(5, Math.max(1, val)) });
+                      }}
                       className="w-20 rounded-lg bg-gray-800 border border-gray-700 px-3 py-1.5 text-sm text-gray-200 text-center"
                     />
                     <div className="flex-1 h-2 rounded-full bg-gray-800">
