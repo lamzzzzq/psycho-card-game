@@ -63,10 +63,16 @@ export default function ResultsPage() {
 
         <div className="flex gap-3">
           <button
+            onClick={() => router.push('/pvp')}
+            className="flex-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 py-3 font-semibold text-white transition hover:opacity-90"
+          >
+            联机对战
+          </button>
+          <button
             onClick={() => router.push('/lobby')}
             className="flex-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 py-3 font-semibold text-white transition hover:opacity-90"
           >
-            进入对战
+            单机对战
           </button>
           <button
             onClick={() => {

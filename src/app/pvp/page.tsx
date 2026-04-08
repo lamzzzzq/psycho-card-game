@@ -5,16 +5,20 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
+import { useHydrated } from '@/stores/useHydration';
 import { upsertPlayer, createRoom, joinRoom } from '@/lib/room-api';
 import { PlayerInfo } from '@/types/pvp';
+import { BigFiveScores, DIMENSIONS } from '@/types';
+import { DIMENSION_META } from '@/data/dimensions';
 
 
 type Tab = 'create' | 'join';
 
 export default function PvpLobbyPage() {
   const router = useRouter();
+  const hydrated = useHydrated();
   const { player, setPlayer } = usePlayerStore();
-  const { bigFiveScores } = useAssessmentStore();
+  const { bigFiveScores, setManualScores } = useAssessmentStore();
 
   const [tab, setTab] = useState<Tab>('create');
   const [studentId, setStudentId] = useState(player?.studentId ?? '');
@@ -24,6 +28,17 @@ export default function PvpLobbyPage() {
   const [totalRounds, setTotalRounds] = useState(5);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualScoresInput, setManualScoresInput] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
+  const [rawInputs, setRawInputs] = useState<Record<string, string>>({ O: '3', C: '3', E: '3', A: '3', N: '3' });
+
+  if (!hydrated) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="text-gray-600">加载中...</p>
+      </div>
+    );
+  }
 
   async function ensurePlayer() {
     const sid = studentId.trim();
@@ -77,7 +92,13 @@ export default function PvpLobbyPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md space-y-6"
       >
-        <div className="text-center space-y-1">
+        <div className="text-center space-y-1 relative">
+          <button
+            onClick={() => router.push('/')}
+            className="absolute left-0 top-1 text-gray-400 hover:text-white transition-colors text-sm"
+          >
+            ← 首页
+          </button>
           <h1 className="text-3xl font-bold text-white">⚔️ 联机对战</h1>
           <p className="text-gray-400 text-sm">创建或加入房间，与真实玩家博弈</p>
         </div>
@@ -104,8 +125,76 @@ export default function PvpLobbyPage() {
           {studentIdConfirm && studentIdConfirm !== studentId && (
             <p className="text-xs text-red-400">两次输入的学号不一致</p>
           )}
-          {!bigFiveScores && (
-            <p className="text-xs text-yellow-400">⚠️ 未完成测评，将使用随机人格数据参与游戏</p>
+          {bigFiveScores ? (
+            <p className="text-xs text-green-400">✅ 已完成人格测评</p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-yellow-400">⚠️ 未完成测评，将使用随机人格数据参与游戏</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => router.push('/assessment')}
+                  className="flex-1 py-1.5 rounded-lg text-xs font-medium border border-purple-500/50 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
+                >
+                  🧠 完整测评 (60题)
+                </button>
+                <button
+                  onClick={() => setShowManualInput(!showManualInput)}
+                  className="flex-1 py-1.5 rounded-lg text-xs font-medium border border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600 transition-colors"
+                >
+                  ✏️ 手动输入分数
+                </button>
+              </div>
+              {showManualInput && (
+                <div className="space-y-3 rounded-xl border border-gray-700 bg-gray-800/50 p-4 mt-2">
+                  <h3 className="text-xs font-medium text-gray-300">Big Five 分数 (1.0 - 5.0)</h3>
+                  <div className="space-y-2">
+                    {DIMENSIONS.map((d) => {
+                      const meta = DIMENSION_META[d];
+                      return (
+                        <div key={d} className="flex items-center gap-2">
+                          <span className="text-xs w-14" style={{ color: meta.colorHex }}>{meta.name}</span>
+                          <input
+                            type="number"
+                            min="1"
+                            max="5"
+                            step="0.1"
+                            value={rawInputs[d]}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              setRawInputs(prev => ({ ...prev, [d]: raw }));
+                              const val = parseFloat(raw);
+                              if (!isNaN(val)) setManualScoresInput(prev => ({ ...prev, [d]: val }));
+                            }}
+                            onBlur={() => {
+                              const val = parseFloat(rawInputs[d]);
+                              const clamped = isNaN(val) ? 3 : Math.min(5, Math.max(1, val));
+                              setManualScoresInput(prev => ({ ...prev, [d]: clamped }));
+                              setRawInputs(prev => ({ ...prev, [d]: String(clamped) }));
+                            }}
+                            className="w-16 rounded-lg bg-gray-800 border border-gray-700 px-2 py-1 text-xs text-gray-200 text-center"
+                          />
+                          <div className="flex-1 h-1.5 rounded-full bg-gray-800">
+                            <div
+                              className="h-1.5 rounded-full transition-all"
+                              style={{ width: `${((manualScoresInput[d] - 1) / 4) * 100}%`, backgroundColor: meta.colorHex }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setManualScores(manualScoresInput);
+                      setShowManualInput(false);
+                    }}
+                    className="w-full py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold transition-colors"
+                  >
+                    确认分数
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
