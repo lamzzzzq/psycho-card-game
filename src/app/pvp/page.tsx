@@ -8,6 +8,7 @@ import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
 import { usePvpStore } from '@/stores/usePvpStore';
 import { upsertPlayer, createRoom, joinRoom } from '@/lib/room-api';
+import { supabase } from '@/lib/supabase';
 import { PlayerInfo } from '@/types/pvp';
 import { BigFiveScores, DIMENSIONS } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
@@ -33,12 +34,41 @@ export default function PvpLobbyPage() {
   const [manualScoresInput, setManualScoresInput] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
   const [rawInputs, setRawInputs] = useState<Record<string, string>>({ O: '3', C: '3', E: '3', A: '3', N: '3' });
 
-  // Arriving at the lobby means "starting fresh". Drop any persisted PVP
-  // state from a previous session so we don't bounce back into a stale
-  // game via the room-page subscribe effect.
+  // On lobby mount, reconcile with the DB:
+  //   - If this player is still seated in an active room, bounce them
+  //     back into it (covers accidental back-button navigations that
+  //     would otherwise orphan them on the lobby).
+  //   - Otherwise clear any persisted PVP state so we don't bounce into
+  //     a stale game via the room-page subscribe effect.
   useEffect(() => {
-    usePvpStore.getState().reset();
-  }, []);
+    if (!player) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('room_players')
+        .select('room_id, rooms!inner(code, status)')
+        .eq('player_id', player.id);
+      if (cancelled) return;
+      // Supabase types the join as an array; in practice room_id → rooms
+      // is 1:1 so we grab the first entry.
+      const rows = (data ?? []) as unknown as Array<{
+        rooms: { code: string; status: string } | { code: string; status: string }[] | null;
+      }>;
+      const pickRoom = (r: typeof rows[number]) =>
+        Array.isArray(r.rooms) ? r.rooms[0] : r.rooms;
+      const active = rows
+        .map(pickRoom)
+        .find((room) => room && (room.status === 'waiting' || room.status === 'playing'));
+      if (!error && active) {
+        router.replace(active.status === 'playing' ? `/pvp/game/${active.code}` : `/pvp/room/${active.code}`);
+        return;
+      }
+      usePvpStore.getState().reset();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [player, router]);
 
   if (!hydrated) {
     return (

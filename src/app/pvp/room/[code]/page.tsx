@@ -7,7 +7,7 @@ import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { usePvpStore } from '@/stores/usePvpStore';
 import { supabase } from '@/lib/supabase';
-import { getRoomPlayers, kickPlayer, dissolveRoom, updateRoomStatus } from '@/lib/room-api';
+import { getRoomPlayers, kickPlayer, dissolveRoom, leaveRoom, updateRoomStatus } from '@/lib/room-api';
 import { Room, RoomPlayer, RoomSettings } from '@/types/pvp';
 
 export default function RoomWaitPage() {
@@ -149,9 +149,14 @@ export default function RoomWaitPage() {
     router.replace('/pvp');
   }, [room]);
 
-  const handleLeave = useCallback(() => {
+  const handleLeave = useCallback(async () => {
     if (!player || !room) return;
     sendMessage({ type: 'player-left', playerId: player.id });
+    try {
+      await leaveRoom(room.id, player.id);
+    } catch {
+      // Even if DB delete fails, exit locally to avoid getting stuck.
+    }
     unsubscribeRoom();
     router.replace('/pvp');
   }, [player, room]);
