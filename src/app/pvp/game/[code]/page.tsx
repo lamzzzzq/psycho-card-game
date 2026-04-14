@@ -249,9 +249,13 @@ export default function PvpGamePage() {
   }
 
   function handlePong() {
-    if (selectedCardIds.length < 2) { showBanner(false, '请先选择 2 张手牌'); return; }
     if (!gameState?.pendingDiscard || !('dimension' in gameState.pendingDiscard)) return;
     const dim = (gameState.pendingDiscard as any).dimension as Dimension;
+    const need = Math.max(0, (targets?.[dim] ?? 2) - 1);
+    if (selectedCardIds.length < need) {
+      showBanner(false, need === 0 ? '直接点碰即可' : `请先选择 ${need} 张手牌`);
+      return;
+    }
     dispatchAction({ type: 'pong', dimension: dim, handCardIds: selectedCardIds });
   }
 
@@ -434,7 +438,13 @@ export default function PvpGamePage() {
                   </div>
                 </div>
                 <div className="text-xs text-gray-400">
-                  从手牌中选 ≥2 张同维度的牌，再点碰
+                  {(() => {
+                    const dim = 'dimension' in gameState.pendingDiscard ? (gameState.pendingDiscard as any).dimension as Dimension : null;
+                    const need = dim ? Math.max(0, (targets?.[dim] ?? 2) - 1) : 2;
+                    return need === 0
+                      ? '你该维度只需 1 张 — 可直接点碰'
+                      : `从手牌中选 ${need} 张同维度的牌，再点碰`;
+                  })()}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -444,13 +454,19 @@ export default function PvpGamePage() {
                 >
                   过
                 </button>
-                <button
-                  onClick={handlePong}
-                  disabled={selectedCardIds.length < 2}
-                  className="px-4 py-1.5 rounded-lg text-xs font-bold bg-orange-500 hover:bg-orange-400 text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
-                >
-                  碰！{selectedCardIds.length > 0 ? `(已选${selectedCardIds.length}张)` : ''}
-                </button>
+                {(() => {
+                  const dim = 'dimension' in gameState.pendingDiscard ? (gameState.pendingDiscard as any).dimension as Dimension : null;
+                  const need = dim ? Math.max(0, (targets?.[dim] ?? 2) - 1) : 2;
+                  return (
+                    <button
+                      onClick={handlePong}
+                      disabled={selectedCardIds.length < need}
+                      className="px-4 py-1.5 rounded-lg text-xs font-bold bg-orange-500 hover:bg-orange-400 text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    >
+                      碰！{need > 0 && selectedCardIds.length > 0 ? `(已选${selectedCardIds.length}/${need})` : ''}
+                    </button>
+                  );
+                })()}
                 <button
                   onClick={handleHu}
                   className="px-4 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-red-600 to-orange-500 text-white hover:opacity-90 transition"
