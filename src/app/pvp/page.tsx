@@ -56,16 +56,25 @@ export default function PvpLobbyPage() {
       const active = rows
         .map(pickRoom)
         .find((room) => room && (room.status === 'waiting' || room.status === 'playing'));
-      if (active) {
-        setActiveRoom({ code: active.code, status: active.status, roomId: active.id });
-      } else {
+      if (!active) {
         usePvpStore.getState().reset();
+        return;
       }
+      if (active.status === 'waiting') {
+        // Normal pre-game flow — land directly in the room so the user
+        // can see the player list. No zombie risk here: if the host
+        // never started, there's no broken game state to recover into.
+        router.replace(`/pvp/room/${active.code}`);
+        return;
+      }
+      // Playing — could be a live game OR a zombie from an abandoned
+      // session. Show a banner so the user decides.
+      setActiveRoom({ code: active.code, status: active.status, roomId: active.id });
     })();
     return () => {
       cancelled = true;
     };
-  }, [player]);
+  }, [player, router]);
 
   function resumeActiveRoom() {
     if (!activeRoom) return;
