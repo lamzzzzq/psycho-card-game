@@ -7,7 +7,7 @@ import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { DIMENSION_META } from '@/data/dimensions';
 import { DIMENSIONS, Dimension } from '@/types';
 import { getTargetCounts } from '@/lib/scoring';
-import { getDeclaredDimensions, getRankings } from '@/lib/game-logic';
+import { getDeclaredDimensions } from '@/lib/game-logic';
 import { PlayerHand } from '@/components/game/PlayerHand';
 import { OpponentHand } from '@/components/game/OpponentHand';
 import { DrawPile } from '@/components/game/DrawPile';
@@ -71,47 +71,6 @@ export default function GamePage() {
       setSelectedCardIds([]);
     }
   }, [game?.phase]);
-
-  // Auto-skip human turn when skipNextTurn is true
-  // Only trigger when it's a NEW turn (not right after Hu fail in same turn)
-  useEffect(() => {
-    if (!game || game.phase !== 'drawing') return;
-    const currentPlayer = game.players[game.currentPlayerIndex];
-    // Check if last action was hu-fail by this player — if so, don't skip yet (current turn continues)
-    const lastAction = game.actionLog[game.actionLog.length - 1];
-    const justFailedHu = lastAction?.type === 'hu-fail' && lastAction.playerId === currentPlayer.id;
-    if (justFailedHu) return;
-
-    if (currentPlayer.isHuman && currentPlayer.skipNextTurn) {
-      const skipAction = {
-        round: game.currentRound,
-        playerId: currentPlayer.id,
-        type: 'skip' as const,
-        timestamp: Date.now(),
-      };
-      const newPlayers = game.players.map((p, i) =>
-        i === game.currentPlayerIndex ? { ...p, skipNextTurn: false, revealedHand: false } : p
-      );
-      const nextPlayerIndex = (game.currentPlayerIndex + 1) % 4;
-      const isRoundEnd = nextPlayerIndex === 0;
-      const nextRound = isRoundEnd ? game.currentRound + 1 : game.currentRound;
-      const isGameOver = game.settings.totalRounds > 0 && isRoundEnd && nextRound > game.settings.totalRounds;
-
-      setTimeout(() => {
-        useGameStore.setState({
-          game: {
-            ...game,
-            players: newPlayers,
-            currentPlayerIndex: nextPlayerIndex,
-            currentRound: nextRound,
-            phase: isGameOver ? 'game-over' : 'drawing',
-            actionLog: [...game.actionLog, skipAction],
-            winner: isGameOver ? getRankings(newPlayers)[0].id : null,
-          },
-        });
-      }, 500);
-    }
-  }, [game?.phase, game?.currentPlayerIndex, game]);
 
   useEffect(() => {
     if (isHumanActive) {

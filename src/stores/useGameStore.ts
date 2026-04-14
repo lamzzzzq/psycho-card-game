@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { GameState, GameSettings, BigFiveScores, PlayerId, Player, Dimension, GameAction } from '@/types';
+import { GameState, GameSettings, BigFiveScores, PlayerId, Player, Dimension } from '@/types';
 import {
   initializeGame,
   drawCard,
@@ -113,36 +113,8 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
     const currentPlayer = game.players[game.currentPlayerIndex];
 
-    // Handle skip turn — also clear revealedHand
-    if (currentPlayer.skipNextTurn) {
-      const skipAction: GameAction = {
-        round: game.currentRound,
-        playerId: currentPlayer.id,
-        type: 'skip',
-        timestamp: Date.now(),
-      };
-      const newPlayers = game.players.map((p, i) =>
-        i === game.currentPlayerIndex ? { ...p, skipNextTurn: false, revealedHand: false } : p
-      );
-      const nextPlayerIndex = (game.currentPlayerIndex + 1) % 4;
-      const isRoundEnd = nextPlayerIndex === 0;
-      const nextRound = isRoundEnd ? game.currentRound + 1 : game.currentRound;
-      const isGameOver = game.settings.totalRounds > 0 && isRoundEnd && nextRound > game.settings.totalRounds;
-
-      await delay(500);
-      set({
-        game: {
-          ...game,
-          players: newPlayers,
-          currentPlayerIndex: nextPlayerIndex,
-          currentRound: nextRound,
-          phase: isGameOver ? 'game-over' : 'drawing',
-          actionLog: [...game.actionLog, skipAction],
-          winner: isGameOver ? getRankings(newPlayers)[0].id : null,
-        },
-      });
-      return;
-    }
+    // skipNextTurn now auto-resolves inside game-logic after every advance,
+    // so by the time this runs the current player is always ready to play.
 
     // AI Hu check
     const huDecision = makeAIHuDecision(currentPlayer, game.settings.aiDifficulty);

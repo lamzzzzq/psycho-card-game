@@ -85,7 +85,7 @@ function finalizeClaimWindow(state: GameState): GameState {
     state.settings.totalRounds,
     state.players.length
   );
-  return {
+  const advanced: GameState = {
     ...state,
     discardPile: [...state.discardPile, state.pendingDiscard],
     pendingDiscard: null,
@@ -96,6 +96,47 @@ function finalizeClaimWindow(state: GameState): GameState {
     phase: isGameOver ? 'game-over' : 'drawing',
     winner: isGameOver ? determineWinner(state.players) : state.winner,
   };
+  return skipPenalizedPlayers(advanced);
+}
+
+// Auto-skip any penalized player (skipNextTurn=true) at the head of the turn
+// queue. Clears the flag + revealedHand, logs a skip action, and recurses up
+// to playerCount times (guard against all-penalized infinite loop).
+export function skipPenalizedPlayers(state: GameState): GameState {
+  let current = state;
+  for (let i = 0; i < current.players.length; i++) {
+    if (current.phase !== 'drawing') return current;
+    const p = current.players[current.currentPlayerIndex];
+    if (!p.skipNextTurn) return current;
+
+    const skipAction: GameAction = {
+      round: current.currentRound,
+      playerId: p.id,
+      type: 'skip',
+      timestamp: Date.now(),
+    };
+    const newPlayers = current.players.map((pl, idx) =>
+      idx === current.currentPlayerIndex
+        ? { ...pl, skipNextTurn: false, revealedHand: false }
+        : pl
+    );
+    const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+      current.currentPlayerIndex,
+      current.currentRound,
+      current.settings.totalRounds,
+      current.players.length
+    );
+    current = {
+      ...current,
+      players: newPlayers,
+      currentPlayerIndex: nextPlayerIndex,
+      currentRound: nextRound,
+      phase: isGameOver ? 'game-over' : 'drawing',
+      actionLog: [...current.actionLog, skipAction],
+      winner: isGameOver ? determineWinner(newPlayers) : current.winner,
+    };
+  }
+  return current;
 }
 
 export function hasWon(player: Player): boolean {
@@ -353,7 +394,7 @@ export function pongCard(
       };
     }
 
-    return {
+    return skipPenalizedPlayers({
       ...state,
       players: newPlayers,
       pendingDiscard: null,
@@ -364,7 +405,7 @@ export function pongCard(
       phase: isGameOver ? 'game-over' : 'drawing',
       actionLog: [...state.actionLog, action],
       winner: isGameOver ? determineWinner(newPlayers) : null,
-    };
+    });
   } else {
     // PONG FAIL — cards stay in hand, hand is revealed, skip next turn.
     // Ponger is locked out of this claim window; wait for remaining claimers.
