@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { DeclaredSet, DIMENSIONS } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 
@@ -48,8 +49,10 @@ export function DeclaredArea({ declaredSets, compact = false }: DeclaredAreaProp
             </span>
             <div className="flex gap-0.5">
               {set.cards.map((card) => (
-                <div
+                <motion.div
                   key={card.id}
+                  layoutId={`card-${card.id}`}
+                  transition={{ type: 'spring', stiffness: 280, damping: 26 }}
                   className="w-10 h-14 rounded-md border flex items-center justify-center p-0.5"
                   style={{
                     backgroundColor: meta.colorHex + '15',
@@ -59,7 +62,7 @@ export function DeclaredArea({ declaredSets, compact = false }: DeclaredAreaProp
                   <p className="text-[6px] leading-tight text-gray-400 text-center line-clamp-3">
                     {card.text}
                   </p>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>

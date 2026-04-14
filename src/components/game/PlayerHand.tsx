@@ -154,9 +154,10 @@ export function PlayerHand({
                 key={card.id}
                 data-card-id={card.id}
                 layout
+                layoutId={`card-${card.id}`}
                 initial={{ opacity: 0, y: 30, scale: 0.8 }}
                 animate={{ opacity: 1, y: isSelected ? -12 : 0, scale: 1 }}
-                exit={{ opacity: 0, y: -80, scale: 0.6, transition: { duration: 0.4 } }}
+                exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.4 } }}
                 transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                 className="relative"
                 onMouseEnter={(e) => { if (isDiscarding) onCardHover(e.currentTarget as HTMLElement); }}

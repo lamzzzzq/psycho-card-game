@@ -30,9 +30,10 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
 
   return (
     <motion.div
-      whileHover={onClick ? { y: -8, scale: 1.03 } : undefined}
-      whileTap={onClick ? { scale: 0.97 } : undefined}
+      whileHover={onClick ? { rotateX: -6, rotateY: 6, scale: 1.06, y: -6 } : undefined}
+      whileTap={onClick ? { scale: 0.97, rotateX: 0, rotateY: 0 } : undefined}
       onClick={onClick}
+      style={onClick ? { transformPerspective: 900 } : undefined}
       className={`${compact ? 'w-14 h-20 p-1.5' : 'w-24 h-36 p-2.5'} rounded-xl border-2 flex flex-col justify-between shadow-lg transition-colors ${
         onClick ? 'cursor-pointer' : ''
       } ${
