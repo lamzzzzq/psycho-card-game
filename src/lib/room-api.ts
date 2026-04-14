@@ -99,6 +99,12 @@ export async function leaveRoom(roomId: string, playerId: string) {
     .eq('player_id', playerId);
 }
 
+// Leave every room this player is seated in. Used before create/join so
+// a player is always in exactly one room at a time.
+export async function leaveAllRooms(playerId: string) {
+  await supabase.from('room_players').delete().eq('player_id', playerId);
+}
+
 // Kick a player (host only)
 export async function kickPlayer(roomId: string, playerId: string) {
   await supabase

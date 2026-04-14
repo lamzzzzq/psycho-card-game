@@ -31,6 +31,11 @@ export default function RoomWaitPage() {
   // Load room from DB on mount
   useEffect(() => {
     if (!player) { router.replace('/pvp'); return; }
+    // Drop any stale gameState from a previous session. We're in the
+    // pre-game waiting room — gameState should be null until host
+    // starts this game, and leaving persisted non-null state behind
+    // breaks the null→non-null edge detection used for the redirect.
+    usePvpStore.setState({ gameState: null, rawGameState: null });
 
     async function loadRoom() {
       try {

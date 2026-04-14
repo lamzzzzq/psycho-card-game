@@ -7,7 +7,7 @@ import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
 import { usePvpStore } from '@/stores/usePvpStore';
-import { upsertPlayer, createRoom, joinRoom, leaveRoom } from '@/lib/room-api';
+import { upsertPlayer, createRoom, joinRoom, leaveRoom, leaveAllRooms } from '@/lib/room-api';
 import { supabase } from '@/lib/supabase';
 import { PlayerInfo } from '@/types/pvp';
 import { BigFiveScores, DIMENSIONS } from '@/types';
@@ -110,6 +110,11 @@ export default function PvpLobbyPage() {
     setError('');
     try {
       const info = await ensurePlayer();
+      // A player can only be in one room at a time. Wipe any previous
+      // seats before creating a new room so stale room_players rows
+      // don't make the banner point at the wrong room later.
+      await leaveAllRooms(info.id);
+      usePvpStore.getState().reset();
       const room = await createRoom(info.id, { maxPlayers, totalRounds });
       router.push(`/pvp/room/${room.code}`);
     } catch (e: any) {
@@ -127,6 +132,8 @@ export default function PvpLobbyPage() {
     setError('');
     try {
       const info = await ensurePlayer();
+      await leaveAllRooms(info.id);
+      usePvpStore.getState().reset();
       await joinRoom(joinCode, info.id);
       router.push(`/pvp/room/${joinCode}`);
     } catch (e: any) {
