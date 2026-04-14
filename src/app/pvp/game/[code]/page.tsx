@@ -10,6 +10,7 @@ import { GameCard, GameAction, Player, PlayerId, DeclaredSet, Dimension, DIMENSI
 import { useGameFeedback, FeedbackOverlays } from '@/components/game/FeedbackLayer';
 import { FlyingCard } from '@/components/game/FlyingCard';
 import { supabase } from '@/lib/supabase';
+import { leaveRoom } from '@/lib/room-api';
 
 interface FlyingAnim { id: number; from: { x: number; y: number }; to: { x: number; y: number }; text: string; }
 import { DIMENSION_META } from '@/data/dimensions';
@@ -60,6 +61,7 @@ export default function PvpGamePage() {
   const [arrowFrom, setArrowFrom] = useState<{ x: number; y: number } | null>(null);
   const [flyingCards, setFlyingCards] = useState<FlyingAnim[]>([]);
   const flyIdRef = useRef(0);
+  const [slowLoad, setSlowLoad] = useState(false);
   const drawPileRef = useRef<HTMLDivElement>(null);
   const discardPileRef = useRef<HTMLDivElement>(null);
   const handAreaRef = useRef<HTMLDivElement>(null);
@@ -92,22 +94,27 @@ export default function PvpGamePage() {
     return () => { cancelled = true; };
   }, [code, player, router]);
 
-  // If a non-host's state-request goes unanswered (host is offline or
-  // never saw it), fall back to the lobby after 6s instead of sitting on
-  // a stale snapshot forever. Reference check — host's reply always
-  // produces a fresh gameState object even if the content is identical.
+  // Progressive loading message: after 4s without gameState, assume the
+  // host is offline and show a more actionable UI (leave the room
+  // instead of just "return to lobby" which would loop back via banner).
   useEffect(() => {
-    const { isHost } = usePvpStore.getState();
-    if (isHost) return;
-    const initialRef = usePvpStore.getState().gameState;
-    const timeout = setTimeout(() => {
-      if (usePvpStore.getState().gameState === initialRef) {
-        usePvpStore.getState().reset();
-        router.replace('/pvp');
-      }
-    }, 6000);
-    return () => clearTimeout(timeout);
-  }, [code, router]);
+    if (gameState) { setSlowLoad(false); return; }
+    const t = setTimeout(() => setSlowLoad(true), 4000);
+    return () => clearTimeout(t);
+  }, [gameState]);
+
+  async function handleAbandonRoom() {
+    const roomId = usePvpStore.getState().room?.id;
+    if (roomId && player) {
+      try { await leaveRoom(roomId, player.id); } catch {}
+    } else if (player) {
+      // Room object might not be hydrated yet; look it up by code.
+      const { data } = await supabase.from('rooms').select('id').eq('code', code).maybeSingle();
+      if (data?.id) { try { await leaveRoom(data.id, player.id); } catch {} }
+    }
+    usePvpStore.getState().reset();
+    router.replace('/pvp');
+  }
 
   // Clear card selection on phase change
   useEffect(() => {
@@ -126,18 +133,43 @@ export default function PvpGamePage() {
 
   if (!gameState) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="text-gray-400 animate-pulse">等待游戏开始…</div>
-          <button
-            onClick={() => {
-              usePvpStore.getState().reset();
-              router.replace('/pvp');
-            }}
-            className="text-xs text-gray-500 hover:text-gray-300 underline transition-colors"
-          >
-            返回大厅
-          </button>
+      <div className="flex flex-1 items-center justify-center px-4">
+        <div className="text-center space-y-4 max-w-sm">
+          {slowLoad ? (
+            <>
+              <div className="text-amber-300 text-sm">房主似乎不在线，无法恢复游戏</div>
+              <button
+                onClick={handleAbandonRoom}
+                className="px-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-400 text-white text-sm font-bold transition-colors"
+              >
+                离开此房间并返回大厅
+              </button>
+              <div>
+                <button
+                  onClick={() => {
+                    usePvpStore.getState().reset();
+                    router.replace('/pvp');
+                  }}
+                  className="text-xs text-gray-500 hover:text-gray-300 underline transition-colors"
+                >
+                  仅返回大厅
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-gray-400 animate-pulse">等待游戏开始…</div>
+              <button
+                onClick={() => {
+                  usePvpStore.getState().reset();
+                  router.replace('/pvp');
+                }}
+                className="text-xs text-gray-500 hover:text-gray-300 underline transition-colors"
+              >
+                返回大厅
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
