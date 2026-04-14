@@ -98,26 +98,39 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
 
       {/* Hand cards */}
       {showCards ? (
-        // Revealed hand — show actual cards
+        // Hu-fail: full hand exposed
         <div className="flex gap-1 flex-wrap justify-center">
           {player.hand.map((card) => (
             <Card key={card.id} card={card} compact />
           ))}
         </div>
       ) : (
-        // Hidden hand — stacked
-        <div className="relative flex items-center" style={{ height: 36 }}>
-          {player.hand.map((card, i) => (
-            <div
-              key={card.id}
-              className="absolute w-7 h-9 rounded-md bg-gradient-to-br from-gray-700 to-gray-800 border border-gray-600 flex items-center justify-center"
-              style={{ left: i * 8, zIndex: i }}
-            >
-              <span className="text-[8px] opacity-40">🧠</span>
+        // Hidden hand — stacked. If pong-failed, show the selected cards
+        // face-up alongside the stack so everyone sees the failed attempt.
+        <>
+          {player.revealedSelectedCards && player.revealedSelectedCards.length > 0 && (
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[9px] text-orange-400">碰失败 — 公开</span>
+              <div className="flex gap-1 flex-wrap justify-center">
+                {player.revealedSelectedCards.map((card) => (
+                  <Card key={card.id} card={card} compact />
+                ))}
+              </div>
             </div>
-          ))}
-          <div style={{ width: Math.max(28, (player.hand.length - 1) * 8 + 28) }} />
-        </div>
+          )}
+          <div className="relative flex items-center" style={{ height: 36 }}>
+            {player.hand.map((card, i) => (
+              <div
+                key={card.id}
+                className="absolute w-7 h-9 rounded-md bg-gradient-to-br from-gray-700 to-gray-800 border border-gray-600 flex items-center justify-center"
+                style={{ left: i * 8, zIndex: i }}
+              >
+                <span className="text-[8px] opacity-40">🧠</span>
+              </div>
+            ))}
+            <div style={{ width: Math.max(28, (player.hand.length - 1) * 8 + 28) }} />
+          </div>
+        </>
       )}
     </motion.div>
   );

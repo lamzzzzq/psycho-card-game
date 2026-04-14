@@ -43,6 +43,9 @@ export function serializeGameState(state: RawGameState, viewerPlayerId: string |
     if (p.revealedHand) {
       base.revealedCards = p.hand;
     }
+    if (p.revealedSelectedCards && p.revealedSelectedCards.length > 0) {
+      base.revealedSelectedCards = p.revealedSelectedCards;
+    }
 
     return base;
   });

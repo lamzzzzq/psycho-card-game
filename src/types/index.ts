@@ -87,7 +87,8 @@ export interface Player {
   bigFiveScores: BigFiveScores;
   declaredSets: DeclaredSet[];
   skipNextTurn: boolean;
-  revealedHand: boolean;
+  revealedHand: boolean;                    // hu-fail: full hand exposed
+  revealedSelectedCards?: GameCard[];       // pong-fail: only the attempted cards exposed
 }
 
 // ===== Game State =====

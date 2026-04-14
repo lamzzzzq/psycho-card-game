@@ -39,6 +39,7 @@ function toPlayer(sp: SerializedPlayer, overrideHand?: GameCard[]): Player {
     declaredSets: sp.declaredSets as DeclaredSet[],
     skipNextTurn: sp.skipNextTurn,
     revealedHand: sp.revealedHand,
+    revealedSelectedCards: sp.revealedSelectedCards,
   };
 }
 

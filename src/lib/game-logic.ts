@@ -115,10 +115,11 @@ export function skipPenalizedPlayers(state: GameState): GameState {
       type: 'skip',
       timestamp: Date.now(),
     };
+    // Only clear skipNextTurn here — reveals (from hu-fail/pong-fail) must
+    // persist through the skip so other players actually see the penalty.
+    // They're cleared when this player next draws for real.
     const newPlayers = current.players.map((pl, idx) =>
-      idx === current.currentPlayerIndex
-        ? { ...pl, skipNextTurn: false, revealedHand: false }
-        : pl
+      idx === current.currentPlayerIndex ? { ...pl, skipNextTurn: false } : pl
     );
     const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
       current.currentPlayerIndex,
@@ -258,19 +259,30 @@ export function drawCard(state: GameState): GameState {
   }
 
   const [drawnCard, ...remaining] = drawPile;
+  const currentIdx = state.currentPlayerIndex;
   const action: GameAction = {
     round: state.currentRound,
-    playerId: state.players[state.currentPlayerIndex].id,
+    playerId: state.players[currentIdx].id,
     type: 'draw',
     timestamp: Date.now(),
   };
 
+  // Clear penalty reveals only after the player has completed their skip
+  // turn (skipNextTurn=false). This keeps reveals visible through own-turn
+  // hu-fail + discard + full loop + skip turn, then clears on resume.
+  const newPlayers = state.players.map((p, i) =>
+    i === currentIdx && !p.skipNextTurn
+      ? { ...p, revealedHand: false, revealedSelectedCards: undefined }
+      : p
+  );
+
   return {
     ...state,
+    players: newPlayers,
     drawPile: remaining,
     discardPile,
     drawnCard,
-    phase: state.players[state.currentPlayerIndex].isHuman ? 'discarding' : 'ai-turn',
+    phase: newPlayers[currentIdx].isHuman ? 'discarding' : 'ai-turn',
     actionLog: [...state.actionLog, action],
   };
 }
@@ -357,14 +369,6 @@ export function pongCard(
     (c) => isPersonalityCard(c) && c.dimension === dimension
   );
 
-  const discardedByIndex = state.discardedByIndex;
-  const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
-    discardedByIndex,
-    state.currentRound,
-    state.settings.totalRounds,
-    state.players.length
-  );
-
   if (allCorrect) {
     // PONG SUCCESS
     const declaredCards = allPongCards.filter(isPersonalityCard) as PersonalityCard[];
@@ -403,24 +407,27 @@ export function pongCard(
       };
     }
 
+    // Pong steals the turn: ponger plays next (draw + discard), not the
+    // player after the discarder.
     return skipPenalizedPlayers({
       ...state,
       players: newPlayers,
       pendingDiscard: null,
       discardedByIndex: -1,
       claimResponses: [],
-      currentPlayerIndex: nextPlayerIndex,
-      currentRound: nextRound,
-      phase: isGameOver ? 'game-over' : 'drawing',
+      currentPlayerIndex: pongerIndex,
+      phase: 'drawing',
       actionLog: [...state.actionLog, action],
-      winner: isGameOver ? determineWinner(newPlayers) : null,
+      winner: null,
     });
   } else {
-    // PONG FAIL — cards stay in hand, hand is revealed, skip next turn.
+    // PONG FAIL — only the selected cards are exposed (attempt is public),
+    // rest of the hand stays hidden. Ponger also skips next turn.
     // Ponger is locked out of this claim window; wait for remaining claimers.
+    const exposedCards = selectedHandCards;
     const newPlayers = state.players.map((p, i) =>
       i === pongerIndex
-        ? { ...p, skipNextTurn: true, revealedHand: true }
+        ? { ...p, skipNextTurn: true, revealedSelectedCards: exposedCards }
         : p
     );
 

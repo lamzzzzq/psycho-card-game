@@ -84,7 +84,8 @@ export interface SerializedPlayer {
   declaredSets: any[];
   skipNextTurn: boolean;
   revealedHand: boolean;
-  revealedCards?: GameCard[]; // Sent when revealedHand is true
+  revealedCards?: GameCard[];          // full hand, sent when revealedHand is true (hu-fail)
+  revealedSelectedCards?: GameCard[];  // subset, sent after pong-fail
 }
 
 // Game result for DB
