@@ -7,7 +7,7 @@ import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
 import { usePvpStore } from '@/stores/usePvpStore';
-import { upsertPlayer, createRoom, joinRoom } from '@/lib/room-api';
+import { upsertPlayer, createRoom, joinRoom, leaveRoom } from '@/lib/room-api';
 import { supabase } from '@/lib/supabase';
 import { PlayerInfo } from '@/types/pvp';
 import { BigFiveScores, DIMENSIONS } from '@/types';
@@ -34,41 +34,54 @@ export default function PvpLobbyPage() {
   const [manualScoresInput, setManualScoresInput] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
   const [rawInputs, setRawInputs] = useState<Record<string, string>>({ O: '3', C: '3', E: '3', A: '3', N: '3' });
 
-  // On lobby mount, reconcile with the DB:
-  //   - If this player is still seated in an active room, bounce them
-  //     back into it (covers accidental back-button navigations that
-  //     would otherwise orphan them on the lobby).
-  //   - Otherwise clear any persisted PVP state so we don't bounce into
-  //     a stale game via the room-page subscribe effect.
+  // On lobby mount, reconcile with the DB but don't force-redirect: an
+  // auto-redirect would re-trap users in a zombie game (host long gone,
+  // DB still says 'playing'). Instead surface a banner letting them
+  // choose between resuming or cleanly leaving the stale room.
+  const [activeRoom, setActiveRoom] = useState<{ code: string; status: string; roomId: string } | null>(null);
+
   useEffect(() => {
     if (!player) return;
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
         .from('room_players')
-        .select('room_id, rooms!inner(code, status)')
+        .select('room_id, rooms!inner(id, code, status)')
         .eq('player_id', player.id);
-      if (cancelled) return;
-      // Supabase types the join as an array; in practice room_id → rooms
-      // is 1:1 so we grab the first entry.
+      if (cancelled || error) return;
       const rows = (data ?? []) as unknown as Array<{
-        rooms: { code: string; status: string } | { code: string; status: string }[] | null;
+        rooms: { id: string; code: string; status: string } | { id: string; code: string; status: string }[] | null;
       }>;
-      const pickRoom = (r: typeof rows[number]) =>
-        Array.isArray(r.rooms) ? r.rooms[0] : r.rooms;
+      const pickRoom = (r: typeof rows[number]) => (Array.isArray(r.rooms) ? r.rooms[0] : r.rooms);
       const active = rows
         .map(pickRoom)
         .find((room) => room && (room.status === 'waiting' || room.status === 'playing'));
-      if (!error && active) {
-        router.replace(active.status === 'playing' ? `/pvp/game/${active.code}` : `/pvp/room/${active.code}`);
-        return;
+      if (active) {
+        setActiveRoom({ code: active.code, status: active.status, roomId: active.id });
+      } else {
+        usePvpStore.getState().reset();
       }
-      usePvpStore.getState().reset();
     })();
     return () => {
       cancelled = true;
     };
-  }, [player, router]);
+  }, [player]);
+
+  function resumeActiveRoom() {
+    if (!activeRoom) return;
+    router.replace(activeRoom.status === 'playing' ? `/pvp/game/${activeRoom.code}` : `/pvp/room/${activeRoom.code}`);
+  }
+
+  async function leaveActiveRoom() {
+    if (!activeRoom || !player) return;
+    try {
+      await leaveRoom(activeRoom.roomId, player.id);
+    } catch {
+      // ignore; still clear local state so the user isn't trapped
+    }
+    usePvpStore.getState().reset();
+    setActiveRoom(null);
+  }
 
   if (!hydrated) {
     return (
@@ -140,6 +153,31 @@ export default function PvpLobbyPage() {
           <h1 className="text-3xl font-bold text-white">⚔️ 联机对战</h1>
           <p className="text-gray-400 text-sm">创建或加入房间，与真实玩家博弈</p>
         </div>
+
+        {/* Active-room resume banner */}
+        {activeRoom && (
+          <div className="rounded-2xl border border-amber-500/40 bg-amber-950/20 p-4 space-y-3">
+            <div className="text-sm text-amber-200">
+              检测到你还在房间{' '}
+              <span className="font-bold text-amber-300">{activeRoom.code}</span> 中
+              {activeRoom.status === 'playing' ? '（游戏进行中）' : '（等待中）'}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={resumeActiveRoom}
+                className="flex-1 px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-gray-900 text-sm font-bold transition-colors"
+              >
+                返回房间
+              </button>
+              <button
+                onClick={leaveActiveRoom}
+                className="flex-1 px-3 py-2 rounded-lg border border-gray-700 text-gray-300 hover:bg-gray-800 text-sm transition-colors"
+              >
+                离开房间
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Player info */}
         <div className="rounded-2xl bg-gray-900 border border-gray-800 p-5 space-y-3">

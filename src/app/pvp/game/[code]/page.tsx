@@ -127,7 +127,18 @@ export default function PvpGamePage() {
   if (!gameState) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-gray-400 animate-pulse">等待游戏开始…</div>
+        <div className="text-center space-y-4">
+          <div className="text-gray-400 animate-pulse">等待游戏开始…</div>
+          <button
+            onClick={() => {
+              usePvpStore.getState().reset();
+              router.replace('/pvp');
+            }}
+            className="text-xs text-gray-500 hover:text-gray-300 underline transition-colors"
+          >
+            返回大厅
+          </button>
+        </div>
       </div>
     );
   }
