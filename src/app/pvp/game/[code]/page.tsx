@@ -8,6 +8,9 @@ import { usePvpStore } from '@/stores/usePvpStore';
 import { SerializedPlayer, PvpAction } from '@/types/pvp';
 import { GameCard, GameAction, Player, PlayerId, DeclaredSet, Dimension, DIMENSIONS } from '@/types';
 import { useGameFeedback, FeedbackOverlays } from '@/components/game/FeedbackLayer';
+import { FlyingCard } from '@/components/game/FlyingCard';
+
+interface FlyingAnim { id: number; from: { x: number; y: number }; to: { x: number; y: number }; text: string; }
 import { DIMENSION_META } from '@/data/dimensions';
 import { getTargetCounts } from '@/lib/scoring';
 import { getDeclaredDimensions } from '@/lib/game-logic';
@@ -54,7 +57,10 @@ export default function PvpGamePage() {
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
   const [resultBanner, setResultBanner] = useState<{ success: boolean; message: string } | null>(null);
   const [arrowFrom, setArrowFrom] = useState<{ x: number; y: number } | null>(null);
+  const [flyingCards, setFlyingCards] = useState<FlyingAnim[]>([]);
+  const flyIdRef = useRef(0);
   const drawPileRef = useRef<HTMLDivElement>(null);
+  const discardPileRef = useRef<HTMLDivElement>(null);
   const handAreaRef = useRef<HTMLDivElement>(null);
 
   // Re-subscribe if store lost channel (e.g. hard refresh)
@@ -121,9 +127,40 @@ export default function PvpGamePage() {
 
   function handleDiscard(cardId: number) {
     if (!isDiscarding) return;
+
+    // Visual flight: spawn a FlyingCard from the hand card's position to
+    // the discard pile. Purely cosmetic — runs in parallel with the
+    // game-state update.
+    const all: GameCard[] = [
+      ...(mePlayer?.hand ?? []),
+      ...(gameState?.drawnCard ? [gameState.drawnCard] : []),
+    ];
+    const card = all.find((c) => c.id === cardId);
+    if (card && discardPileRef.current && handAreaRef.current) {
+      const cardEl = handAreaRef.current.querySelector(`[data-card-id="${cardId}"]`);
+      if (cardEl) {
+        const fromRect = cardEl.getBoundingClientRect();
+        const toRect = discardPileRef.current.getBoundingClientRect();
+        const id = flyIdRef.current++;
+        setFlyingCards((prev) => [
+          ...prev,
+          {
+            id,
+            from: { x: fromRect.left + fromRect.width / 2, y: fromRect.top + fromRect.height / 2 },
+            to: { x: toRect.left + toRect.width / 2, y: toRect.top + toRect.height / 2 },
+            text: card.text,
+          },
+        ]);
+      }
+    }
+
     dispatchAction({ type: 'discard', cardId });
     setArrowFrom(null);
   }
+
+  const removeFlyingCard = useCallback((id: number) => {
+    setFlyingCards((prev) => prev.filter((f) => f.id !== id));
+  }, []);
 
   function handleHu() {
     dispatchAction({ type: 'hu' });
@@ -208,6 +245,9 @@ export default function PvpGamePage() {
   return (
     <motion.div animate={shakeControls} className="flex flex-1 flex-col px-4 py-4 max-w-6xl mx-auto w-full">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
+      {flyingCards.map((f) => (
+        <FlyingCard key={f.id} from={f.from} to={f.to} text={f.text} onComplete={() => removeFlyingCard(f.id)} />
+      ))}
 
       {/* Result banner */}
       {resultBanner && (
@@ -241,10 +281,12 @@ export default function PvpGamePage() {
           >
             <DrawPile count={gameState.drawPileCount} canDraw={canDraw} onDraw={handleDraw} />
           </div>
-          <DiscardPile
-            topCard={gameState.discardPile.length > 0 ? gameState.discardPile[gameState.discardPile.length - 1] : null}
-            count={gameState.discardPile.length}
-          />
+          <div ref={discardPileRef}>
+            <DiscardPile
+              topCard={gameState.discardPile.length > 0 ? gameState.discardPile[gameState.discardPile.length - 1] : null}
+              count={gameState.discardPile.length}
+            />
+          </div>
         </div>
         <div className="hidden md:block w-48">
           <GameLog actions={gameState.actionLog as any} players={allPlayers} />

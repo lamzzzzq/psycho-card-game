@@ -1,6 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useRef } from 'react';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { GameCard, isDummyCard, isPersonalityCard } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 
@@ -28,13 +29,36 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
   const dummy = isDummyCard(card);
   const dimMeta = !dummy && isPersonalityCard(card) ? DIMENSION_META[card.dimension] : null;
 
+  // Mouse-position-based 3D tilt. Track pointer relative to the card;
+  // rotate up to ±18° on each axis toward where the pointer is.
+  const cardRef = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0.5);
+  const my = useMotionValue(0.5);
+  const springConfig = { stiffness: 260, damping: 22, mass: 0.5 };
+  const sx = useSpring(mx, springConfig);
+  const sy = useSpring(my, springConfig);
+  const rotateY = useTransform(sx, [0, 1], [-18, 18]);
+  const rotateX = useTransform(sy, [0, 1], [14, -14]);
+
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!onClick || !cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    mx.set((e.clientX - rect.left) / rect.width);
+    my.set((e.clientY - rect.top) / rect.height);
+  }
+
+  function onPointerLeave() {
+    if (!onClick) return;
+    mx.set(0.5);
+    my.set(0.5);
+  }
+
   return (
     <motion.div
+      ref={cardRef}
       whileHover={
         onClick
           ? {
-              rotateX: -14,
-              rotateY: 14,
               scale: 1.1,
               y: -10,
               zIndex: 20,
@@ -42,9 +66,15 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
             }
           : undefined
       }
-      whileTap={onClick ? { scale: 0.95, rotateX: 0, rotateY: 0, y: 0 } : undefined}
+      whileTap={onClick ? { scale: 0.95, y: 0 } : undefined}
       onClick={onClick}
-      style={onClick ? { transformPerspective: 600, transformStyle: 'preserve-3d' } : undefined}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      style={
+        onClick
+          ? { transformPerspective: 600, transformStyle: 'preserve-3d', rotateX, rotateY }
+          : undefined
+      }
       className={`${compact ? 'w-14 h-20 p-1.5' : 'w-24 h-36 p-2.5'} rounded-xl border-2 flex flex-col justify-between shadow-lg transition-colors ${
         onClick ? 'cursor-pointer' : ''
       } ${
