@@ -61,7 +61,40 @@ export function initializeGame(
     drawnCard: null,
     pendingDiscard: null,
     discardedByIndex: -1,
+    claimResponses: [],
     winner: null,
+  };
+}
+
+// ── Claim-window helpers ─────────────────────────────────────────────────────
+function getEligibleClaimers(state: GameState): number[] {
+  return state.players.map((_, i) => i).filter((i) => i !== state.discardedByIndex);
+}
+
+function allClaimersResponded(state: GameState): boolean {
+  if (state.discardedByIndex < 0) return false;
+  const responded = new Set(state.claimResponses);
+  return getEligibleClaimers(state).every((i) => responded.has(state.players[i].id));
+}
+
+function finalizeClaimWindow(state: GameState): GameState {
+  if (!state.pendingDiscard) return state;
+  const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+    state.discardedByIndex,
+    state.currentRound,
+    state.settings.totalRounds,
+    state.players.length
+  );
+  return {
+    ...state,
+    discardPile: [...state.discardPile, state.pendingDiscard],
+    pendingDiscard: null,
+    discardedByIndex: -1,
+    claimResponses: [],
+    currentPlayerIndex: nextPlayerIndex,
+    currentRound: nextRound,
+    phase: isGameOver ? 'game-over' : 'drawing',
+    winner: isGameOver ? determineWinner(state.players) : state.winner,
   };
 }
 
@@ -138,6 +171,22 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
       timestamp: Date.now(),
     };
 
+    // If hu attempted during another player's claim-window, register response
+    // and wait for remaining claimers before advancing.
+    if (state.phase === 'claim-window' && state.pendingDiscard) {
+      const playerId = state.players[playerIndex].id;
+      const newResponses = state.claimResponses.includes(playerId)
+        ? state.claimResponses
+        : [...state.claimResponses, playerId];
+      const nextState: GameState = {
+        ...state,
+        players: newPlayers,
+        claimResponses: newResponses,
+        actionLog: [...state.actionLog, action],
+      };
+      return allClaimersResponded(nextState) ? finalizeClaimWindow(nextState) : nextState;
+    }
+
     return {
       ...state,
       players: newPlayers,
@@ -208,7 +257,7 @@ export function discardCard(state: GameState, cardId: number): GameState {
     i === playerIndex ? { ...p, hand: newHand } : p
   );
 
-  // Personality card → claim window; dummy card → straight to discard pile
+  // Personality card → claim window; dummy card → free extra draw (same player)
   if (isPersonalityCard(cardToDiscard)) {
     return {
       ...state,
@@ -216,29 +265,20 @@ export function discardCard(state: GameState, cardId: number): GameState {
       drawnCard: null,
       pendingDiscard: cardToDiscard,
       discardedByIndex: playerIndex,
+      claimResponses: [],
       phase: 'claim-window',
       actionLog: [...state.actionLog, action],
     };
   }
 
-  // Dummy card — no claim window
-  const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
-    playerIndex,
-    state.currentRound,
-    state.settings.totalRounds,
-    state.players.length
-  );
-
+  // Dummy card — no claim, no turn advance; player draws again
   return {
     ...state,
     players: newPlayers,
     discardPile: [...state.discardPile, cardToDiscard],
     drawnCard: null,
-    currentPlayerIndex: nextPlayerIndex,
-    currentRound: nextRound,
-    phase: isGameOver ? 'game-over' : 'drawing',
+    phase: 'drawing',
     actionLog: [...state.actionLog, action],
-    winner: isGameOver ? determineWinner(newPlayers) : null,
   };
 }
 
@@ -306,6 +346,7 @@ export function pongCard(
         players: newPlayers,
         pendingDiscard: null,
         discardedByIndex: -1,
+        claimResponses: [],
         actionLog: [...state.actionLog, action],
         phase: 'game-over',
         winner: ponger.id,
@@ -317,6 +358,7 @@ export function pongCard(
       players: newPlayers,
       pendingDiscard: null,
       discardedByIndex: -1,
+      claimResponses: [],
       currentPlayerIndex: nextPlayerIndex,
       currentRound: nextRound,
       phase: isGameOver ? 'game-over' : 'drawing',
@@ -324,7 +366,8 @@ export function pongCard(
       winner: isGameOver ? determineWinner(newPlayers) : null,
     };
   } else {
-    // PONG FAIL — cards stay in hand, hand is revealed, skip next turn
+    // PONG FAIL — cards stay in hand, hand is revealed, skip next turn.
+    // Ponger is locked out of this claim window; wait for remaining claimers.
     const newPlayers = state.players.map((p, i) =>
       i === pongerIndex
         ? { ...p, skipNextTurn: true, revealedHand: true }
@@ -340,43 +383,37 @@ export function pongCard(
       timestamp: Date.now(),
     };
 
-    // Pending card goes to discard pile since pong failed
-    return {
+    const pongerId = state.players[pongerIndex].id;
+    const newResponses = state.claimResponses.includes(pongerId)
+      ? state.claimResponses
+      : [...state.claimResponses, pongerId];
+
+    const nextState: GameState = {
       ...state,
       players: newPlayers,
-      discardPile: [...state.discardPile, pendingCard],
-      pendingDiscard: null,
-      discardedByIndex: -1,
-      currentPlayerIndex: nextPlayerIndex,
-      currentRound: nextRound,
-      phase: isGameOver ? 'game-over' : 'drawing',
+      claimResponses: newResponses,
       actionLog: [...state.actionLog, action],
-      winner: isGameOver ? determineWinner(newPlayers) : null,
     };
+
+    return allClaimersResponded(nextState) ? finalizeClaimWindow(nextState) : nextState;
   }
 }
 
-// No one pongs — pending card goes to discard pile
-export function skipPong(state: GameState): GameState {
+// A single claimer passes. Pending card only moves to discard pile after
+// every eligible non-discarder has responded (skip / pong-fail / hu-fail).
+export function skipPong(state: GameState, playerIndex: number): GameState {
   if (!state.pendingDiscard || state.phase !== 'claim-window') return state;
 
-  const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
-    state.discardedByIndex,
-    state.currentRound,
-    state.settings.totalRounds,
-    state.players.length
-  );
+  const playerId = state.players[playerIndex].id;
+  if (state.claimResponses.includes(playerId)) return state;
+  if (playerIndex === state.discardedByIndex) return state;
 
-  return {
+  const nextState: GameState = {
     ...state,
-    discardPile: [...state.discardPile, state.pendingDiscard],
-    pendingDiscard: null,
-    discardedByIndex: -1,
-    currentPlayerIndex: nextPlayerIndex,
-    currentRound: nextRound,
-    phase: isGameOver ? 'game-over' : 'drawing',
-    winner: isGameOver ? determineWinner(state.players) : null,
+    claimResponses: [...state.claimResponses, playerId],
   };
+
+  return allClaimersResponded(nextState) ? finalizeClaimWindow(nextState) : nextState;
 }
 
 function advancePlayer(

@@ -13,6 +13,7 @@ interface RawGameState {
   pendingDiscard: GameCard | null;
   discardedByIndex: number;
   winner: string | null;
+  claimResponses?: string[];
   settings?: { totalRounds: number; [key: string]: any };
 }
 
@@ -48,6 +49,10 @@ export function serializeGameState(state: RawGameState, viewerPlayerId: string |
 
   const currentPlayer = state.players[state.currentPlayerIndex];
   const isCurrentViewer = viewerPlayerId !== null && currentPlayer?.id === viewerPlayerId;
+  // Broadcast mode (__all__) ships drawnCard to every client; each UI then
+  // filters by isMyTurn so opponents don't see it. This matches how hands
+  // are already handled (broadcast everything, client-side visibility gate).
+  const includeDrawnCard = viewerPlayerId === '__all__' || isCurrentViewer;
 
   return {
     phase: state.phase,
@@ -57,9 +62,10 @@ export function serializeGameState(state: RawGameState, viewerPlayerId: string |
     currentPlayerIndex: state.currentPlayerIndex,
     currentRound: state.currentRound,
     actionLog: state.actionLog ?? [],
-    drawnCard: isCurrentViewer ? state.drawnCard : null,
+    drawnCard: includeDrawnCard ? state.drawnCard : null,
     pendingDiscard: state.pendingDiscard,
     discardedByIndex: state.discardedByIndex,
+    claimResponses: state.claimResponses ?? [],
     winner: state.winner,
     totalRounds: state.settings?.totalRounds ?? 0,
   };

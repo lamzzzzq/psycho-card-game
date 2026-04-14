@@ -125,5 +125,6 @@ export interface GameState {
   drawnCard: GameCard | null;
   pendingDiscard: GameCard | null;
   discardedByIndex: number;
+  claimResponses: PlayerId[];
   winner: PlayerId | null;
 }

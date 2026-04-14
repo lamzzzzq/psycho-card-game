@@ -85,6 +85,8 @@ export default function PvpGamePage() {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isMyTurn = currentPlayer?.id === myId;
   const isClaimWindow = gameState.phase === 'claim-window' && gameState.pendingDiscard !== null;
+  const alreadyResponded = !!myId && (gameState.claimResponses?.includes(myId) ?? false);
+  const canClaim = isClaimWindow && !isMyTurn && !alreadyResponded;
   const canDraw = isMyTurn && gameState.phase === 'drawing';
   const isDiscarding = isMyTurn && gameState.phase === 'discarding';
 
@@ -283,8 +285,8 @@ export default function PvpGamePage() {
             </div>
           )}
 
-          {/* Claim window — opponent discarded, can pong or hu */}
-          {isClaimWindow && !isMyTurn && gameState.pendingDiscard && (
+          {/* Claim window — opponent discarded, can pong or hu (once per window) */}
+          {canClaim && gameState.pendingDiscard && (
             <div className="rounded-xl border border-orange-500/40 bg-orange-950/20 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium text-orange-300">
@@ -338,7 +340,7 @@ export default function PvpGamePage() {
                 cards={mePlayer.hand}
                 drawnCard={isMyTurn ? (gameState.drawnCard ?? null) : null}
                 isDiscarding={isDiscarding}
-                isDeclaring={isClaimWindow && !isMyTurn}
+                isDeclaring={canClaim}
                 isMyTurn={isMyTurn}
                 selectedCardIds={selectedCardIds}
                 onDiscardCard={handleDiscard}

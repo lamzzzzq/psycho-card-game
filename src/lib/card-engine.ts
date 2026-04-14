@@ -13,8 +13,12 @@ export function generatePersonalityCards(): PersonalityCard[] {
   }));
 }
 
+// Cap dummy count to ~18% of deck to keep draw pacing snappy; discarding a
+// dummy no longer ends the turn, but too many still hurt early-game flow.
+const DUMMY_CARD_COUNT = 16;
+
 export function generateDummyCards(): DummyCard[] {
-  return DUMMY_CARD_TEXTS.map((text, i) => ({
+  return DUMMY_CARD_TEXTS.slice(0, DUMMY_CARD_COUNT).map((text, i) => ({
     id: 1000 + i,
     text,
     isDummy: true as const,

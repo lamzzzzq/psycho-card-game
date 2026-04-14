@@ -58,6 +58,7 @@ export function initializePvpGame(
     drawnCard: null,
     pendingDiscard: null,
     discardedByIndex: -1,
+    claimResponses: [],
     winner: null,
   };
 }
@@ -83,6 +84,17 @@ export function applyPvpAction(
   if (action.type === 'pong' && !inClaimWindow) return state;
   if (action.type === 'skip-pong' && !inClaimWindow) return state;
 
+  // Lock out players who already responded in this claim window
+  if (
+    inClaimWindow &&
+    (action.type === 'pong' || action.type === 'skip-pong' || action.type === 'hu') &&
+    !isCurrentPlayer
+  ) {
+    if (playerIndex < 0) return state;
+    const pid = orderedPlayers[playerIndex].player_id as PlayerId;
+    if (state.claimResponses.includes(pid)) return state;
+  }
+
   switch (action.type) {
     case 'draw':
       if (state.phase !== 'drawing') return state;
@@ -99,7 +111,7 @@ export function applyPvpAction(
       return pongCard(state, playerIndex, action.dimension, action.handCardIds);
 
     case 'skip-pong':
-      return skipPong(state);
+      return skipPong(state, playerIndex);
 
     default:
       return state;

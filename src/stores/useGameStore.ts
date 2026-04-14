@@ -73,7 +73,8 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   playerSkipPong: () => {
     const { game } = get();
     if (!game || game.phase !== 'claim-window') return;
-    set({ game: skipPong(game) });
+    // Human is always index 0
+    set({ game: skipPong(game, 0) });
   },
 
   resolvePongWindow: async () => {
@@ -85,25 +86,25 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
     for (let offset = 1; offset < 4; offset++) {
       const idx = (discardedBy + offset) % 4;
-      const player = game.players[idx];
+      const latestGame = get().game;
+      if (!latestGame || latestGame.phase !== 'claim-window') return;
 
-      if (player.isHuman || idx === discardedBy) continue;
+      const player = latestGame.players[idx];
+      if (player.isHuman) continue;
+      if (latestGame.claimResponses.includes(player.id)) continue;
 
-      const decision = makeAIPongDecision(player, pendingCard, game.settings.aiDifficulty);
+      const decision = makeAIPongDecision(player, pendingCard, latestGame.settings.aiDifficulty);
+
+      await delay(400);
+      const currentGame = get().game;
+      if (!currentGame || currentGame.phase !== 'claim-window') return;
 
       if (decision.shouldPong && decision.dimension && decision.handCardIds) {
-        await delay(500);
-        const currentGame = get().game;
-        if (!currentGame || currentGame.phase !== 'claim-window') return;
         set({ game: pongCard(currentGame, idx, decision.dimension, decision.handCardIds) });
         return;
       }
+      set({ game: skipPong(currentGame, idx) });
     }
-
-    await delay(300);
-    const latestGame = get().game;
-    if (!latestGame || latestGame.phase !== 'claim-window') return;
-    set({ game: skipPong(latestGame) });
   },
 
   executeAITurn: async () => {

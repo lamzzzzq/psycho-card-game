@@ -66,9 +66,10 @@ export interface SerializedGameState {
   currentPlayerIndex: number;
   currentRound: number;
   actionLog: GameAction[];
-  drawnCard: GameCard | null; // Only sent to the current player
+  drawnCard: GameCard | null; // Broadcast to all; clients filter by isMyTurn
   pendingDiscard: GameCard | null;
   discardedByIndex: number;
+  claimResponses: string[];
   winner: string | null;
   totalRounds: number;
 }
