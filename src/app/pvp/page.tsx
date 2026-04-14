@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
+import { usePvpStore } from '@/stores/usePvpStore';
 import { upsertPlayer, createRoom, joinRoom } from '@/lib/room-api';
 import { PlayerInfo } from '@/types/pvp';
 import { BigFiveScores, DIMENSIONS } from '@/types';
@@ -31,6 +32,13 @@ export default function PvpLobbyPage() {
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualScoresInput, setManualScoresInput] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
   const [rawInputs, setRawInputs] = useState<Record<string, string>>({ O: '3', C: '3', E: '3', A: '3', N: '3' });
+
+  // Arriving at the lobby means "starting fresh". Drop any persisted PVP
+  // state from a previous session so we don't bounce back into a stale
+  // game via the room-page subscribe effect.
+  useEffect(() => {
+    usePvpStore.getState().reset();
+  }, []);
 
   if (!hydrated) {
     return (

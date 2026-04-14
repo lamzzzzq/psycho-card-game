@@ -93,12 +93,16 @@ export default function RoomWaitPage() {
     sendMessage({ type: 'big-five-updated', playerId: player.id, bigFive: bigFiveScores });
   }, [bigFiveScores]);
 
-  // Listen for game-start redirect (subscribe to store, don't poll every render)
+  // Listen for game-start redirect. Only trigger on a fresh null → non-null
+  // transition so persisted state from a previous session can't bounce us
+  // into a stale game URL.
   useEffect(() => {
+    let prev = usePvpStore.getState().gameState;
     return usePvpStore.subscribe(state => {
-      if (state.gameState) {
+      if (state.gameState && !prev) {
         router.replace(`/pvp/game/${code}`);
       }
+      prev = state.gameState;
     });
   }, [code]);
 

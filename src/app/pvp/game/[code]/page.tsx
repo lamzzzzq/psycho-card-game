@@ -9,6 +9,7 @@ import { SerializedPlayer, PvpAction } from '@/types/pvp';
 import { GameCard, GameAction, Player, PlayerId, DeclaredSet, Dimension, DIMENSIONS } from '@/types';
 import { useGameFeedback, FeedbackOverlays } from '@/components/game/FeedbackLayer';
 import { FlyingCard } from '@/components/game/FlyingCard';
+import { supabase } from '@/lib/supabase';
 
 interface FlyingAnim { id: number; from: { x: number; y: number }; to: { x: number; y: number }; text: string; }
 import { DIMENSION_META } from '@/data/dimensions';
@@ -69,6 +70,44 @@ export default function PvpGamePage() {
     const { channel } = usePvpStore.getState();
     if (!channel) subscribeRoom(code, player.id);
   }, [code, player]);
+
+  // On mount, verify against the DB that this room is actually still in
+  // play. If the room is missing, ended, or just in "waiting" state, the
+  // persisted game state is a zombie — reset + bounce back to the lobby.
+  useEffect(() => {
+    if (!player) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('rooms')
+        .select('status')
+        .eq('code', code)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data || data.status !== 'playing') {
+        usePvpStore.getState().reset();
+        router.replace('/pvp');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [code, player, router]);
+
+  // If a non-host's state-request goes unanswered (host is offline or
+  // never saw it), fall back to the lobby after 6s instead of sitting on
+  // a stale snapshot forever. Reference check — host's reply always
+  // produces a fresh gameState object even if the content is identical.
+  useEffect(() => {
+    const { isHost } = usePvpStore.getState();
+    if (isHost) return;
+    const initialRef = usePvpStore.getState().gameState;
+    const timeout = setTimeout(() => {
+      if (usePvpStore.getState().gameState === initialRef) {
+        usePvpStore.getState().reset();
+        router.replace('/pvp');
+      }
+    }, 6000);
+    return () => clearTimeout(timeout);
+  }, [code, router]);
 
   // Clear card selection on phase change
   useEffect(() => {
