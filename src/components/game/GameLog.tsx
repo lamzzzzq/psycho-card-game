@@ -1,6 +1,6 @@
 'use client';
 
-import { GameAction, Player, isPersonalityCard } from '@/types';
+import { GameAction, Player } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 
 interface GameLogProps {
@@ -26,18 +26,7 @@ export function GameLog({ actions, players }: GameLogProps) {
               <div key={`${action.timestamp}-${action.type}-${i}`} className="text-xs text-gray-500 flex gap-1">
                 <span className="text-gray-400">{player.avatar}</span>
                 {action.type === 'draw' && <span>抽了一张牌</span>}
-                {action.type === 'discard' && (
-                  <span>
-                    弃了{' '}
-                    {action.card && isPersonalityCard(action.card) ? (
-                      <span style={{ color: DIMENSION_META[action.card.dimension].colorHex }}>
-                        [{DIMENSION_META[action.card.dimension].name}]
-                      </span>
-                    ) : (
-                      '一张牌'
-                    )}
-                  </span>
-                )}
+                {action.type === 'discard' && <span>弃了一张牌</span>}
                 {action.type === 'hu-success' && (
                   <span className="text-emerald-400 font-bold">胡了！🀄 游戏结束</span>
                 )}

@@ -298,7 +298,7 @@ export function discardCard(state: GameState, cardId: number): GameState {
     i === playerIndex ? { ...p, hand: newHand } : p
   );
 
-  // Personality card → claim window; dummy card → free extra draw (same player)
+  // Personality card → claim window; dummy card → advance turn (no claim)
   if (isPersonalityCard(cardToDiscard)) {
     return {
       ...state,
@@ -312,15 +312,24 @@ export function discardCard(state: GameState, cardId: number): GameState {
     };
   }
 
-  // Dummy card — no claim, no turn advance; player draws again
-  return {
+  const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+    playerIndex,
+    state.currentRound,
+    state.settings.totalRounds,
+    state.players.length
+  );
+
+  return skipPenalizedPlayers({
     ...state,
     players: newPlayers,
     discardPile: [...state.discardPile, cardToDiscard],
     drawnCard: null,
-    phase: 'drawing',
+    currentPlayerIndex: nextPlayerIndex,
+    currentRound: nextRound,
+    phase: isGameOver ? 'game-over' : 'drawing',
     actionLog: [...state.actionLog, action],
-  };
+    winner: isGameOver ? determineWinner(newPlayers) : null,
+  });
 }
 
 // Pong (碰) — claim a pending discard to complete a dimension
