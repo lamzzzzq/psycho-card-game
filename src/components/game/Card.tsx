@@ -16,6 +16,18 @@ interface CardProps {
 }
 
 export function Card({ card, faceUp = true, selected = false, onClick, compact = false, showDimension = false, tagDimension = null }: CardProps) {
+  // Hooks must run unconditionally — keep them above any early return so
+  // the hook count stays stable when faceUp flips (e.g. revealing an
+  // opponent's hand after hu-fail).
+  const cardRef = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0.5);
+  const my = useMotionValue(0.5);
+  const springConfig = { stiffness: 260, damping: 22, mass: 0.5 };
+  const sx = useSpring(mx, springConfig);
+  const sy = useSpring(my, springConfig);
+  const rotateY = useTransform(sx, [0, 1], [-18, 18]);
+  const rotateX = useTransform(sy, [0, 1], [14, -14]);
+
   if (!faceUp) {
     return (
       <div
@@ -28,17 +40,6 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
 
   const dummy = isDummyCard(card);
   const dimMeta = !dummy && isPersonalityCard(card) ? DIMENSION_META[card.dimension] : null;
-
-  // Mouse-position-based 3D tilt. Track pointer relative to the card;
-  // rotate up to ±18° on each axis toward where the pointer is.
-  const cardRef = useRef<HTMLDivElement>(null);
-  const mx = useMotionValue(0.5);
-  const my = useMotionValue(0.5);
-  const springConfig = { stiffness: 260, damping: 22, mass: 0.5 };
-  const sx = useSpring(mx, springConfig);
-  const sy = useSpring(my, springConfig);
-  const rotateY = useTransform(sx, [0, 1], [-18, 18]);
-  const rotateX = useTransform(sy, [0, 1], [14, -14]);
 
   function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
     if (!onClick || !cardRef.current) return;
