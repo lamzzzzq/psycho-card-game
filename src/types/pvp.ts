@@ -47,7 +47,8 @@ export type RealtimeMessage =
   | { type: 'game-state-update'; gameState: SerializedGameState }
   | { type: 'action-request'; fromPlayerId: string; action: PvpAction }
   | { type: 'game-over'; winnerId: string }
-  | { type: 'big-five-updated'; playerId: string; bigFive: BigFiveScores };
+  | { type: 'big-five-updated'; playerId: string; bigFive: BigFiveScores }
+  | { type: 'state-request'; fromPlayerId: string };
 
 // Actions that clients can request
 export type PvpAction =

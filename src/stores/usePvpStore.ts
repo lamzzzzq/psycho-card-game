@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { Room, RoomPlayer, RoomSettings, RealtimeMessage, PvpAction, SerializedGameState } from '@/types/pvp';
@@ -36,7 +37,9 @@ interface PvpStore {
   reset: () => void;
 }
 
-export const usePvpStore = create<PvpStore>((set, get) => ({
+export const usePvpStore = create<PvpStore>()(
+  persist(
+    (set, get) => ({
   room: null,
   players: [],
   myPlayerId: null,
@@ -122,9 +125,45 @@ export const usePvpStore = create<PvpStore>((set, get) => ({
           case 'game-over':
             // Host saves result, everyone sees it in gameState
             break;
+
+          case 'state-request':
+            // Host replies with the current authoritative state so a
+            // refreshed client can resync mid-game.
+            if (isHost) {
+              const rawState = get().rawGameState;
+              if (rawState) {
+                const snapshot = serializeGameState(rawState, '__all__');
+                channel.send({
+                  type: 'broadcast',
+                  event: 'msg',
+                  payload: { type: 'game-state-update', gameState: snapshot },
+                });
+              }
+            }
+            break;
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') return;
+        const { isHost: iAmHost, myPlayerId: mid, rawGameState } = get();
+        if (!iAmHost && mid) {
+          // Non-host asks host for the current authoritative state.
+          channel.send({
+            type: 'broadcast',
+            event: 'msg',
+            payload: { type: 'state-request', fromPlayerId: mid },
+          });
+        } else if (iAmHost && rawGameState) {
+          // Host just reconnected — re-broadcast its state so anyone
+          // who acted during the outage can reconcile.
+          const snapshot = serializeGameState(rawGameState, '__all__');
+          channel.send({
+            type: 'broadcast',
+            event: 'msg',
+            payload: { type: 'game-state-update', gameState: snapshot },
+          });
+        }
+      });
 
     set({ channel, myPlayerId });
   },
@@ -214,7 +253,24 @@ export const usePvpStore = create<PvpStore>((set, get) => ({
 
   reset: () => {
     get().unsubscribeRoom();
-    set({ room: null, players: [], myPlayerId: null, channel: null, gameState: null, isHost: false });
+    set({ room: null, players: [], myPlayerId: null, channel: null, gameState: null, rawGameState: null, isHost: false });
+    try { localStorage.removeItem('psycho-card-pvp'); } catch {}
   },
-}));
-
+    }),
+    {
+      name: 'psycho-card-pvp',
+      storage: createJSONStorage(() => localStorage),
+      // Channel isn't serializable (functions + live socket). Everything
+      // else survives a refresh so the UI can re-render immediately and
+      // then re-subscribe.
+      partialize: (s) => ({
+        room: s.room,
+        players: s.players,
+        myPlayerId: s.myPlayerId,
+        gameState: s.gameState,
+        rawGameState: s.rawGameState,
+        isHost: s.isHost,
+      }),
+    }
+  )
+);
