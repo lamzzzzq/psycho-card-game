@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { motion, useAnimationControls } from 'framer-motion';
 import { Player } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 import { Card } from './Card';
@@ -13,11 +14,25 @@ interface OpponentHandProps {
 export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
   const [expandedDim, setExpandedDim] = useState<string | null>(null);
   const showCards = player.revealedHand;
+  const bounceControls = useAnimationControls();
+
+  // Small pop when this opponent becomes the active player
+  useEffect(() => {
+    if (isCurrentTurn) {
+      bounceControls.start({
+        scale: [1, 1.06, 0.98, 1.02, 1],
+        transition: { duration: 0.45, ease: 'easeOut' },
+      });
+    }
+  }, [isCurrentTurn, bounceControls]);
 
   return (
-    <div className={`flex flex-col items-center gap-2 rounded-xl p-3 transition ${
-      isCurrentTurn ? 'bg-yellow-500/10 ring-1 ring-yellow-500/30' : ''
-    }`}>
+    <motion.div
+      animate={bounceControls}
+      className={`flex flex-col items-center gap-2 rounded-xl p-3 transition ${
+        isCurrentTurn ? 'bg-yellow-500/10 ring-1 ring-yellow-500/30' : ''
+      }`}
+    >
       <div className="flex items-center gap-2">
         <span className="text-xl">{player.avatar}</span>
         <div className="text-left">
@@ -104,6 +119,6 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
           <div style={{ width: Math.max(28, (player.hand.length - 1) * 8 + 28) }} />
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

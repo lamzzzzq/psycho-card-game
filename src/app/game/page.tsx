@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/stores/useGameStore';
+import { useGameFeedback, FeedbackOverlays } from '@/components/game/FeedbackLayer';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { DIMENSION_META } from '@/data/dimensions';
 import { DIMENSIONS, Dimension } from '@/types';
@@ -64,6 +66,11 @@ export default function GamePage() {
 
   // Timer for human turn
   const isHumanActive = game?.currentPlayerIndex === 0 && (game?.phase === 'drawing' || game?.phase === 'discarding');
+
+  const { shakeControls, flashControls, pops } = useGameFeedback(
+    game?.actionLog ?? [],
+    game?.players ?? []
+  );
 
   // Clear selection when phase changes
   useEffect(() => {
@@ -247,7 +254,8 @@ export default function GamePage() {
   const declaredDims = getDeclaredDimensions(humanPlayer);
 
   return (
-    <div className="flex flex-1 flex-col px-4 py-4 max-w-6xl mx-auto w-full">
+    <motion.div animate={shakeControls} className="flex flex-1 flex-col px-4 py-4 max-w-6xl mx-auto w-full">
+      <FeedbackOverlays flashControls={flashControls} pops={pops} />
       <ArrowOverlay from={arrowFrom} color={arrowColor} />
 
       {/* Result banner */}
@@ -426,6 +434,6 @@ export default function GamePage() {
           }}
         />
       )}
-    </div>
+    </motion.div>
   );
 }

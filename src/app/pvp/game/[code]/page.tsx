@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { useParams, useRouter } from 'next/navigation';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { usePvpStore } from '@/stores/usePvpStore';
 import { SerializedPlayer, PvpAction } from '@/types/pvp';
-import { GameCard, Player, PlayerId, DeclaredSet, Dimension, DIMENSIONS } from '@/types';
+import { GameCard, GameAction, Player, PlayerId, DeclaredSet, Dimension, DIMENSIONS } from '@/types';
+import { useGameFeedback, FeedbackOverlays } from '@/components/game/FeedbackLayer';
 import { DIMENSION_META } from '@/data/dimensions';
 import { getTargetCounts } from '@/lib/scoring';
 import { getDeclaredDimensions } from '@/lib/game-logic';
@@ -65,6 +67,11 @@ export default function PvpGamePage() {
   useEffect(() => {
     if (gameState?.phase !== 'claim-window') setSelectedCardIds([]);
   }, [gameState?.phase]);
+
+  const { shakeControls, flashControls, pops } = useGameFeedback(
+    (gameState?.actionLog ?? []) as GameAction[],
+    gameState?.players ?? []
+  );
 
   const showBanner = useCallback((success: boolean, message: string) => {
     setResultBanner({ success, message });
@@ -198,7 +205,8 @@ export default function PvpGamePage() {
   const declaredDims = mePlayer ? getDeclaredDimensions(mePlayer) : new Set<Dimension>();
 
   return (
-    <div className="flex flex-1 flex-col px-4 py-4 max-w-6xl mx-auto w-full">
+    <motion.div animate={shakeControls} className="flex flex-1 flex-col px-4 py-4 max-w-6xl mx-auto w-full">
+      <FeedbackOverlays flashControls={flashControls} pops={pops} />
 
       {/* Result banner */}
       {resultBanner && (
@@ -377,6 +385,6 @@ export default function PvpGamePage() {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
