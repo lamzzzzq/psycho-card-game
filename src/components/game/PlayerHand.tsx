@@ -41,18 +41,25 @@ export function PlayerHand({
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
   }, []);
 
-  // Tag state — purely UI, does not touch game logic
-  // Tag/organize is only available when it's NOT your turn (idle opponent turns)
-  const canTag = !isMyTurn && !isDiscarding && !isDeclaring;
+  // Tag state — purely UI, does not touch game logic. Available any time
+  // the hand isn't locked into an active choice (discarding / declaring).
+  const canTag = !isDiscarding && !isDeclaring;
   const [tagMap, setTagMap] = useState<Record<number, Dimension>>({});
   const [tagPickerCardId, setTagPickerCardId] = useState<number | null>(null);
   const [sorted, setSorted] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
-  // Close picker on outside click or when it becomes your turn
+  // Two-step discard: click a card to pick it (highlight), then press
+  // the 出牌 button (or click the same card again) to actually discard.
+  const [discardPickId, setDiscardPickId] = useState<number | null>(null);
   useEffect(() => {
-    if (isMyTurn) setTagPickerCardId(null);
-  }, [isMyTurn]);
+    if (!isDiscarding) setDiscardPickId(null);
+  }, [isDiscarding]);
+
+  // Close tag picker when it's no longer allowed
+  useEffect(() => {
+    if (!canTag) setTagPickerCardId(null);
+  }, [canTag]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -96,8 +103,17 @@ export function PlayerHand({
 
   function handleCardClick(cardId: number) {
     if (isDeclaring && onToggleSelect) { onToggleSelect(cardId); return; }
-    if (isDiscarding) { onDiscardCard(cardId); return; }
-    // Idle + not my turn: open/close tag picker
+    if (isDiscarding) {
+      // Click once to pick, click the same card again (or the 出牌 button)
+      // to actually discard.
+      if (discardPickId === cardId) {
+        onDiscardCard(cardId);
+        setDiscardPickId(null);
+      } else {
+        setDiscardPickId(cardId);
+      }
+      return;
+    }
     if (canTag) setTagPickerCardId(prev => (prev === cardId ? null : cardId));
   }
 
@@ -114,10 +130,35 @@ export function PlayerHand({
   return (
     <div className="space-y-3">
       {isDiscarding && (
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="text-center text-sm text-yellow-400">
-          点击一张牌弃掉
-        </motion.p>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center gap-2"
+        >
+          <p className="text-sm text-yellow-400">
+            {discardPickId === null ? '点击一张牌选中' : '再点一次该牌 或 点击「出牌」确认'}
+          </p>
+          {discardPickId !== null && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDiscardPickId(null)}
+                className="px-3 py-1.5 rounded-lg text-xs border border-gray-700 text-gray-400 hover:bg-gray-800 transition"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => {
+                  const id = discardPickId;
+                  onDiscardCard(id);
+                  setDiscardPickId(null);
+                }}
+                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-yellow-500 hover:bg-yellow-400 text-gray-900 transition"
+              >
+                出牌
+              </button>
+            </div>
+          )}
+        </motion.div>
       )}
       {isDeclaring && (
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -145,7 +186,7 @@ export function PlayerHand({
       <div className="flex justify-center gap-2 flex-wrap">
         <AnimatePresence>
           {allCards.map((card) => {
-            const isSelected = selectedCardIds.includes(card.id);
+            const isSelected = selectedCardIds.includes(card.id) || discardPickId === card.id;
             const tagDim = tagMap[card.id] ?? null;
             const isPickerOpen = tagPickerCardId === card.id;
 
