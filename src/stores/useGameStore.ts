@@ -46,9 +46,17 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
   playerHu: () => {
     const { game } = get();
-    if (!game || game.phase === 'game-over' || game.phase === 'claim-window') return;
-    // Human is always index 0, can only Hu on their own turn
-    if (game.currentPlayerIndex !== 0) return;
+    if (!game || game.phase === 'game-over') return;
+    // Hu can be attempted:
+    //  - on own turn (drawing / discarding)
+    //  - during any claim-window where human is not the discarder ("跳着胡")
+    if (game.phase === 'claim-window') {
+      if (game.discardedByIndex === 0) return;
+      const pid = game.players[0]?.id;
+      if (pid && game.claimResponses.includes(pid)) return;
+    } else if (game.currentPlayerIndex !== 0) {
+      return;
+    }
     set({ game: attemptHu(game, 0) });
   },
 
@@ -60,7 +68,9 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
   playerDiscard: (cardId) => {
     const { game } = get();
-    if (!game || game.phase !== 'discarding' || !game.drawnCard) return;
+    // Both paths valid: normal turn (drawnCard set) and post-pong forced
+    // discard (drawnCard=null, pick from hand). Bug #7.
+    if (!game || game.phase !== 'discarding') return;
     set({ game: discardCard(game, cardId) });
   },
 
@@ -83,9 +93,12 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
     const pendingCard = game.pendingDiscard;
     const discardedBy = game.discardedByIndex;
+    const playerCount = game.players.length;
+    // Bug #5: only the downstream (next) player may pong.
+    const downstreamIdx = (discardedBy + 1) % playerCount;
 
-    for (let offset = 1; offset < 4; offset++) {
-      const idx = (discardedBy + offset) % 4;
+    for (let offset = 1; offset < playerCount; offset++) {
+      const idx = (discardedBy + offset) % playerCount;
       const latestGame = get().game;
       if (!latestGame || latestGame.phase !== 'claim-window') return;
 
@@ -93,14 +106,19 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       if (player.isHuman) continue;
       if (latestGame.claimResponses.includes(player.id)) continue;
 
-      const decision = makeAIPongDecision(player, pendingCard, latestGame.settings.aiDifficulty);
+      // Non-downstream AIs always pass (new rule). Downstream AI may pong
+      // if the decision engine says so.
+      const canPong = idx === downstreamIdx && !player.skipNextTurn;
+      const decision = canPong
+        ? makeAIPongDecision(player, pendingCard, latestGame.settings.aiDifficulty)
+        : { shouldPong: false as const };
 
       await delay(400);
       const currentGame = get().game;
       if (!currentGame || currentGame.phase !== 'claim-window') return;
 
-      if (decision.shouldPong && decision.dimension && decision.handCardIds) {
-        set({ game: pongCard(currentGame, idx, decision.dimension, decision.handCardIds) });
+      if (decision.shouldPong && (decision as any).dimension && (decision as any).handCardIds) {
+        set({ game: pongCard(currentGame, idx, (decision as any).dimension, (decision as any).handCardIds) });
         return;
       }
       set({ game: skipPong(currentGame, idx) });
@@ -116,6 +134,30 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     // skipNextTurn now auto-resolves inside game-logic after every advance,
     // so by the time this runs the current player is always ready to play.
 
+    // After a successful pong the ponger lands in phase='discarding' with
+    // drawnCard=null (bug #7). Skip the hu/draw steps and pick a discard
+    // directly from hand.
+    if (game.phase === 'discarding' && !game.drawnCard) {
+      const decision = makeAIDecision(currentPlayer, currentPlayer.hand[0], game.settings.aiDifficulty, {
+        discardPile: game.discardPile,
+        actionLog: game.actionLog,
+        currentRound: game.currentRound,
+        totalRounds: game.settings.totalRounds,
+      });
+      await delay(decision.thinkingMs);
+      const latest = get().game;
+      if (!latest || latest.phase !== 'discarding') return;
+      // makeAIDecision's cardToDiscard may be the drawnCard stand-in —
+      // pick any card from hand if it isn't actually in hand.
+      const handIds = new Set(currentPlayer.hand.map((c) => c.id));
+      const cardId = handIds.has(decision.cardToDiscard.id)
+        ? decision.cardToDiscard.id
+        : currentPlayer.hand[0]?.id;
+      if (cardId == null) return;
+      set({ game: discardCard(latest, cardId) });
+      return;
+    }
+
     // AI Hu check
     const huDecision = makeAIHuDecision(currentPlayer, game.settings.aiDifficulty);
     if (huDecision.shouldHu) {
@@ -127,9 +169,11 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       if (afterHu.phase === 'game-over') return;
     }
 
-    // Draw phase
+    // Draw phase (only if we're still in 'drawing' — hu-fail may have
+    // advanced the turn, and the defensive skip-guard may have skipped us)
     const latestForDraw = get().game;
-    if (!latestForDraw || latestForDraw.phase === 'game-over') return;
+    if (!latestForDraw || latestForDraw.phase !== 'drawing') return;
+    if (latestForDraw.currentPlayerIndex !== game.currentPlayerIndex) return;
 
     const afterDraw = drawCard(latestForDraw);
     set({ game: afterDraw });

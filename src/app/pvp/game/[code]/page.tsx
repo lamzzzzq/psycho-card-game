@@ -7,7 +7,12 @@ import { usePlayerStore } from '@/stores/usePlayerStore';
 import { usePvpStore } from '@/stores/usePvpStore';
 import { SerializedPlayer, PvpAction } from '@/types/pvp';
 import { GameCard, GameAction, Player, PlayerId, DeclaredSet, Dimension, DIMENSIONS } from '@/types';
-import { useGameFeedback, FeedbackOverlays } from '@/components/game/FeedbackLayer';
+import {
+  useGameFeedback,
+  FeedbackOverlays,
+  useYourTurnNotifier,
+  YourTurnBanner,
+} from '@/components/game/FeedbackLayer';
 import { FlyingCard } from '@/components/game/FlyingCard';
 import { supabase } from '@/lib/supabase';
 import { leaveRoom } from '@/lib/room-api';
@@ -126,6 +131,13 @@ export default function PvpGamePage() {
     gameState?.players ?? []
   );
 
+  // Your-turn banner: fires when the turn becomes the viewer's turn.
+  const myIsCurrent =
+    !!gameState &&
+    gameState.players[gameState.currentPlayerIndex]?.id === (myPlayerId ?? player?.id) &&
+    (gameState.phase === 'drawing' || gameState.phase === 'discarding');
+  const yourTurnKey = useYourTurnNotifier(gameState?.currentPlayerIndex, myIsCurrent);
+
   const showBanner = useCallback((success: boolean, message: string) => {
     setResultBanner({ success, message });
     setTimeout(() => setResultBanner(null), 3000);
@@ -177,12 +189,21 @@ export default function PvpGamePage() {
 
   const myId = myPlayerId ?? player?.id;
   const meSerialized = gameState.players.find(p => p.id === myId);
+  const myIndex = gameState.players.findIndex(p => p.id === myId);
   const opponents = gameState.players.filter(p => p.id !== myId);
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isMyTurn = currentPlayer?.id === myId;
   const isClaimWindow = gameState.phase === 'claim-window' && gameState.pendingDiscard !== null;
   const alreadyResponded = !!myId && (gameState.claimResponses?.includes(myId) ?? false);
-  const canClaim = isClaimWindow && !isMyTurn && !alreadyResponded;
+  const isDiscarderMe = gameState.discardedByIndex === myIndex;
+  const canClaim = isClaimWindow && !isDiscarderMe && !alreadyResponded;
+  // Bug #5: pong is only available to the downstream (next) player.
+  const playerCount = gameState.players.length;
+  const isDownstream = isClaimWindow &&
+    (gameState.discardedByIndex + 1) % playerCount === myIndex;
+  const canPong = canClaim && isDownstream && !meSerialized?.skipNextTurn;
+  const canHu = (isMyTurn && gameState.phase !== 'claim-window' && !meSerialized?.skipNextTurn)
+    || (canClaim && !meSerialized?.skipNextTurn);
   const canDraw = isMyTurn && gameState.phase === 'drawing';
   const isDiscarding = isMyTurn && gameState.phase === 'discarding';
 
@@ -331,6 +352,7 @@ export default function PvpGamePage() {
   return (
     <motion.div animate={shakeControls} className="flex flex-1 flex-col px-4 py-4 max-w-6xl mx-auto w-full">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
+      <YourTurnBanner bannerKey={yourTurnKey} />
       {flyingCards.map((f) => (
         <FlyingCard key={f.id} from={f.from} to={f.to} text={f.text} onComplete={() => removeFlyingCard(f.id)} />
       ))}
@@ -371,6 +393,9 @@ export default function PvpGamePage() {
             <DiscardPile
               topCard={gameState.discardPile.length > 0 ? gameState.discardPile[gameState.discardPile.length - 1] : null}
               count={gameState.discardPile.length}
+              discardPile={gameState.discardPile}
+              actions={gameState.actionLog as any}
+              players={gameState.players}
             />
           </div>
         </div>
@@ -422,7 +447,9 @@ export default function PvpGamePage() {
             </div>
           )}
 
-          {/* Claim window — opponent discarded, can pong or hu (once per window) */}
+          {/* Claim window — opponent discarded. Pong only available to
+              the downstream player (bug #5). Hu available to anyone
+              non-discarder ("跳着胡"). */}
           {canClaim && gameState.pendingDiscard && (
             <div className="rounded-xl border border-orange-500/40 bg-orange-950/20 p-4 space-y-3">
               <div className="flex items-center justify-between">
@@ -438,13 +465,15 @@ export default function PvpGamePage() {
                   </div>
                 </div>
                 <div className="text-xs text-gray-400">
-                  {(() => {
-                    const dim = 'dimension' in gameState.pendingDiscard ? (gameState.pendingDiscard as any).dimension as Dimension : null;
+                  {canPong ? (() => {
+                    const dim = 'dimension' in gameState.pendingDiscard!
+                      ? (gameState.pendingDiscard as any).dimension as Dimension
+                      : null;
                     const need = dim ? Math.max(0, (targets?.[dim] ?? 2) - 1) : 2;
                     return need === 0
                       ? '你该维度只需 1 张 — 可直接点碰'
                       : `从手牌中选 ${need} 张同维度的牌，再点碰`;
-                  })()}
+                  })() : '你不是下家，仅可选择 过 或 食胡'}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -454,8 +483,10 @@ export default function PvpGamePage() {
                 >
                   过
                 </button>
-                {(() => {
-                  const dim = 'dimension' in gameState.pendingDiscard ? (gameState.pendingDiscard as any).dimension as Dimension : null;
+                {canPong && (() => {
+                  const dim = 'dimension' in gameState.pendingDiscard!
+                    ? (gameState.pendingDiscard as any).dimension as Dimension
+                    : null;
                   const need = dim ? Math.max(0, (targets?.[dim] ?? 2) - 1) : 2;
                   return (
                     <button
@@ -467,12 +498,14 @@ export default function PvpGamePage() {
                     </button>
                   );
                 })()}
-                <button
-                  onClick={handleHu}
-                  className="px-4 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-red-600 to-orange-500 text-white hover:opacity-90 transition"
-                >
-                  🀄 胡！
-                </button>
+                {!meSerialized?.skipNextTurn && (
+                  <button
+                    onClick={handleHu}
+                    className="px-4 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-red-600 to-orange-500 text-white hover:opacity-90 transition"
+                  >
+                    食胡
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -489,7 +522,7 @@ export default function PvpGamePage() {
                 cards={mePlayer.hand}
                 drawnCard={isMyTurn ? (gameState.drawnCard ?? null) : null}
                 isDiscarding={isDiscarding}
-                isDeclaring={canClaim}
+                isDeclaring={canPong}
                 isMyTurn={isMyTurn}
                 selectedCardIds={selectedCardIds}
                 onDiscardCard={handleDiscard}
@@ -505,12 +538,19 @@ export default function PvpGamePage() {
               {canDraw && (
                 <p className="text-sm text-purple-400 animate-pulse">点击牌堆抽一张牌</p>
               )}
-              <button
-                onClick={handleHu}
-                className="px-5 py-2 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 text-white text-sm font-bold hover:opacity-90 transition shadow-lg"
-              >
-                🀄 胡！
-              </button>
+              {isDiscarding && !gameState.drawnCard && (
+                <p className="text-sm text-orange-400 animate-pulse">
+                  碰牌成功 — 请直接出一张手牌
+                </p>
+              )}
+              {!meSerialized?.skipNextTurn && (
+                <button
+                  onClick={handleHu}
+                  className="px-5 py-2 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 text-white text-sm font-bold hover:opacity-90 transition shadow-lg"
+                >
+                  食胡
+                </button>
+              )}
             </div>
           )}
 

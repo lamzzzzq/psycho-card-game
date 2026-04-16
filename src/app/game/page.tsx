@@ -4,7 +4,12 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/stores/useGameStore';
-import { useGameFeedback, FeedbackOverlays } from '@/components/game/FeedbackLayer';
+import {
+  useGameFeedback,
+  FeedbackOverlays,
+  useYourTurnNotifier,
+  YourTurnBanner,
+} from '@/components/game/FeedbackLayer';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { DIMENSION_META } from '@/data/dimensions';
 import { DIMENSIONS, Dimension } from '@/types';
@@ -72,6 +77,12 @@ export default function GamePage() {
     game?.players ?? []
   );
 
+  // Your-turn banner: fires each time the turn becomes the human's (index 0)
+  const yourTurnKey = useYourTurnNotifier(
+    game?.currentPlayerIndex,
+    game?.currentPlayerIndex === 0 && (game?.phase === 'drawing' || game?.phase === 'discarding')
+  );
+
   // Clear selection when phase changes
   useEffect(() => {
     if (game?.phase !== 'claim-window') {
@@ -90,11 +101,17 @@ export default function GamePage() {
             if (!g) return 0;
             if (g.phase === 'drawing') {
               useGameStore.getState().playerDraw();
-            } else if (g.phase === 'discarding' && g.drawnCard) {
+            } else if (g.phase === 'discarding') {
+              // Normal discard (with drawnCard) OR post-pong forced discard
+              // (drawnCard=null, pick from hand only — bug #7).
               const human = g.players[0];
-              const allCards = [...human.hand, g.drawnCard];
-              const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
-              useGameStore.getState().playerDiscard(randomCard.id);
+              const allCards = g.drawnCard
+                ? [...human.hand, g.drawnCard]
+                : [...human.hand];
+              if (allCards.length > 0) {
+                const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
+                useGameStore.getState().playerDiscard(randomCard.id);
+              }
             }
             return 0;
           }
@@ -200,9 +217,9 @@ export default function GamePage() {
     if (beforeGame && afterGame) {
       const lastAction = afterGame.actionLog[afterGame.actionLog.length - 1];
       if (lastAction?.type === 'hu-success') {
-        showBanner(true, '胡了！🀄 你赢了！');
+        showBanner(true, '食胡！你赢了！');
       } else if (lastAction?.type === 'hu-fail') {
-        showBanner(false, '胡失败！手牌公开，跳过下轮');
+        showBanner(false, '食胡失败！手牌公开，罚停一轮');
       }
     }
   }, [playerHu]);
@@ -225,15 +242,32 @@ export default function GamePage() {
 
   const handleSkipPong = useCallback(async () => {
     setSelectedCardIds([]);
+    // Register the human's pass first so allClaimersResponded can fire,
+    // then drive the AI responses.
+    const g = useGameStore.getState().game;
+    if (g && g.phase === 'claim-window') {
+      const humanId = g.players[0]?.id;
+      if (humanId && !g.claimResponses.includes(humanId) && g.discardedByIndex !== 0) {
+        playerSkipPong();
+      }
+    }
     setAiRunning(true);
     try { await resolvePongWindow(); } finally { setAiRunning(false); }
-  }, [resolvePongWindow]);
+  }, [resolvePongWindow, playerSkipPong]);
 
   const handleResolvePongAI = useCallback(async () => {
     setSelectedCardIds([]);
+    // Auto-countdown expired — also register human's implicit pass.
+    const g = useGameStore.getState().game;
+    if (g && g.phase === 'claim-window') {
+      const humanId = g.players[0]?.id;
+      if (humanId && !g.claimResponses.includes(humanId) && g.discardedByIndex !== 0) {
+        playerSkipPong();
+      }
+    }
     setAiRunning(true);
     try { await resolvePongWindow(); } finally { setAiRunning(false); }
-  }, [resolvePongWindow]);
+  }, [resolvePongWindow, playerSkipPong]);
 
   if (!game) {
     return (
@@ -249,6 +283,19 @@ export default function GamePage() {
   const canDraw = isHumanTurn && game.phase === 'drawing';
   const isDiscarding = isHumanTurn && game.phase === 'discarding';
   const isPongWindow = game.phase === 'claim-window' && game.pendingDiscard !== null && game.discardedByIndex !== 0;
+  // Bug #5: pong is only offered to the downstream player. Human is index 0.
+  const isDownstream =
+    game.phase === 'claim-window' &&
+    (game.discardedByIndex + 1) % game.players.length === 0;
+  const canHu =
+    game.phase !== 'game-over' &&
+    !humanPlayer.skipNextTurn &&
+    (
+      (isHumanTurn && game.phase !== 'claim-window') ||
+      (game.phase === 'claim-window' &&
+        game.discardedByIndex !== 0 &&
+        !game.claimResponses.includes(humanPlayer.id))
+    );
   const topDiscard = game.discardPile.length > 0 ? game.discardPile[game.discardPile.length - 1] : null;
   const targets = getTargetCounts(humanPlayer.bigFiveScores);
   const declaredDims = getDeclaredDimensions(humanPlayer);
@@ -256,6 +303,7 @@ export default function GamePage() {
   return (
     <motion.div animate={shakeControls} className="flex flex-1 flex-col px-4 py-4 max-w-6xl mx-auto w-full">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
+      <YourTurnBanner bannerKey={yourTurnKey} />
       <ArrowOverlay from={arrowFrom} color={arrowColor} />
 
       {/* Result banner */}
@@ -295,7 +343,13 @@ export default function GamePage() {
             <DrawPile count={game.drawPile.length} canDraw={canDraw} onDraw={playerDraw} />
           </div>
           <div ref={discardPileRef}>
-            <DiscardPile topCard={topDiscard} count={game.discardPile.length} />
+            <DiscardPile
+              topCard={topDiscard}
+              count={game.discardPile.length}
+              discardPile={game.discardPile}
+              actions={game.actionLog}
+              players={game.players}
+            />
           </div>
         </div>
         <div className="hidden md:block w-48">
@@ -344,8 +398,8 @@ export default function GamePage() {
           </div>
         </div>
 
-        {/* Pong panel */}
-        {isPongWindow && game.pendingDiscard && (
+        {/* Pong panel — only shown to the downstream player (bug #5) */}
+        {isPongWindow && isDownstream && game.pendingDiscard && (
           <PongPanel
             pendingCard={game.pendingDiscard}
             player={humanPlayer}
@@ -356,6 +410,22 @@ export default function GamePage() {
             onResolveAI={handleResolvePongAI}
           />
         )}
+        {/* Non-downstream claim hint (hu-only path) */}
+        {isPongWindow && !isDownstream && game.pendingDiscard &&
+          !game.claimResponses.includes(humanPlayer.id) && (
+            <div className="rounded-xl border border-orange-500/30 bg-orange-950/20 p-3 flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-xs text-orange-300">
+                {game.players[game.discardedByIndex]?.name} 弃了一张牌 —
+                你不是下家，不能碰。如要食胡请在下方点「食胡」。
+              </p>
+              <button
+                onClick={handleSkipPong}
+                className="px-3 py-1.5 rounded-lg text-xs border border-gray-700 text-gray-400 hover:bg-gray-800 transition"
+              >
+                过
+              </button>
+            </div>
+          )}
 
         {/* Hand + Declared cards */}
         <div className="flex items-start justify-center gap-4">
@@ -369,7 +439,7 @@ export default function GamePage() {
               cards={humanPlayer.hand}
               drawnCard={isHumanTurn ? game.drawnCard : null}
               isDiscarding={isDiscarding}
-              isDeclaring={isPongWindow}
+              isDeclaring={isPongWindow && isDownstream}
               isMyTurn={isHumanTurn}
               selectedCardIds={selectedCardIds}
               onDiscardCard={handleDiscardCard}
@@ -381,13 +451,15 @@ export default function GamePage() {
 
         {/* Action buttons */}
         <div className="flex items-center justify-center gap-3">
-          {/* Hu button — always visible on human turn */}
-          {isHumanTurn && game.phase !== 'game-over' && game.phase !== 'claim-window' && !humanPlayer.skipNextTurn && (
+          {/* Hu button — visible on own turn, or during an opponent's
+              claim-window ("跳着胡"). Hidden when the human has already
+              responded to this claim window. */}
+          {canHu && (
             <button
               onClick={handleHu}
               className="px-5 py-2 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 text-white text-sm font-bold hover:opacity-90 transition shadow-lg"
             >
-              🀄 胡！
+              食胡
             </button>
           )}
 
@@ -408,6 +480,11 @@ export default function GamePage() {
           <div className="flex items-center justify-center gap-2">
             {canDraw && (
               <p className="text-sm text-purple-400 animate-pulse">点击牌堆抽一张牌</p>
+            )}
+            {isDiscarding && !game.drawnCard && (
+              <p className="text-sm text-orange-400 animate-pulse">
+                碰牌成功 — 请直接出一张手牌
+              </p>
             )}
             <span className={`text-sm font-mono font-bold ${timer <= 5 ? 'text-red-400 animate-pulse' : timer <= 10 ? 'text-yellow-400' : 'text-gray-500'}`}>
               {timer}s

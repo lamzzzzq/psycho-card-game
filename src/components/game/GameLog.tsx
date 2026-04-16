@@ -28,10 +28,10 @@ export function GameLog({ actions, players }: GameLogProps) {
                 {action.type === 'draw' && <span>抽了一张牌</span>}
                 {action.type === 'discard' && <span>弃了一张牌</span>}
                 {action.type === 'hu-success' && (
-                  <span className="text-emerald-400 font-bold">胡了！🀄 游戏结束</span>
+                  <span className="text-emerald-400 font-bold">食胡！游戏结束</span>
                 )}
                 {action.type === 'hu-fail' && (
-                  <span className="text-red-400">胡失败！手牌公开，跳过下轮</span>
+                  <span className="text-red-400">食胡失败！手牌公开，罚停一轮</span>
                 )}
                 {action.type === 'pong-success' && action.dimension && (
                   <span style={{ color: DIMENSION_META[action.dimension].colorHex }}>

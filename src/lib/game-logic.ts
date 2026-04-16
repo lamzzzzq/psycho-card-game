@@ -102,6 +102,10 @@ function finalizeClaimWindow(state: GameState): GameState {
 // Auto-skip any penalized player (skipNextTurn=true) at the head of the turn
 // queue. Clears the flag + revealedHand, logs a skip action, and recurses up
 // to playerCount times (guard against all-penalized infinite loop).
+//
+// Safe to call from any 'drawing' state — it's the single source of truth
+// for honoring skipNextTurn flags. drawCard/discardCard call this defensively
+// as a deadlock guard (see bug #6 fix).
 export function skipPenalizedPlayers(state: GameState): GameState {
   let current = state;
   for (let i = 0; i < current.players.length; i++) {
@@ -229,6 +233,12 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
       return allClaimersResponded(nextState) ? finalizeClaimWindow(nextState) : nextState;
     }
 
+    // Own-turn hu-fail: spec says penalty is 罚停一轮 (skip next turn),
+    // current turn continues normally. Player still needs to discard
+    // (if they had drawn) or draw+discard (if they hadn't). The skip-
+    // next-turn flag is honored when the turn wraps back to this player,
+    // via the defensive guard in drawCard + the usual skipPenalizedPlayers
+    // calls from discardCard / finalizeClaimWindow.
     return {
       ...state,
       players: newPlayers,
@@ -238,6 +248,11 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
 }
 
 export function drawCard(state: GameState): GameState {
+  // NOTE: We intentionally do NOT auto-skip penalized current players
+  // here. Per spec, own-turn hu-fail continues the current turn (penalty
+  // is 罚停下一轮, not 罚停本轮). skipPenalizedPlayers is only called
+  // after a turn advance (discardCard / finalizeClaimWindow / pongCard).
+
   let drawPile = state.drawPile;
   let discardPile = state.discardPile;
 
@@ -288,14 +303,16 @@ export function drawCard(state: GameState): GameState {
 }
 
 export function discardCard(state: GameState, cardId: number): GameState {
-  if (!state.drawnCard) return state;
-
+  // After a successful pong, phase='discarding' with drawnCard=null — ponger
+  // must discard directly from hand. Otherwise the normal path: drawnCard
+  // is the just-drawn card, also discardable.
   const playerIndex = state.currentPlayerIndex;
   const player = state.players[playerIndex];
   const drawnCard = state.drawnCard;
 
-  const allCards = [...player.hand, drawnCard];
-  const cardToDiscard = allCards.find((c) => c.id === cardId)!;
+  const allCards = drawnCard ? [...player.hand, drawnCard] : [...player.hand];
+  const cardToDiscard = allCards.find((c) => c.id === cardId);
+  if (!cardToDiscard) return state;
   const newHand = allCards.filter((c) => c.id !== cardId);
 
   const action: GameAction = {
@@ -353,6 +370,14 @@ export function pongCard(
 ): GameState {
   if (!state.pendingDiscard || state.phase !== 'claim-window') return state;
 
+  // Bug #5: pong is restricted to the downstream (next) player only.
+  // Hu can still be attempted by anyone via attemptHu.
+  const downstreamIndex = (state.discardedByIndex + 1) % state.players.length;
+  if (pongerIndex !== downstreamIndex) return state;
+
+  // Penalized players can't pong (matches hu-fail/pong-fail 罚停一轮 rule).
+  if (state.players[pongerIndex].skipNextTurn) return state;
+
   const ponger = state.players[pongerIndex];
   const pendingCard = state.pendingDiscard;
   const targets = getTargetCounts(ponger.bigFiveScores);
@@ -407,8 +432,9 @@ export function pongCard(
       };
     }
 
-    // Pong steals the turn: ponger plays next (draw + discard), not the
-    // player after the discarder.
+    // Pong steals the turn: ponger plays next. Per bug #7, ponger does
+    // NOT draw a new card — they must immediately discard one from hand.
+    // phase='discarding' + drawnCard=null signals this state.
     return skipPenalizedPlayers({
       ...state,
       players: newPlayers,
@@ -416,7 +442,8 @@ export function pongCard(
       discardedByIndex: -1,
       claimResponses: [],
       currentPlayerIndex: pongerIndex,
-      phase: 'drawing',
+      phase: 'discarding',
+      drawnCard: null,
       actionLog: [...state.actionLog, action],
       winner: null,
     });

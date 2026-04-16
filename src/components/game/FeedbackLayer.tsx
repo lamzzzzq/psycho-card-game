@@ -12,7 +12,7 @@ interface Pop {
   id: number;
   text: string;
   playerName: string;
-  kind: 'pong' | 'hu' | 'hu-fail' | 'pong-fail';
+  kind: 'pong' | 'hu' | 'hu-fail' | 'pong-fail' | 'your-turn';
   colorHex?: string;
 }
 
@@ -69,7 +69,7 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[])
         ...p,
         {
           id: ++popIdRef.current,
-          text: '🏆 胡！',
+          text: '🏆 食胡！',
           playerName: nameOf(latest.playerId),
           kind: 'hu',
         },
@@ -79,7 +79,7 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[])
         ...p,
         {
           id: ++popIdRef.current,
-          text: '💥 胡失败',
+          text: '💥 食胡失败',
           playerName: nameOf(latest.playerId),
           kind: 'hu-fail',
         },
@@ -106,6 +106,66 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[])
   }, [pops]);
 
   return { shakeControls, flashControls, pops };
+}
+
+/**
+ * Watches currentPlayerIndex. When it flips TO the viewer, flashes a
+ * prominent "轮到你了!" banner. Silent for opponent turns.
+ */
+export function useYourTurnNotifier(
+  currentPlayerIndex: number | undefined,
+  viewerIsCurrent: boolean
+) {
+  const [banner, setBanner] = useState<number | null>(null);
+  const prevIsCurrentRef = useRef<boolean>(false);
+  const prevIdxRef = useRef<number | undefined>(currentPlayerIndex);
+  const nextIdRef = useRef(0);
+
+  useEffect(() => {
+    const prevIdx = prevIdxRef.current;
+    const prevIsCurrent = prevIsCurrentRef.current;
+    prevIdxRef.current = currentPlayerIndex;
+    prevIsCurrentRef.current = viewerIsCurrent;
+
+    // Only fire when the turn actually changed AND became the viewer's turn
+    if (viewerIsCurrent && !prevIsCurrent && prevIdx !== currentPlayerIndex) {
+      setBanner(++nextIdRef.current);
+    }
+  }, [currentPlayerIndex, viewerIsCurrent]);
+
+  useEffect(() => {
+    if (banner == null) return;
+    const t = setTimeout(() => setBanner(null), 1500);
+    return () => clearTimeout(t);
+  }, [banner]);
+
+  return banner;
+}
+
+export function YourTurnBanner({ bannerKey }: { bannerKey: number | null }) {
+  return (
+    <AnimatePresence>
+      {bannerKey != null && (
+        <motion.div
+          key={bannerKey}
+          initial={{ opacity: 0, scale: 0.4, y: -40 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          transition={{ type: 'spring', stiffness: 360, damping: 22 }}
+          className="pointer-events-none fixed top-1/3 left-1/2 -translate-x-1/2 z-[75] text-center"
+        >
+          <div className="rounded-2xl bg-gradient-to-br from-purple-500 via-fuchsia-500 to-amber-400 px-8 py-4 shadow-[0_0_40px_rgba(168,85,247,0.55)]">
+            <div className="text-[11px] uppercase tracking-[0.3em] text-white/80 font-bold">
+              Your Turn
+            </div>
+            <div className="mt-1 text-3xl font-black text-white drop-shadow-sm">
+              轮到你了！
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 }
 
 export function FeedbackOverlays({
@@ -138,8 +198,13 @@ export function FeedbackOverlays({
                     ? 'rgba(251, 191, 36, 0.95)'
                     : pop.kind === 'pong'
                     ? (pop.colorHex ?? '#f97316') + 'ee'
+                    : pop.kind === 'your-turn'
+                    ? 'rgba(168, 85, 247, 0.95)'
                     : 'rgba(239, 68, 68, 0.9)',
-                color: pop.kind === 'hu-fail' || pop.kind === 'pong-fail' ? '#fff' : '#111',
+                color:
+                  pop.kind === 'hu-fail' || pop.kind === 'pong-fail' || pop.kind === 'your-turn'
+                    ? '#fff'
+                    : '#111',
               }}
             >
               <span className="mr-1 opacity-70">{pop.playerName}</span>

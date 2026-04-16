@@ -29,7 +29,9 @@ export function PlayerHand({
   onToggleSelect,
   onCardHover,
 }: PlayerHandProps) {
-  const rawCards = drawnCard ? [...cards, drawnCard] : cards;
+  // Newly drawn card goes to the FIRST slot so it's easy to spot.
+  const rawCards = drawnCard ? [drawnCard, ...cards] : cards;
+  const drawnCardId = drawnCard?.id ?? null;
 
   // Cheat mode: hold Shift to reveal dimensions
   const [cheatMode, setCheatMode] = useState(false);
@@ -189,6 +191,7 @@ export function PlayerHand({
             const isSelected = selectedCardIds.includes(card.id) || discardPickId === card.id;
             const tagDim = tagMap[card.id] ?? null;
             const isPickerOpen = tagPickerCardId === card.id;
+            const isNewCard = drawnCardId !== null && card.id === drawnCardId;
 
             return (
               <motion.div
@@ -200,7 +203,7 @@ export function PlayerHand({
                 animate={{ opacity: 1, y: isSelected ? -12 : 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.4 } }}
                 transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className="relative"
+                className="relative group"
                 onMouseEnter={(e) => { if (isDiscarding) onCardHover(e.currentTarget as HTMLElement); }}
                 onMouseLeave={() => { if (isDiscarding) onCardHover(null); }}
               >
@@ -211,6 +214,20 @@ export function PlayerHand({
                   tagDimension={tagDim}
                   onClick={() => handleCardClick(card.id)}
                 />
+                {/* "NEW" badge on the just-drawn card. Disappears automatically
+                    on next turn (drawnCard becomes null in state). */}
+                {isNewCard && (
+                  <motion.div
+                    initial={{ scale: 0, rotate: -12 }}
+                    animate={{ scale: 1, rotate: -12 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 18, delay: 0.1 }}
+                    className="absolute -top-2 -right-2 z-30 pointer-events-none select-none"
+                  >
+                    <div className="rounded-full bg-gradient-to-br from-amber-300 to-rose-500 px-2 py-0.5 text-[10px] font-black text-white shadow-lg ring-2 ring-white/40">
+                      NEW
+                    </div>
+                  </motion.div>
+                )}
 
                 {/* Tag picker popover — only when canTag */}
                 <AnimatePresence>
