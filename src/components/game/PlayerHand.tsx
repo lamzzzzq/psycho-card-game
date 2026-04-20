@@ -201,7 +201,7 @@ export function PlayerHand({
       )}
 
       <div className={useCompactCards
-        ? 'grid grid-cols-3 gap-x-2 gap-y-2.5'
+        ? 'psy-scroll flex snap-x snap-mandatory gap-2 overflow-x-auto px-2 pb-2 pt-1 [scroll-padding-inline:0.5rem]'
         : 'grid grid-cols-4 justify-items-center gap-x-2 gap-y-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8'
       }>
         <AnimatePresence>
@@ -221,7 +221,7 @@ export function PlayerHand({
                 animate={{ opacity: 1, y: isSelected ? -12 : 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.4 } }}
                 transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className={`relative group ${useCompactCards ? 'mx-auto w-fit' : 'w-full max-w-[6rem] justify-self-center'}`}
+                className={`relative group ${useCompactCards ? 'shrink-0 snap-center' : 'w-full max-w-[6rem] justify-self-center'}`}
                 onMouseEnter={(e) => { if (isDiscarding) onCardHover(e.currentTarget as HTMLElement); }}
                 onMouseLeave={() => { if (isDiscarding) onCardHover(null); }}
               >

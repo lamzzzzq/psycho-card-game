@@ -277,11 +277,6 @@ export default function PvpGamePage() {
   function handlePong() {
     if (!gameState?.pendingDiscard || !('dimension' in gameState.pendingDiscard)) return;
     const dim = (gameState.pendingDiscard as any).dimension as Dimension;
-    const need = Math.max(0, (targets?.[dim] ?? 2) - 1);
-    if (selectedCardIds.length < need) {
-      showBanner(false, '先选出你判断为同类人格描述的候选牌');
-      return;
-    }
     dispatchAction({ type: 'pong', dimension: dim, handCardIds: selectedCardIds });
   }
 
@@ -515,21 +510,14 @@ export default function PvpGamePage() {
                 >
                   过
                 </button>
-                {canPong && (() => {
-                  const dim = 'dimension' in gameState.pendingDiscard!
-                    ? (gameState.pendingDiscard as any).dimension as Dimension
-                    : null;
-                  const need = dim ? Math.max(0, (targets?.[dim] ?? 2) - 1) : 2;
-                  return (
-                    <button
-                      onClick={handlePong}
-                      disabled={selectedCardIds.length < need}
-                      className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold"
-                    >
-                      碰！{need > 0 && selectedCardIds.length > 0 ? `(已选${selectedCardIds.length}/${need})` : ''}
-                    </button>
-                  );
-                })()}
+                {canPong && (
+                  <button
+                    onClick={handlePong}
+                    className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold"
+                  >
+                    碰！{selectedCardIds.length > 0 ? `（已选 ${selectedCardIds.length} 张）` : ''}
+                  </button>
+                )}
                 {!meSerialized?.skipNextTurn && (
                   <button
                     onClick={handleHu}

@@ -449,13 +449,13 @@ export function pongCard(
       winner: null,
     });
   } else {
-    // PONG FAIL — only the selected cards are exposed (attempt is public),
-    // rest of the hand stays hidden. Ponger also skips next turn.
-    // Ponger is locked out of this claim window; wait for remaining claimers.
+    // PONG FAIL — full hand is exposed AND the selected subset is shown
+    // separately so other players can see exactly what bet went wrong.
+    // Ponger also skips next turn and is locked out of this claim window.
     const exposedCards = selectedHandCards;
     const newPlayers = state.players.map((p, i) =>
       i === pongerIndex
-        ? { ...p, skipNextTurn: true, revealedSelectedCards: exposedCards }
+        ? { ...p, skipNextTurn: true, revealedHand: true, revealedSelectedCards: exposedCards }
         : p
     );
 

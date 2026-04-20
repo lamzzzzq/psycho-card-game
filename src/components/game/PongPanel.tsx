@@ -52,14 +52,8 @@ export function PongPanel({
   const totalWithPending = handCardsOfDim.length + 1;
   const canClaimThisDim = !declaredDims.has(pendingDim) && totalWithPending >= targets[pendingDim];
 
-  // For claim: player selects hand cards + pending card auto-included
-  const selectedCorrectCount = selectedCardIds.filter((id) => {
-    const card = player.hand.find((c) => c.id === id);
-    return card && isPersonalityCard(card) && card.dimension === pendingDim;
-  }).length;
-
-  const neededFromHand = targets[pendingDim] - 1; // -1 because pending card counts
-  const canConfirmClaim = selectedCorrectCount >= neededFromHand;
+  // No more disable on count threshold — let the player commit with any
+  // selection. They eat the penalty if they're wrong; that's their call.
 
   return (
     <motion.div
@@ -134,17 +128,10 @@ export function PongPanel({
           </button>
           {canClaimThisDim && (
             <button
-              disabled={!canConfirmClaim}
               onClick={() => onClaim(pendingDim, selectedCardIds)}
-              className="rounded-full px-3 py-1.5 text-[11px] font-bold transition disabled:cursor-not-allowed sm:px-4 sm:py-2 sm:text-xs"
-              style={{
-                background: canConfirmClaim
-                  ? 'linear-gradient(135deg, #a86d2d 0%, #d3a364 100%)'
-                  : 'linear-gradient(135deg, rgba(53,55,61,0.8), rgba(37,39,44,0.8))',
-                color: canConfirmClaim ? '#fff7eb' : 'rgba(236,223,200,0.36)',
-              }}
+              className="psy-btn psy-btn-accent px-3 py-1.5 text-[11px] font-bold sm:px-4 sm:py-2 sm:text-xs"
             >
-              归档判定
+              归档判定{selectedCardIds.length > 0 ? `（已选 ${selectedCardIds.length} 张）` : ''}
             </button>
           )}
         </div>
