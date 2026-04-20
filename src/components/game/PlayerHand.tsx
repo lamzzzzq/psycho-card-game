@@ -12,6 +12,7 @@ interface PlayerHandProps {
   isDiscarding: boolean;
   isDeclaring?: boolean;
   isMyTurn?: boolean;
+  mobileCompact?: boolean;
   selectedCardIds?: number[];
   onDiscardCard: (cardId: number) => void;
   onToggleSelect?: (cardId: number) => void;
@@ -24,11 +25,24 @@ export function PlayerHand({
   isDiscarding,
   isDeclaring = false,
   isMyTurn = false,
+  mobileCompact = false,
   selectedCardIds = [],
   onDiscardCard,
   onToggleSelect,
   onCardHover,
 }: PlayerHandProps) {
+  const [isCompactViewport, setIsCompactViewport] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)');
+    const sync = () => setIsCompactViewport(media.matches);
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
+
+  const useCompactCards = mobileCompact && isCompactViewport;
+
   // Newly drawn card goes to the FIRST slot so it's easy to spot.
   const rawCards = drawnCard ? [drawnCard, ...cards] : cards;
   const drawnCardId = drawnCard?.id ?? null;
@@ -130,21 +144,21 @@ export function PlayerHand({
   }
 
   return (
-    <div className="space-y-3">
+    <div className={`space-y-2 ${useCompactCards ? 'sm:space-y-3' : 'space-y-3'}`}>
       {isDiscarding && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="flex flex-col items-center gap-2"
         >
-          <p className="text-sm text-yellow-400">
-            {discardPickId === null ? '点击一张牌选中' : '再点一次该牌 或 点击「出牌」确认'}
+          <p className="psy-serif text-sm text-[var(--psy-accent)]">
+            {discardPickId === null ? '先圈定一张要舍弃的线索牌' : '再次点击该牌，或点「提交弃牌」确认'}
           </p>
           {discardPickId !== null && (
             <div className="flex gap-2">
               <button
                 onClick={() => setDiscardPickId(null)}
-                className="px-3 py-1.5 rounded-lg text-xs border border-gray-700 text-gray-400 hover:bg-gray-800 transition"
+                className="psy-btn psy-btn-ghost px-3 py-1.5 text-xs"
               >
                 取消
               </button>
@@ -154,9 +168,9 @@ export function PlayerHand({
                   onDiscardCard(id);
                   setDiscardPickId(null);
                 }}
-                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-yellow-500 hover:bg-yellow-400 text-gray-900 transition"
+                className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold"
               >
-                出牌
+                提交弃牌
               </button>
             </div>
           )}
@@ -164,8 +178,8 @@ export function PlayerHand({
       )}
       {isDeclaring && (
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="text-center text-sm text-purple-400">
-          点击选择要 DECLARE 的牌
+          className="psy-serif text-center text-sm text-[var(--psy-accent)]">
+          选出你认为属于同一人格线索的牌
         </motion.p>
       )}
 
@@ -174,18 +188,22 @@ export function PlayerHand({
         <div className="flex justify-center">
           <button
             onClick={() => setSorted(s => !s)}
-            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-              sorted
-                ? 'bg-purple-600 border-purple-500 text-white'
-                : 'bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400'
-            }`}
+            className="psy-btn px-3 py-1 text-xs font-medium"
+            style={{
+              backgroundColor: sorted ? 'rgba(200,155,93,0.18)' : 'rgba(255,255,255,0.02)',
+              borderColor: sorted ? 'rgba(200,155,93,0.42)' : 'rgba(200,155,93,0.18)',
+              color: sorted ? 'var(--psy-accent)' : 'var(--psy-ink-soft)',
+            }}
           >
-            {sorted ? '✦ 已整理' : '⇅ 整理'}
+            {sorted ? '已按心理标签整理' : '整理手牌'}
           </button>
         </div>
       )}
 
-      <div className="flex justify-center gap-2 flex-wrap">
+      <div className={useCompactCards
+        ? 'grid grid-cols-3 gap-x-2 gap-y-2.5'
+        : 'grid grid-cols-4 justify-items-center gap-x-2 gap-y-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8'
+      }>
         <AnimatePresence>
           {allCards.map((card) => {
             const isSelected = selectedCardIds.includes(card.id) || discardPickId === card.id;
@@ -203,13 +221,14 @@ export function PlayerHand({
                 animate={{ opacity: 1, y: isSelected ? -12 : 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.4 } }}
                 transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className="relative group"
+                className={`relative group ${useCompactCards ? 'mx-auto w-fit' : 'w-full max-w-[6rem] justify-self-center'}`}
                 onMouseEnter={(e) => { if (isDiscarding) onCardHover(e.currentTarget as HTMLElement); }}
                 onMouseLeave={() => { if (isDiscarding) onCardHover(null); }}
               >
                 <Card
                   card={card}
                   selected={isSelected}
+                  compact={useCompactCards}
                   showDimension={cheatMode}
                   tagDimension={tagDim}
                   onClick={() => handleCardClick(card.id)}
@@ -218,13 +237,19 @@ export function PlayerHand({
                     on next turn (drawnCard becomes null in state). */}
                 {isNewCard && (
                   <motion.div
-                    initial={{ scale: 0, rotate: -12 }}
-                    animate={{ scale: 1, rotate: -12 }}
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 18, delay: 0.1 }}
-                    className="absolute -top-2 -right-2 z-30 pointer-events-none select-none"
+                    className={`absolute z-30 pointer-events-none select-none ${useCompactCards ? '-right-1 top-1' : '-right-1 top-2'}`}
                   >
-                    <div className="rounded-full bg-gradient-to-br from-amber-300 to-rose-500 px-2 py-0.5 text-[10px] font-black text-white shadow-lg ring-2 ring-white/40">
-                      NEW
+                    <div
+                      className={`${useCompactCards ? 'px-1.5 py-0.5 text-[7px]' : 'px-2 py-0.5 text-[9px]'} rounded-full border font-semibold tracking-[0.16em] text-[var(--psy-accent)] shadow-[0_8px_18px_rgba(0,0,0,0.22)]`}
+                      style={{
+                        background: 'linear-gradient(180deg, rgba(20,31,46,0.96), rgba(12,21,31,0.98))',
+                        borderColor: 'rgba(200,155,93,0.34)',
+                      }}
+                    >
+                      新抽
                     </div>
                   </motion.div>
                 )}
@@ -238,9 +263,11 @@ export function PlayerHand({
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 4, scale: 0.95 }}
                       transition={{ duration: 0.12 }}
-                      className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-50 bg-gray-900 border border-gray-700 rounded-xl p-2 shadow-xl flex flex-col gap-1.5 min-w-[80px]"
+                      className={`psy-panel absolute left-1/2 z-[120] flex min-w-[88px] -translate-x-1/2 flex-col gap-1.5 rounded-xl p-2 shadow-xl ${
+                        useCompactCards ? 'top-full mt-1' : 'bottom-full mb-2'
+                      }`}
                     >
-                      <p className="text-[9px] text-gray-500 text-center whitespace-nowrap">标记人格</p>
+                      <p className="psy-serif whitespace-nowrap text-center text-[9px] text-[var(--psy-muted)]">标记人格线索</p>
                       <div className="flex flex-col gap-1">
                         {DIMENSIONS.map(dim => {
                           const meta = DIMENSION_META[dim];
@@ -252,7 +279,7 @@ export function PlayerHand({
                               className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors ${
                                 active
                                   ? 'text-white'
-                                  : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                                  : 'text-[var(--psy-ink-soft)] hover:bg-white/4'
                               }`}
                               style={active ? { backgroundColor: meta.colorHex + '33', color: meta.colorHex } : {}}
                             >
@@ -266,7 +293,7 @@ export function PlayerHand({
                       {tagDim && (
                         <button
                           onClick={() => clearTag(card.id)}
-                          className="text-[9px] text-gray-500 hover:text-gray-300 text-center mt-0.5 transition-colors"
+                          className="mt-0.5 text-center text-[9px] text-[var(--psy-muted)] transition-colors hover:text-[var(--psy-ink-soft)]"
                         >
                           清除标记
                         </button>

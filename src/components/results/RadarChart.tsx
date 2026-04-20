@@ -27,54 +27,65 @@ export function RadarChart({ scores, size = 280 }: RadarChartProps) {
   const dataPath = dataPoints.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ') + ' Z';
 
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[280px]">
-      {/* Grid levels */}
-      {levels.map((level) => {
-        const points = DIMENSIONS.map((d) => getPoint(d, level));
-        const path = points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ') + ' Z';
-        return <path key={level} d={path} fill="none" stroke="#374151" strokeWidth="1" opacity={0.5} />;
-      })}
+    <div className="psy-panel psy-etched rounded-[1.9rem] p-5">
+      <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[300px]">
+        <defs>
+          <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#d3a364" stopOpacity="0.34" />
+            <stop offset="100%" stopColor="#7aa2d6" stopOpacity="0.22" />
+          </linearGradient>
+        </defs>
 
-      {/* Axis lines */}
-      {DIMENSIONS.map((d) => {
-        const point = getPoint(d, 5);
-        return (
-          <line key={d} x1={center} y1={center} x2={point.x} y2={point.y} stroke="#374151" strokeWidth="1" opacity={0.5} />
-        );
-      })}
+        <circle cx={center} cy={center} r={radius + 24} fill="none" stroke="rgba(200,155,93,0.16)" strokeWidth="1" />
+        <circle cx={center} cy={center} r={radius + 8} fill="none" stroke="rgba(200,155,93,0.1)" strokeWidth="1" />
 
-      {/* Data area */}
-      <path d={dataPath} fill="url(#radarGradient)" stroke="#a855f7" strokeWidth="2" opacity={0.8} />
-      <defs>
-        <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#a855f7" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#ec4899" stopOpacity="0.3" />
-        </linearGradient>
-      </defs>
+        {levels.map((level) => {
+          const points = DIMENSIONS.map((d) => getPoint(d, level));
+          const path = points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ') + ' Z';
+          return <path key={level} d={path} fill="none" stroke="rgba(226, 211, 184, 0.14)" strokeWidth="1" />;
+        })}
 
-      {/* Data points */}
-      {dataPoints.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="4" fill={DIMENSION_META[DIMENSIONS[i]].colorHex} />
-      ))}
+        {DIMENSIONS.map((d) => {
+          const point = getPoint(d, 5);
+          return (
+            <line key={d} x1={center} y1={center} x2={point.x} y2={point.y} stroke="rgba(226, 211, 184, 0.14)" strokeWidth="1" />
+          );
+        })}
 
-      {/* Labels */}
-      {DIMENSIONS.map((d) => {
-        const meta = DIMENSION_META[d];
-        const point = getPoint(d, 6.2);
-        return (
-          <text
-            key={d}
-            x={point.x}
-            y={point.y}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="text-xs font-medium"
-            fill={meta.colorHex}
-          >
-            {meta.name}
-          </text>
-        );
-      })}
-    </svg>
+        <path d={dataPath} fill="url(#radarGradient)" stroke="#d3a364" strokeWidth="2.2" opacity={0.92} />
+
+        {dataPoints.map((p, i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="7" fill="rgba(211,163,100,0.12)" />
+            <circle cx={p.x} cy={p.y} r="4" fill={DIMENSION_META[DIMENSIONS[i]].colorHex} />
+          </g>
+        ))}
+
+        {DIMENSIONS.map((d) => {
+          const meta = DIMENSION_META[d];
+          const point = getPoint(d, 6.2);
+          return (
+            <text
+              key={d}
+              x={point.x}
+              y={point.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className="psy-serif text-xs font-medium"
+              fill={meta.colorHex}
+            >
+              {meta.name}
+            </text>
+          );
+        })}
+
+        <text x={center} y={center - 3} textAnchor="middle" className="psy-serif text-[12px]" fill="rgba(236,223,200,0.82)">
+          Persona
+        </text>
+        <text x={center} y={center + 14} textAnchor="middle" className="psy-serif text-[18px]" fill="#d3a364">
+          ✦
+        </text>
+      </svg>
+    </div>
   );
 }

@@ -22,7 +22,7 @@ function getOrderedQuestions(mode: QuestionOrder): Question[] {
 export default function AssessmentPage() {
   const router = useRouter();
   const hydrated = useHydrated();
-  const { answers, setAnswer, calculateScores, setManualScores, getProgress, isComplete, bigFiveScores } = useAssessmentStore();
+  const { answers, setAnswer, calculateScores, setManualScores, getProgress, bigFiveScores } = useAssessmentStore();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [orderMode, setOrderMode] = useState<QuestionOrder>('sequential');
   const [orderedQuestions, setOrderedQuestions] = useState<Question[]>(QUESTIONS);
@@ -85,13 +85,24 @@ export default function AssessmentPage() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="w-full max-w-xl space-y-8"
+        className="w-full max-w-3xl space-y-8"
       >
-        {/* Skip assessment button */}
+        <div className="space-y-4 text-center">
+          <p className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-ink-soft)]">
+            Persona Reading
+          </p>
+          <h1 className="psy-serif text-3xl text-[var(--psy-ink)] md:text-4xl">
+            抽取你的人格原型
+          </h1>
+          <p className="mx-auto max-w-2xl text-sm leading-7 text-[var(--psy-ink-soft)]">
+            每一道陈述题都像翻开一张隐喻牌面。你给出的倾向，会在结尾汇聚成五维人格图谱，并影响后续牌局目标。
+          </p>
+        </div>
+
         <div className="flex justify-end">
           <button
             onClick={() => setShowManualInput(!showManualInput)}
-            className="text-xs text-gray-500 hover:text-gray-300 transition underline"
+            className="text-xs text-[var(--psy-muted)] transition underline decoration-[rgba(200,155,93,0.3)] underline-offset-4 hover:text-[var(--psy-ink-soft)]"
           >
             {showManualInput ? '返回测评' : '跳过测评，手动输入分数'}
           </button>
@@ -99,14 +110,14 @@ export default function AssessmentPage() {
 
         {/* Manual input panel */}
         {showManualInput ? (
-          <div className="space-y-4 rounded-xl border border-gray-700 bg-gray-900/50 p-6">
-            <h3 className="text-sm font-medium text-gray-300">手动输入 Big Five 分数 (1.0 - 5.0)</h3>
+          <div className="psy-panel psy-etched space-y-5 rounded-[1.7rem] p-6">
+            <h3 className="psy-serif text-lg font-medium text-[var(--psy-ink)]">手动录入人格刻度</h3>
             <div className="space-y-3">
               {DIMENSIONS.map((d) => {
                 const meta = DIMENSION_META[d];
                 return (
                   <div key={d} className="flex items-center gap-3">
-                    <span className="text-sm w-16" style={{ color: meta.colorHex }}>{meta.name}</span>
+                    <span className="psy-serif w-16 text-sm" style={{ color: meta.colorHex }}>{meta.name}</span>
                     <input
                       type="number"
                       min="1"
@@ -125,9 +136,10 @@ export default function AssessmentPage() {
                         setManualInputScores({ ...manualScores, [d]: clamped });
                         setRawInputs(prev => ({ ...prev, [d]: String(clamped) }));
                       }}
-                      className="w-20 rounded-lg bg-gray-800 border border-gray-700 px-3 py-1.5 text-sm text-gray-200 text-center"
+                      className="w-20 rounded-lg border px-3 py-1.5 text-center text-sm text-[var(--psy-ink)]"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(200,155,93,0.18)' }}
                     />
-                    <div className="flex-1 h-2 rounded-full bg-gray-800">
+                    <div className="h-2 flex-1 rounded-full bg-[rgba(255,255,255,0.05)]">
                       <div
                         className="h-2 rounded-full transition-all"
                         style={{ width: `${((manualScores[d] - 1) / 4) * 100}%`, backgroundColor: meta.colorHex }}
@@ -142,7 +154,7 @@ export default function AssessmentPage() {
                 setManualScores(manualScores);
                 router.push('/results');
               }}
-              className="w-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 py-2.5 font-semibold text-white transition hover:opacity-90"
+              className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[linear-gradient(135deg,#9b6430_0%,#d4a469_100%)] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95"
             >
               确认分数，进入游戏
             </button>
@@ -168,32 +180,32 @@ export default function AssessmentPage() {
           <button
             onClick={handlePrev}
             disabled={currentIndex === 0}
-            className="rounded-lg px-4 py-2 text-sm text-gray-400 transition hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="rounded-full border border-[rgba(200,155,93,0.18)] px-4 py-2 text-sm text-[var(--psy-ink-soft)] transition hover:bg-[rgba(200,155,93,0.08)] disabled:opacity-30 disabled:cursor-not-allowed"
           >
             上一题
           </button>
           <button
             onClick={toggleOrder}
-            className={`rounded-lg px-3 py-1.5 text-xs transition border ${
+            className={`rounded-full px-3 py-1.5 text-xs transition border ${
               orderMode === 'shuffled'
-                ? 'border-pink-500/50 bg-pink-500/10 text-pink-400'
-                : 'border-gray-700 text-gray-500 hover:text-gray-300'
+                ? 'border-[rgba(200,155,93,0.4)] bg-[rgba(200,155,93,0.14)] text-[var(--psy-accent)]'
+                : 'border-[rgba(200,155,93,0.18)] text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
             }`}
           >
-            {orderMode === 'sequential' ? '🔀 打乱顺序' : '📋 按类型排列'}
+            {orderMode === 'sequential' ? '打乱顺序' : '按维度排列'}
           </button>
           <button
             onClick={handleNext}
             disabled={currentIndex === total - 1}
-            className="rounded-lg px-4 py-2 text-sm text-gray-400 transition hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="rounded-full border border-[rgba(200,155,93,0.18)] px-4 py-2 text-sm text-[var(--psy-ink-soft)] transition hover:bg-[rgba(200,155,93,0.08)] disabled:opacity-30 disabled:cursor-not-allowed"
           >
             下一题
           </button>
         </div>
 
         {/* Question map: 60 tiles showing answered/unanswered/current */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-gray-600">
+        <div className="psy-panel psy-etched space-y-3 rounded-[1.5rem] p-4">
+          <div className="flex items-center justify-between text-xs text-[var(--psy-muted)]">
             <span>题目导航</span>
             <span>{progress}/60 已作答</span>
           </div>
@@ -208,7 +220,7 @@ export default function AssessmentPage() {
                   onClick={() => setCurrentIndex(i)}
                   className={`h-6 rounded text-[9px] font-medium transition-all ${
                     isCurrent
-                      ? 'ring-2 ring-white scale-110'
+                      ? 'ring-2 ring-[var(--psy-ink)] scale-110'
                       : ''
                   } ${
                     isAnswered
@@ -223,10 +235,10 @@ export default function AssessmentPage() {
               );
             })}
           </div>
-          <div className="flex gap-3 justify-center text-[10px] text-gray-600">
-            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded bg-purple-400/60" /> 已答</span>
-            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded bg-purple-400/25" /> 未答</span>
-            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded bg-white ring-1 ring-white" /> 当前</span>
+          <div className="flex justify-center gap-3 text-[10px] text-[var(--psy-muted)]">
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(200,155,93,0.6)' }} /> 已答</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(200,155,93,0.25)' }} /> 未答</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded bg-white ring-1 ring-white" /> 当前</span>
           </div>
         </div>
         </>

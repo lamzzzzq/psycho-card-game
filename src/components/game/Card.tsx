@@ -11,11 +11,12 @@ interface CardProps {
   selected?: boolean;
   onClick?: () => void;
   compact?: boolean;
+  tiny?: boolean;
   showDimension?: boolean;
   tagDimension?: import('@/types').Dimension | null;
 }
 
-export function Card({ card, faceUp = true, selected = false, onClick, compact = false, showDimension = false, tagDimension = null }: CardProps) {
+export function Card({ card, faceUp = true, selected = false, onClick, compact = false, tiny = false, showDimension = false, tagDimension = null }: CardProps) {
   // Hooks must run unconditionally — keep them above any early return so
   // the hook count stays stable when faceUp flips (e.g. revealing an
   // opponent's hand after hu-fail).
@@ -31,9 +32,18 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
   if (!faceUp) {
     return (
       <div
-        className={`${compact ? 'w-14 h-20' : 'w-24 h-36'} rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 border-2 border-gray-600 flex items-center justify-center shadow-lg`}
+        className={`${tiny ? 'w-11 h-16 rounded-[0.95rem]' : compact ? 'w-[4.55rem] h-[6.8rem] rounded-[1.08rem]' : 'w-24 h-36 rounded-[1.2rem]'} border flex items-center justify-center shadow-[0_20px_45px_rgba(0,0,0,0.35)]`}
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(25,39,56,0.98), rgba(14,24,35,0.98))',
+          borderColor: 'rgba(194, 159, 109, 0.32)',
+          boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.04), 0 18px 36px rgba(0,0,0,0.34)',
+        }}
       >
-        <span className={`${compact ? 'text-lg' : 'text-2xl'} opacity-40`}>🧠</span>
+        <div className="flex flex-col items-center gap-1">
+          <span className={`${tiny ? 'text-sm' : compact ? 'text-xl' : 'text-2xl'} opacity-70`}>◈</span>
+          {!compact && !tiny && <span className="psy-serif text-[9px] tracking-[0.18em] uppercase text-[var(--psy-ink-soft)]">Psyche</span>}
+        </div>
       </div>
     );
   }
@@ -71,49 +81,82 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
       onClick={onClick}
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
-      style={
-        onClick
-          ? { transformPerspective: 600, transformStyle: 'preserve-3d', rotateX, rotateY }
-          : undefined
-      }
-      className={`${compact ? 'w-14 h-20 p-1.5' : 'w-24 h-36 p-2.5'} rounded-xl border-2 flex flex-col justify-between shadow-lg transition-colors ${
+      className={`${tiny ? 'w-11 h-16 p-1 rounded-[0.95rem]' : compact ? 'w-[4.55rem] h-[6.8rem] p-1.5 rounded-[1.08rem]' : 'w-24 h-36 p-2.5 rounded-xl'} border-2 flex flex-col justify-between shadow-lg transition-colors ${
         onClick ? 'cursor-pointer' : ''
-      } ${
-        selected
-          ? 'border-emerald-400 bg-emerald-950/30 ring-2 ring-emerald-400/50'
-          : dummy
-          ? 'border-gray-600 bg-gray-800/50 border-dashed'
-          : 'border-gray-700 bg-gray-900 hover:border-gray-500'
       }`}
+      style={{
+        ...(onClick
+          ? { transformPerspective: 600, transformStyle: 'preserve-3d', rotateX, rotateY }
+          : {}),
+        borderColor: selected
+          ? 'rgba(111, 214, 178, 0.92)'
+          : dummy
+          ? 'rgba(190, 173, 145, 0.24)'
+          : 'rgba(194, 159, 109, 0.36)',
+        background: selected
+          ? 'linear-gradient(180deg, rgba(17,52,50,0.96), rgba(10,31,33,0.96))'
+          : dummy
+          ? 'linear-gradient(180deg, rgba(35,39,46,0.82), rgba(20,24,30,0.82))'
+          : 'linear-gradient(180deg, rgba(26,40,57,0.96), rgba(17,28,41,0.96))',
+        boxShadow: selected
+          ? '0 0 0 1px rgba(111,214,178,0.22), 0 18px 34px rgba(0,0,0,0.34)'
+          : 'inset 0 0 0 1px rgba(255,255,255,0.04), 0 16px 32px rgba(0,0,0,0.3)',
+      }}
     >
+      {!compact && !tiny && (
+        <div
+          className="pointer-events-none absolute inset-[6px] rounded-[0.8rem]"
+          style={{ border: '1px solid rgba(236, 223, 200, 0.08)' }}
+        />
+      )}
       {/* Cheat mode: show dimension when showDimension is true */}
-      {showDimension && dimMeta && !compact && (
+      {showDimension && dimMeta && !compact && !tiny && (
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dimMeta.colorHex }} />
-          <span className="text-[8px]" style={{ color: dimMeta.colorHex }}>{dimMeta.name}</span>
+          <span className="psy-serif text-[8px]" style={{ color: dimMeta.colorHex }}>{dimMeta.name}</span>
         </div>
       )}
-      {dummy && !compact && (
+      {dummy && !compact && !tiny && (
         <div className="flex items-center gap-1">
-          <span className="text-[8px] text-gray-500">💡 冷知识</span>
+          <span className="psy-serif text-[8px] text-[var(--psy-muted)]">档案注记</span>
         </div>
       )}
-      {!showDimension && !dummy && !compact && <div />}
+      {!showDimension && !dummy && !compact && !tiny && <div />}
 
-      <p className={`${compact ? 'text-[7px] leading-tight' : 'text-[10px] leading-relaxed'} ${
-        dummy ? 'text-gray-500 italic' : 'text-gray-300'
-      } text-center`}>
-        {compact ? (card.text.length > 12 ? card.text.slice(0, 12) + '...' : card.text) : card.text}
+      {tagDimension && compact && !tiny && (
+        <div className="absolute inset-x-1 top-1 flex justify-center">
+          <span
+            className="flex max-w-full items-center gap-1 rounded-full px-1.5 py-0.5 text-[8px] font-semibold leading-none shadow-[0_4px_10px_rgba(0,0,0,0.18)]"
+            style={{
+              backgroundColor: DIMENSION_META[tagDimension].colorHex + '26',
+              color: DIMENSION_META[tagDimension].colorHex,
+              border: `1px solid ${DIMENSION_META[tagDimension].colorHex}45`,
+            }}
+          >
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: DIMENSION_META[tagDimension].colorHex }}
+            />
+            <span className="truncate">{DIMENSION_META[tagDimension].name}</span>
+          </span>
+        </div>
+      )}
+
+      <p className={`${tiny ? 'text-[5px] leading-tight' : compact ? 'text-[9px] leading-tight' : 'text-[10px] leading-relaxed'} ${
+        dummy ? 'text-[var(--psy-muted)] italic' : 'text-[var(--psy-ink)]'
+      } text-center ${compact ? 'font-medium' : 'psy-serif tracking-[0.01em]'}`}>
+        {tiny ? (card.text.length > 8 ? card.text.slice(0, 8) + '...' : card.text) : compact ? (card.text.length > 20 ? card.text.slice(0, 20) + '...' : card.text) : card.text}
       </p>
 
       {/* Tag indicator */}
-      {tagDimension && !compact ? (
+      {tagDimension && !compact && !tiny ? (
         <div className="flex justify-end">
           <span
             className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full"
             style={{
               backgroundColor: DIMENSION_META[tagDimension].colorHex + '33',
               color: DIMENSION_META[tagDimension].colorHex,
+              border: `1px solid ${DIMENSION_META[tagDimension].colorHex}44`,
             }}
           >
             {DIMENSION_META[tagDimension].name}

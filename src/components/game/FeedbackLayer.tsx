@@ -154,11 +154,18 @@ export function YourTurnBanner({ bannerKey }: { bannerKey: number | null }) {
           transition={{ type: 'spring', stiffness: 360, damping: 22 }}
           className="pointer-events-none fixed top-1/3 left-1/2 -translate-x-1/2 z-[75] text-center"
         >
-          <div className="rounded-2xl bg-gradient-to-br from-purple-500 via-fuchsia-500 to-amber-400 px-8 py-4 shadow-[0_0_40px_rgba(168,85,247,0.55)]">
-            <div className="text-[11px] uppercase tracking-[0.3em] text-white/80 font-bold">
+          <div
+            className="psy-etched rounded-[1.5rem] px-8 py-4"
+            style={{
+              background: 'linear-gradient(180deg, rgba(23,34,49,0.96), rgba(11,19,29,0.98))',
+              border: '1px solid rgba(200,155,93,0.38)',
+              boxShadow: '0 0 40px rgba(77, 53, 21, 0.28)',
+            }}
+          >
+            <div className="psy-serif text-[11px] tracking-[0.3em] text-[var(--psy-accent)]">
               Your Turn
             </div>
-            <div className="mt-1 text-3xl font-black text-white drop-shadow-sm">
+            <div className="mt-1 psy-serif text-3xl font-black text-[var(--psy-ink)]">
               轮到你了！
             </div>
           </div>

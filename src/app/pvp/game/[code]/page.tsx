@@ -28,6 +28,8 @@ import { DiscardPile } from '@/components/game/DiscardPile';
 import { GameLog } from '@/components/game/GameLog';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
 import { Card } from '@/components/game/Card';
+import { MobileGameSheet } from '@/components/game/MobileGameSheet';
+import { ArrowOverlay } from '@/components/game/ArrowOverlay';
 
 // Convert SerializedPlayer → Player (for reusing single-player components)
 function toPlayer(sp: SerializedPlayer, overrideHand?: GameCard[]): Player {
@@ -63,7 +65,9 @@ export default function PvpGamePage() {
 
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
   const [resultBanner, setResultBanner] = useState<{ success: boolean; message: string } | null>(null);
+  const [mobileSheet, setMobileSheet] = useState<'log' | 'declared' | 'persona' | null>(null);
   const [arrowFrom, setArrowFrom] = useState<{ x: number; y: number } | null>(null);
+  const [arrowTo, setArrowTo] = useState<{ x: number; y: number } | null>(null);
   const [flyingCards, setFlyingCards] = useState<FlyingAnim[]>([]);
   const flyIdRef = useRef(0);
   const [slowLoad, setSlowLoad] = useState(false);
@@ -259,6 +263,7 @@ export default function PvpGamePage() {
 
     dispatchAction({ type: 'discard', cardId });
     setArrowFrom(null);
+    setArrowTo(null);
   }
 
   const removeFlyingCard = useCallback((id: number) => {
@@ -274,7 +279,7 @@ export default function PvpGamePage() {
     const dim = (gameState.pendingDiscard as any).dimension as Dimension;
     const need = Math.max(0, (targets?.[dim] ?? 2) - 1);
     if (selectedCardIds.length < need) {
-      showBanner(false, need === 0 ? '直接点碰即可' : `请先选择 ${need} 张手牌`);
+      showBanner(false, '先选出你判断为同类人格描述的候选牌');
       return;
     }
     dispatchAction({ type: 'pong', dimension: dim, handCardIds: selectedCardIds });
@@ -291,19 +296,24 @@ export default function PvpGamePage() {
   }
 
   const handleDrawPileHover = useCallback((hovering: boolean) => {
-    if (!drawPileRef.current) return;
+    if (!drawPileRef.current || !handAreaRef.current) return;
     if (hovering && canDraw) {
-      const rect = drawPileRef.current.getBoundingClientRect();
-      setArrowFrom({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+      const fromRect = drawPileRef.current.getBoundingClientRect();
+      const toRect = handAreaRef.current.getBoundingClientRect();
+      setArrowFrom({ x: fromRect.left + fromRect.width / 2, y: fromRect.top + fromRect.height / 2 });
+      setArrowTo({ x: toRect.left + toRect.width / 2, y: toRect.top + Math.min(40, toRect.height * 0.35) });
     } else {
       setArrowFrom(null);
+      setArrowTo(null);
     }
   }, [canDraw]);
 
   const handleCardHover = useCallback((el: HTMLElement | null) => {
-    if (!el) { setArrowFrom(null); return; }
+    if (!el || !discardPileRef.current) { setArrowFrom(null); setArrowTo(null); return; }
     const rect = el.getBoundingClientRect();
+    const discardRect = discardPileRef.current.getBoundingClientRect();
     setArrowFrom({ x: rect.left + rect.width / 2, y: rect.top });
+    setArrowTo({ x: discardRect.left + discardRect.width / 2, y: discardRect.top + discardRect.height / 2 });
   }, []);
 
   // Game over screen
@@ -350,9 +360,10 @@ export default function PvpGamePage() {
   const declaredDims = mePlayer ? getDeclaredDimensions(mePlayer) : new Set<Dimension>();
 
   return (
-    <motion.div animate={shakeControls} className="flex flex-1 flex-col px-4 py-4 max-w-6xl mx-auto w-full">
+    <motion.div animate={shakeControls} className="mx-auto flex h-[100dvh] max-w-6xl w-full flex-col overflow-hidden px-3 py-3 sm:px-4 sm:py-4">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
       <YourTurnBanner bannerKey={yourTurnKey} />
+      <ArrowOverlay from={arrowFrom} to={arrowTo} color="#c89b5d" />
       {flyingCards.map((f) => (
         <FlyingCard key={f.id} from={f.from} to={f.to} text={f.text} onComplete={() => removeFlyingCard(f.id)} />
       ))}
@@ -369,7 +380,7 @@ export default function PvpGamePage() {
       )}
 
       {/* Opponents */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <div className="mb-1 grid h-[13dvh] shrink-0 grid-cols-3 gap-2 overflow-hidden sm:mb-4 sm:h-[6.5rem] sm:gap-3">
         {opponentPlayers.map(opp => (
           <OpponentHand
             key={opp.id}
@@ -380,8 +391,8 @@ export default function PvpGamePage() {
       </div>
 
       {/* Center: Draw + Discard + Log */}
-      <div className="flex-1 flex items-center justify-center gap-6 my-4">
-        <div className="flex items-center gap-6">
+      <div className="my-1 flex h-[16dvh] shrink-0 items-center justify-center gap-3 sm:my-4 sm:grid sm:h-[11rem] sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
+        <div className="flex items-center gap-3 sm:col-start-2 sm:gap-6">
           <div
             ref={drawPileRef}
             onMouseEnter={() => handleDrawPileHover(true)}
@@ -399,24 +410,23 @@ export default function PvpGamePage() {
             />
           </div>
         </div>
-        <div className="hidden md:block w-48">
+        <div className="hidden md:block md:col-start-3 md:justify-self-end w-52">
           <GameLog actions={gameState.actionLog as any} players={allPlayers} />
         </div>
       </div>
 
       {/* My player area */}
       {mePlayer && (
-        <div className="space-y-3">
+        <div className="flex min-h-0 flex-1 flex-col space-y-2 sm:space-y-3">
           {/* Big Five scores */}
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <span className="text-xs text-gray-600 mr-1">我的人格:</span>
+          <div className="hidden items-center justify-center gap-1.5 flex-wrap sm:flex">
             {DIMENSIONS.map(d => {
               const meta = DIMENSION_META[d];
               const score = mePlayer.bigFiveScores[d];
               return (
-                <div key={d} className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: meta.colorHex + '15' }}>
-                  <span className="text-[10px]" style={{ color: meta.colorHex }}>{meta.name}</span>
-                  <span className="text-xs font-bold" style={{ color: meta.colorHex }}>{score.toFixed(1)}</span>
+                <div key={d} className="flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: meta.colorHex + '12', border: `1px solid ${meta.colorHex}22` }}>
+                  <span className="text-[9px]" style={{ color: meta.colorHex }}>{meta.name}</span>
+                  <span className="text-[10px] font-bold" style={{ color: meta.colorHex }}>{score.toFixed(1)}</span>
                 </div>
               );
             })}
@@ -424,62 +434,74 @@ export default function PvpGamePage() {
 
           {/* Targets */}
           {targets && (
-            <div className="flex items-center justify-center gap-3 flex-wrap">
-              <span className="text-xs text-gray-600 mr-1">目标:</span>
+            <div className="hidden items-center justify-center gap-1.5 flex-wrap sm:flex">
               {DIMENSIONS.map(d => {
                 const meta = DIMENSION_META[d];
                 const isDone = declaredDims.has(d);
                 return (
-                  <div key={d} className="flex items-center gap-1 rounded-lg px-2 py-1"
+                  <div key={d} className="flex items-center gap-1 rounded-full px-2 py-0.5"
                     style={{ backgroundColor: isDone ? meta.colorHex + '25' : 'rgba(75,75,75,0.3)' }}
                   >
-                    <span className="text-[10px]" style={{ color: isDone ? meta.colorHex : '#9ca3af' }}>{meta.name}</span>
-                    <span className={`text-xs font-bold ${isDone ? '' : 'text-gray-400'}`} style={isDone ? { color: meta.colorHex } : undefined}>
+                    <span className="text-[9px]" style={{ color: isDone ? meta.colorHex : '#9ca3af' }}>{meta.name}</span>
+                    <span className={`text-[10px] font-bold ${isDone ? '' : 'text-gray-400'}`} style={isDone ? { color: meta.colorHex } : undefined}>
                       {isDone ? '✓' : `${targets[d]}张`}
                     </span>
                   </div>
                 );
               })}
-              <div className="rounded-lg bg-gray-800 px-2 py-1">
-                <span className="text-[10px] text-gray-500">已完成 </span>
-                <span className="text-xs font-bold text-emerald-400">{mePlayer.declaredSets.length}/5</span>
+              <div className="rounded-full bg-gray-800 px-2 py-0.5">
+                <span className="text-[9px] text-gray-500">完成 </span>
+                <span className="text-[10px] font-bold text-emerald-400">{mePlayer.declaredSets.length}/5</span>
               </div>
             </div>
           )}
+
+          <div className="flex shrink-0 flex-col gap-1.5 sm:hidden">
+            <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
+              <span className="psy-serif text-[var(--psy-accent)]">第 {gameState.currentRound}{gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''} 轮</span>
+              <span className="truncate">{isMyTurn ? '轮到你' : `${currentPlayer?.name}中`}</span>
+              <span>归档 {mePlayer.declaredSets.length}/5</span>
+            </div>
+            <div className="flex items-center justify-end gap-1">
+              <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">人格</button>
+              <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">归档</button>
+              <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">记录</button>
+            </div>
+          </div>
 
           {/* Claim window — opponent discarded. Pong only available to
               the downstream player (bug #5). Hu available to anyone
               non-discarder ("跳着胡"). */}
           {canClaim && gameState.pendingDiscard && (
-            <div className="rounded-xl border border-orange-500/40 bg-orange-950/20 p-4 space-y-3">
+            <div className="psy-panel space-y-3 rounded-[1.35rem] border p-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-orange-300">
+                <h3 className="psy-serif text-sm font-medium text-[var(--psy-accent)]">
                   {gameState.players[gameState.discardedByIndex]?.name} 弃了一张牌 — 选择行动
                 </h3>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-[10px] text-gray-500">被弃的牌</span>
-                  <div className="ring-2 ring-orange-400/50 rounded-xl">
+                  <span className="text-[10px] text-[var(--psy-muted)]">被弃的牌</span>
+                  <div className="rounded-xl ring-1 ring-[rgba(200,155,93,0.35)]">
                     <Card card={gameState.pendingDiscard} />
                   </div>
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-[var(--psy-ink-soft)]">
                   {canPong ? (() => {
-                    const dim = 'dimension' in gameState.pendingDiscard!
-                      ? (gameState.pendingDiscard as any).dimension as Dimension
-                      : null;
-                    const need = dim ? Math.max(0, (targets?.[dim] ?? 2) - 1) : 2;
-                    return need === 0
-                      ? '你该维度只需 1 张 — 可直接点碰'
-                      : `从手牌中选 ${need} 张同维度的牌，再点碰`;
+                    return (
+                      <ul className="list-disc pl-4 space-y-1 marker:text-orange-400">
+                        <li>只选你判断为同一人格描述的手牌</li>
+                        <li>总张数要达到该维度要求</li>
+                        <li>混入其他人格牌会受罚</li>
+                      </ul>
+                    );
                   })() : '你不是下家，仅可选择 过 或 食胡'}
                 </div>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={handleSkipPong}
-                  className="px-4 py-1.5 rounded-lg text-xs font-medium border border-gray-700 text-gray-400 hover:bg-gray-800 transition"
+                  className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs font-medium"
                 >
                   过
                 </button>
@@ -492,7 +514,7 @@ export default function PvpGamePage() {
                     <button
                       onClick={handlePong}
                       disabled={selectedCardIds.length < need}
-                      className="px-4 py-1.5 rounded-lg text-xs font-bold bg-orange-500 hover:bg-orange-400 text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
+                      className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold"
                     >
                       碰！{need > 0 && selectedCardIds.length > 0 ? `(已选${selectedCardIds.length}/${need})` : ''}
                     </button>
@@ -501,7 +523,7 @@ export default function PvpGamePage() {
                 {!meSerialized?.skipNextTurn && (
                   <button
                     onClick={handleHu}
-                    className="px-4 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-red-600 to-orange-500 text-white hover:opacity-90 transition"
+                    className="psy-btn psy-btn-danger px-4 py-1.5 text-xs font-bold"
                   >
                     食胡
                   </button>
@@ -510,20 +532,41 @@ export default function PvpGamePage() {
             </div>
           )}
 
+          {/* Action buttons (my turn only) */}
+          {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && (
+            <div className="flex shrink-0 items-center justify-center gap-2 sm:gap-3">
+              {canDraw && (
+                <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">点击牌堆抽一张牌</p>
+              )}
+              {isDiscarding && !gameState.drawnCard && (
+                <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">
+                  碰牌成功 — 请直接出一张手牌
+                </p>
+              )}
+              {!meSerialized?.skipNextTurn && (
+                <button
+                  onClick={handleHu}
+                  className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
+                >
+                  食胡
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Hand + Declared */}
-          <div className="flex items-start justify-center gap-4">
-            {mePlayer.declaredSets.length > 0 && (
-              <div className="flex-shrink-0">
-                <DeclaredArea declaredSets={mePlayer.declaredSets} />
-              </div>
-            )}
-            <div ref={handAreaRef} className="flex-1 min-w-0">
+          <div className="flex min-h-0 flex-1 items-start justify-center gap-3 sm:h-[30dvh] sm:flex-none sm:gap-4">
+            <div className="hidden flex-shrink-0 sm:block">
+              <DeclaredArea declaredSets={mePlayer.declaredSets} />
+            </div>
+            <div ref={handAreaRef} className="min-h-0 flex-1 min-w-0 overflow-visible">
               <PlayerHand
                 cards={mePlayer.hand}
                 drawnCard={isMyTurn ? (gameState.drawnCard ?? null) : null}
                 isDiscarding={isDiscarding}
                 isDeclaring={canPong}
                 isMyTurn={isMyTurn}
+                mobileCompact={true}
                 selectedCardIds={selectedCardIds}
                 onDiscardCard={handleDiscard}
                 onToggleSelect={handleToggleSelect}
@@ -532,39 +575,56 @@ export default function PvpGamePage() {
             </div>
           </div>
 
-          {/* Action buttons (my turn only) */}
-          {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && (
-            <div className="flex items-center justify-center gap-3">
-              {canDraw && (
-                <p className="text-sm text-purple-400 animate-pulse">点击牌堆抽一张牌</p>
-              )}
-              {isDiscarding && !gameState.drawnCard && (
-                <p className="text-sm text-orange-400 animate-pulse">
-                  碰牌成功 — 请直接出一张手牌
-                </p>
-              )}
-              {!meSerialized?.skipNextTurn && (
-                <button
-                  onClick={handleHu}
-                  className="px-5 py-2 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 text-white text-sm font-bold hover:opacity-90 transition shadow-lg"
-                >
-                  食胡
-                </button>
-              )}
-            </div>
-          )}
-
           {/* Round info */}
-          <div className="text-center text-xs text-gray-600">
+          <div className="hidden text-center text-xs text-[var(--psy-muted)] sm:block">
             第 {gameState.currentRound}{gameState.totalRounds > 0 ? ` / ${gameState.totalRounds}` : ''} 轮
             {!isMyTurn && (
-              <span className="ml-2 text-gray-500">— {currentPlayer?.name} 的回合</span>
+              <span className="ml-2 text-[var(--psy-muted)]">— {currentPlayer?.name} 的回合</span>
             )}
             {isMyTurn && (
-              <span className="ml-2 text-purple-400 font-medium animate-pulse">— 轮到你了</span>
+              <span className="ml-2 font-medium text-[var(--psy-accent)] animate-pulse">— 轮到你了</span>
             )}
           </div>
         </div>
+      )}
+      {mePlayer && targets && (
+        <>
+          <MobileGameSheet
+            title="人格刻度"
+            open={mobileSheet === 'persona'}
+            onClose={() => setMobileSheet(null)}
+          >
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {DIMENSIONS.map((d) => {
+                  const meta = DIMENSION_META[d];
+                  const score = mePlayer.bigFiveScores[d];
+                  const isDone = declaredDims.has(d);
+                  return (
+                    <div key={d} className="rounded-xl border px-3 py-2" style={{ borderColor: meta.colorHex + '33', backgroundColor: meta.colorHex + '12' }}>
+                      <div className="psy-serif text-sm" style={{ color: meta.colorHex }}>{meta.name}</div>
+                      <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">分数 {score.toFixed(1)} · {isDone ? '已完成' : `目标 ${targets[d]} 张`}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </MobileGameSheet>
+          <MobileGameSheet
+            title="已归档人格"
+            open={mobileSheet === 'declared'}
+            onClose={() => setMobileSheet(null)}
+          >
+            {mePlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={mePlayer.declaredSets} /> : <p className="text-sm text-[var(--psy-muted)]">暂时还没有完成归档的维度。</p>}
+          </MobileGameSheet>
+          <MobileGameSheet
+            title="行动记录"
+            open={mobileSheet === 'log'}
+            onClose={() => setMobileSheet(null)}
+          >
+            <GameLog actions={gameState.actionLog as any} players={allPlayers} />
+          </MobileGameSheet>
+        </>
       )}
     </motion.div>
   );

@@ -279,6 +279,7 @@ export function drawCard(state: GameState): GameState {
     round: state.currentRound,
     playerId: state.players[currentIdx].id,
     type: 'draw',
+    card: drawnCard,
     timestamp: Date.now(),
   };
 
