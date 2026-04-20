@@ -17,7 +17,8 @@ export function FlyingCard({ from, to, text, onComplete }: FlyingCardProps) {
 
   return (
     <motion.div
-      className="fixed z-[80] w-24 h-36 rounded-xl border-2 border-amber-400/60 bg-gray-900/95 flex items-center justify-center p-2 shadow-[0_20px_40px_rgba(251,191,36,0.35)] pointer-events-none"
+      className="psy-panel psy-etched fixed z-[80] flex h-36 w-24 items-center justify-center rounded-[1.2rem] p-2 pointer-events-none"
+      style={{ borderColor: 'var(--psy-border-strong)', boxShadow: '0 20px 40px rgba(200,155,93,0.32)' }}
       initial={{
         left: from.x - 48,
         top: from.y - 72,
@@ -39,7 +40,7 @@ export function FlyingCard({ from, to, text, onComplete }: FlyingCardProps) {
       }}
       onAnimationComplete={onComplete}
     >
-      <p className="text-[10px] leading-tight text-gray-200 text-center font-medium">{text}</p>
+      <p className="psy-serif text-center text-[10px] leading-tight text-[var(--psy-ink)]">{text}</p>
     </motion.div>
   );
 }

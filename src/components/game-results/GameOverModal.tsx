@@ -29,14 +29,14 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverM
         initial={{ scale: 0.8, y: 30 }}
         animate={{ scale: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        className="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-900 p-6 space-y-6"
+        className="psy-panel psy-etched w-full max-w-md space-y-6 rounded-[1.6rem] p-6"
       >
-        <div className="text-center space-y-2">
+        <div className="space-y-2 text-center">
           <div className="text-4xl">{isHumanWinner ? '🏆' : '😤'}</div>
-          <h2 className="text-2xl font-bold text-gray-100">
+          <h2 className="psy-serif text-2xl text-[var(--psy-ink)]">
             {isHumanWinner ? '你赢了！' : `${winner.name} 获胜`}
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[var(--psy-muted)]">
             {hasFullWinner
               ? `${isHumanWinner ? '你' : winner.name}成功 DECLARE 了所有人格维度！`
               : '回合结束！按 DECLARE 进度和剩余手牌排名'}
@@ -48,29 +48,30 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverM
             const declaredCount = player.declaredSets.length;
             const penalty = calculatePenaltyScore(player.hand);
             const medals = ['🥇', '🥈', '🥉', ''];
+            const isFirst = i === 0;
             return (
               <div
                 key={player.id}
-                className={`rounded-xl p-3 space-y-2 ${
-                  i === 0 ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-gray-800/50'
-                }`}
+                className="space-y-2 rounded-[1.2rem] border p-3"
+                style={{
+                  borderColor: isFirst ? 'var(--psy-border-strong)' : 'rgba(200,155,93,0.14)',
+                  background: isFirst ? 'var(--psy-accent-soft)' : 'rgba(255,255,255,0.02)',
+                }}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="text-lg">{medals[i] || `#${i + 1}`}</span>
                     <span>{player.avatar}</span>
-                    <div>
-                      <div className={`text-sm font-medium ${player.isHuman ? 'text-purple-400' : 'text-gray-300'}`}>
-                        {player.name}
-                      </div>
+                    <div className={`psy-serif text-sm ${player.isHuman ? 'text-[var(--psy-accent)]' : 'text-[var(--psy-ink)]'}`}>
+                      {player.name}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-gray-200">
+                    <div className="text-sm font-medium text-[var(--psy-ink)]">
                       {declaredCount}/5 DECLARE
                     </div>
                     {player.hand.length > 0 && (
-                      <div className="text-[10px] text-red-400">
+                      <div className="text-[10px] text-[var(--psy-danger)]">
                         剩余 {player.hand.length} 张 ({penalty})
                       </div>
                     )}
@@ -83,16 +84,10 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverM
         </div>
 
         <div className="flex gap-3">
-          <button
-            onClick={onPlayAgain}
-            className="flex-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 py-3 font-semibold text-white transition hover:opacity-90"
-          >
+          <button onClick={onPlayAgain} className="psy-btn psy-btn-accent flex-1 py-3 font-medium">
             再来一局
           </button>
-          <button
-            onClick={onBackToLobby}
-            className="rounded-full border border-gray-700 px-6 py-3 text-sm font-medium text-gray-400 transition hover:bg-gray-800"
-          >
+          <button onClick={onBackToLobby} className="psy-btn psy-btn-ghost px-6 py-3 text-sm">
             返回大厅
           </button>
         </div>

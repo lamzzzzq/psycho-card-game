@@ -93,26 +93,26 @@ export default function Home() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.1fr_1.1fr_1fr_1fr]">
           <button
             onClick={() => router.push('/pvp')}
-            className="psy-serif block w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[linear-gradient(135deg,#9b6430_0%,#d4a469_100%)] px-6 py-3.5 text-base font-semibold text-[#fff7eb] transition hover:opacity-95 cursor-pointer"
+            className="psy-btn psy-btn-accent psy-serif w-full px-6 py-3.5 text-base font-semibold"
           >
             联机对战
           </button>
           <button
             onClick={() => hasResults ? router.push('/lobby') : router.push('/assessment')}
-            className="block w-full rounded-full border border-[rgba(200,155,93,0.24)] bg-[rgba(255,255,255,0.02)] px-6 py-3.5 font-medium text-[var(--psy-ink)] transition hover:bg-[rgba(200,155,93,0.08)] cursor-pointer"
+            className="psy-btn psy-btn-ghost w-full px-6 py-3.5 font-medium"
           >
             单机对战{!hasResults && <span className="ml-2 text-xs text-[var(--psy-accent)]">需先测评</span>}
           </button>
           <button
             onClick={() => router.push('/assessment')}
-            className="block w-full rounded-full border border-[rgba(200,155,93,0.24)] bg-[rgba(255,255,255,0.02)] px-6 py-3.5 font-medium text-[var(--psy-ink)] transition hover:bg-[rgba(200,155,93,0.08)] cursor-pointer"
+            className="psy-btn psy-btn-ghost w-full px-6 py-3.5 font-medium"
           >
             {progress > 0 ? `继续测评 (${progress}/60)` : hasResults ? '重新测评' : '开始测评'}
           </button>
           {hasResults && (
             <button
               onClick={() => router.push('/results')}
-              className="block w-full rounded-full border border-[rgba(200,155,93,0.24)] bg-[rgba(255,255,255,0.02)] px-6 py-3.5 font-medium text-[var(--psy-ink)] transition hover:bg-[rgba(200,155,93,0.08)] cursor-pointer"
+              className="psy-btn psy-btn-ghost w-full px-6 py-3.5 font-medium"
             >
               查看人格报告
             </button>

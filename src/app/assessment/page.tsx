@@ -41,7 +41,7 @@ export default function AssessmentPage() {
   if (!hydrated) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-gray-600">加载中...</p>
+        <p className="psy-serif text-[var(--psy-muted)]">加载中…</p>
       </div>
     );
   }

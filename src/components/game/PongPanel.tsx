@@ -79,7 +79,7 @@ export function PongPanel({
             {pendingCard.text}
           </div>
         </div>
-        <span className={`text-sm font-mono font-bold ${countdown <= 2 ? 'text-red-400 animate-pulse' : 'text-[var(--psy-accent)]'}`}>
+        <span className={`font-mono text-sm font-medium tabular-nums ${countdown <= 2 ? 'animate-pulse text-[var(--psy-danger)]' : 'text-[var(--psy-accent)]'}`}>
           {countdown}s
         </span>
       </div>
@@ -93,7 +93,7 @@ export function PongPanel({
           </div>
         </div>
 
-        <div className="flex-1 space-y-1 text-[11px] text-gray-400 sm:text-xs">
+        <div className="flex-1 space-y-1 text-[11px] text-[var(--psy-ink-soft)] sm:text-xs">
           {canClaimThisDim ? (
             <div className="space-y-2">
               <p className="text-[var(--psy-ink)]">

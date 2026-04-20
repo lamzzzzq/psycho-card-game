@@ -41,7 +41,7 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
             <div className="psy-serif truncate text-[10px] font-semibold text-[var(--psy-ink)]">{player.name}</div>
             <div className="text-[8px] text-[var(--psy-muted)]">
               {player.hand.length} 张
-              {player.skipNextTurn && <span className="ml-1 text-red-400">停</span>}
+              {player.skipNextTurn && <span className="ml-1 text-[var(--psy-danger)]">停</span>}
               {isCurrentTurn && !player.skipNextTurn && <span className="ml-1 text-[var(--psy-accent)]">中</span>}
             </div>
           </div>
@@ -100,7 +100,7 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
           <div className="text-left">
             <div className="psy-serif text-xs font-semibold text-[var(--psy-ink)] sm:text-sm">{player.name}</div>
             <div className="text-[10px] text-[var(--psy-muted)] sm:text-xs">
-              {player.skipNextTurn && <span className="text-red-400">跳过中</span>}
+              {player.skipNextTurn && <span className="text-[var(--psy-danger)]">跳过中</span>}
               {player.revealedHand && <span className="ml-1 text-[var(--psy-accent)]">档案公开</span>}
               {isCurrentTurn && !player.skipNextTurn && <span className="text-[var(--psy-accent)]">思考中...</span>}
             </div>

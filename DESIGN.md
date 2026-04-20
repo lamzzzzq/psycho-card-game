@@ -49,12 +49,20 @@
 | `--psy-accent` | `#c89b5d` | 标志色（铜金） |
 | `--psy-accent-soft` | `rgba(200,155,93,0.16)` | accent 软化背景 |
 
-### 2.4 阴影
+### 2.4 语义色
+| Token | 值 | 用途 |
+|-------|----|------|
+| `--psy-success` | `#8fc787` | 成功 / 完成（柔和苔绿，避免霓虹绿） |
+| `--psy-success-soft` | `rgba(143,199,135,0.18)` | 成功底色 |
+| `--psy-danger` | `#dc6a4f` | 危险 / 失败（与 psy-btn-danger 同源） |
+| `--psy-danger-soft` | `rgba(220,106,79,0.18)` | 危险底色 |
+
+### 2.5 阴影
 | Token | 值 | 用途 |
 |-------|----|------|
 | `--psy-shadow` | `0 20px 60px rgba(0,0,0,0.34)` | 浮层默认阴影 |
 
-### 2.5 维度色（Big Five）
+### 2.6 维度色（Big Five）
 来自 `src/data/dimensions.ts`，由 `meta.colorHex` 提供。**勿混入主色板**——它们只用于标识维度（标签、角条、归档色块）。
 
 > 透明度约定：`+'26'` ≈ 边框、`+'10'` ≈ 浅底、`+'0d'` ≈ 极浅底。
@@ -170,7 +178,7 @@
 ## 8. 选区与可达性
 
 - `::selection` 统一为铜金底（`rgba(200,155,93,0.28)`）
-- 焦点态：建议追加 `outline: 2px solid var(--psy-accent); outline-offset: 2px`（**待补**）
+- **焦点态**：全局 `:focus-visible` 默认 `outline: 2px solid var(--psy-accent); outline-offset: 2px`；按钮/链接 offset 加大到 3–4px。**禁止 `outline: none` 移除焦点环**——如要替换，请提供等效可见替代。
 - 文字最低对比度：`--psy-muted` on `--psy-bg` 实测约 4.6:1，达标 AA。`--psy-muted` 不要用于按钮主文。
 
 ---
@@ -188,7 +196,9 @@
 
 ## 10. 待补 / 未决
 
-- [ ] 焦点态视觉规范（键盘导航的 outline）
-- [ ] 状态色（success / warning / info）尚无独立令牌，目前借用 accent + danger
+- [x] ~~焦点态视觉规范~~（已落地，§8）
+- [x] ~~success/danger 语义色~~（已落地，§2.4）
+- [ ] warning / info 语义色尚未需要
 - [ ] Toast / Banner 尚未规范
 - [ ] 暗色为唯一主题；浅色模式暂不计划
+- [ ] **未主题化页面**：`src/app/pvp/page.tsx`、`src/app/pvp/room/[code]/page.tsx`、`src/app/stats/page.tsx` 仍用旧 Tailwind gray，需独立改造

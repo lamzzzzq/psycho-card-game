@@ -15,10 +15,10 @@ export function ScoreBoard({ players, currentRound, totalRounds }: ScoreBoardPro
   );
 
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4 space-y-3">
+    <div className="psy-panel space-y-3 rounded-[1.2rem] p-4">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-gray-300">计分板</span>
-        <span className="text-gray-500">
+        <span className="psy-serif text-[var(--psy-ink)]">计分板</span>
+        <span className="text-[var(--psy-muted)]">
           第 {currentRound} / {totalRounds} 轮
         </span>
       </div>
@@ -26,13 +26,15 @@ export function ScoreBoard({ players, currentRound, totalRounds }: ScoreBoardPro
         {sorted.map((player, i) => (
           <div key={player.id} className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              <span className="w-4 text-xs text-gray-600">#{i + 1}</span>
+              <span className="w-4 text-xs text-[var(--psy-muted)]">#{i + 1}</span>
               <span>{player.avatar}</span>
-              <span className={player.isHuman ? 'text-purple-400 font-medium' : 'text-gray-400'}>
+              <span className={player.isHuman ? 'font-medium text-[var(--psy-accent)]' : 'text-[var(--psy-ink-soft)]'}>
                 {player.name}
               </span>
             </div>
-            <span className="font-mono text-gray-300">{getPlayerScore(player).toFixed(1)}</span>
+            <span className="font-mono text-[var(--psy-ink)] tabular-nums">
+              {getPlayerScore(player).toFixed(1)}
+            </span>
           </div>
         ))}
       </div>

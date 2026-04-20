@@ -313,7 +313,7 @@ export default function GamePage() {
   if (!game) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-gray-500">加载中...</p>
+        <p className="psy-serif text-[var(--psy-muted)]">加载中…</p>
       </div>
     );
   }
@@ -421,19 +421,29 @@ export default function GamePage() {
             const target = targets[d];
             const isDone = declaredDims.has(d);
             return (
-              <div key={d} className="flex items-center gap-1 rounded-full px-2 py-0.5"
-                style={{ backgroundColor: isDone ? meta.colorHex + '25' : 'rgba(75,75,75,0.3)' }}
+              <div
+                key={d}
+                className="flex items-center gap-1 rounded-full px-2 py-0.5"
+                style={{
+                  backgroundColor: isDone ? meta.colorHex + '25' : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${isDone ? meta.colorHex + '40' : 'rgba(200,155,93,0.14)'}`,
+                }}
               >
-                <span className="text-[9px]" style={{ color: isDone ? meta.colorHex : '#9ca3af' }}>{meta.name}</span>
-                <span className={`text-[10px] font-bold ${isDone ? '' : 'text-gray-400'}`} style={isDone ? { color: meta.colorHex } : undefined}>
+                <span className="text-[9px]" style={{ color: isDone ? meta.colorHex : 'var(--psy-muted)' }}>
+                  {meta.name}
+                </span>
+                <span
+                  className="text-[10px] font-medium"
+                  style={{ color: isDone ? meta.colorHex : 'var(--psy-ink-soft)' }}
+                >
                   {isDone ? '✓' : `${target}张`}
                 </span>
               </div>
             );
           })}
-          <div className="rounded-full bg-gray-800 px-2 py-0.5">
-            <span className="text-[9px] text-gray-500">完成 </span>
-            <span className="text-[10px] font-bold text-emerald-400">{humanPlayer.declaredSets.length}/5</span>
+          <div className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2 py-0.5">
+            <span className="text-[9px] text-[var(--psy-muted)]">完成 </span>
+            <span className="text-[10px] font-medium text-[var(--psy-success)]">{humanPlayer.declaredSets.length}/5</span>
           </div>
         </div>
 
@@ -441,7 +451,7 @@ export default function GamePage() {
           <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
             <span className="psy-serif text-[var(--psy-accent)]">第 {game.currentRound}{game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 轮</span>
             <span className="truncate">已完成 {humanPlayer.declaredSets.length}/5</span>
-            <span className={`font-mono ${timer <= 5 ? 'text-red-400' : 'text-[var(--psy-accent)]'}`}>{timer}s</span>
+            <span className={`font-mono tabular-nums ${timer <= 5 ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-accent)]'}`}>{timer}s</span>
           </div>
           <div className="flex items-center justify-end gap-1">
             <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">人格</button>

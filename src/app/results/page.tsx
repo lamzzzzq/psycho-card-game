@@ -16,7 +16,7 @@ export default function ResultsPage() {
   if (!hydrated) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-gray-600">加载中...</p>
+        <p className="psy-serif text-[var(--psy-muted)]">加载中…</p>
       </div>
     );
   }
@@ -24,11 +24,11 @@ export default function ResultsPage() {
   if (!bigFiveScores) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-center space-y-4">
-          <p className="text-gray-400">尚未完成测评</p>
+        <div className="space-y-4 text-center">
+          <p className="text-[var(--psy-muted)]">尚未完成测评</p>
           <button
             onClick={() => router.push('/assessment')}
-            className="rounded-full bg-purple-500 px-6 py-2 text-sm font-medium text-white"
+            className="psy-btn psy-btn-accent px-6 py-2 text-sm font-medium"
           >
             开始测评
           </button>

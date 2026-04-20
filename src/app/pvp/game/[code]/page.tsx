@@ -166,7 +166,7 @@ export default function PvpGamePage() {
                     usePvpStore.getState().reset();
                     router.replace('/pvp');
                   }}
-                  className="text-xs text-gray-500 hover:text-gray-300 underline transition-colors"
+                  className="text-xs text-[var(--psy-muted)] underline transition-colors hover:text-[var(--psy-ink-soft)]"
                 >
                   仅返回大厅
                 </button>
@@ -174,13 +174,13 @@ export default function PvpGamePage() {
             </>
           ) : (
             <>
-              <div className="text-gray-400 animate-pulse">等待游戏开始…</div>
+              <div className="psy-serif animate-pulse text-[var(--psy-ink-soft)]">等待游戏开始…</div>
               <button
                 onClick={() => {
                   usePvpStore.getState().reset();
                   router.replace('/pvp');
                 }}
-                className="text-xs text-gray-500 hover:text-gray-300 underline transition-colors"
+                className="text-xs text-[var(--psy-muted)] underline transition-colors hover:text-[var(--psy-ink-soft)]"
               >
                 返回大厅
               </button>
@@ -323,30 +323,30 @@ export default function PvpGamePage() {
       <div className="flex flex-1 items-center justify-center">
         <div className="text-center space-y-6">
           <div className="text-6xl">{gameState.winner === myId ? '🏆' : '😔'}</div>
-          <h1 className="text-3xl font-bold text-white">
+          <h1 className="psy-serif text-3xl text-[var(--psy-ink)]">
             {gameState.winner === myId ? '你赢了！' : `${winner?.name ?? '对手'} 赢了`}
           </h1>
           <div className="space-y-2">
             {gameState.players.map((p, i) => (
-              <div key={p.id} className="flex items-center gap-3 justify-center text-sm">
-                <span className="text-gray-400">#{i + 1}</span>
-                <span className={p.id === gameState.winner ? 'text-yellow-400 font-bold' : 'text-gray-300'}>
+              <div key={p.id} className="flex items-center justify-center gap-3 text-sm">
+                <span className="text-[var(--psy-muted)]">#{i + 1}</span>
+                <span className={p.id === gameState.winner ? 'psy-serif font-medium text-[var(--psy-accent)]' : 'text-[var(--psy-ink-soft)]'}>
                   {p.name}
                 </span>
-                <span className="text-gray-500">申报 {p.declaredSets.length} 组 · 剩余 {p.handCount} 张</span>
+                <span className="text-[var(--psy-muted)]">申报 {p.declaredSets.length} 组 · 剩余 {p.handCount} 张</span>
               </div>
             ))}
           </div>
-          <div className="flex gap-3 justify-center">
+          <div className="flex justify-center gap-3">
             <button
               onClick={() => router.replace(`/pvp/room/${code}`)}
-              className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium transition-colors"
+              className="psy-btn psy-btn-accent px-6 py-2.5 font-medium"
             >
               再来一局
             </button>
             <button
               onClick={() => router.replace('/')}
-              className="px-6 py-2.5 rounded-xl border border-gray-700 text-gray-300 hover:bg-gray-800 transition-colors"
+              className="psy-btn psy-btn-ghost px-6 py-2.5 text-sm"
             >
               返回首页
             </button>
@@ -439,19 +439,29 @@ export default function PvpGamePage() {
                 const meta = DIMENSION_META[d];
                 const isDone = declaredDims.has(d);
                 return (
-                  <div key={d} className="flex items-center gap-1 rounded-full px-2 py-0.5"
-                    style={{ backgroundColor: isDone ? meta.colorHex + '25' : 'rgba(75,75,75,0.3)' }}
+                  <div
+                    key={d}
+                    className="flex items-center gap-1 rounded-full px-2 py-0.5"
+                    style={{
+                      backgroundColor: isDone ? meta.colorHex + '25' : 'rgba(255,255,255,0.04)',
+                      border: `1px solid ${isDone ? meta.colorHex + '40' : 'rgba(200,155,93,0.14)'}`,
+                    }}
                   >
-                    <span className="text-[9px]" style={{ color: isDone ? meta.colorHex : '#9ca3af' }}>{meta.name}</span>
-                    <span className={`text-[10px] font-bold ${isDone ? '' : 'text-gray-400'}`} style={isDone ? { color: meta.colorHex } : undefined}>
+                    <span className="text-[9px]" style={{ color: isDone ? meta.colorHex : 'var(--psy-muted)' }}>
+                      {meta.name}
+                    </span>
+                    <span
+                      className="text-[10px] font-medium"
+                      style={{ color: isDone ? meta.colorHex : 'var(--psy-ink-soft)' }}
+                    >
                       {isDone ? '✓' : `${targets[d]}张`}
                     </span>
                   </div>
                 );
               })}
-              <div className="rounded-full bg-gray-800 px-2 py-0.5">
-                <span className="text-[9px] text-gray-500">完成 </span>
-                <span className="text-[10px] font-bold text-emerald-400">{mePlayer.declaredSets.length}/5</span>
+              <div className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2 py-0.5">
+                <span className="text-[9px] text-[var(--psy-muted)]">完成 </span>
+                <span className="text-[10px] font-medium text-[var(--psy-success)]">{mePlayer.declaredSets.length}/5</span>
               </div>
             </div>
           )}

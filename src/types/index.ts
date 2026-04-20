@@ -7,9 +7,7 @@ export interface DimensionMeta {
   key: Dimension;
   name: string;
   nameEn: string;
-  color: string;
   colorHex: string;
-  bgColor: string;
   description: string;
   highLabel: string;
   lowLabel: string;

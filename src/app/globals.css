@@ -20,6 +20,10 @@
   --psy-muted: #8c7c66;
   --psy-accent: #c89b5d;
   --psy-accent-soft: rgba(200, 155, 93, 0.16);
+  --psy-success: #8fc787;
+  --psy-success-soft: rgba(143, 199, 135, 0.18);
+  --psy-danger: #dc6a4f;
+  --psy-danger-soft: rgba(220, 106, 79, 0.18);
   --psy-shadow: 0 20px 60px rgba(0, 0, 0, 0.34);
 }
 
@@ -152,4 +156,20 @@ body::before {
 
 .psy-scroll::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, rgba(207, 167, 112, 0.94), rgba(148, 111, 65, 0.96));
+}
+
+:focus-visible {
+  outline: 2px solid var(--psy-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline-offset: 3px;
+}
+
+.psy-btn:focus-visible {
+  outline-offset: 4px;
 }

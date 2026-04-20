@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GameAction, Player, isDummyCard, isPersonalityCard } from '@/types';
+import { DIMENSION_META } from '@/data/dimensions';
 
 interface GameLogProps {
   actions: GameAction[];
@@ -42,8 +43,9 @@ function getActionLabel(action: GameAction) {
   }
   if (action.type === 'pong-success' && action.dimension) {
     return {
-      tone: 'success' as const,
+      tone: 'dimension' as const,
       prefix: `碰牌成功${action.cardCount ? ` (${action.cardCount}张)` : ''}`,
+      colorHex: DIMENSION_META[action.dimension].colorHex,
     };
   }
   if (action.type === 'pong-fail' && action.dimension) {
@@ -96,9 +98,9 @@ export function GameLog({ actions, players }: GameLogProps) {
                     <div
                       className={`${
                         label.tone === 'success'
-                          ? 'font-bold text-emerald-300'
+                          ? 'font-medium text-[var(--psy-success)]'
                           : label.tone === 'danger'
-                          ? 'text-red-300'
+                          ? 'text-[var(--psy-danger)]'
                           : label.tone === 'muted'
                           ? 'text-[var(--psy-muted)]'
                           : ''
@@ -178,9 +180,9 @@ export function GameLog({ actions, players }: GameLogProps) {
                             <div
                               className={`${
                                 label.tone === 'success'
-                                  ? 'font-bold text-emerald-300'
+                                  ? 'font-medium text-[var(--psy-success)]'
                                   : label.tone === 'danger'
-                                  ? 'text-red-300'
+                                  ? 'text-[var(--psy-danger)]'
                                   : label.tone === 'muted'
                                   ? 'text-[var(--psy-muted)]'
                                   : ''
