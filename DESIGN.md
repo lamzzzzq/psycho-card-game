@@ -132,6 +132,18 @@
 ### `.psy-scroll`
 深棕铜金滚动条（兼容 webkit + Firefox），用在所有可滚动容器。
 
+### `.psy-input`
+统一表单输入框：圆角 0.9rem + 铜金描边 + 深底渐变。`:focus` 自动套金色 ring（3px soft accent）。错误态加 `.is-error`（描边变 danger）。
+
+### `.psy-tile`
+方形选项块（用于难度/轮数/玩家数选择）：1.2rem 圆角，默认低对比，加 `.is-active` 切换到铜金高亮渐变 + 阴影。
+
+### `.psy-eyebrow`
+小标题前缀：思源宋体 + 0.32em 字距 + 大写 + accent 色。用于 section 标签（如「ROOM CODE」「玩家信息」）。
+
+### `.psy-chip`
+内联标签胶囊：胶囊形 + 浅金描边 + 浅金底。用于状态/数量/属性标识（不要用作按钮）。
+
 ### `<PsyOverlayPanel>`
 所有蒙层（centered modal / bottom sheet）的唯一入口，封装：
 - Portal 到 `document.body`
@@ -201,4 +213,4 @@
 - [ ] warning / info 语义色尚未需要
 - [ ] Toast / Banner 尚未规范
 - [ ] 暗色为唯一主题；浅色模式暂不计划
-- [ ] **未主题化页面**：`src/app/pvp/page.tsx`、`src/app/pvp/room/[code]/page.tsx`、`src/app/stats/page.tsx` 仍用旧 Tailwind gray，需独立改造
+- [x] ~~未主题化页面~~（pvp/page.tsx、pvp/room、stats 已迁移到 Psy 设计系统）

@@ -131,6 +131,83 @@ body::before {
   box-shadow: 0 18px 34px rgba(85, 30, 24, 0.26);
 }
 
+.psy-input {
+  width: 100%;
+  border-radius: 0.9rem;
+  border: 1px solid var(--psy-border);
+  background: linear-gradient(180deg, rgba(13, 24, 36, 0.84), rgba(10, 18, 28, 0.92));
+  color: var(--psy-ink);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
+}
+
+.psy-input::placeholder {
+  color: var(--psy-muted);
+}
+
+.psy-input:hover {
+  border-color: var(--psy-border-strong);
+}
+
+.psy-input:focus {
+  outline: none;
+  border-color: var(--psy-accent);
+  box-shadow: 0 0 0 3px var(--psy-accent-soft);
+}
+
+.psy-input.is-error {
+  border-color: var(--psy-danger);
+}
+
+.psy-tile {
+  border-radius: 1.2rem;
+  border: 1px solid rgba(200, 155, 93, 0.16);
+  background: linear-gradient(180deg, rgba(20, 31, 46, 0.78), rgba(11, 20, 31, 0.92));
+  padding: 0.875rem 1rem;
+  text-align: center;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+  cursor: pointer;
+  color: var(--psy-ink);
+}
+
+.psy-tile:hover {
+  border-color: rgba(200, 155, 93, 0.32);
+}
+
+.psy-tile.is-active {
+  border-color: rgba(200, 155, 93, 0.48);
+  background: linear-gradient(180deg, rgba(64, 46, 27, 0.92), rgba(27, 22, 17, 0.96));
+  box-shadow: 0 18px 32px rgba(72, 49, 18, 0.24);
+}
+
+.psy-eyebrow {
+  font-family: var(--font-serif-cn), serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--psy-accent);
+}
+
+.psy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 155, 93, 0.22);
+  background: rgba(200, 155, 93, 0.08);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--psy-ink-soft);
+}
+
 .psy-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(200, 155, 93, 0.52) rgba(13, 24, 36, 0.4);

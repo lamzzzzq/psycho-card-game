@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 
 interface PlayerStat {
@@ -20,6 +22,7 @@ interface GameRecord {
 }
 
 export default function StatsPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<PlayerStat[]>([]);
   const [records, setRecords] = useState<GameRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,11 +40,8 @@ export default function StatsPage() {
         const results = (data ?? []) as GameRecord[];
         setRecords(results);
 
-        // Aggregate per student
         const map = new Map<string, { played: number; wins: number }>();
-
         for (const r of results) {
-          // Count participation from rankings
           if (Array.isArray(r.rankings)) {
             for (const p of r.rankings) {
               const entry = map.get(p.playerId) ?? { played: 0, wins: 0 };
@@ -49,7 +49,6 @@ export default function StatsPage() {
               map.set(p.playerId, entry);
             }
           }
-          // Count wins
           if (r.winner_id) {
             const entry = map.get(r.winner_id) ?? { played: 0, wins: 0 };
             entry.wins++;
@@ -80,118 +79,137 @@ export default function StatsPage() {
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-gray-400 animate-pulse">加载统计数据…</div>
+        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">加载统计数据…</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center px-4 py-8">
-      <div className="w-full max-w-3xl space-y-6">
-        <div className="text-center space-y-1">
-          <h1 className="text-3xl font-bold text-white">数据统计</h1>
-          <p className="text-gray-400 text-sm">参与者出勤与对战记录</p>
+    <div className="flex flex-1 flex-col items-center px-6 py-10">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-4xl space-y-8"
+      >
+        <div className="space-y-3">
+          <button
+            onClick={() => router.push('/')}
+            className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
+          >
+            ← 返回首页
+          </button>
+          <p className="psy-eyebrow">DECK ARCHIVES</p>
+          <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">数据统计</h1>
+          <p className="text-base leading-7 text-[var(--psy-ink-soft)]">参与者出勤与对战记录的归档卷宗。</p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <span className="psy-chip">{stats.length} 名参与者</span>
+            <span className="psy-chip">{records.length} 场对局</span>
+          </div>
         </div>
 
-        {/* View toggle */}
-        <div className="flex rounded-xl bg-gray-900 border border-gray-800 p-1">
-          {(['summary', 'detail'] as const).map(v => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                view === v
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              {v === 'summary' ? '汇总统计' : '对局明细'}
-            </button>
-          ))}
-        </div>
-
-        {view === 'summary' ? (
-          <div className="rounded-2xl bg-gray-900 border border-gray-800 overflow-hidden">
-            <div className="grid grid-cols-4 gap-px bg-gray-800 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              <div className="bg-gray-900 px-4 py-3">学号</div>
-              <div className="bg-gray-900 px-4 py-3 text-center">参加场次</div>
-              <div className="bg-gray-900 px-4 py-3 text-center">胜利场次</div>
-              <div className="bg-gray-900 px-4 py-3 text-center">胜率</div>
-            </div>
-            {stats.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-500">暂无对局数据</div>
-            ) : (
-              stats.map((s, i) => (
-                <div
-                  key={s.studentId}
-                  className={`grid grid-cols-4 gap-px bg-gray-800 ${i % 2 === 0 ? '' : ''}`}
+        <div className="psy-panel psy-etched space-y-6 rounded-[2rem] p-6 sm:p-8">
+          <div className="grid grid-cols-2 gap-2 rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] p-1">
+            {(['summary', 'detail'] as const).map((v) => {
+              const active = view === v;
+              return (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={`psy-serif rounded-full px-4 py-2 text-sm transition ${
+                    active
+                      ? 'bg-[linear-gradient(180deg,rgba(64,46,27,0.92),rgba(27,22,17,0.96))] text-[var(--psy-ink)] shadow-[0_10px_24px_rgba(72,49,18,0.24)]'
+                      : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
+                  }`}
                 >
-                  <div className="bg-gray-900 px-4 py-3 text-sm text-white font-mono">
-                    {s.studentId}
-                  </div>
-                  <div className="bg-gray-900 px-4 py-3 text-sm text-gray-300 text-center">
-                    {s.gamesPlayed}
-                  </div>
-                  <div className="bg-gray-900 px-4 py-3 text-sm text-center">
-                    <span className={s.wins > 0 ? 'text-emerald-400 font-medium' : 'text-gray-500'}>
-                      {s.wins}
-                    </span>
-                  </div>
-                  <div className="bg-gray-900 px-4 py-3 text-sm text-center">
-                    <span className={parseInt(s.winRate) >= 50 ? 'text-emerald-400' : 'text-gray-400'}>
-                      {s.winRate}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-            {stats.length > 0 && (
-              <div className="bg-gray-900 px-4 py-3 text-xs text-gray-500 border-t border-gray-800">
-                共 {stats.length} 名参与者，{records.length} 场对局
-              </div>
-            )}
+                  {v === 'summary' ? '汇总统计' : '对局明细'}
+                </button>
+              );
+            })}
           </div>
-        ) : (
-          <div className="space-y-3">
-            {records.length === 0 ? (
-              <div className="rounded-2xl bg-gray-900 border border-gray-800 px-4 py-8 text-center text-gray-500">
-                暂无对局记录
+
+          {view === 'summary' ? (
+            stats.length === 0 ? (
+              <div className="rounded-[1.4rem] border border-[rgba(200,155,93,0.14)] bg-[rgba(255,255,255,0.02)] px-6 py-12 text-center text-sm text-[var(--psy-muted)]">
+                暂无对局数据
               </div>
             ) : (
-              records.map(r => (
-                <div key={r.id} className="rounded-xl bg-gray-900 border border-gray-800 p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">
-                      {new Date(r.created_at).toLocaleString('zh-CN')}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {r.rounds_played} 轮
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.isArray(r.rankings) && r.rankings.map((p, i) => (
-                      <div
-                        key={p.playerId}
-                        className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${
-                          p.playerId === r.winner_id
-                            ? 'bg-yellow-500/15 border border-yellow-500/30 text-yellow-300'
-                            : 'bg-gray-800 text-gray-300'
-                        }`}
-                      >
-                        {p.playerId === r.winner_id && <span>🏆</span>}
-                        <span className="font-mono">{p.playerId}</span>
-                        <span className="text-xs text-gray-500">
-                          申报{p.declaredCount}组 剩{p.remainingCards}张
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+              <div className="overflow-hidden rounded-[1.4rem] border border-[rgba(200,155,93,0.18)]">
+                <div className="psy-eyebrow grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-px border-b border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.05)] px-5 py-3 text-[10px]">
+                  <div>学号</div>
+                  <div className="text-center">参加场次</div>
+                  <div className="text-center">胜利场次</div>
+                  <div className="text-center">胜率</div>
                 </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
+                {stats.map((s, i) => (
+                  <div
+                    key={s.studentId}
+                    className="grid grid-cols-[1.5fr_1fr_1fr_1fr] items-center gap-px border-t border-[rgba(200,155,93,0.08)] px-5 py-3 text-sm transition hover:bg-[rgba(200,155,93,0.04)]"
+                    style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}
+                  >
+                    <div className="font-mono text-[var(--psy-ink)] tabular-nums">{s.studentId}</div>
+                    <div className="text-center font-mono text-[var(--psy-ink-soft)] tabular-nums">{s.gamesPlayed}</div>
+                    <div className="text-center font-mono tabular-nums">
+                      <span className={s.wins > 0 ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-muted)]'}>
+                        {s.wins}
+                      </span>
+                    </div>
+                    <div className="text-center font-mono tabular-nums">
+                      <span className={parseInt(s.winRate) >= 50 ? 'text-[var(--psy-success)]' : 'text-[var(--psy-ink-soft)]'}>
+                        {s.winRate}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : (
+            <div className="space-y-3">
+              {records.length === 0 ? (
+                <div className="rounded-[1.4rem] border border-[rgba(200,155,93,0.14)] bg-[rgba(255,255,255,0.02)] px-6 py-12 text-center text-sm text-[var(--psy-muted)]">
+                  暂无对局记录
+                </div>
+              ) : (
+                records.map((r) => (
+                  <div
+                    key={r.id}
+                    className="space-y-3 rounded-[1.4rem] border border-[rgba(200,155,93,0.16)] bg-[rgba(255,255,255,0.02)] p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-[var(--psy-muted)]">
+                        {new Date(r.created_at).toLocaleString('zh-CN')}
+                      </span>
+                      <span className="psy-eyebrow text-[10px] text-[var(--psy-muted)]">{r.rounds_played} 轮</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {Array.isArray(r.rankings) &&
+                        r.rankings.map((p) => {
+                          const isWinner = p.playerId === r.winner_id;
+                          return (
+                            <div
+                              key={p.playerId}
+                              className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm"
+                              style={{
+                                borderColor: isWinner ? 'var(--psy-border-strong)' : 'rgba(200,155,93,0.18)',
+                                background: isWinner ? 'var(--psy-accent-soft)' : 'rgba(255,255,255,0.025)',
+                                color: isWinner ? 'var(--psy-accent)' : 'var(--psy-ink-soft)',
+                              }}
+                            >
+                              {isWinner && <span>🏆</span>}
+                              <span className="font-mono tabular-nums">{p.playerId}</span>
+                              <span className="text-xs text-[var(--psy-muted)]">
+                                申报{p.declaredCount}组 · 剩{p.remainingCards}张
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 }
