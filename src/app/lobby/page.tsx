@@ -28,6 +28,12 @@ export default function LobbyPage() {
           >
             开始测评
           </button>
+          <button
+            onClick={() => router.push('/')}
+            className="block mx-auto text-xs text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
+          >
+            ← 返回首页
+          </button>
         </div>
       </div>
     );

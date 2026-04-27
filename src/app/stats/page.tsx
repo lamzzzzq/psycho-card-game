@@ -134,16 +134,22 @@ export default function StatsPage() {
               </div>
             ) : (
               <div className="overflow-hidden rounded-[1.4rem] border border-[rgba(200,155,93,0.18)]">
-                <div className="psy-eyebrow grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-px border-b border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.05)] px-5 py-3 text-[10px]">
+                <div className="psy-eyebrow grid grid-cols-[1.4fr_0.9fr_0.9fr_0.9fr] gap-px border-b border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.05)] px-3 py-3 text-[10px] sm:grid-cols-[1.5fr_1fr_1fr_1fr] sm:px-5">
                   <div>学号</div>
-                  <div className="text-center">参加场次</div>
-                  <div className="text-center">胜利场次</div>
+                  <div className="text-center">
+                    <span className="sm:hidden">场次</span>
+                    <span className="hidden sm:inline">参加场次</span>
+                  </div>
+                  <div className="text-center">
+                    <span className="sm:hidden">胜场</span>
+                    <span className="hidden sm:inline">胜利场次</span>
+                  </div>
                   <div className="text-center">胜率</div>
                 </div>
                 {stats.map((s, i) => (
                   <div
                     key={s.studentId}
-                    className="grid grid-cols-[1.5fr_1fr_1fr_1fr] items-center gap-px border-t border-[rgba(200,155,93,0.08)] px-5 py-3 text-sm transition hover:bg-[rgba(200,155,93,0.04)]"
+                    className="grid grid-cols-[1.4fr_0.9fr_0.9fr_0.9fr] items-center gap-px border-t border-[rgba(200,155,93,0.08)] px-3 py-3 text-sm transition hover:bg-[rgba(200,155,93,0.04)] sm:grid-cols-[1.5fr_1fr_1fr_1fr] sm:px-5"
                     style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}
                   >
                     <div className="font-mono text-[var(--psy-ink)] tabular-nums">{s.studentId}</div>
