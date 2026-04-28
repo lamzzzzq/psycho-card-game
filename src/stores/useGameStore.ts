@@ -94,9 +94,10 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     const pendingCard = game.pendingDiscard;
     const discardedBy = game.discardedByIndex;
     const playerCount = game.players.length;
-    // Bug #5: only the downstream (next) player may pong.
-    const downstreamIdx = (discardedBy + 1) % playerCount;
 
+    // First-come-first-served: any AI non-discarder may pong. Iterate
+    // downstream-first so deterministic tie-breaking favors the closest
+    // player; pongCard advances the phase and breaks the loop early.
     for (let offset = 1; offset < playerCount; offset++) {
       const idx = (discardedBy + offset) % playerCount;
       const latestGame = get().game;
@@ -106,9 +107,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       if (player.isHuman) continue;
       if (latestGame.claimResponses.includes(player.id)) continue;
 
-      // Non-downstream AIs always pass (new rule). Downstream AI may pong
-      // if the decision engine says so.
-      const canPong = idx === downstreamIdx && !player.skipNextTurn;
+      const canPong = !player.skipNextTurn;
       const decision = canPong
         ? makeAIPongDecision(player, pendingCard, latestGame.settings.aiDifficulty)
         : { shouldPong: false as const };

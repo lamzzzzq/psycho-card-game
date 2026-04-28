@@ -13,10 +13,10 @@ interface CardProps {
   compact?: boolean;
   tiny?: boolean;
   showDimension?: boolean;
-  tagDimension?: import('@/types').Dimension | null;
+  revealedDimension?: import('@/types').Dimension | null;
 }
 
-export function Card({ card, faceUp = true, selected = false, onClick, compact = false, tiny = false, showDimension = false, tagDimension = null }: CardProps) {
+export function Card({ card, faceUp = true, selected = false, onClick, compact = false, tiny = false, showDimension = false, revealedDimension = null }: CardProps) {
   // Hooks must run unconditionally — keep them above any early return so
   // the hook count stays stable when faceUp flips (e.g. revealing an
   // opponent's hand after hu-fail).
@@ -123,21 +123,24 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
       )}
       {!showDimension && !dummy && !compact && !tiny && <div />}
 
-      {tagDimension && compact && !tiny && (
-        <div className="absolute inset-x-1 top-1 flex justify-center">
+      {/* Revealed real dimension (after using "view 2 cards"): top-right corner */}
+      {revealedDimension && !tiny && (
+        <div className={`absolute z-20 ${compact ? 'right-1 top-1' : 'right-1.5 top-1.5'}`}>
           <span
-            className="flex max-w-full items-center gap-1 rounded-full px-1.5 py-0.5 text-[8px] font-semibold leading-none shadow-[0_4px_10px_rgba(0,0,0,0.18)]"
+            className={`flex items-center gap-1 rounded-full font-semibold leading-none shadow-[0_4px_10px_rgba(0,0,0,0.22)] ${
+              compact ? 'px-1.5 py-0.5 text-[7px]' : 'px-1.5 py-0.5 text-[8px]'
+            }`}
             style={{
-              backgroundColor: DIMENSION_META[tagDimension].colorHex + '26',
-              color: DIMENSION_META[tagDimension].colorHex,
-              border: `1px solid ${DIMENSION_META[tagDimension].colorHex}45`,
+              backgroundColor: DIMENSION_META[revealedDimension].colorHex + '33',
+              color: DIMENSION_META[revealedDimension].colorHex,
+              border: `1px solid ${DIMENSION_META[revealedDimension].colorHex}55`,
             }}
           >
             <span
               className="h-1.5 w-1.5 rounded-full"
-              style={{ backgroundColor: DIMENSION_META[tagDimension].colorHex }}
+              style={{ backgroundColor: DIMENSION_META[revealedDimension].colorHex }}
             />
-            <span className="truncate">{DIMENSION_META[tagDimension].name}</span>
+            <span>{DIMENSION_META[revealedDimension].name}</span>
           </span>
         </div>
       )}
@@ -148,23 +151,7 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
         {tiny ? (card.text.length > 8 ? card.text.slice(0, 8) + '...' : card.text) : compact ? (card.text.length > 20 ? card.text.slice(0, 20) + '...' : card.text) : card.text}
       </p>
 
-      {/* Tag indicator */}
-      {tagDimension && !compact && !tiny ? (
-        <div className="flex justify-end">
-          <span
-            className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full"
-            style={{
-              backgroundColor: DIMENSION_META[tagDimension].colorHex + '33',
-              color: DIMENSION_META[tagDimension].colorHex,
-              border: `1px solid ${DIMENSION_META[tagDimension].colorHex}44`,
-            }}
-          >
-            {DIMENSION_META[tagDimension].name}
-          </span>
-        </div>
-      ) : (
-        <div />
-      )}
+      <div />
     </motion.div>
   );
 }

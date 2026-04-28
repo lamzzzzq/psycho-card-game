@@ -10,10 +10,15 @@ export interface PlayerInfo {
 // Room status
 export type RoomStatus = 'waiting' | 'playing' | 'finished';
 
+// Personality deck identifier. Only 'big-five' is implemented for MVP;
+// the others appear in the create-room UI as locked previews.
+export type DeckId = 'big-five' | 'hexaco' | 'cpai';
+
 // Room settings
 export interface RoomSettings {
   totalRounds: number; // 0 = unlimited
   maxPlayers: number; // 3-4
+  deck?: DeckId; // optional for backward-compat with existing rooms (= 'big-five')
 }
 
 // Room data from DB

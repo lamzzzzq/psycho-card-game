@@ -56,6 +56,11 @@ export default function GamePage() {
   // Card selection state (for pong)
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
   const [mobileSheet, setMobileSheet] = useState<'log' | 'declared' | 'persona' | null>(null);
+  // "View 2 cards" feature: 1 use per own turn. Resets when active player changes.
+  const [viewMode, setViewMode] = useState(false);
+  const [pickedViewIds, setPickedViewIds] = useState<number[]>([]);
+  const [viewedCardIds, setViewedCardIds] = useState<number[]>([]);
+  const [viewUsedThisTurn, setViewUsedThisTurn] = useState(false);
 
   // Result feedback banner
   const [resultBanner, setResultBanner] = useState<{ success: boolean; message: string } | null>(null);
@@ -92,6 +97,14 @@ export default function GamePage() {
       setSelectedCardIds([]);
     }
   }, [game?.phase]);
+
+  // Reset view-cards state on turn change
+  useEffect(() => {
+    setViewMode(false);
+    setPickedViewIds([]);
+    setViewedCardIds([]);
+    setViewUsedThisTurn(false);
+  }, [game?.currentPlayerIndex, game?.currentRound]);
 
   useEffect(() => {
     if (isHumanActive) {
@@ -324,10 +337,6 @@ export default function GamePage() {
   const canDraw = isHumanTurn && game.phase === 'drawing';
   const isDiscarding = isHumanTurn && game.phase === 'discarding';
   const isPongWindow = game.phase === 'claim-window' && game.pendingDiscard !== null && game.discardedByIndex !== 0;
-  // Bug #5: pong is only offered to the downstream player. Human is index 0.
-  const isDownstream =
-    game.phase === 'claim-window' &&
-    (game.discardedByIndex + 1) % game.players.length === 0;
   const canHu =
     game.phase !== 'game-over' &&
     !humanPlayer.skipNextTurn &&
@@ -342,7 +351,7 @@ export default function GamePage() {
   const declaredDims = getDeclaredDimensions(humanPlayer);
 
   return (
-    <motion.div animate={shakeControls} className="mx-auto flex h-[100dvh] max-w-6xl w-full flex-col overflow-hidden px-3 py-3 sm:px-4 sm:py-4">
+    <motion.div animate={shakeControls} className="mx-auto flex min-h-[100dvh] max-w-6xl w-full flex-col px-3 py-3 sm:px-4 sm:py-4">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
       <YourTurnBanner bannerKey={yourTurnKey} />
       <ArrowOverlay from={arrowFrom} to={arrowTo} color={arrowColor} />
@@ -363,7 +372,7 @@ export default function GamePage() {
       ))}
 
       {/* Opponents */}
-      <div className="mb-1 grid h-[13dvh] shrink-0 grid-cols-3 gap-2 overflow-hidden sm:mb-4 sm:h-[6.5rem] sm:gap-3">
+      <div className="mb-1 grid shrink-0 grid-cols-3 gap-2 sm:mb-4 sm:h-[6.5rem] sm:gap-3">
         {opponents.map((opp) => (
           <OpponentHand
             key={opp.id}
@@ -374,7 +383,7 @@ export default function GamePage() {
       </div>
 
       {/* Center: Draw pile + Discard pile + Game log */}
-      <div className="my-1 flex h-[16dvh] shrink-0 items-center justify-center gap-3 sm:my-4 sm:grid sm:h-[11rem] sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
+      <div className="my-1 flex shrink-0 items-center justify-center gap-3 sm:my-4 sm:grid sm:h-[11rem] sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
         <div className="flex items-center gap-3 sm:col-start-2 sm:gap-6">
           <div
             ref={drawPileRef}
@@ -399,7 +408,7 @@ export default function GamePage() {
       </div>
 
       {/* Human player area */}
-      <div className="flex min-h-0 flex-1 flex-col space-y-2 sm:space-y-3">
+      <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
         {/* Row 1: My personality scores */}
         <div className="hidden shrink-0 items-center justify-center gap-1.5 flex-wrap sm:flex">
           {DIMENSIONS.map((d) => {
@@ -460,76 +469,116 @@ export default function GamePage() {
           </div>
         </div>
 
-        {/* Pong panel — only shown to the downstream player (bug #5) */}
-        {isPongWindow && isDownstream && game.pendingDiscard && (
-          <PongPanel
-            pendingCard={game.pendingDiscard}
-            player={humanPlayer}
-            discardedByName={game.players[game.discardedByIndex]?.name ?? ''}
-            selectedCardIds={selectedCardIds}
-            onClaim={handlePong}
-            onSkip={handleSkipPong}
-            onResolveAI={handleResolvePongAI}
-          />
-        )}
-        {/* Non-downstream claim hint (hu-only path) */}
-        {isPongWindow && !isDownstream && game.pendingDiscard &&
+        {/* Pong panel — first-come-first-served: any non-discarder may
+            attempt pong (race resolves naturally). */}
+        {isPongWindow && game.pendingDiscard &&
           !game.claimResponses.includes(humanPlayer.id) && (
-            <div className="psy-panel flex shrink-0 items-center justify-center gap-3 rounded-[1.35rem] border p-3 flex-wrap">
-              <p className="max-w-3xl text-xs text-[var(--psy-accent)]">
-                {game.players[game.discardedByIndex]?.name} 弃了一张牌 —
-                你不是下家，不能碰。如要食胡请在下方点「食胡」。
-              </p>
-              <button
-                onClick={handleSkipPong}
-                className="psy-btn psy-btn-ghost shrink-0 px-3 py-1.5 text-xs"
-              >
-                过
-              </button>
-            </div>
+            <PongPanel
+              pendingCard={game.pendingDiscard}
+              player={humanPlayer}
+              discardedByName={game.players[game.discardedByIndex]?.name ?? ''}
+              selectedCardIds={selectedCardIds}
+              onClaim={handlePong}
+              onSkip={handleSkipPong}
+              onResolveAI={handleResolvePongAI}
+            />
           )}
 
         {/* Action buttons */}
-        <div className="flex shrink-0 items-center justify-center gap-2 sm:gap-3">
-          {/* Hu button — visible on own turn, or during an opponent's
-              claim-window ("跳着胡"). Hidden when the human has already
-              responded to this claim window. */}
-          {canHu && (
-            <button
-              onClick={handleHu}
-              className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
-            >
-              食胡
-            </button>
-          )}
+        {!viewMode && (
+          <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 sm:gap-3">
+            {/* Hu button — visible on own turn, or during an opponent's
+                claim-window ("跳着胡"). Hidden when the human has already
+                responded to this claim window. */}
+            {canHu && (
+              <button
+                onClick={handleHu}
+                className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
+              >
+                食胡
+              </button>
+            )}
 
-          {/* AI turn button */}
-          {!isHumanTurn && game.phase !== 'game-over' && game.phase !== 'claim-window' && (
-            <button
-              onClick={runOneAITurn}
-              disabled={aiRunning}
-              className="psy-btn psy-btn-accent px-6 py-2 text-sm font-medium"
-            >
-              {game.players[game.currentPlayerIndex].avatar}{' '}
-              {game.players[game.currentPlayerIndex].name} 的回合 — 点击执行
-            </button>
-          )}
-        </div>
+            {isHumanTurn && isDiscarding && !viewUsedThisTurn && (
+              <button
+                onClick={() => { setViewMode(true); setPickedViewIds([]); }}
+                className="psy-btn psy-btn-ghost px-4 py-2 text-sm font-medium"
+                title="本回合可查看 2 张自己的手牌的人格"
+              >
+                🔍 查看 2 张牌（1/1）
+              </button>
+            )}
+            {isHumanTurn && isDiscarding && viewUsedThisTurn && (
+              <span className="text-xs text-[var(--psy-muted)]">本回合查看已用</span>
+            )}
+
+            {/* AI turn button */}
+            {!isHumanTurn && game.phase !== 'game-over' && game.phase !== 'claim-window' && (
+              <button
+                onClick={runOneAITurn}
+                disabled={aiRunning}
+                className="psy-btn psy-btn-accent px-6 py-2 text-sm font-medium"
+              >
+                {game.players[game.currentPlayerIndex].avatar}{' '}
+                {game.players[game.currentPlayerIndex].name} 的回合 — 点击执行
+              </button>
+            )}
+          </div>
+        )}
+
+        {viewMode && (
+          <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
+            <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
+              🔍 选 2 张你想要查看的手牌（{pickedViewIds.length}/2）
+            </p>
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={() => { setViewMode(false); setPickedViewIds([]); }}
+                className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => {
+                  if (pickedViewIds.length === 0) return;
+                  setViewedCardIds(pickedViewIds);
+                  setViewMode(false);
+                  setPickedViewIds([]);
+                  setViewUsedThisTurn(true);
+                }}
+                disabled={pickedViewIds.length === 0}
+                className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:opacity-40"
+              >
+                查看
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Hand + Declared cards */}
-        <div className="flex min-h-0 flex-1 items-start justify-center gap-3 sm:h-[30dvh] sm:flex-none sm:gap-4">
+        <div className="flex flex-1 items-start justify-center gap-3 sm:gap-4">
           <div className="hidden flex-shrink-0 sm:block">
             <DeclaredArea declaredSets={humanPlayer.declaredSets} />
           </div>
-          <div ref={handAreaRef} className="min-h-0 flex-1 min-w-0 overflow-visible">
+          <div ref={handAreaRef} className="flex-1 min-w-0 overflow-visible">
             <PlayerHand
               cards={humanPlayer.hand}
               drawnCard={isHumanTurn ? game.drawnCard : null}
-              isDiscarding={isDiscarding}
-              isDeclaring={isPongWindow && isDownstream}
+              isDiscarding={isDiscarding && !viewMode}
+              isDeclaring={isPongWindow}
               isMyTurn={isHumanTurn}
               mobileCompact
               selectedCardIds={selectedCardIds}
+              viewedCardIds={viewedCardIds}
+              viewMode={viewMode}
+              pickedViewIds={pickedViewIds}
+              onTogglePickView={(cardId) =>
+                setPickedViewIds((prev) =>
+                  prev.includes(cardId)
+                    ? prev.filter((id) => id !== cardId)
+                    : prev.length >= 2 ? prev : [...prev, cardId]
+                )
+              }
               onDiscardCard={handleDiscardCard}
               onToggleSelect={handleToggleSelect}
               onCardHover={handleCardHover}

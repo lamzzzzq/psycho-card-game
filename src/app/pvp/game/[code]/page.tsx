@@ -66,6 +66,12 @@ export default function PvpGamePage() {
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
   const [resultBanner, setResultBanner] = useState<{ success: boolean; message: string } | null>(null);
   const [mobileSheet, setMobileSheet] = useState<'log' | 'declared' | 'persona' | null>(null);
+  // "View 2 cards" feature: 1 use per own turn. State resets when the
+  // active player or round changes.
+  const [viewMode, setViewMode] = useState(false);
+  const [pickedViewIds, setPickedViewIds] = useState<number[]>([]);
+  const [viewedCardIds, setViewedCardIds] = useState<number[]>([]);
+  const [viewUsedThisTurn, setViewUsedThisTurn] = useState(false);
   const [arrowFrom, setArrowFrom] = useState<{ x: number; y: number } | null>(null);
   const [arrowTo, setArrowTo] = useState<{ x: number; y: number } | null>(null);
   const [flyingCards, setFlyingCards] = useState<FlyingAnim[]>([]);
@@ -129,6 +135,14 @@ export default function PvpGamePage() {
   useEffect(() => {
     if (gameState?.phase !== 'claim-window') setSelectedCardIds([]);
   }, [gameState?.phase]);
+
+  // Reset "view cards" state whenever the active turn changes (own or other).
+  useEffect(() => {
+    setViewMode(false);
+    setPickedViewIds([]);
+    setViewedCardIds([]);
+    setViewUsedThisTurn(false);
+  }, [gameState?.currentPlayerIndex, gameState?.currentRound]);
 
   const { shakeControls, flashControls, pops } = useGameFeedback(
     (gameState?.actionLog ?? []) as GameAction[],
@@ -201,11 +215,10 @@ export default function PvpGamePage() {
   const alreadyResponded = !!myId && (gameState.claimResponses?.includes(myId) ?? false);
   const isDiscarderMe = gameState.discardedByIndex === myIndex;
   const canClaim = isClaimWindow && !isDiscarderMe && !alreadyResponded;
-  // Bug #5: pong is only available to the downstream (next) player.
-  const playerCount = gameState.players.length;
-  const isDownstream = isClaimWindow &&
-    (gameState.discardedByIndex + 1) % playerCount === myIndex;
-  const canPong = canClaim && isDownstream && !meSerialized?.skipNextTurn;
+  // First-come-first-served: any non-discarder can pong. The race
+  // resolves naturally because pongCard advances the phase out of
+  // 'claim-window' before slower clicks land.
+  const canPong = canClaim && !meSerialized?.skipNextTurn;
   const canHu = (isMyTurn && gameState.phase !== 'claim-window' && !meSerialized?.skipNextTurn)
     || (canClaim && !meSerialized?.skipNextTurn);
   const canDraw = isMyTurn && gameState.phase === 'drawing';
@@ -290,6 +303,35 @@ export default function PvpGamePage() {
     );
   }
 
+  function handleStartView() {
+    if (viewUsedThisTurn) return;
+    setViewMode(true);
+    setPickedViewIds([]);
+  }
+
+  function handleTogglePickView(cardId: number) {
+    setPickedViewIds(prev =>
+      prev.includes(cardId)
+        ? prev.filter(id => id !== cardId)
+        : prev.length >= 2 ? prev : [...prev, cardId]
+    );
+  }
+
+  function handleConfirmView() {
+    if (pickedViewIds.length === 0) return;
+    setViewedCardIds(pickedViewIds);
+    setViewMode(false);
+    setPickedViewIds([]);
+    setViewUsedThisTurn(true);
+  }
+
+  function handleCancelView() {
+    setViewMode(false);
+    setPickedViewIds([]);
+  }
+
+  const canStartView = isMyTurn && gameState.phase === 'discarding' && !viewUsedThisTurn && !viewMode;
+
   const handleDrawPileHover = useCallback((hovering: boolean) => {
     if (!drawPileRef.current || !handAreaRef.current) return;
     if (hovering && canDraw) {
@@ -355,7 +397,7 @@ export default function PvpGamePage() {
   const declaredDims = mePlayer ? getDeclaredDimensions(mePlayer) : new Set<Dimension>();
 
   return (
-    <motion.div animate={shakeControls} className="mx-auto flex h-[100dvh] max-w-6xl w-full flex-col overflow-hidden px-3 py-3 sm:px-4 sm:py-4">
+    <motion.div animate={shakeControls} className="mx-auto flex min-h-[100dvh] max-w-6xl w-full flex-col px-3 py-3 sm:px-4 sm:py-4">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
       <YourTurnBanner bannerKey={yourTurnKey} />
       <ArrowOverlay from={arrowFrom} to={arrowTo} color="#c89b5d" />
@@ -375,7 +417,7 @@ export default function PvpGamePage() {
       )}
 
       {/* Opponents */}
-      <div className="mb-1 grid h-[13dvh] shrink-0 grid-cols-3 gap-2 overflow-hidden sm:mb-4 sm:h-[6.5rem] sm:gap-3">
+      <div className="mb-1 grid shrink-0 grid-cols-3 gap-2 sm:mb-4 sm:h-[6.5rem] sm:gap-3">
         {opponentPlayers.map(opp => (
           <OpponentHand
             key={opp.id}
@@ -386,7 +428,7 @@ export default function PvpGamePage() {
       </div>
 
       {/* Center: Draw + Discard + Log */}
-      <div className="my-1 flex h-[16dvh] shrink-0 items-center justify-center gap-3 sm:my-4 sm:grid sm:h-[11rem] sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
+      <div className="my-1 flex shrink-0 items-center justify-center gap-3 sm:my-4 sm:grid sm:h-[11rem] sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
         <div className="flex items-center gap-3 sm:col-start-2 sm:gap-6">
           <div
             ref={drawPileRef}
@@ -412,7 +454,7 @@ export default function PvpGamePage() {
 
       {/* My player area */}
       {mePlayer && (
-        <div className="flex min-h-0 flex-1 flex-col space-y-2 sm:space-y-3">
+        <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
           {/* Big Five scores */}
           <div className="hidden items-center justify-center gap-1.5 flex-wrap sm:flex">
             {DIMENSIONS.map(d => {
@@ -474,15 +516,16 @@ export default function PvpGamePage() {
             </div>
           </div>
 
-          {/* Claim window — opponent discarded. Pong only available to
-              the downstream player (bug #5). Hu available to anyone
-              non-discarder ("跳着胡"). */}
+          {/* Claim window — opponent discarded. First-come-first-served:
+              any non-discarder may pong / pass / hu. Whoever clicks
+              first wins the race. */}
           {canClaim && gameState.pendingDiscard && (
             <div className="psy-panel space-y-3 rounded-[1.35rem] border p-4">
               <div className="flex items-center justify-between">
                 <h3 className="psy-serif text-sm font-medium text-[var(--psy-accent)]">
                   {gameState.players[gameState.discardedByIndex]?.name} 弃了一张牌 — 选择行动
                 </h3>
+                <span className="text-[10px] text-[var(--psy-muted)]">先点先得</span>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex flex-col items-center gap-1">
@@ -492,15 +535,11 @@ export default function PvpGamePage() {
                   </div>
                 </div>
                 <div className="text-xs text-[var(--psy-ink-soft)]">
-                  {canPong ? (() => {
-                    return (
-                      <ul className="list-disc pl-4 space-y-1 marker:text-orange-400">
-                        <li>只选你判断为同一人格描述的手牌</li>
-                        <li>总张数要达到该维度要求</li>
-                        <li>混入其他人格牌会受罚</li>
-                      </ul>
-                    );
-                  })() : '你不是下家，仅可选择 过 或 食胡'}
+                  <ul className="list-disc pl-4 space-y-1 marker:text-orange-400">
+                    <li>选出与弃牌同一人格的手牌后点「碰」</li>
+                    <li>总张数要达到该维度要求</li>
+                    <li>混入其他人格牌会受罚</li>
+                  </ul>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -531,8 +570,8 @@ export default function PvpGamePage() {
           )}
 
           {/* Action buttons (my turn only) */}
-          {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && (
-            <div className="flex shrink-0 items-center justify-center gap-2 sm:gap-3">
+          {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && !viewMode && (
+            <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 sm:gap-3">
               {canDraw && (
                 <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">点击牌堆抽一张牌</p>
               )}
@@ -540,6 +579,18 @@ export default function PvpGamePage() {
                 <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">
                   碰牌成功 — 请直接出一张手牌
                 </p>
+              )}
+              {canStartView && (
+                <button
+                  onClick={handleStartView}
+                  className="psy-btn psy-btn-ghost px-4 py-2 text-sm font-medium"
+                  title="本回合可查看 2 张自己的手牌的人格"
+                >
+                  🔍 查看 2 张牌（{viewUsedThisTurn ? '0' : '1'}/1）
+                </button>
+              )}
+              {viewUsedThisTurn && !viewMode && (
+                <span className="text-xs text-[var(--psy-muted)]">本回合查看已用</span>
               )}
               {!meSerialized?.skipNextTurn && (
                 <button
@@ -552,20 +603,48 @@ export default function PvpGamePage() {
             </div>
           )}
 
+          {/* View-cards mode: pick up to 2 cards from your own hand */}
+          {viewMode && (
+            <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
+              <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
+                🔍 选 2 张你想要查看的手牌（{pickedViewIds.length}/2）
+              </p>
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={handleCancelView}
+                  className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleConfirmView}
+                  disabled={pickedViewIds.length === 0}
+                  className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:opacity-40"
+                >
+                  查看
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Hand + Declared */}
-          <div className="flex min-h-0 flex-1 items-start justify-center gap-3 sm:h-[30dvh] sm:flex-none sm:gap-4">
+          <div className="flex flex-1 items-start justify-center gap-3 sm:gap-4">
             <div className="hidden flex-shrink-0 sm:block">
               <DeclaredArea declaredSets={mePlayer.declaredSets} />
             </div>
-            <div ref={handAreaRef} className="min-h-0 flex-1 min-w-0 overflow-visible">
+            <div ref={handAreaRef} className="flex-1 min-w-0 overflow-visible">
               <PlayerHand
                 cards={mePlayer.hand}
                 drawnCard={isMyTurn ? (gameState.drawnCard ?? null) : null}
-                isDiscarding={isDiscarding}
+                isDiscarding={isDiscarding && !viewMode}
                 isDeclaring={canPong}
                 isMyTurn={isMyTurn}
                 mobileCompact={true}
                 selectedCardIds={selectedCardIds}
+                viewedCardIds={viewedCardIds}
+                viewMode={viewMode}
+                pickedViewIds={pickedViewIds}
+                onTogglePickView={handleTogglePickView}
                 onDiscardCard={handleDiscard}
                 onToggleSelect={handleToggleSelect}
                 onCardHover={handleCardHover}

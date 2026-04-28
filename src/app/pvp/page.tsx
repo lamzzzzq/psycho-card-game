@@ -9,9 +9,15 @@ import { useHydrated } from '@/stores/useHydration';
 import { usePvpStore } from '@/stores/usePvpStore';
 import { upsertPlayer, createRoom, joinRoom, leaveRoom, leaveAllRooms } from '@/lib/room-api';
 import { supabase } from '@/lib/supabase';
-import { PlayerInfo } from '@/types/pvp';
+import { PlayerInfo, DeckId } from '@/types/pvp';
 import { BigFiveScores, DIMENSIONS } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
+
+const DECK_OPTIONS: { id: DeckId; name: string; subtitle: string; locked: boolean }[] = [
+  { id: 'big-five', name: 'Big Five', subtitle: '五因素人格 · OCEAN', locked: false },
+  { id: 'hexaco', name: 'HEXACO', subtitle: '六因素人格 · 含诚信维度', locked: true },
+  { id: 'cpai', name: '中国人格 CPAI', subtitle: '本土化人格量表', locked: true },
+];
 
 type Tab = 'create' | 'join';
 
@@ -27,6 +33,7 @@ export default function PvpLobbyPage() {
   const [joinCode, setJoinCode] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(3);
   const [totalRounds, setTotalRounds] = useState(5);
+  const [deck, setDeck] = useState<DeckId>('big-five');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
@@ -106,7 +113,7 @@ export default function PvpLobbyPage() {
       const info = await ensurePlayer();
       await leaveAllRooms(info.id);
       usePvpStore.getState().reset();
-      const room = await createRoom(info.id, { maxPlayers, totalRounds });
+      const room = await createRoom(info.id, { maxPlayers, totalRounds, deck });
       router.push(`/pvp/room/${room.code}`);
     } catch (e: any) {
       setError(e.message ?? '创建失败');
@@ -296,6 +303,32 @@ export default function PvpLobbyPage() {
 
         {tab === 'create' ? (
           <section className="psy-panel psy-etched space-y-5 rounded-[1.6rem] p-6">
+            <div className="space-y-2">
+              <p className="psy-eyebrow text-[10px]">人格牌堆</p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {DECK_OPTIONS.map((opt) => {
+                  const active = deck === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => !opt.locked && setDeck(opt.id)}
+                      disabled={opt.locked}
+                      className={`psy-tile flex flex-col items-start gap-1 px-3 py-3 text-left transition ${active ? 'is-active' : ''} ${opt.locked ? 'opacity-55 cursor-not-allowed' : ''}`}
+                      title={opt.locked ? '即将上线' : ''}
+                    >
+                      <div className="flex w-full items-center justify-between">
+                        <span className="psy-serif text-sm text-[var(--psy-ink)]">{opt.name}</span>
+                        {opt.locked && (
+                          <span className="text-[9px] text-[var(--psy-muted)]">🔒 即将上线</span>
+                        )}
+                      </div>
+                      <span className="text-[10px] leading-snug text-[var(--psy-muted)]">{opt.subtitle}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <p className="psy-eyebrow text-[10px]">最多玩家数</p>
               <div className="grid grid-cols-2 gap-2">

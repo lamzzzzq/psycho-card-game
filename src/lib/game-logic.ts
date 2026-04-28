@@ -77,6 +77,13 @@ function allClaimersResponded(state: GameState): boolean {
   return getEligibleClaimers(state).every((i) => responded.has(state.players[i].id));
 }
 
+// First-come-first-served claim model: any non-discarder can pong/skip;
+// race resolves naturally — once pongCard applies, phase leaves
+// 'claim-window' and subsequent pong attempts return state unchanged.
+//
+// (Earlier versions enforced a downstream-priority queue; the current
+// rule is "fast enough wins".)
+
 function finalizeClaimWindow(state: GameState): GameState {
   if (!state.pendingDiscard) return state;
   const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
@@ -362,7 +369,10 @@ export function discardCard(state: GameState, cardId: number): GameState {
   });
 }
 
-// Pong (碰) — claim a pending discard to complete a dimension
+// Pong (碰) — claim a pending discard to complete a dimension.
+// First-come-first-served: any non-discarder may attempt pong; the race
+// resolves naturally because a successful pong advances the phase out
+// of 'claim-window'.
 export function pongCard(
   state: GameState,
   pongerIndex: number,
@@ -370,11 +380,7 @@ export function pongCard(
   handCardIds: number[]
 ): GameState {
   if (!state.pendingDiscard || state.phase !== 'claim-window') return state;
-
-  // Bug #5: pong is restricted to the downstream (next) player only.
-  // Hu can still be attempted by anyone via attemptHu.
-  const downstreamIndex = (state.discardedByIndex + 1) % state.players.length;
-  if (pongerIndex !== downstreamIndex) return state;
+  if (pongerIndex === state.discardedByIndex) return state;
 
   // Penalized players can't pong (matches hu-fail/pong-fail 罚停一轮 rule).
   if (state.players[pongerIndex].skipNextTurn) return state;
@@ -486,6 +492,7 @@ export function pongCard(
 
 // A single claimer passes. Pending card only moves to discard pile after
 // every eligible non-discarder has responded (skip / pong-fail / hu-fail).
+// First-come-first-served — no priority gating.
 export function skipPong(state: GameState, playerIndex: number): GameState {
   if (!state.pendingDiscard || state.phase !== 'claim-window') return state;
 
