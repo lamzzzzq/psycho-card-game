@@ -174,7 +174,6 @@ export function PlayerHand({
                   card={card}
                   selected={isSelected}
                   compact={useCompactCards}
-                  showDimension={cheatMode}
                   revealedDimension={revealed}
                   onClick={() => handleCardClick(card.id)}
                 />

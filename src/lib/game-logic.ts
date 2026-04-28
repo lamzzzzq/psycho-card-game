@@ -80,9 +80,39 @@ function allClaimersResponded(state: GameState): boolean {
 // First-come-first-served claim model: any non-discarder can pong/skip;
 // race resolves naturally — once pongCard applies, phase leaves
 // 'claim-window' and subsequent pong attempts return state unchanged.
+
+// Penalty-freeze rule (pong-fail / hu-fail aftermath):
 //
-// (Earlier versions enforced a downstream-priority queue; the current
-// rule is "fast enough wins".)
+// After a failed pong, the offender (C) is frozen out of EVERY claim
+// window — pong, hu, skip — until their own turn auto-skips them.
+// Concretely with seat order A→B→C:
+//
+//   A discards → C pong-fails → claim window finalizes
+//   ↓
+//   B's turn: B draws + discards → claim window opens.
+//             C must NOT participate (still penalized).
+//             autoSkipPenalizedClaimers records C's skip silently.
+//   ↓
+//   C's turn: skipPenalizedPlayers auto-skips C, clears skipNextTurn.
+//   ↓
+//   A's turn: A acts again. C is now unfrozen.
+//
+// Without this auto-skip, B's claim window would block forever waiting
+// on C, since C's UI hides the panel for penalized players.
+function autoSkipPenalizedClaimers(state: GameState): GameState {
+  if (state.phase !== 'claim-window') return state;
+  const newResponses = [...state.claimResponses];
+  for (let i = 0; i < state.players.length; i++) {
+    if (i === state.discardedByIndex) continue;
+    const p = state.players[i];
+    if (p.skipNextTurn && !newResponses.includes(p.id)) {
+      newResponses.push(p.id);
+    }
+  }
+  if (newResponses.length === state.claimResponses.length) return state;
+  const next: GameState = { ...state, claimResponses: newResponses };
+  return allClaimersResponded(next) ? finalizeClaimWindow(next) : next;
+}
 
 function finalizeClaimWindow(state: GameState): GameState {
   if (!state.pendingDiscard) return state;
@@ -163,6 +193,10 @@ export function getDeclaredDimensions(player: Player): Set<Dimension> {
 // Hu (胡) — attempt to declare ALL remaining undeclared dimensions at once
 export function attemptHu(state: GameState, playerIndex: number): GameState {
   const player = state.players[playerIndex];
+  // Penalized players are frozen out of all claim actions (pong / hu /
+  // skip) until their own turn auto-skips. Defensive guard so direct
+  // calls from PVP can't bypass the freeze.
+  if (player.skipNextTurn) return state;
   const targets = getTargetCounts(player.bigFiveScores);
   const declaredDims = getDeclaredDimensions(player);
 
@@ -337,7 +371,7 @@ export function discardCard(state: GameState, cardId: number): GameState {
 
   // Personality card → claim window; dummy card → advance turn (no claim)
   if (isPersonalityCard(cardToDiscard)) {
-    return {
+    const claimState: GameState = {
       ...state,
       players: newPlayers,
       drawnCard: null,
@@ -347,6 +381,9 @@ export function discardCard(state: GameState, cardId: number): GameState {
       phase: 'claim-window',
       actionLog: [...state.actionLog, action],
     };
+    // Frozen claimers (pong-fail / hu-fail offenders) auto-skip so the
+    // window doesn't deadlock waiting on them.
+    return autoSkipPenalizedClaimers(claimState);
   }
 
   const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
@@ -455,13 +492,15 @@ export function pongCard(
       winner: null,
     });
   } else {
-    // PONG FAIL — full hand is exposed AND the selected subset is shown
-    // separately so other players can see exactly what bet went wrong.
-    // Ponger also skips next turn and is locked out of this claim window.
+    // PONG FAIL — only the cards used in the failed bet are exposed
+    // (NOT the full hand; full-hand reveal is reserved for hu-fail).
+    // Ponger also skips next turn and is frozen out of all claim
+    // windows until their own auto-skip turn fires (see
+    // autoSkipPenalizedClaimers).
     const exposedCards = selectedHandCards;
     const newPlayers = state.players.map((p, i) =>
       i === pongerIndex
-        ? { ...p, skipNextTurn: true, revealedHand: true, revealedSelectedCards: exposedCards }
+        ? { ...p, skipNextTurn: true, revealedSelectedCards: exposedCards }
         : p
     );
 

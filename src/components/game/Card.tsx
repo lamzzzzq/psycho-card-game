@@ -12,11 +12,13 @@ interface CardProps {
   onClick?: () => void;
   compact?: boolean;
   tiny?: boolean;
-  showDimension?: boolean;
+  // When non-null, render the real dimension as a top-right badge.
+  // Used both by cheat mode (Shift hold) and the per-turn "view 2 cards"
+  // reveal — both feed through the same prop so badges never overlap.
   revealedDimension?: import('@/types').Dimension | null;
 }
 
-export function Card({ card, faceUp = true, selected = false, onClick, compact = false, tiny = false, showDimension = false, revealedDimension = null }: CardProps) {
+export function Card({ card, faceUp = true, selected = false, onClick, compact = false, tiny = false, revealedDimension = null }: CardProps) {
   // Hooks must run unconditionally — keep them above any early return so
   // the hook count stays stable when faceUp flips (e.g. revealing an
   // opponent's hand after hu-fail).
@@ -49,7 +51,6 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
   }
 
   const dummy = isDummyCard(card);
-  const dimMeta = !dummy && isPersonalityCard(card) ? DIMENSION_META[card.dimension] : null;
 
   function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
     if (!onClick || !cardRef.current) return;
@@ -81,7 +82,7 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
       onClick={onClick}
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
-      className={`${tiny ? 'w-11 h-16 p-1 rounded-[0.95rem]' : compact ? 'w-[4.55rem] h-[6.8rem] p-1.5 rounded-[1.08rem]' : 'w-24 h-36 p-2.5 rounded-xl'} border-2 flex flex-col justify-between shadow-lg transition-colors ${
+      className={`${tiny ? 'w-11 h-16 p-1 rounded-[0.95rem]' : compact ? 'w-[4.55rem] h-[6.8rem] p-1.5 rounded-[1.08rem]' : 'w-24 h-36 p-2.5 rounded-xl'} border-2 flex flex-col items-center ${compact || tiny ? 'justify-center' : 'justify-between'} shadow-lg transition-colors ${
         onClick ? 'cursor-pointer' : ''
       }`}
       style={{
@@ -109,21 +110,15 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
           style={{ border: '1px solid rgba(236, 223, 200, 0.08)' }}
         />
       )}
-      {/* Cheat mode: show dimension when showDimension is true */}
-      {showDimension && dimMeta && !compact && !tiny && (
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dimMeta.colorHex }} />
-          <span className="psy-serif text-[8px]" style={{ color: dimMeta.colorHex }}>{dimMeta.name}</span>
-        </div>
-      )}
       {dummy && !compact && !tiny && (
         <div className="flex items-center gap-1">
           <span className="psy-serif text-[8px] text-[var(--psy-muted)]">档案注记</span>
         </div>
       )}
-      {!showDimension && !dummy && !compact && !tiny && <div />}
+      {!dummy && !compact && !tiny && <div />}
 
-      {/* Revealed real dimension (after using "view 2 cards"): top-right corner */}
+      {/* Real dimension badge (top-right) — driven by either cheat mode
+          or the per-turn "view 2 cards" feature via revealedDimension. */}
       {revealedDimension && !tiny && (
         <div className={`absolute z-20 ${compact ? 'right-1 top-1' : 'right-1.5 top-1.5'}`}>
           <span
@@ -151,7 +146,7 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
         {tiny ? (card.text.length > 8 ? card.text.slice(0, 8) + '...' : card.text) : compact ? (card.text.length > 20 ? card.text.slice(0, 20) + '...' : card.text) : card.text}
       </p>
 
-      <div />
+      {!compact && !tiny && <div />}
     </motion.div>
   );
 }
