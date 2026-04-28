@@ -432,11 +432,16 @@ export function pongCard(
   const selectedHandCards = ponger.hand.filter((c) => handCardIds.includes(c.id));
   const allPongCards = [...selectedHandCards, pendingCard];
 
-  if (allPongCards.length < targetCount) return state;
-
-  const allCorrect = allPongCards.every(
-    (c) => isPersonalityCard(c) && c.dimension === dimension
-  );
+  // Insufficient card count is treated as a failed pong (not a silent
+  // no-op). The user committed to "碰" — they eat the penalty either
+  // way. Earlier the count gate silently rejected the click and the
+  // panel just bounced; that left the player stuck with no feedback.
+  const enoughCards = allPongCards.length >= targetCount;
+  const allCorrect =
+    enoughCards &&
+    allPongCards.every(
+      (c) => isPersonalityCard(c) && c.dimension === dimension
+    );
 
   if (allCorrect) {
     // PONG SUCCESS

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion, useAnimationControls } from 'framer-motion';
+import { motion, AnimatePresence, useAnimationControls } from 'framer-motion';
 import { Player } from '@/types';
 import { Card } from './Card';
 import { DeclaredArea } from './DeclaredArea';
@@ -12,7 +12,7 @@ interface OpponentHandProps {
 }
 
 export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
-  const [showRevealedCards, setShowRevealedCards] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
   const showCards = player.revealedHand;
   const hasRevealedSubset = !showCards && (player.revealedSelectedCards?.length ?? 0) > 0;
   const bounceControls = useAnimationControls();
@@ -27,6 +27,22 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
   }, [isCurrentTurn, bounceControls]);
 
   const stackWidth = Math.max(20, Math.min(72, (player.hand.length - 1) * 4 + 18));
+
+  // Modal contents differ slightly: full reveal (hu-fail) shows the
+  // entire hand; subset (pong-fail) shows only the cards the offender
+  // bet with.
+  const modalCards = showCards
+    ? player.hand
+    : hasRevealedSubset
+    ? player.revealedSelectedCards!
+    : [];
+  const modalTitle = showCards ? '公开档案 · 全手牌' : '判定样本 · 失败的碰';
+  const modalAccent = showCards ? 'var(--psy-accent)' : 'var(--psy-danger)';
+  const triggerLabel = showCards
+    ? `查看公开档案（${player.hand.length}）`
+    : hasRevealedSubset
+    ? `查看判定样本（${player.revealedSelectedCards!.length}）`
+    : '';
 
   return (
     <motion.div
@@ -74,55 +90,76 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
       {/* Archive */}
       <DeclaredArea declaredSets={player.declaredSets} compact title={`${player.name} 的归档`} />
 
-      {/* Revealed full hand (pong-fail / hu-fail) */}
-      {showCards && (
-        <div className="space-y-1.5">
-          <button
-            onClick={() => setShowRevealedCards((v) => !v)}
-            className="psy-btn psy-btn-ghost w-full px-2 py-1 text-[10px]"
-            style={{
-              borderColor: 'rgba(200,155,93,0.32)',
-              color: 'var(--psy-accent)',
-              background: 'rgba(200,155,93,0.08)',
-            }}
-          >
-            {showRevealedCards ? '收起公开档案' : `查看公开档案（${player.hand.length}）`}
-          </button>
-          {showRevealedCards && (
-            <div className="flex flex-wrap justify-center gap-1">
-              {player.hand.map((card) => (
-                <Card key={card.id} card={card} tiny />
-              ))}
-            </div>
-          )}
-        </div>
+      {/* Reveal trigger — opens modal */}
+      {(showCards || hasRevealedSubset) && (
+        <button
+          type="button"
+          onClick={() => setOpenModal(true)}
+          className="psy-btn psy-btn-ghost w-full px-2 py-1 text-[10px]"
+          style={{
+            borderColor: showCards ? 'rgba(200,155,93,0.32)' : 'rgba(220,106,79,0.32)',
+            color: modalAccent,
+            background: showCards
+              ? 'rgba(200,155,93,0.08)'
+              : 'rgba(220,106,79,0.08)',
+          }}
+        >
+          {triggerLabel}
+        </button>
       )}
 
-      {/* Revealed subset (pong-fail attempt) */}
-      {hasRevealedSubset && (
-        <div className="space-y-1.5">
-          <button
-            onClick={() => setShowRevealedCards((v) => !v)}
-            className="psy-btn psy-btn-ghost w-full px-2 py-1 text-[10px]"
-            style={{
-              borderColor: 'rgba(220,106,79,0.32)',
-              color: 'var(--psy-danger)',
-              background: 'rgba(220,106,79,0.08)',
-            }}
+      <AnimatePresence>
+        {openModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            onClick={() => setOpenModal(false)}
           >
-            {showRevealedCards
-              ? '收起判定样本'
-              : `查看判定样本（${player.revealedSelectedCards!.length}）`}
-          </button>
-          {showRevealedCards && (
-            <div className="flex flex-wrap justify-center gap-1">
-              {player.revealedSelectedCards!.map((card) => (
-                <Card key={card.id} card={card} tiny />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+            <motion.div
+              initial={{ scale: 0.92, y: 12 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 12 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+              onClick={(e) => e.stopPropagation()}
+              className="psy-panel psy-etched flex max-h-[80vh] w-full max-w-3xl flex-col rounded-[1.75rem]"
+            >
+              <div
+                className="flex items-center justify-between border-b px-5 py-3"
+                style={{ borderColor: 'rgba(200,155,93,0.12)' }}
+              >
+                <h3 className="psy-serif text-sm font-bold text-[var(--psy-ink)]">
+                  {modalTitle}
+                  <span className="ml-2 text-xs font-normal text-[var(--psy-muted)]">
+                    {player.avatar} {player.name} · 共 {modalCards.length} 张
+                  </span>
+                </h3>
+                <button
+                  onClick={() => setOpenModal(false)}
+                  className="px-2 py-1 text-sm text-[var(--psy-ink-soft)] hover:text-white"
+                  aria-label="关闭"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="psy-scroll flex-1 overflow-y-auto px-5 py-4">
+                {modalCards.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-[var(--psy-muted)]">暂无可显示的牌</p>
+                ) : (
+                  <div className="grid grid-cols-3 justify-items-center gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+                    {modalCards.map((card) => (
+                      <Card key={card.id} card={card} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

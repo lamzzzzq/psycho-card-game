@@ -80,12 +80,10 @@ export function PlayerHand({
     if (viewMode && onTogglePickView) { onTogglePickView(cardId); return; }
     if (isDeclaring && onToggleSelect) { onToggleSelect(cardId); return; }
     if (isDiscarding) {
-      if (discardPickId === cardId) {
-        onDiscardCard(cardId);
-        setDiscardPickId(null);
-      } else {
-        setDiscardPickId(cardId);
-      }
+      // Click toggles selection only. The actual discard requires the
+      // explicit "提交弃牌" button — double-clicking a card no longer
+      // commits, to prevent mis-taps.
+      setDiscardPickId((prev) => (prev === cardId ? null : cardId));
       return;
     }
   }
@@ -106,7 +104,7 @@ export function PlayerHand({
           className="flex flex-col items-center gap-2"
         >
           <p className="psy-serif text-sm text-[var(--psy-accent)]">
-            {discardPickId === null ? '先圈定一张要舍弃的线索牌' : '再次点击该牌，或点「提交弃牌」确认'}
+            {discardPickId === null ? '先圈定一张要舍弃的线索牌' : '点「提交弃牌」确认（再次点击该牌可取消选中）'}
           </p>
           {discardPickId !== null && (
             <div className="flex gap-2">

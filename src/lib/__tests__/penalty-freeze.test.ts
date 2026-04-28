@@ -61,6 +61,48 @@ function aBcClaimState() {
   });
 }
 
+describe('pong-fail penalty (count too low)', () => {
+  it('pong with insufficient cards is treated as a fail, not silently rejected', () => {
+    // Default Big Five 3.0 → target O = 3. C selects only 1 card →
+    // total (1 hand + 1 pending) = 2 < 3. Earlier code silently
+    // bounced; now it must commit as a failed pong with penalty.
+    const state = makeGameState({
+      phase: 'claim-window',
+      discardedByIndex: 0,
+      currentPlayerIndex: 0,
+      pendingDiscard: makeCard('O', { id: 100 }),
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({ id: 'B' as PlayerId }),
+        makePlayer({ id: 'C' as PlayerId, hand: [makeCard('O', { id: 1 })] }),
+      ],
+    });
+    const result = pongCard(state, 2, 'O', [1]);
+    // Penalty applied — not a no-op return.
+    expect(result).not.toBe(state);
+    expect(result.players[2].skipNextTurn).toBe(true);
+    expect(result.players[2].revealedHand).toBe(false);
+    expect(result.players[2].revealedSelectedCards?.length).toBe(1);
+  });
+
+  it('pong with no selected cards is also treated as a fail', () => {
+    const state = makeGameState({
+      phase: 'claim-window',
+      discardedByIndex: 0,
+      currentPlayerIndex: 0,
+      pendingDiscard: makeCard('O', { id: 100 }),
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({ id: 'B' as PlayerId }),
+        makePlayer({ id: 'C' as PlayerId, hand: [makeCard('O', { id: 1 })] }),
+      ],
+    });
+    const result = pongCard(state, 2, 'O', []);
+    expect(result.players[2].skipNextTurn).toBe(true);
+    expect(result.players[2].revealedSelectedCards?.length).toBe(0);
+  });
+});
+
 describe('pong-fail penalty (visibility)', () => {
   it('pong-fail exposes only the attempted cards, NOT the full hand', () => {
     const state = aBcClaimState();
