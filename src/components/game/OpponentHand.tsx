@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useAnimationControls } from 'framer-motion';
 import { Player } from '@/types';
 import { Card } from './Card';
@@ -13,6 +14,13 @@ interface OpponentHandProps {
 
 export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
   const [openModal, setOpenModal] = useState(false);
+  // Portal mount guard. The modal needs to escape OpponentHand's outer
+  // motion.div, which gets `transform` from the bounce animation and
+  // therefore breaks `position: fixed` containment. Portal-to-body fixes
+  // the squeeze. We gate on `mounted` because document.body is undefined
+  // during SSR.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const showCards = player.revealedHand;
   const hasRevealedSubset = !showCards && (player.revealedSelectedCards?.length ?? 0) > 0;
   const bounceControls = useAnimationControls();
@@ -112,58 +120,61 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
         </button>
       )}
 
-      <AnimatePresence>
-        {openModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-            onClick={() => setOpenModal(false)}
-          >
+      {mounted && createPortal(
+        <AnimatePresence>
+          {openModal && (
             <motion.div
-              initial={{ scale: 0.92, y: 12 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.92, y: 12 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-              onClick={(e) => e.stopPropagation()}
-              className="psy-panel psy-etched flex max-h-[80vh] w-full max-w-3xl flex-col rounded-[1.75rem]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+              onClick={() => setOpenModal(false)}
             >
-              <div
-                className="flex items-center justify-between border-b px-5 py-3"
-                style={{ borderColor: 'rgba(200,155,93,0.12)' }}
+              <motion.div
+                initial={{ scale: 0.92, y: 12 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.92, y: 12 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+                onClick={(e) => e.stopPropagation()}
+                className="psy-panel psy-etched flex max-h-[85vh] w-full max-w-3xl flex-col rounded-[1.75rem]"
               >
-                <h3 className="psy-serif text-sm font-bold text-[var(--psy-ink)]">
-                  {modalTitle}
-                  <span className="ml-2 text-xs font-normal text-[var(--psy-muted)]">
-                    {player.avatar} {player.name} · 共 {modalCards.length} 张
-                  </span>
-                </h3>
-                <button
-                  onClick={() => setOpenModal(false)}
-                  className="px-2 py-1 text-sm text-[var(--psy-ink-soft)] hover:text-white"
-                  aria-label="关闭"
+                <div
+                  className="flex items-center justify-between border-b px-5 py-3"
+                  style={{ borderColor: 'rgba(200,155,93,0.12)' }}
                 >
-                  ✕
-                </button>
-              </div>
+                  <h3 className="psy-serif text-sm font-bold text-[var(--psy-ink)]">
+                    {modalTitle}
+                    <span className="ml-2 text-xs font-normal text-[var(--psy-muted)]">
+                      {player.avatar} {player.name} · 共 {modalCards.length} 张
+                    </span>
+                  </h3>
+                  <button
+                    onClick={() => setOpenModal(false)}
+                    className="px-2 py-1 text-sm text-[var(--psy-ink-soft)] hover:text-white"
+                    aria-label="关闭"
+                  >
+                    ✕
+                  </button>
+                </div>
 
-              <div className="psy-scroll flex-1 overflow-y-auto px-5 py-4">
-                {modalCards.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-[var(--psy-muted)]">暂无可显示的牌</p>
-                ) : (
-                  <div className="grid grid-cols-3 justify-items-center gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-                    {modalCards.map((card) => (
-                      <Card key={card.id} card={card} />
-                    ))}
-                  </div>
-                )}
-              </div>
+                <div className="psy-scroll flex-1 overflow-y-auto px-5 py-4">
+                  {modalCards.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-[var(--psy-muted)]">暂无可显示的牌</p>
+                  ) : (
+                    <div className="grid grid-cols-3 justify-items-center gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+                      {modalCards.map((card) => (
+                        <Card key={card.id} card={card} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </motion.div>
   );
 }
