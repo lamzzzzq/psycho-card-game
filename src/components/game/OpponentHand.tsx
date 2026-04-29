@@ -61,8 +61,12 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
             </div>
             <div className="text-[9px] text-[var(--psy-muted)] sm:text-[10px]">
               {player.hand.length} 张
-              {player.skipNextTurn && <span className="ml-1 text-[var(--psy-danger)]">· 停</span>}
-              {!player.skipNextTurn && isCurrentTurn && <span className="ml-1 text-[var(--psy-accent)]">· 思考中</span>}
+              {(player.skipNextTurn || typeof player.frozenUntilDiscarderIndex === 'number') && (
+                <span className="ml-1 text-[var(--psy-danger)]">· 停</span>
+              )}
+              {!player.skipNextTurn && typeof player.frozenUntilDiscarderIndex !== 'number' && isCurrentTurn && (
+                <span className="ml-1 text-[var(--psy-accent)]">· 思考中</span>
+              )}
               {player.revealedHand && <span className="ml-1 text-[var(--psy-accent)]">· 档案公开</span>}
             </div>
           </div>

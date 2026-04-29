@@ -92,6 +92,10 @@ export interface SerializedPlayer {
   revealedHand: boolean;
   revealedCards?: GameCard[];          // full hand, sent when revealedHand is true (hu-fail)
   revealedSelectedCards?: GameCard[];  // subset, sent after pong-fail
+  // Pong-fail freeze marker, mirrored from the host-side Player. Clients
+  // gate their claim panel (碰 / 胡) on this so the freeze persists after
+  // the own-turn auto-skip has already cleared skipNextTurn.
+  frozenUntilDiscarderIndex?: number;
 }
 
 // Game result for DB

@@ -337,9 +337,11 @@ export default function GamePage() {
   const canDraw = isHumanTurn && game.phase === 'drawing';
   const isDiscarding = isHumanTurn && game.phase === 'discarding';
   const isPongWindow = game.phase === 'claim-window' && game.pendingDiscard !== null && game.discardedByIndex !== 0;
+  const humanFrozen =
+    humanPlayer.skipNextTurn || typeof humanPlayer.frozenUntilDiscarderIndex === 'number';
   const canHu =
     game.phase !== 'game-over' &&
-    !humanPlayer.skipNextTurn &&
+    !humanFrozen &&
     (
       (isHumanTurn && game.phase !== 'claim-window') ||
       (game.phase === 'claim-window' &&
@@ -470,8 +472,10 @@ export default function GamePage() {
         </div>
 
         {/* Pong panel — first-come-first-served: any non-discarder may
-            attempt pong (race resolves naturally). */}
-        {isPongWindow && game.pendingDiscard &&
+            attempt pong (race resolves naturally). Hidden when the human
+            is pong-fail frozen so the panel never offers an action that
+            would be rejected by the engine guard. */}
+        {isPongWindow && game.pendingDiscard && !humanFrozen &&
           !game.claimResponses.includes(humanPlayer.id) && (
             <PongPanel
               pendingCard={game.pendingDiscard}

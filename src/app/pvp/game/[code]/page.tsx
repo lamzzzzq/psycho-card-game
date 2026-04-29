@@ -52,6 +52,7 @@ function toPlayer(sp: SerializedPlayer, overrideHand?: GameCard[]): Player {
     skipNextTurn: sp.skipNextTurn,
     revealedHand: sp.revealedHand,
     revealedSelectedCards: sp.revealedSelectedCards,
+    frozenUntilDiscarderIndex: sp.frozenUntilDiscarderIndex,
   };
 }
 
@@ -218,9 +219,16 @@ export default function PvpGamePage() {
   // First-come-first-served: any non-discarder can pong. The race
   // resolves naturally because pongCard advances the phase out of
   // 'claim-window' before slower clicks land.
-  const canPong = canClaim && !meSerialized?.skipNextTurn;
-  const canHu = (isMyTurn && gameState.phase !== 'claim-window' && !meSerialized?.skipNextTurn)
-    || (canClaim && !meSerialized?.skipNextTurn);
+  // A pong-fail player carries TWO freeze marks: skipNextTurn (one
+  // own-turn auto-skip) and frozenUntilDiscarderIndex (locked out of
+  // every claim window until the original block-discarder operates
+  // again). Either suppresses the claim panel.
+  const meFrozen =
+    meSerialized?.skipNextTurn ||
+    typeof meSerialized?.frozenUntilDiscarderIndex === 'number';
+  const canPong = canClaim && !meFrozen;
+  const canHu = (isMyTurn && gameState.phase !== 'claim-window' && !meFrozen)
+    || (canClaim && !meFrozen);
   const canDraw = isMyTurn && gameState.phase === 'drawing';
   const isDiscarding = isMyTurn && gameState.phase === 'discarding';
 
@@ -557,7 +565,7 @@ export default function PvpGamePage() {
                     碰！{selectedCardIds.length > 0 ? `（已选 ${selectedCardIds.length} 张）` : ''}
                   </button>
                 )}
-                {!meSerialized?.skipNextTurn && (
+                {!meFrozen && (
                   <button
                     onClick={handleHu}
                     className="psy-btn psy-btn-danger px-4 py-1.5 text-xs font-bold"

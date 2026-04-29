@@ -99,13 +99,17 @@ function allClaimersResponded(state: GameState): boolean {
 //
 // Without this auto-skip, B's claim window would block forever waiting
 // on C, since C's UI hides the panel for penalized players.
+function isFrozen(p: { skipNextTurn: boolean; frozenUntilDiscarderIndex?: number }): boolean {
+  return p.skipNextTurn || typeof p.frozenUntilDiscarderIndex === 'number';
+}
+
 function autoSkipPenalizedClaimers(state: GameState): GameState {
   if (state.phase !== 'claim-window') return state;
   const newResponses = [...state.claimResponses];
   for (let i = 0; i < state.players.length; i++) {
     if (i === state.discardedByIndex) continue;
     const p = state.players[i];
-    if (p.skipNextTurn && !newResponses.includes(p.id)) {
+    if (isFrozen(p) && !newResponses.includes(p.id)) {
       newResponses.push(p.id);
     }
   }
@@ -159,9 +163,20 @@ export function skipPenalizedPlayers(state: GameState): GameState {
     // Only clear skipNextTurn here — reveals (from hu-fail/pong-fail) must
     // persist through the skip so other players actually see the penalty.
     // They're cleared when this player next draws for real.
-    const newPlayers = current.players.map((pl, idx) =>
-      idx === current.currentPlayerIndex ? { ...pl, skipNextTurn: false } : pl
-    );
+    // Also lift any third party's pong-fail freeze that was pointing at
+    // this player. The semantic is "frozen until X operates again"; if
+    // X keeps getting penalized themselves, a literal-discard requirement
+    // would deadlock the third party permanently. A skip counts as X
+    // having taken their turn — release the freeze defensively.
+    const skippedIdx = current.currentPlayerIndex;
+    const newPlayers = current.players.map((pl, idx) => {
+      let next = pl;
+      if (idx === skippedIdx) next = { ...next, skipNextTurn: false };
+      if (next.frozenUntilDiscarderIndex === skippedIdx) {
+        next = { ...next, frozenUntilDiscarderIndex: undefined };
+      }
+      return next;
+    });
     const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
       current.currentPlayerIndex,
       current.currentRound,
@@ -194,9 +209,10 @@ export function getDeclaredDimensions(player: Player): Set<Dimension> {
 export function attemptHu(state: GameState, playerIndex: number): GameState {
   const player = state.players[playerIndex];
   // Penalized players are frozen out of all claim actions (pong / hu /
-  // skip) until their own turn auto-skips. Defensive guard so direct
-  // calls from PVP can't bypass the freeze.
-  if (player.skipNextTurn) return state;
+  // skip) until their own turn auto-skips AND the original block-discarder
+  // operates again. Defensive guard so direct calls from PVP can't bypass
+  // the freeze.
+  if (isFrozen(player)) return state;
   const targets = getTargetCounts(player.bigFiveScores);
   const declaredDims = getDeclaredDimensions(player);
 
@@ -365,9 +381,16 @@ export function discardCard(state: GameState, cardId: number): GameState {
     timestamp: Date.now(),
   };
 
-  const newPlayers = state.players.map((p, i) =>
-    i === playerIndex ? { ...p, hand: newHand } : p
-  );
+  // Apply hand mutation + lift the pong-fail freeze for any player whose
+  // frozenUntilDiscarderIndex marker matches THIS discarder. The freeze
+  // semantic is "locked out until the player you failed against operates
+  // again" — both personality and dummy discards count as operating.
+  const newPlayers = state.players.map((p, i) => {
+    const handPatched = i === playerIndex ? { ...p, hand: newHand } : p;
+    return handPatched.frozenUntilDiscarderIndex === playerIndex
+      ? { ...handPatched, frozenUntilDiscarderIndex: undefined }
+      : handPatched;
+  });
 
   // Personality card → claim window; dummy card → advance turn (no claim)
   if (isPersonalityCard(cardToDiscard)) {
@@ -420,7 +443,7 @@ export function pongCard(
   if (pongerIndex === state.discardedByIndex) return state;
 
   // Penalized players can't pong (matches hu-fail/pong-fail 罚停一轮 rule).
-  if (state.players[pongerIndex].skipNextTurn) return state;
+  if (isFrozen(state.players[pongerIndex])) return state;
 
   const ponger = state.players[pongerIndex];
   const pendingCard = state.pendingDiscard;
@@ -499,13 +522,23 @@ export function pongCard(
   } else {
     // PONG FAIL — only the cards used in the failed bet are exposed
     // (NOT the full hand; full-hand reveal is reserved for hu-fail).
-    // Ponger also skips next turn and is frozen out of all claim
-    // windows until their own auto-skip turn fires (see
-    // autoSkipPenalizedClaimers).
+    // Ponger gets two penalty marks:
+    //   1. skipNextTurn — auto-skip at their next own turn
+    //   2. frozenUntilDiscarderIndex — locked out of every claim window
+    //      until the original block-discarder operates again
+    // Together they implement the symmetric model: 1 own-turn skip plus
+    // a freeze that lasts the full A→B→C cycle, regardless of whether
+    // the offender is the immediate downstream player or further out.
     const exposedCards = selectedHandCards;
+    const blockDiscarderIndex = state.discardedByIndex;
     const newPlayers = state.players.map((p, i) =>
       i === pongerIndex
-        ? { ...p, skipNextTurn: true, revealedSelectedCards: exposedCards }
+        ? {
+            ...p,
+            skipNextTurn: true,
+            frozenUntilDiscarderIndex: blockDiscarderIndex,
+            revealedSelectedCards: exposedCards,
+          }
         : p
     );
 

@@ -26,6 +26,7 @@ import {
 } from '../game-logic';
 import {
   makeCard,
+  makeDummy,
   makeGameState,
   makePlayer,
   resetCardIds,
@@ -309,5 +310,133 @@ describe('skipPenalizedPlayers — sanity: clears skipNextTurn after own auto-sk
     state = skipPenalizedPlayers(state);
     expect(state.currentPlayerIndex).toBe(1); // advanced to B
     expect(state.players[0].skipNextTurn).toBe(false); // A unfrozen
+  });
+});
+
+// Pong-fail by the IMMEDIATE downstream player (B against A) is the case
+// where the natural turn rotation auto-skips B before the next claim
+// window opens. Without the frozenUntilDiscarderIndex marker, B would
+// regain the right to pong on C's discard immediately, which violates
+// the symmetric "1 own-turn skip + 1 claim-window freeze" rule.
+describe('penalty freeze — B-fail (immediate downstream)', () => {
+  it('pong-fail tags the offender with the original discarder index', () => {
+    const state = makeGameState({
+      phase: 'claim-window',
+      discardedByIndex: 0,
+      currentPlayerIndex: 0,
+      pendingDiscard: makeCard('O', { id: 100 }),
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({
+          id: 'B' as PlayerId,
+          hand: [makeCard('O', { id: 10 }), makeCard('C', { id: 11 })],
+        }),
+        makePlayer({ id: 'C' as PlayerId }),
+      ],
+    });
+    const result = pongCard(state, 1, 'O', [10, 11]);
+    expect(result.players[1].skipNextTurn).toBe(true);
+    expect(result.players[1].frozenUntilDiscarderIndex).toBe(0);
+  });
+
+  it('B is auto-skipped at own turn AND auto-marked in C\'s claim window', () => {
+    let state = makeGameState({
+      phase: 'claim-window',
+      discardedByIndex: 0,
+      currentPlayerIndex: 0,
+      pendingDiscard: makeCard('O', { id: 100 }),
+      drawPile: [makeCard('A', { id: 200 }), makeCard('A', { id: 201 })],
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({
+          id: 'B' as PlayerId,
+          hand: [makeCard('O', { id: 10 }), makeCard('C', { id: 11 })],
+        }),
+        makePlayer({ id: 'C' as PlayerId, hand: [] }),
+      ],
+    });
+
+    // B fails (mixed dimensions; count satisfies target so we exercise
+    // the all-correct gate, not the count gate).
+    state = pongCard(state, 1, 'O', [10, 11]);
+    // C skips → finalize → advance to B → skipPenalizedPlayers skips B.
+    state = skipPong(state, 2);
+    expect(state.currentPlayerIndex).toBe(2); // landed on C
+    expect(state.players[1].skipNextTurn).toBe(false); // skip consumed
+    // CRITICAL: freeze marker survives the own-turn skip.
+    expect(state.players[1].frozenUntilDiscarderIndex).toBe(0);
+
+    // C draws + discards a personality card → claim window with C as
+    // discarder. B should be auto-marked (frozenUntilDiscarderIndex=0
+    // does not match current discarder=2).
+    state = drawCard(state);
+    state = discardCard(state, state.drawnCard!.id);
+    expect(state.phase).toBe('claim-window');
+    expect(state.discardedByIndex).toBe(2);
+    expect(state.claimResponses).toContain('B');
+    // The freeze marker should still be set because A has not operated
+    // again yet.
+    expect(state.players[1].frozenUntilDiscarderIndex).toBe(0);
+  });
+
+  it('A\'s next discard clears B\'s freeze and B can claim again', () => {
+    let state = makeGameState({
+      phase: 'claim-window',
+      discardedByIndex: 0,
+      currentPlayerIndex: 0,
+      pendingDiscard: makeCard('O', { id: 100 }),
+      drawPile: [
+        makeCard('A', { id: 200 }), // C draws this
+        makeCard('A', { id: 201 }), // A draws this on round 2
+      ],
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({
+          id: 'B' as PlayerId,
+          hand: [makeCard('O', { id: 10 }), makeCard('C', { id: 11 })],
+        }),
+        makePlayer({ id: 'C' as PlayerId, hand: [] }),
+      ],
+    });
+
+    state = pongCard(state, 1, 'O', [10, 11]); // B fails
+    state = skipPong(state, 2);                 // C skips → land on C
+    state = drawCard(state);                    // C draws
+    state = discardCard(state, state.drawnCard!.id); // C discards
+    state = skipPong(state, 0);                 // A skips → finalize → advance to A
+
+    expect(state.currentPlayerIndex).toBe(0);
+
+    // A draws + discards. discardCard clears any player whose freeze
+    // marker matches the new discarder.
+    state = drawCard(state);
+    state = discardCard(state, state.drawnCard!.id);
+
+    expect(state.phase).toBe('claim-window');
+    expect(state.discardedByIndex).toBe(0);
+    expect(state.players[1].frozenUntilDiscarderIndex).toBeUndefined();
+    expect(state.claimResponses).not.toContain('B');
+  });
+
+  it('a dummy-card discard by the original block-discarder also lifts the freeze', () => {
+    // Edge case: A's next operation happens to be a dummy-card discard
+    // (no claim window). The freeze should still clear so B is not
+    // stuck frozen forever.
+    let state = makeGameState({
+      phase: 'drawing',
+      currentPlayerIndex: 0,
+      drawPile: [makeDummy({ id: 999 })],
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({
+          id: 'B' as PlayerId,
+          frozenUntilDiscarderIndex: 0,
+        }),
+        makePlayer({ id: 'C' as PlayerId }),
+      ],
+    });
+    state = drawCard(state);
+    state = discardCard(state, state.drawnCard!.id);
+    expect(state.players[1].frozenUntilDiscarderIndex).toBeUndefined();
   });
 });

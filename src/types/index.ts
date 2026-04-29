@@ -87,6 +87,12 @@ export interface Player {
   skipNextTurn: boolean;
   revealedHand: boolean;                    // hu-fail: full hand exposed
   revealedSelectedCards?: GameCard[];       // pong-fail: only the attempted cards exposed
+  // Pong-fail freeze marker. Holds the index of the player whose discard
+  // the failed pong was attempted against. The penalized player is locked
+  // out of every subsequent claim window until that same player discards
+  // again. Cleared in discardCard when the matching player discards.
+  // Undefined for players with no active pong-fail freeze.
+  frozenUntilDiscarderIndex?: number;
 }
 
 // ===== Game State =====

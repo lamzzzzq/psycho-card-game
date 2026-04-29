@@ -46,6 +46,9 @@ export function serializeGameState(state: RawGameState, viewerPlayerId: string |
     if (p.revealedSelectedCards && p.revealedSelectedCards.length > 0) {
       base.revealedSelectedCards = p.revealedSelectedCards;
     }
+    if (typeof p.frozenUntilDiscarderIndex === 'number') {
+      base.frozenUntilDiscarderIndex = p.frozenUntilDiscarderIndex;
+    }
 
     return base;
   });
