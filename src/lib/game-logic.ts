@@ -439,18 +439,52 @@ export function pongCard(
   dimension: Dimension,
   handCardIds: number[]
 ): GameState {
-  if (!state.pendingDiscard || state.phase !== 'claim-window') return state;
-  if (pongerIndex === state.discardedByIndex) return state;
+  if (!state.pendingDiscard || state.phase !== 'claim-window') {
+    console.warn('[pong-silent] #1 claim-window-closed', {
+      pongerIndex,
+      pongerId: state.players[pongerIndex]?.id,
+      phase: state.phase,
+      hasPendingDiscard: !!state.pendingDiscard,
+      discardedByIndex: state.discardedByIndex,
+      claimResponses: state.claimResponses,
+    });
+    return state;
+  }
+  if (pongerIndex === state.discardedByIndex) {
+    console.warn('[pong-silent] #2 self-discard', {
+      pongerIndex,
+      pongerId: state.players[pongerIndex]?.id,
+      discardedByIndex: state.discardedByIndex,
+    });
+    return state;
+  }
 
   // Penalized players can't pong (matches hu-fail/pong-fail 罚停一轮 rule).
-  if (isFrozen(state.players[pongerIndex])) return state;
+  if (isFrozen(state.players[pongerIndex])) {
+    const p = state.players[pongerIndex];
+    console.warn('[pong-silent] #3 frozen', {
+      pongerIndex,
+      pongerId: p.id,
+      skipNextTurn: p.skipNextTurn,
+      frozenUntilDiscarderIndex: p.frozenUntilDiscarderIndex,
+    });
+    return state;
+  }
 
   const ponger = state.players[pongerIndex];
   const pendingCard = state.pendingDiscard;
   const targets = getTargetCounts(ponger.bigFiveScores);
   const targetCount = targets[dimension];
 
-  if (getDeclaredDimensions(ponger).has(dimension)) return state;
+  if (getDeclaredDimensions(ponger).has(dimension)) {
+    console.warn('[pong-silent] #4 dimension-already-declared', {
+      pongerIndex,
+      pongerId: ponger.id,
+      dimension,
+      declaredDimensions: Array.from(getDeclaredDimensions(ponger)),
+    });
+    return state;
+  }
 
   const selectedHandCards = ponger.hand.filter((c) => handCardIds.includes(c.id));
   const allPongCards = [...selectedHandCards, pendingCard];
