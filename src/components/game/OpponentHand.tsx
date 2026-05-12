@@ -35,6 +35,8 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
   }, [isCurrentTurn, bounceControls]);
 
   const stackWidth = Math.max(20, Math.min(72, (player.hand.length - 1) * 4 + 18));
+  const isPenalized = player.skipNextTurn || typeof player.frozenUntilDiscarderIndex === 'number';
+  const hasLeft = player.hasLeft === true;
 
   // Modal contents differ slightly: full reveal (hu-fail) shows the
   // entire hand; subset (pong-fail) shows only the cards the offender
@@ -69,13 +71,11 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
             </div>
             <div className="text-[9px] text-[var(--psy-muted)] sm:text-[10px]">
               {player.hand.length} 张
-              {(player.skipNextTurn || typeof player.frozenUntilDiscarderIndex === 'number') && (
-                <span className="ml-1 text-[var(--psy-danger)]">· 停</span>
-              )}
-              {!player.skipNextTurn && typeof player.frozenUntilDiscarderIndex !== 'number' && isCurrentTurn && (
+              {!isPenalized && !hasLeft && isCurrentTurn && (
                 <span className="ml-1 text-[var(--psy-accent)]">· 思考中</span>
               )}
               {player.revealedHand && <span className="ml-1 text-[var(--psy-accent)]">· 档案公开</span>}
+              {hasLeft && <span className="ml-1 text-[var(--psy-muted)]">· AI 托管</span>}
             </div>
           </div>
         </div>
@@ -98,6 +98,21 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
           ))}
         </div>
       </div>
+
+      {/* Penalty badge — visible to everyone */}
+      {isPenalized && (
+        <div
+          className="flex items-center justify-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold sm:text-[10px]"
+          style={{
+            borderColor: 'rgba(220,106,79,0.45)',
+            backgroundColor: 'rgba(220,106,79,0.12)',
+            color: 'var(--psy-danger)',
+          }}
+        >
+          <span>⛔</span>
+          <span>罚停一轮</span>
+        </div>
+      )}
 
       {/* Archive */}
       <DeclaredArea declaredSets={player.declaredSets} compact title={`${player.name} 的归档`} />

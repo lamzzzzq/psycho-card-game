@@ -12,7 +12,7 @@ import {
 } from '@/components/game/FeedbackLayer';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { DIMENSION_META } from '@/data/dimensions';
-import { DIMENSIONS, Dimension } from '@/types';
+import { DIMENSIONS, Dimension, isPersonalityCard } from '@/types';
 import { getTargetCounts } from '@/lib/scoring';
 import { getDeclaredDimensions } from '@/lib/game-logic';
 import { PlayerHand } from '@/components/game/PlayerHand';
@@ -26,6 +26,7 @@ import { FlyingCard } from '@/components/game/FlyingCard';
 import { PongPanel } from '@/components/game/PongPanel';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
+import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
 
 interface FlyingAnim {
   id: number;
@@ -42,6 +43,7 @@ export default function GamePage() {
     playerDiscard,
     playerHu,
     playerPong,
+    playerSelfPong,
     playerSkipPong,
     resolvePongWindow,
     executeAITurn,
@@ -64,6 +66,15 @@ export default function GamePage() {
 
   // Result feedback banner
   const [resultBanner, setResultBanner] = useState<{ success: boolean; message: string } | null>(null);
+  // Exit-confirmation modal
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+  // Pong intent — when user clicks the main-area 「碰」 button, this opens
+  // a card-selection flow. type='self' for 自摸碰 (own turn), 'other' for
+  // claiming an opponent's discard.
+  const [pongIntent, setPongIntent] = useState<{
+    type: 'self' | 'other';
+    dimension: Dimension;
+  } | null>(null);
 
   // Arrow state
   const [arrowFrom, setArrowFrom] = useState<{ x: number; y: number } | null>(null);
@@ -97,6 +108,13 @@ export default function GamePage() {
       setSelectedCardIds([]);
     }
   }, [game?.phase]);
+
+  // Clear pong intent when turn/phase context changes — keeps the modal
+  // invariant honest.
+  useEffect(() => {
+    setPongIntent(null);
+    setSelectedCardIds([]);
+  }, [game?.currentPlayerIndex, game?.phase]);
 
   // Reset view-cards state on turn change
   useEffect(() => {
@@ -278,6 +296,24 @@ export default function GamePage() {
     }
   }, [playerHu]);
 
+  // Self-pong (自摸碰) commit handler
+  const handleSelfPongCommit = useCallback(() => {
+    if (!pongIntent || pongIntent.type !== 'self') return;
+    const beforeGame = useGameStore.getState().game;
+    playerSelfPong(pongIntent.dimension, selectedCardIds);
+    const afterGame = useGameStore.getState().game;
+    setSelectedCardIds([]);
+    setPongIntent(null);
+    if (beforeGame && afterGame) {
+      const lastAction = afterGame.actionLog[afterGame.actionLog.length - 1];
+      if (lastAction?.type === 'pong-success') {
+        showBanner(true, `自摸碰！${DIMENSION_META[pongIntent.dimension].name} 完成！`);
+      } else if (lastAction?.type === 'pong-fail') {
+        showBanner(false, '自摸碰失败！手牌公开，跳过下轮');
+      }
+    }
+  }, [playerSelfPong, pongIntent, selectedCardIds]);
+
   // Pong (碰) handler
   const handlePong = useCallback((dimension: Dimension, handCardIds: number[]) => {
     const beforeGame = useGameStore.getState().game;
@@ -352,6 +388,47 @@ export default function GamePage() {
   const targets = getTargetCounts(humanPlayer.bigFiveScores);
   const declaredDims = getDeclaredDimensions(humanPlayer);
 
+  // ── Pong candidate computation ────────────────────────────────────────
+  // Self-pong: on own turn (drawing / discarding), any undeclared dim
+  // where pool (hand + drawnCard) has at least targetCount same-dim
+  // personality cards.
+  const selfPongCandidates: Dimension[] = [];
+  if (isHumanTurn && !humanFrozen && (game.phase === 'drawing' || game.phase === 'discarding')) {
+    const pool = [
+      ...humanPlayer.hand,
+      ...(game.drawnCard ? [game.drawnCard] : []),
+    ];
+    for (const d of DIMENSIONS) {
+      if (declaredDims.has(d)) continue;
+      const same = pool.filter((c) => isPersonalityCard(c) && c.dimension === d).length;
+      if (same >= targets[d]) selfPongCandidates.push(d);
+    }
+  }
+
+  // Other-pong: only the pending discard's dimension is a candidate,
+  // and only if it can be combined with (target - 1) same-dim hand cards.
+  const otherPongCandidate: Dimension | null = (() => {
+    if (!isPongWindow || !game.pendingDiscard || humanFrozen) return null;
+    if (game.claimResponses.includes(humanPlayer.id)) return null;
+    const pc = game.pendingDiscard;
+    if (!isPersonalityCard(pc)) return null;
+    const d = pc.dimension;
+    if (declaredDims.has(d)) return null;
+    const sameInHand = humanPlayer.hand.filter(
+      (c) => isPersonalityCard(c) && c.dimension === d
+    ).length;
+    return sameInHand >= targets[d] - 1 ? d : null;
+  })();
+
+  const canPongAnywhere = selfPongCandidates.length > 0 || otherPongCandidate !== null;
+  const pongIntentTarget = pongIntent ? targets[pongIntent.dimension] : 0;
+  const pongIntentRequiredSelectCount =
+    pongIntent?.type === 'self'
+      ? pongIntentTarget // pick exactly N from pool (hand + drawnCard)
+      : pongIntent?.type === 'other'
+      ? pongIntentTarget - 1 // pick N-1 from hand; pending card completes it
+      : 0;
+
   return (
     <motion.div animate={shakeControls} className="mx-auto flex min-h-[100dvh] max-w-6xl w-full flex-col px-3 py-3 sm:px-4 sm:py-4">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
@@ -372,6 +449,53 @@ export default function GamePage() {
       {flyingCards.map((f) => (
         <FlyingCard key={f.id} from={f.from} to={f.to} text={f.text} onComplete={() => removeFlyingCard(f.id)} />
       ))}
+
+      {/* Top bar: exit button */}
+      <div className="mb-1 flex shrink-0 items-center justify-between sm:mb-2">
+        <button
+          onClick={() => setExitConfirmOpen(true)}
+          className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] px-3 py-1 text-[10px] text-[var(--psy-muted)] transition hover:border-[rgba(220,80,80,0.4)] hover:text-[var(--psy-danger)] sm:text-[11px]"
+        >
+          ← 退出对局
+        </button>
+        <span className="psy-serif text-[10px] uppercase tracking-[0.32em] text-[var(--psy-muted)] sm:text-[11px]">
+          人格麻将
+        </span>
+      </div>
+
+      {/* Exit confirmation modal */}
+      <PsyOverlayPanel
+        open={exitConfirmOpen}
+        onClose={() => setExitConfirmOpen(false)}
+        title="确认退出本局？"
+        variant="centered"
+      >
+        <div className="space-y-5 px-1 py-2">
+          <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">
+            退出后本局进度将丢失，且无法恢复。
+            <br />
+            确认后将直接结束本局并回到大厅。
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setExitConfirmOpen(false)}
+              className="psy-btn psy-btn-ghost px-5 py-2 text-sm"
+            >
+              取消
+            </button>
+            <button
+              onClick={() => {
+                setExitConfirmOpen(false);
+                resetGame();
+                router.push('/lobby');
+              }}
+              className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
+            >
+              确认退出
+            </button>
+          </div>
+        </div>
+      </PsyOverlayPanel>
 
       {/* Opponents */}
       <div className="mb-1 grid shrink-0 grid-cols-3 gap-2 sm:mb-4 sm:h-[6.5rem] sm:gap-3">
@@ -411,6 +535,13 @@ export default function GamePage() {
 
       {/* Human player area */}
       <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
+        {/* Penalty banner for human player — visible & loud */}
+        {humanFrozen && (
+          <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-xs font-semibold text-[var(--psy-danger)] sm:text-sm">
+            <span>⛔</span>
+            <span>你被罚停一轮 — 下个本应出牌的回合会被自动跳过，期间无法参与碰/食胡</span>
+          </div>
+        )}
         {/* Row 1: My personality scores */}
         <div className="hidden shrink-0 items-center justify-center gap-1.5 flex-wrap sm:flex">
           {DIMENSIONS.map((d) => {
@@ -489,7 +620,7 @@ export default function GamePage() {
           )}
 
         {/* Action buttons */}
-        {!viewMode && (
+        {!viewMode && !pongIntent && (
           <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 sm:gap-3">
             {/* Hu button — visible on own turn, or during an opponent's
                 claim-window ("跳着胡"). Hidden when the human has already
@@ -502,6 +633,43 @@ export default function GamePage() {
                 食胡
               </button>
             )}
+
+            {/* Pong button — permanent in the main action area. Disabled
+                when no candidate dimension is available. Clicking opens
+                a selection flow: if only one candidate, jumps straight
+                to picking cards; if multiple, a small dimension picker
+                opens first. */}
+            <button
+              onClick={() => {
+                if (!canPongAnywhere) return;
+                if (otherPongCandidate) {
+                  setPongIntent({ type: 'other', dimension: otherPongCandidate });
+                  setSelectedCardIds([]);
+                  return;
+                }
+                if (selfPongCandidates.length === 1) {
+                  setPongIntent({ type: 'self', dimension: selfPongCandidates[0] });
+                  setSelectedCardIds([]);
+                  return;
+                }
+                // Multi-candidate self-pong → use first; user can cancel
+                // and re-pick once we add a dim-picker UI. Keeps the flow
+                // unblocked.
+                setPongIntent({ type: 'self', dimension: selfPongCandidates[0] });
+                setSelectedCardIds([]);
+              }}
+              disabled={!canPongAnywhere}
+              className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
+              title={
+                canPongAnywhere
+                  ? otherPongCandidate
+                    ? `碰对方弃牌（${DIMENSION_META[otherPongCandidate].name}）`
+                    : `自摸碰 · ${selfPongCandidates.map((d) => DIMENSION_META[d].name).join(' / ')}`
+                  : '当前没有可碰的人格维度'
+              }
+            >
+              碰
+            </button>
 
             {isHumanTurn && isDiscarding && !viewUsedThisTurn && (
               <button
@@ -559,6 +727,72 @@ export default function GamePage() {
           </div>
         )}
 
+        {/* Pong intent — card selection prompt */}
+        {pongIntent && (
+          <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
+            <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
+              {pongIntent.type === 'self' ? '🎯 自摸碰' : '🎯 碰对方弃牌'} ·{' '}
+              <span style={{ color: DIMENSION_META[pongIntent.dimension].colorHex }}>
+                {DIMENSION_META[pongIntent.dimension].name}
+              </span>{' '}
+              · 请精确选择{' '}
+              <span className="text-white font-bold">{pongIntentRequiredSelectCount}</span> 张
+              {pongIntent.type === 'self' ? '同维度牌（含刚抽到的）' : '同维度手牌（连同弃牌共凑 ' + pongIntentTarget + ' 张）'}
+              （已选 <span className="text-white font-bold">{selectedCardIds.length}</span>）
+            </p>
+            {/* Self-pong dimension switcher (only when there are multiple candidates) */}
+            {pongIntent.type === 'self' && selfPongCandidates.length > 1 && (
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {selfPongCandidates.map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => {
+                      setPongIntent({ type: 'self', dimension: d });
+                      setSelectedCardIds([]);
+                    }}
+                    className="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition"
+                    style={{
+                      borderColor: pongIntent.dimension === d
+                        ? DIMENSION_META[d].colorHex
+                        : 'rgba(200,155,93,0.18)',
+                      backgroundColor: pongIntent.dimension === d
+                        ? DIMENSION_META[d].colorHex + '20'
+                        : 'rgba(255,255,255,0.02)',
+                      color: pongIntent.dimension === d
+                        ? DIMENSION_META[d].colorHex
+                        : 'var(--psy-ink-soft)',
+                    }}
+                  >
+                    {DIMENSION_META[d].name}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={() => { setPongIntent(null); setSelectedCardIds([]); }}
+                className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => {
+                  if (pongIntent.type === 'self') {
+                    handleSelfPongCommit();
+                  } else {
+                    handlePong(pongIntent.dimension, selectedCardIds);
+                    setPongIntent(null);
+                  }
+                }}
+                disabled={selectedCardIds.length !== pongIntentRequiredSelectCount}
+                className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:opacity-40"
+              >
+                {pongIntent.type === 'self' ? '自摸归档' : '归档判定'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Hand + Declared cards */}
         <div className="flex flex-1 items-start justify-center gap-3 sm:gap-4">
           <div className="hidden flex-shrink-0 sm:block">
@@ -568,8 +802,8 @@ export default function GamePage() {
             <PlayerHand
               cards={humanPlayer.hand}
               drawnCard={isHumanTurn ? game.drawnCard : null}
-              isDiscarding={isDiscarding && !viewMode}
-              isDeclaring={isPongWindow}
+              isDiscarding={isDiscarding && !viewMode && !pongIntent}
+              isDeclaring={isPongWindow || pongIntent !== null}
               isMyTurn={isHumanTurn}
               mobileCompact
               selectedCardIds={selectedCardIds}

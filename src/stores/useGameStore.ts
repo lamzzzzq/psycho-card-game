@@ -8,6 +8,7 @@ import {
   discardCard,
   attemptHu,
   pongCard,
+  selfPongCard,
   skipPong,
   getPlayerScore,
   getRankings,
@@ -25,6 +26,7 @@ interface GameStore {
   playerDraw: () => void;
   playerDiscard: (cardId: number) => void;
   playerPong: (dimension: Dimension, handCardIds: number[]) => void;
+  playerSelfPong: (dimension: Dimension, cardIds: number[]) => void;
   playerSkipPong: () => void;
   resolvePongWindow: () => Promise<void>;
   executeAITurn: () => Promise<void>;
@@ -78,6 +80,14 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     const { game } = get();
     if (!game || game.phase !== 'claim-window') return;
     set({ game: pongCard(game, 0, dimension, handCardIds) });
+  },
+
+  playerSelfPong: (dimension, cardIds) => {
+    const { game } = get();
+    if (!game) return;
+    if (game.phase !== 'drawing' && game.phase !== 'discarding') return;
+    if (game.currentPlayerIndex !== 0) return;
+    set({ game: selfPongCard(game, 0, dimension, cardIds) });
   },
 
   playerSkipPong: () => {

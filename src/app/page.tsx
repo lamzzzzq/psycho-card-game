@@ -12,9 +12,9 @@ export default function Home() {
   const progress = getProgress();
   const hasResults = hydrated && bigFiveScores !== null;
   const features = [
-    { glyph: '✦', title: '人格抽样', note: '60 道陈述题，提取五维倾向' },
-    { glyph: '◈', title: '心理牌局', note: '用线索牌判断人格归属' },
-    { glyph: '☽', title: '对局镜像', note: 'AI 与真人都会暴露决策痕迹' },
+    { glyph: '✦', title: '自我评估', note: '先完成测评，得到你自己的五维倾向' },
+    { glyph: '◈', title: '抽牌归档', note: '凑齐同一人格维度的手牌，公开归档' },
+    { glyph: '☽', title: '识人破局', note: '对手的每张弃牌，都暴露了他的人格' },
   ];
 
   return (
@@ -28,10 +28,10 @@ export default function Home() {
           <div className="space-y-6">
             <div className="space-y-3">
               <p className="psy-serif text-xs uppercase tracking-[0.42em] text-[var(--psy-ink-soft)]">
-                Psychological Arcana Deck
+                Personalities Mahjong
               </p>
               <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">
-                PsychoCard
+                人格麻将
               </h1>
               <p className="max-w-xl text-lg leading-8 text-[var(--psy-ink-soft)]">
                 把人格测评、心理线索判断与卡牌对战编织在一起。先读懂自己，再在牌桌上读懂别人。
@@ -118,7 +118,13 @@ export default function Home() {
             </button>
           )}
         </div>
-        <div className="flex justify-center">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          <button
+            onClick={() => router.push('/tutorial')}
+            className="text-sm text-[var(--psy-accent)] underline decoration-[rgba(200,155,93,0.4)] underline-offset-4 transition hover:text-[var(--psy-ink)]"
+          >
+            📖 玩法教学 / Tutorial
+          </button>
           <button
             onClick={() => router.push('/stats')}
             className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"

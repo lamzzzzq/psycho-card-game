@@ -93,6 +93,10 @@ export interface Player {
   // again. Cleared in discardCard when the matching player discards.
   // Undefined for players with no active pong-fail freeze.
   frozenUntilDiscarderIndex?: number;
+  // Player has quit the game. Their seat is AI-piloted for the rest of
+  // the match. Other players continue until a winner is declared or the
+  // last human standing also leaves.
+  hasLeft?: boolean;
 }
 
 // ===== Game State =====

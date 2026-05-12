@@ -489,13 +489,14 @@ export function pongCard(
   const selectedHandCards = ponger.hand.filter((c) => handCardIds.includes(c.id));
   const allPongCards = [...selectedHandCards, pendingCard];
 
-  // Insufficient card count is treated as a failed pong (not a silent
-  // no-op). The user committed to "碰" — they eat the penalty either
-  // way. Earlier the count gate silently rejected the click and the
-  // panel just bounced; that left the player stuck with no feedback.
-  const enoughCards = allPongCards.length >= targetCount;
+  // STRICT count enforcement: user must commit exactly `targetCount` cards
+  // total (targetCount - 1 from hand + the pending discard). Selecting
+  // fewer OR more is treated as a failed pong and incurs the penalty.
+  // This locks in the contract the player declared: "I have exactly N
+  // cards of this dimension."
+  const exactCount = allPongCards.length === targetCount;
   const allCorrect =
-    enoughCards &&
+    exactCount &&
     allPongCards.every(
       (c) => isPersonalityCard(c) && c.dimension === dimension
     );
@@ -599,6 +600,123 @@ export function pongCard(
 
     return allClaimersResponded(nextState) ? finalizeClaimWindow(nextState) : nextState;
   }
+}
+
+// Self-pong (自摸碰) — declare a dimension on your own turn from your
+// own cards (hand + just-drawn). Triggered during your 'drawing' /
+// 'discarding' phase. STRICT count: must commit exactly `targetCount`
+// same-dimension cards. Wrong count or wrong dimension → pong-fail
+// penalty (skipNextTurn + selected-card reveal).
+//
+// Distinct from pongCard:
+//   - No discarder context (no frozenUntilDiscarderIndex on fail).
+//   - All cards come from the ponger's own pool (hand + drawnCard).
+//   - On success the ponger stays as currentPlayer in 'discarding' phase
+//     (they still owe a discard, whether or not drawnCard was used).
+export function selfPongCard(
+  state: GameState,
+  pongerIndex: number,
+  dimension: Dimension,
+  cardIds: number[]
+): GameState {
+  if (state.phase !== 'drawing' && state.phase !== 'discarding') return state;
+  if (state.currentPlayerIndex !== pongerIndex) return state;
+
+  const ponger = state.players[pongerIndex];
+  if (isFrozen(ponger)) return state;
+  if (getDeclaredDimensions(ponger).has(dimension)) return state;
+
+  const targets = getTargetCounts(ponger.bigFiveScores);
+  const targetCount = targets[dimension];
+
+  // Pool = current hand + the freshly-drawn card (if any).
+  const pool: GameCard[] = [
+    ...ponger.hand,
+    ...(state.drawnCard ? [state.drawnCard] : []),
+  ];
+  const selected = pool.filter((c) => cardIds.includes(c.id));
+
+  const exactCount = selected.length === targetCount;
+  const allCorrect =
+    exactCount &&
+    selected.every(
+      (c) => isPersonalityCard(c) && c.dimension === dimension
+    );
+
+  if (allCorrect) {
+    const declaredCards = selected as PersonalityCard[];
+    const drawnUsed = state.drawnCard && cardIds.includes(state.drawnCard.id);
+    const newHand = ponger.hand.filter((c) => !cardIds.includes(c.id));
+    const newDrawn = drawnUsed ? null : state.drawnCard;
+
+    const newDeclaredSets = [
+      ...ponger.declaredSets,
+      { dimension, cards: declaredCards, round: state.currentRound },
+    ];
+    const newPlayers = state.players.map((p, i) =>
+      i === pongerIndex
+        ? { ...p, hand: newHand, declaredSets: newDeclaredSets }
+        : p
+    );
+
+    const action: GameAction = {
+      round: state.currentRound,
+      playerId: ponger.id,
+      type: 'pong-success',
+      dimension,
+      cardCount: declaredCards.length,
+      timestamp: Date.now(),
+    };
+
+    const updatedPonger = newPlayers[pongerIndex];
+    if (hasWon(updatedPonger)) {
+      return {
+        ...state,
+        players: newPlayers,
+        drawnCard: newDrawn,
+        actionLog: [...state.actionLog, action],
+        phase: 'game-over',
+        winner: ponger.id,
+      };
+    }
+
+    // Stays in discarding — player still owes one discard.
+    return {
+      ...state,
+      players: newPlayers,
+      drawnCard: newDrawn,
+      phase: 'discarding',
+      actionLog: [...state.actionLog, action],
+    };
+  }
+
+  // SELF-PONG FAIL — same penalty model as pong-fail minus the discarder
+  // freeze (there's no other discarder to wait on).
+  const exposedCards = selected;
+  const newPlayers = state.players.map((p, i) =>
+    i === pongerIndex
+      ? {
+          ...p,
+          skipNextTurn: true,
+          revealedSelectedCards: exposedCards,
+        }
+      : p
+  );
+
+  const action: GameAction = {
+    round: state.currentRound,
+    playerId: ponger.id,
+    type: 'pong-fail',
+    dimension,
+    cardCount: selected.length,
+    timestamp: Date.now(),
+  };
+
+  return {
+    ...state,
+    players: newPlayers,
+    actionLog: [...state.actionLog, action],
+  };
 }
 
 // A single claimer passes. Pending card only moves to discard pile after

@@ -34,7 +34,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
                 <div className="mb-3 flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: meta.colorHex }} />
                   <span className="text-sm font-medium" style={{ color: meta.colorHex }}>
-                    已归档 {set.cards.length} 张
+                    {meta.name} · {set.cards.length} 张
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -78,7 +78,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
                       >
                         <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.colorHex }} />
                         <span className="text-[9px]" style={{ color: meta.colorHex }}>
-                          {set.cards.length}张
+                          {meta.name} {set.cards.length}张
                         </span>
                       </div>
                     );
@@ -116,7 +116,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
                 <div key={set.dimension} className="flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.colorHex }} />
                   <span className="text-[9px] font-medium" style={{ color: meta.colorHex }}>
-                    已归档 {set.cards.length} 张
+                    {meta.name} {set.cards.length} 张
                   </span>
                 </div>
               );
