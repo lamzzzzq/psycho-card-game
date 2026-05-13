@@ -10,9 +10,10 @@ import { DeclaredArea } from './DeclaredArea';
 interface OpponentHandProps {
   player: Player;
   isCurrentTurn: boolean;
+  isTentativeOffline?: boolean;
 }
 
-export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
+export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false }: OpponentHandProps) {
   const [openModal, setOpenModal] = useState(false);
   // Portal mount guard. The modal needs to escape OpponentHand's outer
   // motion.div, which gets `transform` from the bounce animation and
@@ -71,11 +72,14 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
             </div>
             <div className="text-[9px] text-[var(--psy-muted)] sm:text-[10px]">
               {player.hand.length} 张
-              {!isPenalized && !hasLeft && isCurrentTurn && (
+              {!isPenalized && !hasLeft && !isTentativeOffline && isCurrentTurn && (
                 <span className="ml-1 text-[var(--psy-accent)]">· 思考中</span>
               )}
               {player.revealedHand && <span className="ml-1 text-[var(--psy-accent)]">· 档案公开</span>}
               {hasLeft && <span className="ml-1 text-[var(--psy-danger)]">· 已退出</span>}
+              {!hasLeft && isTentativeOffline && (
+                <span className="ml-1 text-amber-300">· 离线中</span>
+              )}
             </div>
           </div>
         </div>
@@ -99,6 +103,22 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
         </div>
       </div>
 
+      {/* Offline badge — overrides penalty if hasLeft is false. Three
+          mutex states: hasLeft > tentativeOffline > isPenalized. */}
+      {!hasLeft && isTentativeOffline && (
+        <div
+          className="flex items-center justify-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold sm:text-[10px]"
+          style={{
+            borderColor: 'rgba(245,200,90,0.45)',
+            backgroundColor: 'rgba(245,200,90,0.12)',
+            color: '#f5c85a',
+          }}
+        >
+          <span>⚠</span>
+          <span>离线中（3 分钟内未回则离场）</span>
+        </div>
+      )}
+
       {/* Left badge — overrides penalty badge */}
       {hasLeft && (
         <div
@@ -114,8 +134,8 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
         </div>
       )}
 
-      {/* Penalty badge — visible to everyone */}
-      {!hasLeft && isPenalized && (
+      {/* Penalty badge — visible to everyone (hidden when offline or left) */}
+      {!hasLeft && !isTentativeOffline && isPenalized && (
         <div
           className="flex items-center justify-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold sm:text-[10px]"
           style={{

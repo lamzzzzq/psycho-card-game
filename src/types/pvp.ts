@@ -47,6 +47,11 @@ export type RealtimeMessage =
   | { type: 'player-left'; playerId: string }
   | { type: 'player-kicked'; playerId: string }
   | { type: 'room-dissolved' }
+  // Tentative offline: presence dropped but within grace period.
+  // UI shows "离线中" badge until host promotes to player-left or
+  // the player reconnects (player-online).
+  | { type: 'player-offline'; playerId: string }
+  | { type: 'player-online'; playerId: string }
   | { type: 'settings-changed'; settings: RoomSettings }
   // toPlayerId, when set, means this payload was tailored for a single
   // recipient — clients with a different myPlayerId MUST ignore it. Used

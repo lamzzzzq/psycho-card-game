@@ -10,6 +10,12 @@ import { BigFiveScores } from '@/types';
 import { serializeGameState } from '@/lib/pvp-serializer';
 import { initializePvpGame, applyPvpAction } from '@/lib/pvp-game-logic';
 
+// Host-side grace-period timers: presence drops → 3-minute hold-off
+// → real markPlayerLeft + broadcast. Lives outside the zustand state
+// so it's not persisted / serialized.
+const OFFLINE_GRACE_MS = 3 * 60 * 1000;
+const offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
 interface PvpStore {
   // Room state
   room: Room | null;
@@ -21,6 +27,10 @@ interface PvpStore {
   gameState: SerializedGameState | null;
   rawGameState: any | null; // host-only full game state
   isHost: boolean;
+
+  // Tentative-offline players (presence dropped but still inside grace
+  // period). Visible to every client via player-offline broadcast.
+  offlinePlayerIds: string[];
 
   // Actions
   setRoom: (room: Room) => void;
@@ -47,6 +57,7 @@ export const usePvpStore = create<PvpStore>()(
   gameState: null,
   rawGameState: null,
   isHost: false,
+  offlinePlayerIds: [],
 
   setRoom: (room) => set({ room }),
   setMyPlayerId: (id) => set({ myPlayerId: id }),
@@ -82,7 +93,22 @@ export const usePvpStore = create<PvpStore>()(
             break;
 
           case 'player-left':
-            set(s => ({ players: s.players.filter(p => p.player_id !== payload.playerId) }));
+            set(s => ({
+              players: s.players.filter(p => p.player_id !== payload.playerId),
+              offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== payload.playerId),
+            }));
+            break;
+
+          case 'player-offline':
+            set(s => s.offlinePlayerIds.includes(payload.playerId)
+              ? s
+              : { offlinePlayerIds: [...s.offlinePlayerIds, payload.playerId] });
+            break;
+
+          case 'player-online':
+            set(s => ({
+              offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== payload.playerId),
+            }));
             break;
 
           case 'player-kicked':
@@ -127,7 +153,13 @@ export const usePvpStore = create<PvpStore>()(
             break;
 
           case 'game-over':
-            // Host saves result, everyone sees it in gameState
+            // Host saves result, everyone sees it in gameState.
+            // Also clear any stale offline UI — once the game is over
+            // we don't want lingering "离线中" badges if someone happened
+            // to disconnect right at the end.
+            for (const t of offlineTimers.values()) clearTimeout(t);
+            offlineTimers.clear();
+            set({ offlinePlayerIds: [] });
             break;
 
           case 'state-request':
@@ -154,10 +186,12 @@ export const usePvpStore = create<PvpStore>()(
       })
       // Presence channel — supabase auto-pings every subscriber and
       // fires 'leave' on disconnect (close tab / network drop / OS sleep).
-      // Lets the host detect a vanished player without that player having
-      // to send 'leave' explicitly. ~10s detection lag on hard disconnect.
+      // Don't kick immediately — give them OFFLINE_GRACE_MS (3 min) to
+      // come back. Switching apps / brief connection drops shouldn't
+      // boot the player. Host promotes to a real leave only when the
+      // timer expires without reconnect.
       .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-        const { isHost: hostNow, rawGameState, room, players: ps, sendMessage: send } = get();
+        const { isHost: hostNow, rawGameState, room, sendMessage: send } = get();
         const leftIds = (leftPresences as { player_id?: string }[])
           .map((p) => p.player_id)
           .filter((id): id is string => typeof id === 'string');
@@ -165,29 +199,80 @@ export const usePvpStore = create<PvpStore>()(
 
         const hostPid = room.host_id;
 
-        // Case 1: host vanished. Non-host clients cannot run the engine
-        // (rawGameState is host-only). Room is effectively dissolved.
+        // Case 1: HOST vanished → unrecoverable for non-host clients
+        // (rawGameState is host-only). Bail immediately, no grace.
+        // TODO: extend grace to host too — needs host migration design
+        // (transfer rawGameState to next-seated player on host drop).
         if (!hostNow && hostPid && leftIds.includes(hostPid)) {
           get().unsubscribeRoom();
           if (typeof window !== 'undefined') window.location.href = '/';
           return;
         }
 
-        // Case 2: I'm host. A non-host player disappeared mid-game →
-        // synthetically dispatch their 'leave' so the engine cleanly
-        // marks hasLeft and rotation skips their seat. Stops the table
-        // from waiting forever on a dead client.
+        // Case 2: I'm host. Mark non-host leavers as tentatively offline
+        // and start a grace timer. If they reconnect within 3 min, we
+        // cancel. Otherwise we promote to a real leave.
         if (hostNow && rawGameState && rawGameState.phase !== 'game-over') {
           for (const lid of leftIds) {
             if (lid === hostPid) continue;
-            const stillThere = (rawGameState.players as { id: string; hasLeft?: boolean }[])
+            const stillIn = (rawGameState.players as { id: string; hasLeft?: boolean }[])
               .find((p) => p.id === lid && !p.hasLeft);
-            if (stillThere) {
+            if (!stillIn) continue;
+            // Mark offline locally + broadcast
+            set(s => s.offlinePlayerIds.includes(lid)
+              ? s
+              : { offlinePlayerIds: [...s.offlinePlayerIds, lid] });
+            send({ type: 'player-offline', playerId: lid });
+            // Reset any prior timer (presence flap)
+            const prev = offlineTimers.get(lid);
+            if (prev) clearTimeout(prev);
+            const timer = setTimeout(() => {
+              offlineTimers.delete(lid);
+              const stillHost = get().isHost;
+              const currRaw = get().rawGameState;
+              if (!stillHost || !currRaw || currRaw.phase === 'game-over') return;
+              const stillNotLeft = (currRaw.players as { id: string; hasLeft?: boolean }[])
+                .find((p) => p.id === lid && !p.hasLeft);
+              if (!stillNotLeft) return;
+              // Grace expired — really leave. The broadcast below has
+              // self:false, so host's own broadcast handler doesn't
+              // fire — that's why we manually splice players + clear
+              // offlinePlayerIds locally (instead of relying on the
+              // broadcast handler at 'case player-left').
               get().handlePlayerAction(lid, { type: 'leave' });
               send({ type: 'player-left', playerId: lid });
-            }
+              set(s => ({
+                players: s.players.filter((p) => p.player_id !== lid),
+                offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== lid),
+              }));
+            }, OFFLINE_GRACE_MS);
+            offlineTimers.set(lid, timer);
           }
-          set({ players: ps.filter((p) => !leftIds.includes(p.player_id)) });
+        }
+      })
+      // Presence 'join' fires on initial subscribe AND on reconnect.
+      // Use it to cancel a pending grace-timer when the player returns
+      // within the window.
+      .on('presence', { event: 'join' }, ({ newPresences }) => {
+        const { isHost: hostNow, sendMessage: send } = get();
+        const joinIds = (newPresences as { player_id?: string }[])
+          .map((p) => p.player_id)
+          .filter((id): id is string => typeof id === 'string');
+        for (const jid of joinIds) {
+          const t = offlineTimers.get(jid);
+          if (t) {
+            clearTimeout(t);
+            offlineTimers.delete(jid);
+          }
+          // Clear local offline state and broadcast (host only — others
+          // mirror via the broadcast). Non-host clients update their
+          // own offlinePlayerIds when receiving 'player-online'.
+          set(s => s.offlinePlayerIds.includes(jid)
+            ? { offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== jid) }
+            : s);
+          if (hostNow) {
+            send({ type: 'player-online', playerId: jid });
+          }
         }
       })
       .subscribe(async (status) => {
@@ -232,7 +317,10 @@ export const usePvpStore = create<PvpStore>()(
   unsubscribeRoom: () => {
     const { channel } = get();
     if (channel) channel.unsubscribe();
-    set({ channel: null, room: null, players: [], gameState: null, rawGameState: null, isHost: false });
+    // Clear all pending grace timers (host only — non-host has none).
+    for (const t of offlineTimers.values()) clearTimeout(t);
+    offlineTimers.clear();
+    set({ channel: null, room: null, players: [], gameState: null, rawGameState: null, isHost: false, offlinePlayerIds: [] });
   },
 
   sendMessage: (msg) => {
@@ -332,7 +420,7 @@ export const usePvpStore = create<PvpStore>()(
 
   reset: () => {
     get().unsubscribeRoom();
-    set({ room: null, players: [], myPlayerId: null, channel: null, gameState: null, rawGameState: null, isHost: false });
+    set({ room: null, players: [], myPlayerId: null, channel: null, gameState: null, rawGameState: null, isHost: false, offlinePlayerIds: [] });
     try { localStorage.removeItem('psycho-card-pvp'); } catch {}
   },
     }),

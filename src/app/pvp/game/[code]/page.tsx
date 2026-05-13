@@ -66,7 +66,7 @@ export default function PvpGamePage() {
   const code = params.code as string;
 
   const { player } = usePlayerStore();
-  const { gameState, myPlayerId, isHost, sendMessage, subscribeRoom } = usePvpStore();
+  const { gameState, myPlayerId, isHost, sendMessage, subscribeRoom, offlinePlayerIds } = usePvpStore();
 
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
   const [resultBanner, setResultBanner] = useState<{ success: boolean; message: string } | null>(null);
@@ -602,6 +602,7 @@ export default function PvpGamePage() {
             key={opp.id}
             player={opp}
             isCurrentTurn={currentPlayer?.id === opp.id}
+            isTentativeOffline={offlinePlayerIds.includes(opp.id)}
           />
         ))}
       </div>
