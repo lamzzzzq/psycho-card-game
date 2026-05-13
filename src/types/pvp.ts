@@ -61,7 +61,9 @@ export type PvpAction =
   | { type: 'discard'; cardId: number }
   | { type: 'hu' }
   | { type: 'pong'; dimension: Dimension; handCardIds: number[] }
-  | { type: 'skip-pong' };
+  | { type: 'self-pong'; dimension: Dimension; cardIds: number[] }
+  | { type: 'skip-pong' }
+  | { type: 'leave' };
 
 // Serialized game state for broadcast (same shape as GameState)
 export interface SerializedGameState {
@@ -96,6 +98,9 @@ export interface SerializedPlayer {
   // gate their claim panel (碰 / 胡) on this so the freeze persists after
   // the own-turn auto-skip has already cleared skipNextTurn.
   frozenUntilDiscarderIndex?: number;
+  // Player quit the room — their seat is permanently skipped by the
+  // engine; UI shows "已退出".
+  hasLeft?: boolean;
 }
 
 // Game result for DB

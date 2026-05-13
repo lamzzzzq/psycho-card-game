@@ -99,8 +99,10 @@ function allClaimersResponded(state: GameState): boolean {
 //
 // Without this auto-skip, B's claim window would block forever waiting
 // on C, since C's UI hides the panel for penalized players.
-function isFrozen(p: { skipNextTurn: boolean; frozenUntilDiscarderIndex?: number }): boolean {
-  return p.skipNextTurn || typeof p.frozenUntilDiscarderIndex === 'number';
+function isFrozen(p: { skipNextTurn: boolean; frozenUntilDiscarderIndex?: number; hasLeft?: boolean }): boolean {
+  // hasLeft permanently freezes the seat — the player quit, their turn
+  // is dead-air and they cannot participate in any claim window.
+  return !!p.hasLeft || p.skipNextTurn || typeof p.frozenUntilDiscarderIndex === 'number';
 }
 
 function autoSkipPenalizedClaimers(state: GameState): GameState {
@@ -152,7 +154,9 @@ export function skipPenalizedPlayers(state: GameState): GameState {
   for (let i = 0; i < current.players.length; i++) {
     if (current.phase !== 'drawing') return current;
     const p = current.players[current.currentPlayerIndex];
-    if (!p.skipNextTurn) return current;
+    // hasLeft: permanent seat skip. Their turn is dead-air; we advance
+    // immediately, do NOT clear hasLeft (they're out for good).
+    if (!p.skipNextTurn && !p.hasLeft) return current;
 
     const skipAction: GameAction = {
       round: current.currentRound,
@@ -766,4 +770,97 @@ export function getRankings(players: Player[]): Player[] {
     if (declDiff !== 0) return declDiff;
     return a.hand.length - b.hand.length;
   });
+}
+
+// Mark a player as having quit. The seat stays in players[] (indexes
+// must remain stable for currentPlayerIndex / discardedByIndex), but
+// the player is treated as permanently frozen by isFrozen() —
+// skipPenalizedPlayers will fast-forward their turn forever.
+//
+// Side-effects we have to handle here:
+//   1. If the leaver was the current player, advance the turn and
+//      run skipPenalizedPlayers so the next live player gets control.
+//   2. If we're inside a claim-window, auto-pass for the leaver so
+//      we don't deadlock waiting on their response.
+//   3. If fewer than 2 active players remain, end the game now and
+//      award the last-standing seat (or the highest-ranked active
+//      player) the win.
+export function markPlayerLeft(state: GameState, playerId: string): GameState {
+  const idx = state.players.findIndex((p) => p.id === playerId);
+  if (idx < 0) return state;
+  if (state.players[idx].hasLeft) return state;
+  if (state.phase === 'game-over') return state;
+
+  const newPlayers = state.players.map((p, i) =>
+    i === idx ? { ...p, hasLeft: true } : p
+  );
+
+  const activeCount = newPlayers.filter((p) => !p.hasLeft).length;
+
+  // End the game if 0 or 1 active players left.
+  if (activeCount <= 1) {
+    const lastStanding = newPlayers.find((p) => !p.hasLeft);
+    const winnerId = lastStanding
+      ? lastStanding.id
+      : getRankings(newPlayers)[0]?.id ?? null;
+    return {
+      ...state,
+      players: newPlayers,
+      phase: 'game-over',
+      winner: winnerId,
+      pendingDiscard: null,
+      discardedByIndex: -1,
+      claimResponses: [],
+    };
+  }
+
+  let next: GameState = { ...state, players: newPlayers };
+
+  // Inside a claim-window we have to record the leaver as having
+  // implicitly passed so allClaimersResponded() can fire.
+  if (next.phase === 'claim-window') {
+    const leftId = newPlayers[idx].id;
+    if (!next.claimResponses.includes(leftId) && next.discardedByIndex !== idx) {
+      next = { ...next, claimResponses: [...next.claimResponses, leftId] };
+    }
+    next = autoSkipPenalizedClaimers(next);
+    // If everyone else already responded, finalize.
+    if (next.phase === 'claim-window' && allClaimersResponded(next)) {
+      next = finalizeClaimWindow(next);
+    }
+  }
+
+  // If we ended up handing control to the leaver (their own turn at
+  // the moment they quit, or finalize-claim landed on them), force the
+  // turn-skip machinery to step past them.
+  if (
+    next.phase === 'drawing' &&
+    next.players[next.currentPlayerIndex].hasLeft
+  ) {
+    // Synthesize the same skip flow used by skipPenalizedPlayers.
+    next = skipPenalizedPlayers(next);
+  } else if (
+    (next.phase === 'discarding' || next.phase === 'drawing') &&
+    next.currentPlayerIndex === idx
+  ) {
+    // Mid-turn leave (e.g. they had drawn but not yet discarded). Move
+    // on cleanly.
+    const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+      idx,
+      next.currentRound,
+      next.settings.totalRounds,
+      next.players.length
+    );
+    next = {
+      ...next,
+      currentPlayerIndex: nextPlayerIndex,
+      currentRound: nextRound,
+      drawnCard: null,
+      phase: isGameOver ? 'game-over' : 'drawing',
+      winner: isGameOver ? getRankings(next.players)[0]?.id ?? null : next.winner,
+    };
+    if (next.phase === 'drawing') next = skipPenalizedPlayers(next);
+  }
+
+  return next;
 }

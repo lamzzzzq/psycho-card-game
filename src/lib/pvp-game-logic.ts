@@ -16,8 +16,10 @@ import {
   discardCard,
   attemptHu,
   pongCard,
+  selfPongCard,
   skipPong,
   getDeclaredDimensions,
+  markPlayerLeft,
 } from './game-logic';
 import { createShuffledDeck, dealCardsVariable } from './card-engine';
 import { getTargetCounts } from './scoring';
@@ -74,15 +76,24 @@ export function applyPvpAction(
   const playerIndex = orderedPlayers.findIndex(p => p.player_id === fromPlayerId);
   const currentPlayerId = orderedPlayers[state.currentPlayerIndex]?.player_id;
 
-  // Non-current-player can pong, skip-pong, or hu during claim-window
+  // Non-current-player can pong, skip-pong, hu, or leave during claim-window
   const isCurrentPlayer = fromPlayerId === currentPlayerId;
   const inClaimWindow = state.phase === 'claim-window';
 
-  if (!isCurrentPlayer && action.type !== 'pong' && action.type !== 'skip-pong' && action.type !== 'hu') {
-    return state;
+  // 'leave' can be invoked at any time by any player.
+  if (action.type !== 'leave') {
+    if (
+      !isCurrentPlayer &&
+      action.type !== 'pong' &&
+      action.type !== 'skip-pong' &&
+      action.type !== 'hu'
+    ) {
+      return state;
+    }
+    if (action.type === 'pong' && !inClaimWindow) return state;
+    if (action.type === 'skip-pong' && !inClaimWindow) return state;
+    if (action.type === 'self-pong' && !isCurrentPlayer) return state;
   }
-  if (action.type === 'pong' && !inClaimWindow) return state;
-  if (action.type === 'skip-pong' && !inClaimWindow) return state;
 
   // Lock out players who already responded in this claim window
   if (
@@ -110,8 +121,14 @@ export function applyPvpAction(
     case 'pong':
       return pongCard(state, playerIndex, action.dimension, action.handCardIds);
 
+    case 'self-pong':
+      return selfPongCard(state, playerIndex, action.dimension, action.cardIds);
+
     case 'skip-pong':
       return skipPong(state, playerIndex);
+
+    case 'leave':
+      return markPlayerLeft(state, fromPlayerId);
 
     default:
       return state;

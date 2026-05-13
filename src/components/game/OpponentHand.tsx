@@ -75,7 +75,7 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
                 <span className="ml-1 text-[var(--psy-accent)]">· 思考中</span>
               )}
               {player.revealedHand && <span className="ml-1 text-[var(--psy-accent)]">· 档案公开</span>}
-              {hasLeft && <span className="ml-1 text-[var(--psy-muted)]">· AI 托管</span>}
+              {hasLeft && <span className="ml-1 text-[var(--psy-danger)]">· 已退出</span>}
             </div>
           </div>
         </div>
@@ -99,8 +99,23 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
         </div>
       </div>
 
+      {/* Left badge — overrides penalty badge */}
+      {hasLeft && (
+        <div
+          className="flex items-center justify-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold sm:text-[10px]"
+          style={{
+            borderColor: 'rgba(220,106,79,0.45)',
+            backgroundColor: 'rgba(120,120,120,0.15)',
+            color: 'var(--psy-danger)',
+          }}
+        >
+          <span>🚪</span>
+          <span>已退出对局</span>
+        </div>
+      )}
+
       {/* Penalty badge — visible to everyone */}
-      {isPenalized && (
+      {!hasLeft && isPenalized && (
         <div
           className="flex items-center justify-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold sm:text-[10px]"
           style={{

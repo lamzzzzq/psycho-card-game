@@ -49,6 +49,9 @@ export function serializeGameState(state: RawGameState, viewerPlayerId: string |
     if (typeof p.frozenUntilDiscarderIndex === 'number') {
       base.frozenUntilDiscarderIndex = p.frozenUntilDiscarderIndex;
     }
+    if (p.hasLeft) {
+      base.hasLeft = true;
+    }
 
     return base;
   });

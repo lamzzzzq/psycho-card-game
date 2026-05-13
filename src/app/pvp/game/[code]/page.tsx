@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { usePvpStore } from '@/stores/usePvpStore';
 import { SerializedPlayer, PvpAction } from '@/types/pvp';
-import { GameCard, GameAction, Player, PlayerId, DeclaredSet, Dimension, DIMENSIONS } from '@/types';
+import { GameCard, GameAction, Player, PlayerId, DeclaredSet, Dimension, DIMENSIONS, isPersonalityCard } from '@/types';
 import {
   useGameFeedback,
   FeedbackOverlays,
@@ -54,6 +54,7 @@ function toPlayer(sp: SerializedPlayer, overrideHand?: GameCard[]): Player {
     revealedHand: sp.revealedHand,
     revealedSelectedCards: sp.revealedSelectedCards,
     frozenUntilDiscarderIndex: sp.frozenUntilDiscarderIndex,
+    hasLeft: sp.hasLeft,
   };
 }
 
@@ -80,6 +81,11 @@ export default function PvpGamePage() {
   const flyIdRef = useRef(0);
   const [slowLoad, setSlowLoad] = useState(false);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+  const [pongIntent, setPongIntent] = useState<{
+    type: 'self' | 'other';
+    dimension: Dimension;
+  } | null>(null);
+  const [idleReminderVisible, setIdleReminderVisible] = useState(false);
   const drawPileRef = useRef<HTMLDivElement>(null);
   const discardPileRef = useRef<HTMLDivElement>(null);
   const handAreaRef = useRef<HTMLDivElement>(null);
@@ -147,6 +153,13 @@ export default function PvpGamePage() {
     setViewUsedThisTurn(false);
   }, [gameState?.currentPlayerIndex, gameState?.currentRound]);
 
+  // Reset pong-intent on phase / turn changes — keeps the modal honest.
+  useEffect(() => {
+    setPongIntent(null);
+    setSelectedCardIds([]);
+  }, [gameState?.currentPlayerIndex, gameState?.phase]);
+
+
   const { shakeControls, flashControls, pops } = useGameFeedback(
     (gameState?.actionLog ?? []) as GameAction[],
     gameState?.players ?? []
@@ -158,6 +171,27 @@ export default function PvpGamePage() {
     gameState.players[gameState.currentPlayerIndex]?.id === (myPlayerId ?? player?.id) &&
     (gameState.phase === 'drawing' || gameState.phase === 'discarding');
   const yourTurnKey = useYourTurnNotifier(gameState?.currentPlayerIndex, myIsCurrent);
+
+  // 30-second idle reminder: when it's my turn (drawing or discarding)
+  // and I haven't acted, surface a 3s banner nudging me to play.
+  // Resets on turn change or any action (action log length grows).
+  useEffect(() => {
+    if (!gameState) return;
+    if (!myIsCurrent) {
+      setIdleReminderVisible(false);
+      return;
+    }
+    let hideAt: number | null = null;
+    const remindAt = window.setTimeout(() => {
+      setIdleReminderVisible(true);
+      hideAt = window.setTimeout(() => setIdleReminderVisible(false), 3000);
+    }, 30_000);
+    return () => {
+      window.clearTimeout(remindAt);
+      if (hideAt) window.clearTimeout(hideAt);
+      setIdleReminderVisible(false);
+    };
+  }, [myIsCurrent, gameState?.currentPlayerIndex, gameState?.phase, gameState?.actionLog?.length, gameState]);
 
   const showBanner = useCallback((success: boolean, message: string) => {
     setResultBanner({ success, message });
@@ -406,6 +440,54 @@ export default function PvpGamePage() {
   const targets = mePlayer ? getTargetCounts(mePlayer.bigFiveScores) : null;
   const declaredDims = mePlayer ? getDeclaredDimensions(mePlayer) : new Set<Dimension>();
 
+  // ── Pong candidates (mirror of single-player game/page logic) ─────────
+  const selfPongCandidates: Dimension[] = [];
+  if (mePlayer && targets && isMyTurn && !meFrozen && (gameState.phase === 'drawing' || gameState.phase === 'discarding')) {
+    const pool: GameCard[] = [
+      ...mePlayer.hand,
+      ...(gameState.drawnCard ? [gameState.drawnCard] : []),
+    ];
+    for (const d of DIMENSIONS) {
+      if (declaredDims.has(d)) continue;
+      const same = pool.filter((c) => isPersonalityCard(c) && c.dimension === d).length;
+      if (same >= targets[d]) selfPongCandidates.push(d);
+    }
+  }
+
+  const otherPongCandidate: Dimension | null = (() => {
+    if (!mePlayer || !targets) return null;
+    if (!isClaimWindow || !gameState.pendingDiscard || meFrozen) return null;
+    if (alreadyResponded || isDiscarderMe) return null;
+    const pc = gameState.pendingDiscard;
+    if (!isPersonalityCard(pc)) return null;
+    const d = pc.dimension;
+    if (declaredDims.has(d)) return null;
+    const sameInHand = mePlayer.hand.filter(
+      (c) => isPersonalityCard(c) && c.dimension === d
+    ).length;
+    return sameInHand >= targets[d] - 1 ? d : null;
+  })();
+
+  const canPongAnywhere = selfPongCandidates.length > 0 || otherPongCandidate !== null;
+  const pongIntentTarget = pongIntent && targets ? targets[pongIntent.dimension] : 0;
+  const pongIntentRequiredSelectCount =
+    pongIntent?.type === 'self'
+      ? pongIntentTarget
+      : pongIntent?.type === 'other'
+      ? pongIntentTarget - 1
+      : 0;
+
+  function handleCommitPongIntent() {
+    if (!pongIntent) return;
+    if (pongIntent.type === 'self') {
+      dispatchAction({ type: 'self-pong', dimension: pongIntent.dimension, cardIds: selectedCardIds });
+    } else {
+      dispatchAction({ type: 'pong', dimension: pongIntent.dimension, handCardIds: selectedCardIds });
+    }
+    setPongIntent(null);
+    setSelectedCardIds([]);
+  }
+
   return (
     <motion.div animate={shakeControls} className="mx-auto flex min-h-[100dvh] max-w-6xl w-full flex-col px-3 py-3 sm:px-4 sm:py-4">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
@@ -439,7 +521,9 @@ export default function PvpGamePage() {
           <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">
             退出后本局进度将丢失，且无法恢复。
             <br />
-            其他玩家会继续对局到分出胜负（你的座位暂由 AI 兜底，详见后续版本）。
+            桌上其他玩家会继续对局，少一人继续打到分出胜负。
+            <br />
+            若只剩 1 人，对局立即结束、剩下的玩家获胜。
           </p>
           <div className="flex justify-end gap-3">
             <button
@@ -451,6 +535,10 @@ export default function PvpGamePage() {
             <button
               onClick={() => {
                 setExitConfirmOpen(false);
+                // Broadcast the leave so the engine marks the seat
+                // hasLeft + skips it for everyone else. Then exit the
+                // room cleanly.
+                try { dispatchAction({ type: 'leave' }); } catch {}
                 handleAbandonRoom();
               }}
               className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
@@ -469,6 +557,13 @@ export default function PvpGamePage() {
             : 'bg-red-500/90 text-white border border-red-400'
         }`}>
           {resultBanner.success ? '✅' : '❌'} {resultBanner.message}
+        </div>
+      )}
+
+      {/* 30s idle reminder — fires once if my turn idles past 30s */}
+      {idleReminderVisible && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 rounded-xl border border-amber-400/60 bg-amber-500/90 px-6 py-3 text-sm font-bold text-white shadow-2xl animate-pulse">
+          ⏰ 请注意：现在是你的回合
         </div>
       )}
 
@@ -633,7 +728,7 @@ export default function PvpGamePage() {
           )}
 
           {/* Action buttons (my turn only) */}
-          {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && !viewMode && (
+          {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && !viewMode && !pongIntent && (
             <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 sm:gap-3">
               {canDraw && (
                 <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">点击牌堆抽一张牌</p>
@@ -655,7 +750,7 @@ export default function PvpGamePage() {
               {viewUsedThisTurn && !viewMode && (
                 <span className="text-xs text-[var(--psy-muted)]">本回合查看已用</span>
               )}
-              {!meSerialized?.skipNextTurn && (
+              {!meFrozen && (
                 <button
                   onClick={handleHu}
                   className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
@@ -663,6 +758,83 @@ export default function PvpGamePage() {
                   食胡
                 </button>
               )}
+              {/* Self-pong button — only on own turn; disabled when no candidate */}
+              {!meFrozen && (
+                <button
+                  onClick={() => {
+                    if (selfPongCandidates.length === 0) return;
+                    setPongIntent({ type: 'self', dimension: selfPongCandidates[0] });
+                    setSelectedCardIds([]);
+                  }}
+                  disabled={selfPongCandidates.length === 0}
+                  className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
+                  title={
+                    selfPongCandidates.length > 0
+                      ? `自摸碰 · ${selfPongCandidates.map((d) => DIMENSION_META[d].name).join(' / ')}`
+                      : '当前没有可自摸的人格维度'
+                  }
+                >
+                  自摸碰
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Pong-intent panel — card selection prompt */}
+          {pongIntent && targets && (
+            <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
+              <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
+                {pongIntent.type === 'self' ? '🎯 自摸碰' : '🎯 碰对方弃牌'} ·{' '}
+                <span style={{ color: DIMENSION_META[pongIntent.dimension].colorHex }}>
+                  {DIMENSION_META[pongIntent.dimension].name}
+                </span>{' '}
+                · 请精确选择{' '}
+                <span className="text-white font-bold">{pongIntentRequiredSelectCount}</span> 张
+                {pongIntent.type === 'self' ? '同维度牌（含刚抽到的）' : '同维度手牌（连同弃牌共凑 ' + pongIntentTarget + ' 张）'}
+                （已选 <span className="text-white font-bold">{selectedCardIds.length}</span>）
+              </p>
+              {pongIntent.type === 'self' && selfPongCandidates.length > 1 && (
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {selfPongCandidates.map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => {
+                        setPongIntent({ type: 'self', dimension: d });
+                        setSelectedCardIds([]);
+                      }}
+                      className="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition"
+                      style={{
+                        borderColor: pongIntent.dimension === d
+                          ? DIMENSION_META[d].colorHex
+                          : 'rgba(200,155,93,0.18)',
+                        backgroundColor: pongIntent.dimension === d
+                          ? DIMENSION_META[d].colorHex + '20'
+                          : 'rgba(255,255,255,0.02)',
+                        color: pongIntent.dimension === d
+                          ? DIMENSION_META[d].colorHex
+                          : 'var(--psy-ink-soft)',
+                      }}
+                    >
+                      {DIMENSION_META[d].name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={() => { setPongIntent(null); setSelectedCardIds([]); }}
+                  className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleCommitPongIntent}
+                  disabled={selectedCardIds.length !== pongIntentRequiredSelectCount}
+                  className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:opacity-40"
+                >
+                  {pongIntent.type === 'self' ? '自摸归档' : '归档判定'}
+                </button>
+              </div>
             </div>
           )}
 
@@ -699,8 +871,8 @@ export default function PvpGamePage() {
               <PlayerHand
                 cards={mePlayer.hand}
                 drawnCard={isMyTurn ? (gameState.drawnCard ?? null) : null}
-                isDiscarding={isDiscarding && !viewMode}
-                isDeclaring={canPong}
+                isDiscarding={isDiscarding && !viewMode && !pongIntent}
+                isDeclaring={canPong || pongIntent !== null}
                 isMyTurn={isMyTurn}
                 mobileCompact={true}
                 selectedCardIds={selectedCardIds}
