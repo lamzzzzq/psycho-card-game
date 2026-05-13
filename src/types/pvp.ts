@@ -48,8 +48,12 @@ export type RealtimeMessage =
   | { type: 'player-kicked'; playerId: string }
   | { type: 'room-dissolved' }
   | { type: 'settings-changed'; settings: RoomSettings }
-  | { type: 'game-start'; gameState: SerializedGameState }
-  | { type: 'game-state-update'; gameState: SerializedGameState }
+  // toPlayerId, when set, means this payload was tailored for a single
+  // recipient — clients with a different myPlayerId MUST ignore it. Used
+  // to keep hand cards private per-recipient instead of broadcasting
+  // every hand to every viewer.
+  | { type: 'game-start'; gameState: SerializedGameState; toPlayerId?: string }
+  | { type: 'game-state-update'; gameState: SerializedGameState; toPlayerId?: string }
   | { type: 'action-request'; fromPlayerId: string; action: PvpAction }
   | { type: 'game-over'; winnerId: string }
   | { type: 'big-five-updated'; playerId: string; bigFive: BigFiveScores }

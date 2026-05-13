@@ -105,6 +105,10 @@ export const usePvpStore = create<PvpStore>()(
 
           case 'game-start':
           case 'game-state-update':
+            // Drop payloads addressed to other recipients (per-player
+            // hand-privacy broadcast). Untagged payloads are accepted
+            // for backwards-compat with legacy '__all__' broadcasts.
+            if (payload.toPlayerId && payload.toPlayerId !== myId) break;
             set({ gameState: payload.gameState });
             break;
 
@@ -127,16 +131,21 @@ export const usePvpStore = create<PvpStore>()(
             break;
 
           case 'state-request':
-            // Host replies with the current authoritative state so a
-            // refreshed client can resync mid-game.
+            // Host replies privately to the requester (resync after
+            // refresh). Personal snapshot — never expose other hands.
             if (isHost) {
               const rawState = get().rawGameState;
               if (rawState) {
-                const snapshot = serializeGameState(rawState, '__all__');
+                const requesterId = payload.fromPlayerId;
+                const snapshot = serializeGameState(rawState, requesterId);
                 channel.send({
                   type: 'broadcast',
                   event: 'msg',
-                  payload: { type: 'game-state-update', gameState: snapshot },
+                  payload: {
+                    type: 'game-state-update',
+                    gameState: snapshot,
+                    toPlayerId: requesterId,
+                  },
                 });
               }
             }
@@ -154,14 +163,25 @@ export const usePvpStore = create<PvpStore>()(
             payload: { type: 'state-request', fromPlayerId: mid },
           });
         } else if (iAmHost && rawGameState) {
-          // Host just reconnected — re-broadcast its state so anyone
-          // who acted during the outage can reconcile.
-          const snapshot = serializeGameState(rawGameState, '__all__');
-          channel.send({
-            type: 'broadcast',
-            event: 'msg',
-            payload: { type: 'game-state-update', gameState: snapshot },
-          });
+          // Host just reconnected — re-broadcast personalized state per
+          // recipient so anyone who acted during the outage can reconcile,
+          // without leaking other hands.
+          const orderedPlayers = [...get().players].sort(
+            (a, b) => a.seat_index - b.seat_index
+          );
+          for (const op of orderedPlayers) {
+            const pid = op.player_id;
+            const snapshot = serializeGameState(rawGameState, pid);
+            channel.send({
+              type: 'broadcast',
+              event: 'msg',
+              payload: {
+                type: 'game-state-update',
+                gameState: snapshot,
+                toPlayerId: pid,
+              },
+            });
+          }
         }
       });
 
@@ -205,9 +225,14 @@ export const usePvpStore = create<PvpStore>()(
     const { channel } = get();
     if (!channel) return;
 
-    // Broadcast game start with all hands included (each client reads their own)
-    const serialized = serializeGameState(rawState, '__all__');
-    get().sendMessage({ type: 'game-start', gameState: serialized });
+    // Per-recipient broadcast: each player only ever sees their own hand
+    // + the public state. Replaces the old '__all__' mode which leaked
+    // every hand to every client (visible in opponent devtools).
+    for (const op of orderedPlayers) {
+      const pid = op.player_id;
+      const personal = serializeGameState(rawState, pid);
+      get().sendMessage({ type: 'game-start', gameState: personal, toPlayerId: pid });
+    }
 
     // Also update local gameState for host
     const hostSerialized = serializeGameState(rawState, myPlayerId);
@@ -237,9 +262,12 @@ export const usePvpStore = create<PvpStore>()(
     const newState = applyPvpAction(rawState, _fromPlayerId, action, orderedPlayers);
     set({ rawGameState: newState });
 
-    // Broadcast updated state with all hands (each client reads their own)
-    const serialized = serializeGameState(newState, '__all__');
-    get().sendMessage({ type: 'game-state-update', gameState: serialized });
+    // Per-recipient broadcast to keep hands private.
+    for (const op of orderedPlayers) {
+      const pid = op.player_id;
+      const personal = serializeGameState(newState, pid);
+      get().sendMessage({ type: 'game-state-update', gameState: personal, toPlayerId: pid });
+    }
 
     // Update host view
     const hostSerialized = serializeGameState(newState, get().myPlayerId);

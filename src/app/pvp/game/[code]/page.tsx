@@ -15,7 +15,7 @@ import {
 } from '@/components/game/FeedbackLayer';
 import { FlyingCard } from '@/components/game/FlyingCard';
 import { supabase } from '@/lib/supabase';
-import { leaveRoom } from '@/lib/room-api';
+import { leaveRoom, updateRoomStatus } from '@/lib/room-api';
 
 interface FlyingAnim { id: number; from: { x: number; y: number }; to: { x: number; y: number }; text: string; }
 import { DIMENSION_META } from '@/data/dimensions';
@@ -130,7 +130,19 @@ export default function PvpGamePage() {
   }, [gameState]);
 
   async function handleAbandonRoom() {
-    const roomId = usePvpStore.getState().room?.id;
+    const { isHost, gameState: gs, room, sendMessage: send } = usePvpStore.getState();
+    // Host quitting mid-game: current architecture has no host migration
+    // (rawGameState lives only on host). Broadcast 'room-dissolved' so all
+    // clients exit cleanly instead of staring at a frozen table forever.
+    const gameInProgress = gs && gs.phase !== 'game-over';
+    if (isHost && gameInProgress) {
+      try { send({ type: 'room-dissolved' }); } catch {}
+      const rId = room?.id;
+      if (rId) {
+        try { await updateRoomStatus(rId, 'ended'); } catch {}
+      }
+    }
+    const roomId = room?.id;
     if (roomId && player) {
       try { await leaveRoom(roomId, player.id); } catch {}
     } else if (player) {
@@ -174,30 +186,27 @@ export default function PvpGamePage() {
     (gameState.phase === 'drawing' || gameState.phase === 'discarding');
   const yourTurnKey = useYourTurnNotifier(gameState?.currentPlayerIndex, myIsCurrent);
 
-  // Recurring 30-second idle reminder: when it's my turn (drawing or
-  // discarding) and I haven't acted, flash a 3s banner nudging me to
-  // play. Keeps recurring every 30s until I act (actionLog grows) or
-  // my turn ends. Deps deliberately narrow — `gameState` whole obj is
-  // NOT a dep because every realtime broadcast bumps it and would
-  // otherwise reset the interval on every opponent state push.
+  // Recurring 30-second idle reminder. Deps narrowed to ONLY myIsCurrent —
+  // any other dep (phase / actionLog / gameState) gets bumped by realtime
+  // state pushes and would prematurely reset the 30s clock. The interval
+  // tears down naturally when myIsCurrent flips false (turn ends).
   useEffect(() => {
     if (!myIsCurrent) {
       setIdleReminderVisible(false);
       return;
     }
     let hideTimer: number | null = null;
-    const tick = () => {
+    const interval = window.setInterval(() => {
       setIdleReminderVisible(true);
       if (hideTimer) window.clearTimeout(hideTimer);
       hideTimer = window.setTimeout(() => setIdleReminderVisible(false), 3000);
-    };
-    const interval = window.setInterval(tick, 30_000);
+    }, 30_000);
     return () => {
       window.clearInterval(interval);
       if (hideTimer) window.clearTimeout(hideTimer);
       setIdleReminderVisible(false);
     };
-  }, [myIsCurrent, gameState?.currentPlayerIndex, gameState?.phase, gameState?.actionLog?.length]);
+  }, [myIsCurrent]);
 
   const showBanner = useCallback((success: boolean, message: string) => {
     setResultBanner({ success, message });
