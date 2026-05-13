@@ -713,14 +713,26 @@ export function selfPongCard(
     };
   }
 
-  // SELF-PONG FAIL — same penalty as pong-fail: skip own next turn +
-  // frozen until your own next clean discard.
+  // SELF-PONG FAIL — symmetric with pong-fail. Two crucial differences
+  // from a literal copy of pong-fail:
+  //   1. drawnCard is returned to hand. The offender has ALREADY invested
+  //      their own-turn (they drew + attempted pong). Letting them
+  //      discard after failing would immediately clear frozenUntilOwnDiscard
+  //      (since discardCard clears it), nullifying the penalty.
+  //   2. No skipNextTurn is set — this turn is itself the "forfeit own
+  //      turn". A second skip would be double-counting. The freeze
+  //      persists until the offender's NEXT clean own-turn discard.
+  // Net effect: own-turn forfeited + 1 full round of claim-window
+  // lockout, mirroring pong-fail's "skip + claim freeze" cost.
   const exposedCards = selected;
+  const handWithDrawnReturned: GameCard[] = state.drawnCard
+    ? [...ponger.hand, state.drawnCard]
+    : ponger.hand;
   const newPlayers = state.players.map((p, i) =>
     i === pongerIndex
       ? {
           ...p,
-          skipNextTurn: true,
+          hand: handWithDrawnReturned,
           frozenUntilOwnDiscard: true,
           revealedSelectedCards: exposedCards,
         }
@@ -736,11 +748,23 @@ export function selfPongCard(
     timestamp: Date.now(),
   };
 
-  return {
+  const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+    state.currentPlayerIndex,
+    state.currentRound,
+    state.settings.totalRounds,
+    state.players.length
+  );
+
+  return skipPenalizedPlayers({
     ...state,
     players: newPlayers,
+    drawnCard: null,
+    currentPlayerIndex: nextPlayerIndex,
+    currentRound: nextRound,
+    phase: isGameOver ? 'game-over' : 'drawing',
     actionLog: [...state.actionLog, action],
-  };
+    winner: isGameOver ? determineWinner(newPlayers) : null,
+  });
 }
 
 // A single claimer passes. Pending card only moves to discard pile after
