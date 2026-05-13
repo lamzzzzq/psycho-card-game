@@ -562,9 +562,15 @@ export default function PvpGamePage() {
 
       {/* 30s idle reminder — fires once if my turn idles past 30s */}
       {idleReminderVisible && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 rounded-xl border border-amber-400/60 bg-amber-500/90 px-6 py-3 text-sm font-bold text-white shadow-2xl animate-pulse">
+        <motion.div
+          initial={{ opacity: 0, y: -10, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-[60] max-w-[90vw] rounded-xl border border-amber-400/60 bg-amber-500/90 px-5 py-2.5 text-xs font-bold text-white shadow-2xl sm:top-20 sm:px-6 sm:py-3 sm:text-sm"
+        >
           ⏰ 请注意：现在是你的回合
-        </div>
+        </motion.div>
       )}
 
       {/* Opponents */}
@@ -608,9 +614,10 @@ export default function PvpGamePage() {
         <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
           {/* Penalty banner — visible & loud */}
           {meFrozen && (
-            <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-xs font-semibold text-[var(--psy-danger)] sm:text-sm">
+            <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
               <span>⛔</span>
-              <span>你被罚停一轮 — 下个本应出牌的回合会被自动跳过，期间无法参与碰/食胡</span>
+              <span className="hidden sm:inline">你被罚停一轮 — 下个本应出牌的回合会被自动跳过，期间无法参与碰/食胡</span>
+              <span className="sm:hidden">罚停一轮 · 下回合跳过 · 期间不可碰/胡</span>
             </div>
           )}
           {/* Big Five scores */}

@@ -537,9 +537,10 @@ export default function GamePage() {
       <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
         {/* Penalty banner for human player — visible & loud */}
         {humanFrozen && (
-          <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-xs font-semibold text-[var(--psy-danger)] sm:text-sm">
+          <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
             <span>⛔</span>
-            <span>你被罚停一轮 — 下个本应出牌的回合会被自动跳过，期间无法参与碰/食胡</span>
+            <span className="hidden sm:inline">你被罚停一轮 — 下个本应出牌的回合会被自动跳过，期间无法参与碰/食胡</span>
+            <span className="sm:hidden">罚停一轮 · 下回合跳过 · 期间不可碰/胡</span>
           </div>
         )}
         {/* Row 1: My personality scores */}
