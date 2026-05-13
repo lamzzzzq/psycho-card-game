@@ -1,113 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useReducer, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/game/Card';
 import { DIMENSION_META } from '@/data/dimensions';
-import type { GameCard, PersonalityCard, DummyCard } from '@/types';
+import type { GameCard, PersonalityCard, DummyCard, Dimension } from '@/types';
 
+// ─── Static doc: 概念分组 ────────────────────────────────────────────────
 type Step = {
   title: string;
   body: string;
   hint?: string;
 };
-
-// ─── Playback (剧本演示) ─────────────────────────────────────────────────
-// Scripted 6-frame walkthrough of a turn:
-//   hand 3×N + 1 dummy → draw N → self-pong → declare → discard dummy.
-// All cards are static fakes; only the Card visuals are real.
-
-const FAKE_NEURO = (id: number): PersonalityCard => ({
-  id,
-  dimension: 'N',
-  text: '我经常感到焦虑或忧虑',
-  facet: 'anxiety',
-});
-const FAKE_NEURO_2 = (id: number): PersonalityCard => ({
-  id,
-  dimension: 'N',
-  text: '我容易情绪波动',
-  facet: 'volatility',
-});
-const FAKE_NEURO_3 = (id: number): PersonalityCard => ({
-  id,
-  dimension: 'N',
-  text: '我容易感到压力',
-  facet: 'stress',
-});
-const FAKE_NEURO_4 = (id: number): PersonalityCard => ({
-  id,
-  dimension: 'N',
-  text: '我对批评比较敏感',
-  facet: 'sensitivity',
-});
-const FAKE_DUMMY = (id: number): DummyCard => ({
-  id,
-  text: '颜色会影响食欲，蓝色会抑制饥饿感',
-  isDummy: true,
-});
-
-const HAND_BASE: GameCard[] = [FAKE_NEURO(1), FAKE_NEURO_2(2), FAKE_NEURO_3(3), FAKE_DUMMY(4)];
-
-type Frame = {
-  caption: string;
-  cta?: string;        // text on the "下一帧" button
-  hand: GameCard[];    // shown in hand row
-  drawnCard?: GameCard | null;
-  highlighted?: number[]; // card ids that pulse
-  declaredCount?: number; // shows "归档: 神经质 N张"
-  showSelfPongBtn?: boolean;
-  showCommitBtn?: boolean;
-  bigBanner?: string;
-};
-
-const FRAMES: Frame[] = [
-  {
-    caption:
-      '开局的你 — 手里 3 张神经质牌 + 1 张档案注记（中性常识牌，无人格归属）。假设你的「神经质」目标分数是 4 张，所以你还差 1 张。',
-    hand: HAND_BASE,
-    cta: '抽一张牌',
-  },
-  {
-    caption:
-      '从牌堆抽到 1 张牌 — 翻开是「神经质」！加上手里 3 张神经质，你现在正好凑齐 4 张目标。这就是「自摸触发」。',
-    hand: HAND_BASE,
-    drawnCard: FAKE_NEURO_4(5),
-    cta: '点开自摸碰按钮',
-  },
-  {
-    caption:
-      '在主操作区点击「自摸碰」按钮 → 进入选牌模式。系统会让你选择维度（5 个未归档维度都可以选 → 不剧透）。这里你选「神经质」。',
-    hand: HAND_BASE,
-    drawnCard: FAKE_NEURO_4(5),
-    showSelfPongBtn: true,
-    cta: '选 4 张神经质牌',
-  },
-  {
-    caption:
-      '在手牌 + 刚抽到的牌中选恰好 4 张同维度牌（神经质 ×4）。张数必须精准等于目标 — 多 1 张少 1 张都算失败。',
-    hand: HAND_BASE,
-    drawnCard: FAKE_NEURO_4(5),
-    highlighted: [1, 2, 3, 5],
-    showCommitBtn: true,
-    cta: '提交归档',
-  },
-  {
-    caption:
-      '✅ 神经质归档成功！4 张牌从手中移出，进入「公开归档区」给所有对手看见。你现在剩 1 张档案注记。还差 4 个维度。',
-    hand: [FAKE_DUMMY(4)],
-    declaredCount: 4,
-    cta: '出 1 张牌结束回合',
-  },
-  {
-    caption:
-      '归档成功后必须立刻出 1 张牌结束回合（不允许连碰）。这里把档案注记丢到弃牌堆 → 回合结束 → 下一个玩家。重复 4 次同样的流程归档其他维度，全部 5 个完成即胜利。',
-    hand: [],
-    declaredCount: 4,
-    bigBanner: '回合结束 · 下一玩家',
-  },
-];
 
 const STEPS: Step[] = [
   {
@@ -116,263 +21,472 @@ const STEPS: Step[] = [
   },
   {
     title: '牌桌',
-    body: '4 人对局（你 + 3 个 AI 对手）。牌堆由两类牌组成：带颜色标记的「人格描述牌」（属于某一维度），以及无维度归属的「档案注记 / 心理学线索牌」（中立，可弃可观察对手风格）。',
-    hint: '初始手牌张数 = 你 5 个维度目标张数之和 − 1。少的那张要靠「碰」或「食胡」补齐。',
+    body: '4 人对局（单机 = 你 + 3 个 AI，联机 = 4 个真实玩家）。牌堆由两类牌组成：带颜色标记的「人格描述牌」（属于某一维度），以及无维度归属的「档案注记 / 知识牌」（中立，可弃可观察对手风格）。',
+    hint: '初始手牌张数 = 5 个维度目标张数之和 − 1。少的那张要靠「碰」或「食胡」补齐。',
   },
   {
     title: '抽牌',
-    body: '轮到你时，先点击牌堆抽 1 张。如果你已开启「查看 2 张牌」的特权，可以一次性把其中两张未知牌的真实人格揭开，便于打牌。',
+    body: '轮到你时，先点击牌堆抽 1 张。如果你愿意，可以一次性开启「查看 2 张牌」的特权 —— 每回合最多 1 次，把任意 2 张未知的手牌真实人格揭开。用完即重置到下次回合。',
   },
   {
     title: '出牌',
-    body: '抽完后选 1 张你不需要的丢到中间的弃牌堆。被弃出的牌进入「心理判读窗口」，所有非你之外的玩家都有几秒钟时间决定是否「碰」或「食胡」。',
+    body: '抽完后选 1 张你不需要的丢到中间的弃牌堆。被弃出的牌进入「心理判读窗口」，其他 3 名玩家有几秒钟决定是否要「碰」（同维度归档）或「食胡」（直接胜利）。',
   },
   {
     title: '碰（公开归档）',
-    body: '当一张人格牌满足你某个维度的需要时，可以宣布「碰」。规则：\n• 自摸碰（你自己回合内，每回合最多 1 次）→ 从你的「手牌 + 刚抽到的牌」里挑选恰好「该维度目标张数」张同维度牌组合归档；\n• 碰他人弃牌（claim 窗口内先点先得）→ 从手牌中挑选恰好「该维度目标张数 − 1」张同维度牌，加上那张弃牌正好凑齐；\n选错维度、混入其他人格牌、张数不对 → 视为「碰失败」，吃罚停一整轮。',
-    hint: '碰成功后该维度立刻公开归档，所有人都看得见，你需要立刻出一张牌。自摸碰每回合只能用 1 次，下回合开始抽牌时重置。',
+    body: '把同维度的牌凑齐目标张数即可归档。两种触发方式：\n• 自摸碰（你自己回合内，每回合最多 1 次）→ 从你的「手牌 + 刚抽到的牌」里挑选恰好「该维度目标张数」张同维度牌；\n• 截胡碰（claim 窗口内先点先得）→ 从手牌挑选「该维度目标张数 − 1」张同维度牌，加上那张弃牌正好凑齐；\n选错维度、混入其他人格牌、张数不对 → 视为「碰失败」，吃罚停一整轮。',
+    hint: '系统不会告诉你「这个维度你够了」，5 个未归档维度全部让你选，需要自己判断。',
   },
   {
     title: '食胡（宣布胜利）',
-    body: '当你的牌（已归档 + 手中 + 这张待判定牌）能正好完成全部 5 个维度时，按下「食胡」。\n触发时机：\n• 你的回合中（自摸食胡）；\n• 任意人弃牌进入判读窗口时（截胡）。\n判定不成立 → 食胡失败。',
+    body: '当你的牌（已归档 + 手中 + 这张待判定牌）正好完成全部 5 个维度时，按下「食胡」。\n触发时机：\n• 你的回合中（自摸食胡）；\n• 任意人弃牌进入判读窗口时（截胡食胡）。\n判定不成立 → 食胡失败，整副手牌公开 + 罚停一整轮。',
   },
   {
     title: '罚停一整轮（失败的惩罚）',
-    body: '「碰失败」「自摸碰失败」「食胡失败」都会让你被罚停整整一圈：\n• 失败时押的那几张牌（碰）或整副手牌（食胡）立刻公开给所有玩家；\n• 你下一个本应该出牌的回合会被完整跳过（不抽不出）；\n• 从失败那一刻起，直到你自己再次完成一次正常的「抽 + 出」为止，期间所有其他玩家的碰/食胡判定窗口你都不能参与。\n等于：错过一整圈的所有截胡机会 + 跳一次自己回合。所有玩家都会在你头像下看到「⛔ 罚停一轮」标识。',
+    body: '「碰失败 / 自摸碰失败 / 食胡失败」都罚停一整轮：\n• 失败时押的那几张牌（碰）或整副手牌（食胡）立刻公开；\n• 下一个本应抽出的回合被完整跳过（不抽不出）；\n• 期间所有其他玩家弃牌的判读窗口你都不能参与；\n• 自摸碰失败更重 —— 因为你已经看过刚抽的牌再做错，期间错过的 claim 窗口约 6 个 + 跳 1 次自己回合，要再下下个回合抽出才解锁。\n所有玩家都会在你头像下看到「⛔ 罚停一轮」标识。',
+    hint: '罚停期间也不能宣告食胡 —— 别想着低成本试错。',
   },
   {
-    title: '胜负',
+    title: '查看 2 张牌（每回合 1 次）',
+    body: '手牌人格默认不显示维度，必须靠记忆和推理。但你可以在自己回合开始抽完后，启用「🔍 查看 2 张牌」一次性把 2 张手牌的真实维度揭开。本回合内有效，下回合自动重置。\n用得好的玩家会优先看自己最不确定的牌，避免归档时混入错误。',
+  },
+  {
+    title: '知识牌（档案注记）',
+    body: '牌堆里有一类无人格归属的「档案注记 / 知识牌」 —— 内容是心理学常识。它们不能用于归档，但也不会"穿帮"成错误维度。\n用途：\n• 抽到就丢，腾出手牌空间；\n• 也是观察对手心理风格的趣味设计（看对手怎么挑这些中性牌可以暴露偏好）。',
+  },
+  {
+    title: '联机 · 退出与轮转',
+    body: '联机房 4 人，任何人点「退出对局」即从该桌退出 —— 不接管，剩下的玩家继续打到分胜负。\n• 退出者的座位永久跳过（看到「🚪 已退出对局」徽章）；\n• 仅剩 1 人即自动宣告该玩家胜利；\n• 你的回合超过 30 秒未操作会弹「请注意：现在是你的回合」提醒，每 30 秒重复一次直到你出牌。',
+    hint: '同学号同时进入两个活动房间会被拒绝 —— 防止两个客户端共享同一座位。',
+  },
+  {
+    title: '胜负与结算',
     body: '第一个完成全部 5 维度归档的玩家获胜。若牌堆抽完仍无人胜出，则按「已归档维度数 × 权重 − 剩余手牌惩罚」结算名次。',
   },
 ];
 
-function PlaybackPanel({ onClose }: { onClose: () => void }) {
-  const [frameIdx, setFrameIdx] = useState(0);
-  const frame = FRAMES[frameIdx];
-  const neuroMeta = DIMENSION_META.N;
-  const isLast = frameIdx === FRAMES.length - 1;
+// ─── Interactive Sandbox ─────────────────────────────────────────────────
+// 真正可点击的教学场景。固定 12 张牌的剧本，玩家按顺序：
+//   1. 点牌堆抽牌
+//   2. 点自摸碰 → 选牌
+//   3. 故意选错 → 看失败演示 → 重置
+//   4. 选对 → 归档成功
+//   5. 出 1 张牌结束回合
+
+const PC = (id: number, dim: Dimension, text: string, facet = 'demo'): PersonalityCard => ({
+  id, dimension: dim, text, facet,
+});
+const DC = (id: number, text: string): DummyCard => ({ id, text, isDummy: true });
+
+const SANDBOX_HAND: GameCard[] = [
+  PC(101, 'N', '我经常感到焦虑或忧虑'),
+  PC(102, 'N', '我容易情绪波动'),
+  PC(103, 'N', '我容易感到压力'),
+  DC(104, '颜色会影响食欲，蓝色会抑制饥饿感'),
+];
+const SANDBOX_DRAWN: PersonalityCard = PC(105, 'N', '我对批评比较敏感');
+
+type Scene =
+  | 'start'           // 等抽牌
+  | 'after-draw'      // 抽完，等点自摸碰
+  | 'pong-picking'    // 选牌中
+  | 'pong-failed'     // 演示失败，等点「重置」
+  | 'pong-success'    // 归档成功，等出牌
+  | 'discard-picking' // 选要弃的牌
+  | 'done';           // 完成本回合
+
+interface SandboxState {
+  scene: Scene;
+  hand: GameCard[];
+  drawnCard: GameCard | null;
+  selectedIds: number[];
+  revealedAll: boolean;          // 自摸碰激活后揭开所有牌的维度（便于教学，真实游戏不会）
+  declared: boolean;             // 神经质是否已归档
+  feedback: { tone: 'success' | 'fail' | 'info'; text: string } | null;
+  failCount: number;             // 失败次数（用于切换 caption）
+}
+
+const initialState: SandboxState = {
+  scene: 'start',
+  hand: SANDBOX_HAND,
+  drawnCard: null,
+  selectedIds: [],
+  revealedAll: false,
+  declared: false,
+  feedback: null,
+  failCount: 0,
+};
+
+type Action =
+  | { type: 'draw' }
+  | { type: 'open-pong' }
+  | { type: 'toggle-select'; id: number }
+  | { type: 'commit-pong' }
+  | { type: 'cancel-pong' }
+  | { type: 'continue-after-fail' }
+  | { type: 'pick-discard'; id: number }
+  | { type: 'reset' };
+
+function reducer(state: SandboxState, action: Action): SandboxState {
+  switch (action.type) {
+    case 'draw':
+      if (state.scene !== 'start') return state;
+      return {
+        ...state,
+        scene: 'after-draw',
+        drawnCard: SANDBOX_DRAWN,
+        feedback: { tone: 'success', text: '✓ 抽到一张「神经质」牌！现在手牌 + 刚抽到 = 4 张神经质 + 1 张档案注记。' },
+      };
+    case 'open-pong':
+      if (state.scene !== 'after-draw') return state;
+      return {
+        ...state,
+        scene: 'pong-picking',
+        revealedAll: true, // 教学模式揭开
+        selectedIds: [],
+        feedback: { tone: 'info', text: '🎯 选恰好 4 张「神经质」牌（含刚抽到的）。注意：真实游戏中维度默认不显示，这里为了教学揭开了。' },
+      };
+    case 'toggle-select':
+      if (state.scene !== 'pong-picking') return state;
+      return {
+        ...state,
+        selectedIds: state.selectedIds.includes(action.id)
+          ? state.selectedIds.filter((i) => i !== action.id)
+          : [...state.selectedIds, action.id],
+      };
+    case 'commit-pong': {
+      if (state.scene !== 'pong-picking') return state;
+      const pool: GameCard[] = [...state.hand, ...(state.drawnCard ? [state.drawnCard] : [])];
+      const selected = pool.filter((c) => state.selectedIds.includes(c.id));
+      const allNeuro = selected.every((c) => !c.isDummy && 'dimension' in c && c.dimension === 'N');
+      const correctCount = selected.length === 4;
+      if (allNeuro && correctCount) {
+        // 成功：4 张神经质从手牌移除，drawnCard 也消耗
+        const remaining = state.hand.filter((c) => !state.selectedIds.includes(c.id));
+        const drawnUsed = state.drawnCard && state.selectedIds.includes(state.drawnCard.id);
+        return {
+          ...state,
+          scene: 'pong-success',
+          hand: remaining,
+          drawnCard: drawnUsed ? null : state.drawnCard,
+          selectedIds: [],
+          declared: true,
+          feedback: { tone: 'success', text: '✅ 神经质归档成功！4 张进入公开归档区。归档后必须立即出 1 张牌结束回合。' },
+        };
+      }
+      // 失败
+      const reason = !correctCount
+        ? `选了 ${selected.length} 张，必须正好 4 张`
+        : '选中的牌里有非神经质（档案注记不算神经质）';
+      return {
+        ...state,
+        scene: 'pong-failed',
+        feedback: {
+          tone: 'fail',
+          text: `❌ 自摸碰失败：${reason}。在真实游戏里你会被罚停一整轮（错过 6 个 claim 窗口 + 跳 1 次自己回合）。教学里我们重置一下让你重来。`,
+        },
+        failCount: state.failCount + 1,
+      };
+    }
+    case 'continue-after-fail':
+      if (state.scene !== 'pong-failed') return state;
+      return {
+        ...state,
+        scene: 'pong-picking',
+        selectedIds: [],
+        feedback: { tone: 'info', text: '试试这次只选神经质（绿色标记的 4 张）。' },
+      };
+    case 'cancel-pong':
+      if (state.scene !== 'pong-picking') return state;
+      return {
+        ...state,
+        scene: 'after-draw',
+        selectedIds: [],
+        revealedAll: false,
+        feedback: null,
+      };
+    case 'pick-discard': {
+      if (state.scene !== 'pong-success' && state.scene !== 'discard-picking') return state;
+      // 只允许丢手中的牌
+      if (!state.hand.find((c) => c.id === action.id)) return state;
+      return {
+        ...state,
+        scene: 'done',
+        hand: state.hand.filter((c) => c.id !== action.id),
+        feedback: {
+          tone: 'success',
+          text: '✓ 出牌完成 → 下一玩家。在真实游戏里这张档案注记会进入弃牌堆，其他玩家可以观察你弃的什么。',
+        },
+      };
+    }
+    case 'reset':
+      return initialState;
+    default:
+      return state;
+  }
+}
+
+function InteractiveSandbox({ onClose }: { onClose: () => void }) {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const N = DIMENSION_META.N;
+
+  const captionByScene: Record<Scene, string> = {
+    start: '这是你的开局：手牌 4 张。假设你的「神经质」目标 = 4 张，你已经有 3 张神经质 + 1 张档案注记，还差 1 张。点击下方「牌堆」抽 1 张。',
+    'after-draw': '抽到了一张神经质牌！正好凑齐 4 张目标。下一步点「自摸碰」试试 ↓',
+    'pong-picking':
+      state.failCount === 0
+        ? '在选牌模式里，从手牌 + 刚抽到的牌中精确选 4 张神经质。先故意选错 1 张（比如点档案注记那张）看会怎么样。'
+        : '选恰好 4 张神经质 → 点「自摸归档」。',
+    'pong-failed': '失败演示。点「继续」回到选牌模式，这次只选神经质。',
+    'pong-success': '归档完成，现在手里只剩 1 张档案注记。点击它出牌结束本回合。',
+    'discard-picking': '点击要弃的牌。',
+    done: '完成本回合演示。真实游戏里：归档 5 个维度全部完成 = 胜利。教学结束 → 去测评开始第一局。',
+  };
+
+  const renderHand = () => {
+    const all: GameCard[] = [...state.hand, ...(state.drawnCard ? [state.drawnCard] : [])];
+    if (all.length === 0) {
+      return <div className="py-4 text-center text-xs text-[var(--psy-muted)]">（手牌已清空）</div>;
+    }
+    return (
+      <AnimatePresence>
+        <div className="flex flex-wrap justify-center gap-2">
+          {all.map((c) => {
+            const isDrawn = state.drawnCard?.id === c.id;
+            const isSelected = state.selectedIds.includes(c.id);
+            const isDummy = c.isDummy === true;
+            const dimension = !isDummy ? (c as PersonalityCard).dimension : null;
+            const canClickToSelect = state.scene === 'pong-picking';
+            const canClickToDiscard = state.scene === 'pong-success' && !isDrawn;
+            return (
+              <motion.div
+                key={c.id}
+                layout
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1, y: isSelected ? -8 : 0 }}
+                exit={{ opacity: 0, scale: 0.6 }}
+                transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+                className={`relative ${
+                  isSelected ? 'ring-2 ring-emerald-400 rounded-[1.1rem]' : ''
+                } ${(canClickToSelect || canClickToDiscard) ? 'cursor-pointer' : ''}`}
+                onClick={() => {
+                  if (canClickToSelect) dispatch({ type: 'toggle-select', id: c.id });
+                  else if (canClickToDiscard) dispatch({ type: 'pick-discard', id: c.id });
+                }}
+              >
+                <Card
+                  card={c}
+                  compact
+                  revealedDimension={state.revealedAll && dimension ? dimension : null}
+                  revealedAsKnowledge={state.revealedAll && isDummy}
+                  selected={isSelected}
+                />
+                {isDrawn && (
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-[var(--psy-accent)] px-2 py-0.5 text-[8px] font-bold text-black">
+                    刚抽到
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </AnimatePresence>
+    );
+  };
 
   return (
     <motion.div
-      key="playback"
+      key="sandbox"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.3 }}
-      className="psy-panel psy-etched rounded-[1.8rem] p-5 sm:p-8"
+      className="psy-panel psy-etched rounded-[1.8rem] p-5 sm:p-7"
     >
       <div className="mb-4 flex items-center justify-between">
         <span className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-muted)]">
-          演示 · 帧 {frameIdx + 1} / {FRAMES.length}
+          交互式沙盒
         </span>
-        <button
-          onClick={onClose}
-          className="text-xs text-[var(--psy-muted)] underline underline-offset-4 hover:text-[var(--psy-ink-soft)]"
-        >
-          退出演示
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => dispatch({ type: 'reset' })}
+            className="text-xs text-[var(--psy-muted)] underline underline-offset-4 hover:text-[var(--psy-ink-soft)]"
+          >
+            重置
+          </button>
+          <button
+            onClick={onClose}
+            className="text-xs text-[var(--psy-muted)] underline underline-offset-4 hover:text-[var(--psy-ink-soft)]"
+          >
+            退出沙盒
+          </button>
+        </div>
       </div>
 
-      {/* 牌桌区 */}
-      <div className="relative space-y-5 rounded-[1.4rem] border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] p-4 sm:p-6">
-        {/* 顶部 banner */}
-        {frame.bigBanner && (
-          <div className="absolute inset-x-4 top-4 z-20 flex justify-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="rounded-xl border border-[var(--psy-accent)] bg-[rgba(200,155,93,0.18)] px-4 py-2 text-sm font-bold text-[var(--psy-accent)]"
-            >
-              {frame.bigBanner}
-            </motion.div>
-          </div>
-        )}
-
-        {/* 公开归档区 */}
+      {/* 牌桌 */}
+      <div className="space-y-4 rounded-[1.4rem] border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] p-4">
+        {/* 归档区 */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="text-[var(--psy-muted)]">公开归档：</span>
-          {frame.declaredCount ? (
+          {state.declared ? (
             <span
               className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
               style={{
-                color: neuroMeta.colorHex,
-                backgroundColor: neuroMeta.colorHex + '20',
-                border: `1px solid ${neuroMeta.colorHex}55`,
+                color: N.colorHex,
+                backgroundColor: N.colorHex + '20',
+                border: `1px solid ${N.colorHex}55`,
               }}
             >
-              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: neuroMeta.colorHex }} />
-              神经质 {frame.declaredCount} 张
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: N.colorHex }} />
+              神经质 4 张
             </span>
           ) : (
             <span className="text-[var(--psy-muted)]">（暂无）</span>
           )}
         </div>
 
-        {/* 牌堆 + 刚抽到的牌 */}
-        <div className="flex items-center justify-center gap-6 sm:gap-10">
-          <div className="flex flex-col items-center gap-1.5">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">牌堆</span>
-            <Card card={FAKE_NEURO(999)} faceUp={false} compact />
-          </div>
-          <AnimatePresence>
-            {frame.drawnCard && (
-              <motion.div
-                key={`drawn-${frameIdx}`}
-                initial={{ opacity: 0, x: -28, scale: 0.85 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.35 }}
-                className="flex flex-col items-center gap-1.5"
-              >
-                <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-accent)]">刚抽到</span>
-                <Card card={frame.drawnCard} compact revealedDimension={'N'} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {/* 牌堆 */}
+        <div className="flex items-center justify-center gap-6">
+          <button
+            disabled={state.scene !== 'start'}
+            onClick={() => dispatch({ type: 'draw' })}
+            className={`flex flex-col items-center gap-1.5 transition ${
+              state.scene === 'start'
+                ? 'cursor-pointer animate-pulse'
+                : 'cursor-not-allowed opacity-50'
+            }`}
+          >
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">
+              {state.scene === 'start' ? '点击抽牌 ↓' : '牌堆'}
+            </span>
+            <div className={state.scene === 'start' ? 'ring-2 ring-[var(--psy-accent)] rounded-[1.1rem]' : ''}>
+              <Card card={PC(999, 'N', '')} faceUp={false} compact />
+            </div>
+          </button>
         </div>
 
-        {/* 主操作区 — 自摸碰按钮 */}
-        <div className="flex items-center justify-center gap-3">
-          <button
-            disabled
-            className={`psy-btn psy-btn-danger px-4 py-1.5 text-xs font-bold opacity-50`}
-          >
+        {/* 操作按钮 */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <button disabled className="psy-btn psy-btn-danger px-4 py-1.5 text-xs font-bold opacity-40">
             食胡
           </button>
           <button
-            disabled
+            disabled={state.scene !== 'after-draw'}
+            onClick={() => dispatch({ type: 'open-pong' })}
             className={`psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold transition ${
-              frame.showSelfPongBtn ? 'animate-pulse opacity-100 ring-2 ring-[var(--psy-accent)]' : 'opacity-30'
+              state.scene === 'after-draw'
+                ? 'animate-pulse ring-2 ring-[var(--psy-accent)]'
+                : 'opacity-40 cursor-not-allowed'
             }`}
           >
             自摸碰
           </button>
         </div>
 
-        {/* 选牌模式提示条 */}
-        {frame.showCommitBtn && (
+        {/* 选牌模式的 commit/cancel */}
+        {state.scene === 'pong-picking' && (
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-2 rounded-xl border border-[rgba(200,155,93,0.28)] bg-[rgba(200,155,93,0.08)] px-3 py-2 text-xs text-[var(--psy-accent)]"
           >
             <span>
-              🎯 自摸碰 · <span style={{ color: neuroMeta.colorHex }}>神经质</span> · 请精确选择 4 张（已选 4）
+              🎯 自摸碰 · <span style={{ color: N.colorHex }}>神经质</span> · 请精确选择 4 张（已选 {state.selectedIds.length}）
             </span>
-            <button
-              disabled
-              className="psy-btn psy-btn-accent animate-pulse px-3 py-1 text-[10px] font-bold ring-2 ring-[var(--psy-accent)]"
-            >
-              自摸归档
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => dispatch({ type: 'cancel-pong' })}
+                className="psy-btn psy-btn-ghost px-3 py-1 text-[10px]"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => dispatch({ type: 'commit-pong' })}
+                className="psy-btn psy-btn-accent px-3 py-1 text-[10px] font-bold"
+              >
+                自摸归档
+              </button>
+            </div>
           </motion.div>
         )}
 
-        {/* 手牌行 */}
+        {/* 失败后的继续按钮 */}
+        {state.scene === 'pong-failed' && (
+          <div className="flex justify-center">
+            <button
+              onClick={() => dispatch({ type: 'continue-after-fail' })}
+              className="psy-btn psy-btn-accent animate-pulse px-4 py-1.5 text-xs font-bold"
+            >
+              继续 →
+            </button>
+          </div>
+        )}
+
+        {/* 手牌 */}
         <div>
           <div className="mb-1.5 flex items-baseline justify-between">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">你的手牌</span>
-            <span className="text-[10px] text-[var(--psy-muted)]">{frame.hand.length} 张</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">
+              {state.scene === 'pong-success' ? '出 1 张牌结束回合 ↓' : '你的手牌'}
+            </span>
+            <span className="text-[10px] text-[var(--psy-muted)]">
+              {state.hand.length + (state.drawnCard ? 1 : 0)} 张
+            </span>
           </div>
-          <AnimatePresence mode="popLayout">
-            <div className="flex flex-wrap justify-center gap-2">
-              {frame.hand.length === 0 ? (
-                <div className="py-3 text-xs text-[var(--psy-muted)]">（手牌已清空）</div>
-              ) : (
-                frame.hand.map((c) => {
-                  const highlighted = frame.highlighted?.includes(c.id);
-                  return (
-                    <motion.div
-                      key={c.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.85 }}
-                      animate={{
-                        opacity: 1,
-                        scale: 1,
-                        y: highlighted ? -8 : 0,
-                      }}
-                      exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.3 } }}
-                      transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-                      className={highlighted ? 'ring-2 ring-emerald-400 rounded-[1.1rem]' : ''}
-                    >
-                      <Card
-                        card={c}
-                        compact
-                        revealedDimension={'dimension' in c ? c.dimension : null}
-                        revealedAsKnowledge={c.isDummy === true}
-                        selected={highlighted}
-                      />
-                    </motion.div>
-                  );
-                })
-              )}
-            </div>
-          </AnimatePresence>
+          {renderHand()}
         </div>
+
+        {state.scene === 'done' && (
+          <div className="flex justify-center">
+            <button
+              onClick={() => dispatch({ type: 'reset' })}
+              className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
+            >
+              再来一遍
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* 旁白 */}
+      {/* 旁注 */}
       <motion.p
-        key={`cap-${frameIdx}`}
+        key={state.scene + '-' + state.failCount}
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
         className="mt-4 rounded-xl border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.06)] px-4 py-3 text-sm leading-7 text-[var(--psy-ink-soft)]"
       >
-        {frame.caption}
+        {captionByScene[state.scene]}
       </motion.p>
 
-      {/* 控制 */}
-      <div className="mt-5 flex items-center justify-between">
-        <button
-          onClick={() => setFrameIdx((i) => Math.max(0, i - 1))}
-          disabled={frameIdx === 0}
-          className="psy-btn psy-btn-ghost px-4 py-2 text-sm disabled:opacity-40"
-        >
-          上一帧
-        </button>
-        <div className="flex gap-1.5">
-          {FRAMES.map((_, i) => (
-            <span
-              key={i}
-              className="h-1.5 w-6 rounded-full transition"
-              style={{
-                backgroundColor:
-                  i === frameIdx
-                    ? 'var(--psy-accent)'
-                    : i < frameIdx
-                    ? 'rgba(200,155,93,0.45)'
-                    : 'rgba(255,255,255,0.08)',
-              }}
-            />
-          ))}
-        </div>
-        {!isLast ? (
-          <button
-            onClick={() => setFrameIdx((i) => Math.min(FRAMES.length - 1, i + 1))}
-            className="psy-btn psy-btn-accent px-5 py-2 text-sm font-semibold"
+      {/* 反馈 banner */}
+      <AnimatePresence>
+        {state.feedback && (
+          <motion.div
+            key={state.feedback.text}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className={`mt-3 rounded-xl border px-4 py-2 text-xs leading-6 ${
+              state.feedback.tone === 'success'
+                ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300'
+                : state.feedback.tone === 'fail'
+                ? 'border-red-400/40 bg-red-500/10 text-red-300'
+                : 'border-amber-400/40 bg-amber-500/10 text-amber-300'
+            }`}
           >
-            {frame.cta ?? '下一帧'}
-          </button>
-        ) : (
-          <button
-            onClick={onClose}
-            className="psy-btn psy-btn-accent px-5 py-2 text-sm font-semibold"
-          >
-            完成 ✓
-          </button>
+            {state.feedback.text}
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </motion.div>
   );
 }
 
+// ─── Page ────────────────────────────────────────────────────────────────
 export default function TutorialPage() {
   const router = useRouter();
-  const [stepIdx, setStepIdx] = useState(0);
-  const [demoMode, setDemoMode] = useState(false);
-  const [playbackMode, setPlaybackMode] = useState(false);
-  const step = STEPS[stepIdx];
+  const [mode, setMode] = useState<'list' | 'sandbox'>('list');
 
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-10">
@@ -394,140 +508,69 @@ export default function TutorialPage() {
           </button>
         </div>
 
-        {!demoMode && !playbackMode && (
+        {mode === 'list' && (
           <>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {STEPS.map((s, i) => (
-                <div
-                  key={s.title}
-                  className="psy-panel psy-etched rounded-[1.4rem] p-5"
-                >
-                  <div className="mb-2 flex items-center gap-2">
-                    <span className="psy-serif text-xs text-[var(--psy-accent)]">
-                      第 {i + 1} 步
-                    </span>
-                  </div>
-                  <h3 className="psy-serif text-lg text-[var(--psy-ink)]">{s.title}</h3>
-                  <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[var(--psy-ink-soft)]">
-                    {s.body}
-                  </p>
-                  {s.hint && (
-                    <p className="mt-3 rounded-lg border border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.06)] px-3 py-2 text-xs text-[var(--psy-accent)]">
-                      💡 {s.hint}
+            {/* 主 CTA */}
+            <div className="psy-panel psy-etched rounded-[1.6rem] p-6 text-center sm:p-7">
+              <h2 className="psy-serif text-2xl text-[var(--psy-ink)] sm:text-3xl">
+                先在沙盒里试一回合
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-[var(--psy-ink-soft)]">
+                真的可以点击：抽牌 → 选牌 → 故意选错 → 看失败演示 → 重选 → 归档 → 出牌
+              </p>
+              <button
+                onClick={() => setMode('sandbox')}
+                className="psy-btn psy-btn-accent psy-serif mt-4 px-7 py-3 text-base font-semibold"
+              >
+                ▶ 进入交互沙盒
+              </button>
+            </div>
+
+            {/* 概念卡片 */}
+            <div>
+              <p className="psy-eyebrow mb-3 text-[10px]">规则要点</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {STEPS.map((s, i) => (
+                  <div key={s.title} className="psy-panel psy-etched rounded-[1.4rem] p-5">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="psy-serif text-xs text-[var(--psy-accent)]">
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <h3 className="psy-serif text-lg text-[var(--psy-ink)]">{s.title}</h3>
+                    <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[var(--psy-ink-soft)]">
+                      {s.body}
                     </p>
-                  )}
-                </div>
-              ))}
+                    {s.hint && (
+                      <p className="mt-3 rounded-lg border border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.06)] px-3 py-2 text-xs text-[var(--psy-accent)]">
+                        💡 {s.hint}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <button
-                onClick={() => setPlaybackMode(true)}
-                className="psy-btn psy-btn-accent psy-serif px-6 py-3 text-base font-semibold"
-              >
-                ▶ 看一回合演示
-              </button>
-              <button
-                onClick={() => {
-                  setStepIdx(0);
-                  setDemoMode(true);
-                }}
-                className="psy-btn psy-btn-ghost px-6 py-3 text-sm"
-              >
-                文字逐步引导
-              </button>
-              <button
                 onClick={() => router.push('/assessment')}
-                className="psy-btn psy-btn-ghost px-6 py-3 text-sm"
+                className="psy-btn psy-btn-accent px-6 py-3 text-sm font-medium"
               >
                 直接开始测评
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="psy-btn psy-btn-ghost px-6 py-3 text-sm"
+              >
+                返回首页
               </button>
             </div>
           </>
         )}
 
-        {/* Playback panel — 剧本式 6 帧演示 */}
         <AnimatePresence mode="wait">
-          {playbackMode && <PlaybackPanel onClose={() => setPlaybackMode(false)} />}
+          {mode === 'sandbox' && <InteractiveSandbox onClose={() => setMode('list')} />}
         </AnimatePresence>
-
-        <AnimatePresence mode="wait">
-          {demoMode && (
-            <motion.div
-              key={stepIdx}
-              initial={{ opacity: 0, y: 16, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.98 }}
-              transition={{ duration: 0.25 }}
-              className="psy-panel psy-etched rounded-[1.8rem] p-7 sm:p-9"
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <span className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-muted)]">
-                  Bubble {stepIdx + 1} / {STEPS.length}
-                </span>
-                <button
-                  onClick={() => setDemoMode(false)}
-                  className="text-xs text-[var(--psy-muted)] underline underline-offset-4 hover:text-[var(--psy-ink-soft)]"
-                >
-                  退出引导
-                </button>
-              </div>
-              <h2 className="psy-serif text-2xl text-[var(--psy-ink)] sm:text-3xl">
-                {step.title}
-              </h2>
-              <p className="mt-4 whitespace-pre-line text-base leading-8 text-[var(--psy-ink-soft)]">
-                {step.body}
-              </p>
-              {step.hint && (
-                <p className="mt-4 rounded-xl border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.08)] px-4 py-3 text-sm text-[var(--psy-accent)]">
-                  💡 {step.hint}
-                </p>
-              )}
-
-              <div className="mt-7 flex items-center justify-between">
-                <button
-                  onClick={() => setStepIdx((i) => Math.max(0, i - 1))}
-                  disabled={stepIdx === 0}
-                  className="psy-btn psy-btn-ghost px-4 py-2 text-sm disabled:opacity-40"
-                >
-                  上一步
-                </button>
-                <div className="flex gap-1.5">
-                  {STEPS.map((_, i) => (
-                    <span
-                      key={i}
-                      className="h-1.5 w-6 rounded-full transition"
-                      style={{
-                        backgroundColor:
-                          i === stepIdx
-                            ? 'var(--psy-accent)'
-                            : i < stepIdx
-                            ? 'rgba(200,155,93,0.45)'
-                            : 'rgba(255,255,255,0.08)',
-                      }}
-                    />
-                  ))}
-                </div>
-                {stepIdx < STEPS.length - 1 ? (
-                  <button
-                    onClick={() => setStepIdx((i) => Math.min(STEPS.length - 1, i + 1))}
-                    className="psy-btn psy-btn-accent px-5 py-2 text-sm font-semibold"
-                  >
-                    下一步
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => router.push('/assessment')}
-                    className="psy-btn psy-btn-accent px-5 py-2 text-sm font-semibold"
-                  >
-                    去测评
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
       </div>
     </div>
   );
