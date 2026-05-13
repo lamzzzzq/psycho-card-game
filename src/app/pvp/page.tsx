@@ -7,7 +7,7 @@ import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
 import { usePvpStore } from '@/stores/usePvpStore';
-import { upsertPlayer, createRoom, joinRoom, leaveRoom, leaveAllRooms } from '@/lib/room-api';
+import { upsertPlayer, createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerActiveRoom } from '@/lib/room-api';
 import { supabase } from '@/lib/supabase';
 import { PlayerInfo, DeckId } from '@/types/pvp';
 import { BigFiveScores, DIMENSIONS } from '@/types';
@@ -104,12 +104,30 @@ export default function PvpLobbyPage() {
     return info;
   }
 
+  // Detect student-ID collision: if the ID is already seated in some
+  // other active room (waiting/playing), refuse the operation. The
+  // local persisted `player` object lets us distinguish "this same
+  // device is resuming" (allowed — drop their old seat) from "someone
+  // else is using the same ID elsewhere" (refuse).
+  async function collisionCheck(id: string): Promise<string | null> {
+    const active = await getPlayerActiveRoom(id);
+    if (!active) return null;
+    // If the locally-persisted player matches and the active room is
+    // the one we already know about → it's the same device, allowed.
+    const localId = player?.id;
+    if (localId === id && activeRoom?.code === active.code) return null;
+    return `学号「${id}」已在房间 ${active.code} 中（${active.status === 'playing' ? '游戏中' : '等待中'}）。请换一个学号或先让对方退出。`;
+  }
+
   async function handleCreate() {
     if (!studentId.trim()) { setError('请输入学号'); return; }
     if (studentId.trim() !== studentIdConfirm.trim()) { setError('两次输入的学号不一致'); return; }
     setLoading(true);
     setError('');
     try {
+      const sid = studentId.trim();
+      const conflict = await collisionCheck(sid);
+      if (conflict) { setError(conflict); setLoading(false); return; }
       const info = await ensurePlayer();
       await leaveAllRooms(info.id);
       usePvpStore.getState().reset();
@@ -129,6 +147,9 @@ export default function PvpLobbyPage() {
     setLoading(true);
     setError('');
     try {
+      const sid = studentId.trim();
+      const conflict = await collisionCheck(sid);
+      if (conflict) { setError(conflict); setLoading(false); return; }
       const info = await ensurePlayer();
       await leaveAllRooms(info.id);
       usePvpStore.getState().reset();
@@ -242,6 +263,8 @@ export default function PvpLobbyPage() {
                             min="1"
                             max="5"
                             step="0.1"
+                            inputMode="decimal"
+                            lang="en"
                             value={rawInputs[d]}
                             onChange={(e) => {
                               const raw = e.target.value;

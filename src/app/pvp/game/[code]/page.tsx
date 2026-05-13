@@ -30,6 +30,7 @@ import { DeclaredArea } from '@/components/game/DeclaredArea';
 import { Card } from '@/components/game/Card';
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
 import { ArrowOverlay } from '@/components/game/ArrowOverlay';
+import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
 
 // Convert SerializedPlayer → Player (for reusing single-player components)
 function toPlayer(sp: SerializedPlayer, overrideHand?: GameCard[]): Player {
@@ -78,6 +79,7 @@ export default function PvpGamePage() {
   const [flyingCards, setFlyingCards] = useState<FlyingAnim[]>([]);
   const flyIdRef = useRef(0);
   const [slowLoad, setSlowLoad] = useState(false);
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const drawPileRef = useRef<HTMLDivElement>(null);
   const discardPileRef = useRef<HTMLDivElement>(null);
   const handAreaRef = useRef<HTMLDivElement>(null);
@@ -413,6 +415,52 @@ export default function PvpGamePage() {
         <FlyingCard key={f.id} from={f.from} to={f.to} text={f.text} onComplete={() => removeFlyingCard(f.id)} />
       ))}
 
+      {/* Top bar: exit button */}
+      <div className="mb-1 flex shrink-0 items-center justify-between sm:mb-2">
+        <button
+          onClick={() => setExitConfirmOpen(true)}
+          className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] px-3 py-1 text-[10px] text-[var(--psy-muted)] transition hover:border-[rgba(220,80,80,0.4)] hover:text-[var(--psy-danger)] sm:text-[11px]"
+        >
+          ← 退出对局
+        </button>
+        <span className="psy-serif text-[10px] uppercase tracking-[0.32em] text-[var(--psy-muted)] sm:text-[11px]">
+          人格麻将 · 联机房 {code}
+        </span>
+      </div>
+
+      {/* Exit confirmation modal */}
+      <PsyOverlayPanel
+        open={exitConfirmOpen}
+        onClose={() => setExitConfirmOpen(false)}
+        title="确认退出本局？"
+        variant="centered"
+      >
+        <div className="space-y-5 px-1 py-2">
+          <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">
+            退出后本局进度将丢失，且无法恢复。
+            <br />
+            其他玩家会继续对局到分出胜负（你的座位暂由 AI 兜底，详见后续版本）。
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setExitConfirmOpen(false)}
+              className="psy-btn psy-btn-ghost px-5 py-2 text-sm"
+            >
+              取消
+            </button>
+            <button
+              onClick={() => {
+                setExitConfirmOpen(false);
+                handleAbandonRoom();
+              }}
+              className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
+            >
+              确认退出
+            </button>
+          </div>
+        </div>
+      </PsyOverlayPanel>
+
       {/* Result banner */}
       {resultBanner && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl text-sm font-bold shadow-2xl animate-bounce ${
@@ -463,6 +511,13 @@ export default function PvpGamePage() {
       {/* My player area */}
       {mePlayer && (
         <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
+          {/* Penalty banner — visible & loud */}
+          {meFrozen && (
+            <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-xs font-semibold text-[var(--psy-danger)] sm:text-sm">
+              <span>⛔</span>
+              <span>你被罚停一轮 — 下个本应出牌的回合会被自动跳过，期间无法参与碰/食胡</span>
+            </div>
+          )}
           {/* Big Five scores */}
           <div className="hidden items-center justify-center gap-1.5 flex-wrap sm:flex">
             {DIMENSIONS.map(d => {

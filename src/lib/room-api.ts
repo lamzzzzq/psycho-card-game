@@ -105,6 +105,29 @@ export async function leaveAllRooms(playerId: string) {
   await supabase.from('room_players').delete().eq('player_id', playerId);
 }
 
+// Find the player's currently-active room (if any). Used to detect
+// student-ID collisions: if a different device tries to create/join
+// with the same ID while a room is still active, we surface a clear
+// error instead of silently kicking the original session.
+export async function getPlayerActiveRoom(
+  playerId: string
+): Promise<{ code: string; status: string; roomId: string } | null> {
+  const { data, error } = await supabase
+    .from('room_players')
+    .select('room_id, rooms!inner(code, status)')
+    .eq('player_id', playerId)
+    .in('rooms.status', ['waiting', 'playing'])
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  // supabase's inner-join types it as an array; we limited to 1 row so
+  // take element 0. Defensive against either shape.
+  const row = data as unknown as { room_id: string; rooms: { code: string; status: string } | { code: string; status: string }[] };
+  const rooms = Array.isArray(row.rooms) ? row.rooms[0] : row.rooms;
+  if (!rooms) return null;
+  return { code: rooms.code, status: rooms.status, roomId: row.room_id };
+}
+
 // Kick a player (host only)
 export async function kickPlayer(roomId: string, playerId: string) {
   await supabase

@@ -11,26 +11,27 @@ interface GameLogProps {
 }
 
 function getActionLabel(action: GameAction) {
-  if ((action.type === 'draw' || action.type === 'discard') && action.card) {
+  // Draw never exposes card contents — that's private information until
+  // the holder chooses to discard / declare it. Only show "摸了一张牌".
+  if (action.type === 'draw') {
+    return { tone: 'neutral' as const, prefix: '摸了一张牌' };
+  }
+
+  if (action.type === 'discard' && action.card) {
     if (isDummyCard(action.card)) {
       return {
         tone: 'neutral' as const,
-        prefix: action.type === 'draw' ? '抽到了档案注记' : '弃掉了档案注记',
+        prefix: '弃掉了档案注记',
         detail: action.card.text,
       };
     }
-
     if (isPersonalityCard(action.card)) {
       return {
         tone: 'neutral' as const,
-        prefix: action.type === 'draw' ? '抽到了一张线索牌' : '弃掉了一张线索牌',
+        prefix: '弃掉了一张线索牌',
         detail: action.card.text,
       };
     }
-  }
-
-  if (action.type === 'draw') {
-    return { tone: 'neutral' as const, prefix: '抽了一张牌' };
   }
   if (action.type === 'discard') {
     return { tone: 'neutral' as const, prefix: '弃了一张牌' };

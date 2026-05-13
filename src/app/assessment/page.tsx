@@ -123,6 +123,8 @@ export default function AssessmentPage() {
                       min="1"
                       max="5"
                       step="0.1"
+                      inputMode="decimal"
+                      lang="en"
                       value={rawInputs[d]}
                       onChange={(e) => {
                         const raw = e.target.value;
