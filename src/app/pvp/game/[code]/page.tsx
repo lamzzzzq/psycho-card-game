@@ -139,7 +139,7 @@ export default function PvpGamePage() {
       if (data?.id) { try { await leaveRoom(data.id, player.id); } catch {} }
     }
     usePvpStore.getState().reset();
-    router.replace('/pvp');
+    router.replace('/');
   }
 
   // Clear card selection on phase change

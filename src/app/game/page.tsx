@@ -491,7 +491,7 @@ export default function GamePage() {
               onClick={() => {
                 setExitConfirmOpen(false);
                 resetGame();
-                router.push('/lobby');
+                router.push('/');
               }}
               className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
             >
