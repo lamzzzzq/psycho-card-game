@@ -16,9 +16,13 @@ interface CardProps {
   // Used both by cheat mode (Shift hold) and the per-turn "view 2 cards"
   // reveal — both feed through the same prop so badges never overlap.
   revealedDimension?: import('@/types').Dimension | null;
+  // When true on a dummy card, surface a top-right "知识牌" badge in
+  // the same slot as revealedDimension. Mutually exclusive — dimension
+  // cards take precedence.
+  revealedAsKnowledge?: boolean;
 }
 
-export function Card({ card, faceUp = true, selected = false, onClick, compact = false, tiny = false, revealedDimension = null }: CardProps) {
+export function Card({ card, faceUp = true, selected = false, onClick, compact = false, tiny = false, revealedDimension = null, revealedAsKnowledge = false }: CardProps) {
   // Hooks must run unconditionally — keep them above any early return so
   // the hook count stays stable when faceUp flips (e.g. revealing an
   // opponent's hand after hu-fail).
@@ -136,6 +140,30 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
               style={{ backgroundColor: DIMENSION_META[revealedDimension].colorHex }}
             />
             <span>{DIMENSION_META[revealedDimension].name}</span>
+          </span>
+        </div>
+      )}
+
+      {/* Knowledge-card badge (top-right) — shown when a dummy/档案注记
+          card is revealed (view-mode pick or cheat). Same slot as
+          revealedDimension; dimension cards take precedence. */}
+      {!revealedDimension && revealedAsKnowledge && dummy && !tiny && (
+        <div className={`absolute z-20 ${compact ? 'right-1 top-1' : 'right-1.5 top-1.5'}`}>
+          <span
+            className={`flex items-center gap-1 rounded-full font-semibold leading-none shadow-[0_4px_10px_rgba(0,0,0,0.22)] ${
+              compact ? 'px-1.5 py-0.5 text-[7px]' : 'px-1.5 py-0.5 text-[8px]'
+            }`}
+            style={{
+              backgroundColor: 'rgba(200, 180, 150, 0.20)',
+              color: '#cdb78d',
+              border: '1px solid rgba(200, 180, 150, 0.40)',
+            }}
+          >
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: '#cdb78d' }}
+            />
+            <span>知识牌</span>
           </span>
         </div>
       )}

@@ -95,6 +95,11 @@ export function PlayerHand({
     return null;
   }
 
+  function isRevealedAsKnowledge(card: GameCard): boolean {
+    if (isPersonalityCard(card)) return false;
+    return cheatMode || viewedCardIds.includes(card.id);
+  }
+
   return (
     <div className="space-y-2">
       {isDiscarding && !viewMode && (
@@ -173,6 +178,7 @@ export function PlayerHand({
                   selected={isSelected}
                   compact={useCompactCards}
                   revealedDimension={revealed}
+                  revealedAsKnowledge={isRevealedAsKnowledge(card)}
                   onClick={() => handleCardClick(card.id)}
                 />
                 {/* "NEW" badge on the just-drawn card. */}
