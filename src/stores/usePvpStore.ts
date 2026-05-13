@@ -16,6 +16,12 @@ import { initializePvpGame, applyPvpAction } from '@/lib/pvp-game-logic';
 const OFFLINE_GRACE_MS = 3 * 60 * 1000;
 const offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
+// Client-side host-grace timer (non-host clients only). If the host
+// vanishes, every non-host independently starts a 3-min countdown.
+// Host comes back inside the window → cancel. Otherwise the room is
+// truly unrecoverable and we dissolve locally.
+let hostGraceTimer: ReturnType<typeof setTimeout> | null = null;
+
 interface PvpStore {
   // Room state
   room: Room | null;
@@ -199,13 +205,27 @@ export const usePvpStore = create<PvpStore>()(
 
         const hostPid = room.host_id;
 
-        // Case 1: HOST vanished → unrecoverable for non-host clients
-        // (rawGameState is host-only). Bail immediately, no grace.
-        // TODO: extend grace to host too — needs host migration design
-        // (transfer rawGameState to next-seated player on host drop).
+        // Case 1: HOST vanished. Earlier we dissolved immediately, but
+        // rawGameState is persisted in localStorage, so a host that
+        // tabbed away / refreshed can come back and resume. Give them
+        // the same 3-min grace as everyone else. Non-host clients can't
+        // act during the gap (action-requests have nowhere to land),
+        // so the UI shows a "房主暂时离线" banner via offlinePlayerIds.
         if (!hostNow && hostPid && leftIds.includes(hostPid)) {
-          get().unsubscribeRoom();
-          if (typeof window !== 'undefined') window.location.href = '/';
+          // Mark host as offline locally; show the banner.
+          set(s => s.offlinePlayerIds.includes(hostPid)
+            ? s
+            : { offlinePlayerIds: [...s.offlinePlayerIds, hostPid] });
+          // Independent client-side timeout — no broadcast (the host is
+          // gone, no one would forward it). Each client races its own
+          // countdown.
+          if (hostGraceTimer) clearTimeout(hostGraceTimer);
+          hostGraceTimer = setTimeout(() => {
+            hostGraceTimer = null;
+            // 3 min and host still hasn't returned — give up.
+            get().unsubscribeRoom();
+            if (typeof window !== 'undefined') window.location.href = '/';
+          }, OFFLINE_GRACE_MS);
           return;
         }
 
@@ -254,19 +274,26 @@ export const usePvpStore = create<PvpStore>()(
       // Use it to cancel a pending grace-timer when the player returns
       // within the window.
       .on('presence', { event: 'join' }, ({ newPresences }) => {
-        const { isHost: hostNow, sendMessage: send } = get();
+        const { isHost: hostNow, room: rm, sendMessage: send } = get();
         const joinIds = (newPresences as { player_id?: string }[])
           .map((p) => p.player_id)
           .filter((id): id is string => typeof id === 'string');
+        const hostPid = rm?.host_id;
         for (const jid of joinIds) {
+          // Case A: host coming back — cancel the client-side
+          // host-grace countdown (regardless of whether I'm the host or
+          // a peer).
+          if (hostPid && jid === hostPid && hostGraceTimer) {
+            clearTimeout(hostGraceTimer);
+            hostGraceTimer = null;
+          }
+          // Case B: host's per-player grace timer (host only).
           const t = offlineTimers.get(jid);
           if (t) {
             clearTimeout(t);
             offlineTimers.delete(jid);
           }
-          // Clear local offline state and broadcast (host only — others
-          // mirror via the broadcast). Non-host clients update their
-          // own offlinePlayerIds when receiving 'player-online'.
+          // Clear local offline state.
           set(s => s.offlinePlayerIds.includes(jid)
             ? { offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== jid) }
             : s);
@@ -280,7 +307,34 @@ export const usePvpStore = create<PvpStore>()(
         // Track self in presence so others can detect our disconnect.
         try { await channel.track({ player_id: myPlayerId, t: Date.now() }); } catch {}
 
-        const { isHost: iAmHost, myPlayerId: mid, rawGameState } = get();
+        const { isHost: iAmHost, myPlayerId: mid, rawGameState, room: rm2 } = get();
+
+        // Defensive: peer refresh while the host happens to be inside
+        // their 3-min grace window. We just (re-)subscribed but missed
+        // the 'leave' event for the host, so no grace timer is running.
+        // Check current presence state; if host pid isn't present,
+        // synthesize the offline state + start the local timer.
+        const hostPid2 = rm2?.host_id;
+        if (!iAmHost && hostPid2) {
+          try {
+            const presence = channel.presenceState() as Record<string, Array<{ player_id?: string }>>;
+            const allPresent = Object.values(presence).flat();
+            const hostHere = allPresent.some((p) => p.player_id === hostPid2);
+            if (!hostHere && !hostGraceTimer) {
+              set((s) => s.offlinePlayerIds.includes(hostPid2)
+                ? s
+                : { offlinePlayerIds: [...s.offlinePlayerIds, hostPid2] });
+              hostGraceTimer = setTimeout(() => {
+                hostGraceTimer = null;
+                get().unsubscribeRoom();
+                if (typeof window !== 'undefined') window.location.href = '/';
+              }, OFFLINE_GRACE_MS);
+            }
+          } catch {
+            // presence read failed — fall through to normal state-request
+          }
+        }
+
         if (!iAmHost && mid) {
           // Non-host asks host for the current authoritative state.
           channel.send({
@@ -317,9 +371,14 @@ export const usePvpStore = create<PvpStore>()(
   unsubscribeRoom: () => {
     const { channel } = get();
     if (channel) channel.unsubscribe();
-    // Clear all pending grace timers (host only — non-host has none).
+    // Clear all pending grace timers (host's per-player + client-side
+    // host-grace).
     for (const t of offlineTimers.values()) clearTimeout(t);
     offlineTimers.clear();
+    if (hostGraceTimer) {
+      clearTimeout(hostGraceTimer);
+      hostGraceTimer = null;
+    }
     set({ channel: null, room: null, players: [], gameState: null, rawGameState: null, isHost: false, offlinePlayerIds: [] });
   },
 

@@ -66,7 +66,8 @@ export default function PvpGamePage() {
   const code = params.code as string;
 
   const { player } = usePlayerStore();
-  const { gameState, myPlayerId, isHost, sendMessage, subscribeRoom, offlinePlayerIds } = usePvpStore();
+  const { gameState, myPlayerId, isHost, sendMessage, subscribeRoom, offlinePlayerIds, room } = usePvpStore();
+  const hostOffline = !isHost && !!room?.host_id && offlinePlayerIds.includes(room.host_id);
 
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
   const [resultBanner, setResultBanner] = useState<{ success: boolean; message: string } | null>(null);
@@ -580,6 +581,20 @@ export default function PvpGamePage() {
         }`}>
           {resultBanner.success ? '✅' : '❌'} {resultBanner.message}
         </div>
+      )}
+
+      {/* Host offline banner — non-host clients only, visible during the
+          3-min host-grace window. All actions effectively pause because
+          action-requests have no one to land. */}
+      {hostOffline && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] max-w-[92vw] rounded-xl border border-amber-400/60 bg-amber-500/95 px-5 py-2.5 text-xs font-bold text-white shadow-2xl sm:text-sm"
+        >
+          ⚠ 房主短暂离线 — 操作已暂停，3 分钟内未回则房间解散
+        </motion.div>
       )}
 
       {/* 30s idle reminder — fires once if my turn idles past 30s */}
