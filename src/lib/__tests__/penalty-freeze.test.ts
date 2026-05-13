@@ -409,10 +409,9 @@ describe('penalty freeze — frozenUntilOwnDiscard (罚停一整轮)', () => {
     expect(state.players[1].frozenUntilOwnDiscard).toBe(false);
   });
 
-  it('self-pong-fail forfeits own turn (drawnCard returned to hand, turn advanced, no skipNextTurn)', () => {
-    // Wire up enough state to call selfPongCard directly. C is in own
-    // turn (phase=discarding, drawnCard set), big-five all 3.0 so target
-    // for any dim = 3. C selects 2 wrong-dim cards → fail.
+  it('self-pong-fail: drawnCard returns to hand, both skipNextTurn AND frozenUntilOwnDiscard set, turn advanced', () => {
+    // C is in own turn (phase=discarding, drawnCard set), big-five all
+    // 3.0 so target for any dim = 3. C selects 2 wrong-dim cards → fail.
     const drawn = makeCard('A', { id: 500 });
     let state = makeGameState({
       phase: 'discarding',
@@ -428,15 +427,14 @@ describe('penalty freeze — frozenUntilOwnDiscard (罚停一整轮)', () => {
       ],
     });
     state = selfPongCard(state, 2, 'O', [600, 601]);
-    // C's hand should now include the returned drawnCard.
+    // drawnCard returned to hand → no information lost, but no discard either.
     expect(state.players[2].hand.map((c) => c.id).sort()).toEqual([500, 600, 601]);
-    // skipNextTurn NOT set — this own turn is itself the forfeit.
-    expect(state.players[2].skipNextTurn).toBe(false);
-    // frozenUntilOwnDiscard is set — still locked out of claim windows.
+    // Both penalty marks set: skip own next turn + freeze claim windows
+    // until the second own-turn discard.
+    expect(state.players[2].skipNextTurn).toBe(true);
     expect(state.players[2].frozenUntilOwnDiscard).toBe(true);
     // Turn advanced past C.
     expect(state.currentPlayerIndex).not.toBe(2);
-    // No more drawnCard hanging around.
     expect(state.drawnCard).toBeNull();
   });
 

@@ -713,17 +713,19 @@ export function selfPongCard(
     };
   }
 
-  // SELF-PONG FAIL — symmetric with pong-fail. Two crucial differences
-  // from a literal copy of pong-fail:
-  //   1. drawnCard is returned to hand. The offender has ALREADY invested
-  //      their own-turn (they drew + attempted pong). Letting them
-  //      discard after failing would immediately clear frozenUntilOwnDiscard
-  //      (since discardCard clears it), nullifying the penalty.
-  //   2. No skipNextTurn is set — this turn is itself the "forfeit own
-  //      turn". A second skip would be double-counting. The freeze
-  //      persists until the offender's NEXT clean own-turn discard.
-  // Net effect: own-turn forfeited + 1 full round of claim-window
-  // lockout, mirroring pong-fail's "skip + claim freeze" cost.
+  // SELF-PONG FAIL — full "罚停一整轮" treatment.
+  //   1. drawnCard returns to hand — letting the offender discard would
+  //      immediately clear frozenUntilOwnDiscard, nullifying the freeze.
+  //   2. skipNextTurn=true — the offender ALSO loses their next own-turn
+  //      (no draw, no discard). Combined with frozenUntilOwnDiscard,
+  //      this forces the offender to sit through TWO full rounds of
+  //      claim windows before the second own-turn finally clears the
+  //      freeze. The first own turn is consumed by the auto-skip.
+  //   3. frozenUntilOwnDiscard=true — blocks every claim window between
+  //      now and the second own-turn discard.
+  // Net cost: ~6 claim windows + 1 own-turn skip. Yes, this is heavier
+  // than pong-fail (4 + 1) — by design, because the offender has more
+  // information (they already saw the drawnCard + chose a dim).
   const exposedCards = selected;
   const handWithDrawnReturned: GameCard[] = state.drawnCard
     ? [...ponger.hand, state.drawnCard]
@@ -733,6 +735,7 @@ export function selfPongCard(
       ? {
           ...p,
           hand: handWithDrawnReturned,
+          skipNextTurn: true,
           frozenUntilOwnDiscard: true,
           revealedSelectedCards: exposedCards,
         }
