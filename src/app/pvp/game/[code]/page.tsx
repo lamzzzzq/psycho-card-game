@@ -446,16 +446,15 @@ export default function PvpGamePage() {
   const declaredDims = mePlayer ? getDeclaredDimensions(mePlayer) : new Set<Dimension>();
 
   // ── Pong candidates (mirror of single-player game/page logic) ─────────
+  // Self-pong candidate list = ALL undeclared dimensions. Deliberately
+  // does NOT pre-filter by pool>=target — that would leak which dims
+  // the player has enough cards for and basically give away the puzzle.
+  // selfPongCard's strict count + dim check judges correctness on commit.
   const selfPongCandidates: Dimension[] = [];
   if (mePlayer && targets && isMyTurn && !meFrozen && (gameState.phase === 'drawing' || gameState.phase === 'discarding')) {
-    const pool: GameCard[] = [
-      ...mePlayer.hand,
-      ...(gameState.drawnCard ? [gameState.drawnCard] : []),
-    ];
     for (const d of DIMENSIONS) {
       if (declaredDims.has(d)) continue;
-      const same = pool.filter((c) => isPersonalityCard(c) && c.dimension === d).length;
-      if (same >= targets[d]) selfPongCandidates.push(d);
+      selfPongCandidates.push(d);
     }
   }
 

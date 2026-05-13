@@ -389,19 +389,16 @@ export default function GamePage() {
   const declaredDims = getDeclaredDimensions(humanPlayer);
 
   // ── Pong candidate computation ────────────────────────────────────────
-  // Self-pong: on own turn (drawing / discarding), any undeclared dim
-  // where pool (hand + drawnCard) has at least targetCount same-dim
-  // personality cards.
+  // Self-pong candidate list = ALL undeclared dimensions. Deliberately
+  // does NOT pre-filter by pool>=target — that would leak which dims
+  // the player has enough cards for, basically giving away the puzzle.
+  // The player picks a dim + N cards on their own judgement; the engine
+  // judges correctness on commit (selfPongCard's strict count + dim check).
   const selfPongCandidates: Dimension[] = [];
   if (isHumanTurn && !humanFrozen && (game.phase === 'drawing' || game.phase === 'discarding')) {
-    const pool = [
-      ...humanPlayer.hand,
-      ...(game.drawnCard ? [game.drawnCard] : []),
-    ];
     for (const d of DIMENSIONS) {
       if (declaredDims.has(d)) continue;
-      const same = pool.filter((c) => isPersonalityCard(c) && c.dimension === d).length;
-      if (same >= targets[d]) selfPongCandidates.push(d);
+      selfPongCandidates.push(d);
     }
   }
 
