@@ -639,44 +639,36 @@ export default function GamePage() {
               </button>
             )}
 
-            {/* Pong button — permanent in the main action area. Disabled
-                when no candidate dimension is available. Clicking opens
-                a selection flow: if only one candidate, jumps straight
-                to picking cards; if multiple, a small dimension picker
-                opens first. */}
-            <button
-              onClick={() => {
-                if (!canPongAnywhere) return;
-                if (otherPongCandidate) {
-                  setPongIntent({ type: 'other', dimension: otherPongCandidate });
-                  setSelectedCardIds([]);
-                  return;
-                }
-                if (selfPongCandidates.length === 1) {
+            {/* Self-pong button — visible only on own turn (claim-window
+                pong is handled by the floating PongPanel). Stays enabled
+                regardless of whether the player actually has the cards —
+                we don't want to leak "you can pong dim X" by toggling
+                the button. The player decides; the engine judges. */}
+            {isHumanTurn && game.phase !== 'claim-window' && (
+              <button
+                onClick={() => {
+                  if (humanPlayer.selfPongUsedThisTurn || humanFrozen) return;
+                  if (selfPongCandidates.length === 0) return;
                   setPongIntent({ type: 'self', dimension: selfPongCandidates[0] });
                   setSelectedCardIds([]);
-                  return;
+                }}
+                disabled={
+                  humanFrozen ||
+                  !!humanPlayer.selfPongUsedThisTurn ||
+                  selfPongCandidates.length === 0
                 }
-                // Multi-candidate self-pong → use first; user can cancel
-                // and re-pick once we add a dim-picker UI. Keeps the flow
-                // unblocked.
-                setPongIntent({ type: 'self', dimension: selfPongCandidates[0] });
-                setSelectedCardIds([]);
-              }}
-              disabled={!canPongAnywhere}
-              className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
-              title={
-                canPongAnywhere
-                  ? otherPongCandidate
-                    ? `碰对方弃牌（${DIMENSION_META[otherPongCandidate].name}）`
-                    : `自摸碰 · ${selfPongCandidates.map((d) => DIMENSION_META[d].name).join(' / ')}`
-                  : humanPlayer.selfPongUsedThisTurn
-                  ? '本回合自摸碰已用，下回合再来'
-                  : '当前无可碰对象'
-              }
-            >
-              碰
-            </button>
+                className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
+                title={
+                  humanFrozen
+                    ? '罚停中，本轮无法自摸碰'
+                    : humanPlayer.selfPongUsedThisTurn
+                    ? '本回合自摸碰已用，下回合再来'
+                    : '自摸碰 · 你自己判断维度和张数'
+                }
+              >
+                自摸碰
+              </button>
+            )}
 
             {isHumanTurn && isDiscarding && !viewUsedThisTurn && (
               <button

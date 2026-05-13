@@ -778,27 +778,33 @@ export default function PvpGamePage() {
                   食胡
                 </button>
               )}
-              {/* Self-pong button — only on own turn; disabled when no candidate */}
-              {!meFrozen && (
-                <button
-                  onClick={() => {
-                    if (selfPongCandidates.length === 0) return;
-                    setPongIntent({ type: 'self', dimension: selfPongCandidates[0] });
-                    setSelectedCardIds([]);
-                  }}
-                  disabled={selfPongCandidates.length === 0}
-                  className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
-                  title={
-                    selfPongCandidates.length > 0
-                      ? `自摸碰 · ${selfPongCandidates.map((d) => DIMENSION_META[d].name).join(' / ')}`
-                      : meAlreadySelfPonged
-                      ? '本回合自摸碰已用，下回合再来'
-                      : '当前无可自摸的维度'
-                  }
-                >
-                  自摸碰
-                </button>
-              )}
+              {/* Self-pong button — visible only on own turn. Stays
+                  enabled regardless of whether the player actually has
+                  matching cards; toggling on/off would leak "you have
+                  enough N-dim cards". Player decides, engine judges. */}
+              <button
+                onClick={() => {
+                  if (meFrozen || meAlreadySelfPonged) return;
+                  if (selfPongCandidates.length === 0) return;
+                  setPongIntent({ type: 'self', dimension: selfPongCandidates[0] });
+                  setSelectedCardIds([]);
+                }}
+                disabled={
+                  meFrozen ||
+                  meAlreadySelfPonged ||
+                  selfPongCandidates.length === 0
+                }
+                className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
+                title={
+                  meFrozen
+                    ? '罚停中，本轮无法自摸碰'
+                    : meAlreadySelfPonged
+                    ? '本回合自摸碰已用，下回合再来'
+                    : '自摸碰 · 你自己判断维度和张数'
+                }
+              >
+                自摸碰
+              </button>
             </div>
           )}
 
