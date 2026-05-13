@@ -52,6 +52,9 @@ export function serializeGameState(state: RawGameState, viewerPlayerId: string |
     if (p.hasLeft) {
       base.hasLeft = true;
     }
+    if (p.selfPongUsedThisTurn) {
+      base.selfPongUsedThisTurn = true;
+    }
 
     return base;
   });

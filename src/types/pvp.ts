@@ -101,6 +101,8 @@ export interface SerializedPlayer {
   // Player quit the room — their seat is permanently skipped by the
   // engine; UI shows "已退出".
   hasLeft?: boolean;
+  // Once-per-turn self-pong gate, mirrored for UI to disable the button.
+  selfPongUsedThisTurn?: boolean;
 }
 
 // Game result for DB

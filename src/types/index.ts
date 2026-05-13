@@ -97,6 +97,10 @@ export interface Player {
   // the match. Other players continue until a winner is declared or the
   // last human standing also leaves.
   hasLeft?: boolean;
+  // True once the player commits a self-pong on the current turn.
+  // Reset by drawCard when the player begins a fresh turn. Enforces
+  // the "one self-pong per turn" rule (engine + UI both gate on this).
+  selfPongUsedThisTurn?: boolean;
 }
 
 // ===== Game State =====

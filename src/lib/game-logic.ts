@@ -347,9 +347,13 @@ export function drawCard(state: GameState): GameState {
   // Clear penalty reveals only after the player has completed their skip
   // turn (skipNextTurn=false). This keeps reveals visible through own-turn
   // hu-fail + discard + full loop + skip turn, then clears on resume.
+  // Also reset selfPongUsedThisTurn — drawing a card marks the start of
+  // a fresh turn, so the once-per-turn self-pong gate is restored.
   const newPlayers = state.players.map((p, i) =>
     i === currentIdx && !p.skipNextTurn
-      ? { ...p, revealedHand: false, revealedSelectedCards: undefined }
+      ? { ...p, revealedHand: false, revealedSelectedCards: undefined, selfPongUsedThisTurn: false }
+      : i === currentIdx
+      ? { ...p, selfPongUsedThisTurn: false }
       : p
   );
 
@@ -629,6 +633,9 @@ export function selfPongCard(
   const ponger = state.players[pongerIndex];
   if (isFrozen(ponger)) return state;
   if (getDeclaredDimensions(ponger).has(dimension)) return state;
+  // One self-pong per turn. Cleared when the player draws on their
+  // next turn (drawCard).
+  if (ponger.selfPongUsedThisTurn) return state;
 
   const targets = getTargetCounts(ponger.bigFiveScores);
   const targetCount = targets[dimension];
@@ -659,7 +666,7 @@ export function selfPongCard(
     ];
     const newPlayers = state.players.map((p, i) =>
       i === pongerIndex
-        ? { ...p, hand: newHand, declaredSets: newDeclaredSets }
+        ? { ...p, hand: newHand, declaredSets: newDeclaredSets, selfPongUsedThisTurn: true }
         : p
     );
 

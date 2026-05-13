@@ -55,6 +55,7 @@ function toPlayer(sp: SerializedPlayer, overrideHand?: GameCard[]): Player {
     revealedSelectedCards: sp.revealedSelectedCards,
     frozenUntilDiscarderIndex: sp.frozenUntilDiscarderIndex,
     hasLeft: sp.hasLeft,
+    selfPongUsedThisTurn: sp.selfPongUsedThisTurn,
   };
 }
 
@@ -172,28 +173,27 @@ export default function PvpGamePage() {
     (gameState.phase === 'drawing' || gameState.phase === 'discarding');
   const yourTurnKey = useYourTurnNotifier(gameState?.currentPlayerIndex, myIsCurrent);
 
-  // 30-second idle reminder: when it's my turn (drawing or discarding)
-  // and I haven't acted, surface a 3s banner nudging me to play.
-  // Deps deliberately narrow — `gameState` itself is NOT a dep because
-  // every realtime broadcast bumps it and would otherwise reset the
-  // timer on every opponent state push. We only reset on:
-  //   - my turn flag flipping
-  //   - currentPlayerIndex changing (turn moved)
-  //   - phase changing (drawing → discarding etc)
-  //   - actionLog growing (someone acted)
+  // Recurring 30-second idle reminder: when it's my turn (drawing or
+  // discarding) and I haven't acted, flash a 3s banner nudging me to
+  // play. Keeps recurring every 30s until I act (actionLog grows) or
+  // my turn ends. Deps deliberately narrow — `gameState` whole obj is
+  // NOT a dep because every realtime broadcast bumps it and would
+  // otherwise reset the interval on every opponent state push.
   useEffect(() => {
     if (!myIsCurrent) {
       setIdleReminderVisible(false);
       return;
     }
-    let hideAt: number | null = null;
-    const remindAt = window.setTimeout(() => {
+    let hideTimer: number | null = null;
+    const tick = () => {
       setIdleReminderVisible(true);
-      hideAt = window.setTimeout(() => setIdleReminderVisible(false), 3000);
-    }, 30_000);
+      if (hideTimer) window.clearTimeout(hideTimer);
+      hideTimer = window.setTimeout(() => setIdleReminderVisible(false), 3000);
+    };
+    const interval = window.setInterval(tick, 30_000);
     return () => {
-      window.clearTimeout(remindAt);
-      if (hideAt) window.clearTimeout(hideAt);
+      window.clearInterval(interval);
+      if (hideTimer) window.clearTimeout(hideTimer);
       setIdleReminderVisible(false);
     };
   }, [myIsCurrent, gameState?.currentPlayerIndex, gameState?.phase, gameState?.actionLog?.length]);
@@ -450,8 +450,17 @@ export default function PvpGamePage() {
   // does NOT pre-filter by pool>=target — that would leak which dims
   // the player has enough cards for and basically give away the puzzle.
   // selfPongCard's strict count + dim check judges correctness on commit.
+  // Once-per-turn rule: if already used this turn, no candidates.
+  const meAlreadySelfPonged = !!mePlayer?.selfPongUsedThisTurn;
   const selfPongCandidates: Dimension[] = [];
-  if (mePlayer && targets && isMyTurn && !meFrozen && (gameState.phase === 'drawing' || gameState.phase === 'discarding')) {
+  if (
+    mePlayer &&
+    targets &&
+    isMyTurn &&
+    !meFrozen &&
+    !meAlreadySelfPonged &&
+    (gameState.phase === 'drawing' || gameState.phase === 'discarding')
+  ) {
     for (const d of DIMENSIONS) {
       if (declaredDims.has(d)) continue;
       selfPongCandidates.push(d);
@@ -782,7 +791,9 @@ export default function PvpGamePage() {
                   title={
                     selfPongCandidates.length > 0
                       ? `自摸碰 · ${selfPongCandidates.map((d) => DIMENSION_META[d].name).join(' / ')}`
-                      : '当前没有可自摸的人格维度'
+                      : meAlreadySelfPonged
+                      ? '本回合自摸碰已用，下回合再来'
+                      : '当前无可自摸的维度'
                   }
                 >
                   自摸碰

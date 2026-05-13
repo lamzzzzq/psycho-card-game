@@ -394,8 +394,15 @@ export default function GamePage() {
   // the player has enough cards for, basically giving away the puzzle.
   // The player picks a dim + N cards on their own judgement; the engine
   // judges correctness on commit (selfPongCard's strict count + dim check).
+  //
+  // Once-per-turn rule: if already used this turn, no candidates.
   const selfPongCandidates: Dimension[] = [];
-  if (isHumanTurn && !humanFrozen && (game.phase === 'drawing' || game.phase === 'discarding')) {
+  if (
+    isHumanTurn &&
+    !humanFrozen &&
+    !humanPlayer.selfPongUsedThisTurn &&
+    (game.phase === 'drawing' || game.phase === 'discarding')
+  ) {
     for (const d of DIMENSIONS) {
       if (declaredDims.has(d)) continue;
       selfPongCandidates.push(d);
@@ -663,7 +670,9 @@ export default function GamePage() {
                   ? otherPongCandidate
                     ? `碰对方弃牌（${DIMENSION_META[otherPongCandidate].name}）`
                     : `自摸碰 · ${selfPongCandidates.map((d) => DIMENSION_META[d].name).join(' / ')}`
-                  : '当前没有可碰的人格维度'
+                  : humanPlayer.selfPongUsedThisTurn
+                  ? '本回合自摸碰已用，下回合再来'
+                  : '当前无可碰对象'
               }
             >
               碰
