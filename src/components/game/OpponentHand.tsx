@@ -35,7 +35,7 @@ export function OpponentHand({ player, isCurrentTurn }: OpponentHandProps) {
   }, [isCurrentTurn, bounceControls]);
 
   const stackWidth = Math.max(20, Math.min(72, (player.hand.length - 1) * 4 + 18));
-  const isPenalized = player.skipNextTurn || typeof player.frozenUntilDiscarderIndex === 'number';
+  const isPenalized = player.skipNextTurn || !!player.frozenUntilOwnDiscard;
   const hasLeft = player.hasLeft === true;
 
   // Modal contents differ slightly: full reveal (hu-fail) shows the

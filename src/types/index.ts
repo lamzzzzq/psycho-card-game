@@ -87,12 +87,18 @@ export interface Player {
   skipNextTurn: boolean;
   revealedHand: boolean;                    // hu-fail: full hand exposed
   revealedSelectedCards?: GameCard[];       // pong-fail: only the attempted cards exposed
-  // Pong-fail freeze marker. Holds the index of the player whose discard
-  // the failed pong was attempted against. The penalized player is locked
-  // out of every subsequent claim window until that same player discards
-  // again. Cleared in discardCard when the matching player discards.
-  // Undefined for players with no active pong-fail freeze.
+  // [DEPRECATED — see frozenUntilOwnDiscard]. Kept for serializer
+  // backward-compat reads on stale broadcasts. Engine no longer sets
+  // it; isFrozen no longer reads it.
   frozenUntilDiscarderIndex?: number;
+  // Penalty freeze: stays true from the moment a pong-fail / self-pong-fail
+  // / hu-fail happens until the offender themselves completes a full
+  // draw + discard. Equivalent to "罚停一整轮" — the offender misses
+  // every claim window during the freeze, has their own next turn
+  // auto-skipped (via skipNextTurn), then must play one fresh
+  // own-turn cleanly before being unfrozen.
+  // Cleared in discardCard when the offender's own discard lands.
+  frozenUntilOwnDiscard?: boolean;
   // Player has quit the game. Their seat is AI-piloted for the rest of
   // the match. Other players continue until a winner is declared or the
   // last human standing also leaves.

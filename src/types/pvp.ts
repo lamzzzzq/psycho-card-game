@@ -94,10 +94,11 @@ export interface SerializedPlayer {
   revealedHand: boolean;
   revealedCards?: GameCard[];          // full hand, sent when revealedHand is true (hu-fail)
   revealedSelectedCards?: GameCard[];  // subset, sent after pong-fail
-  // Pong-fail freeze marker, mirrored from the host-side Player. Clients
-  // gate their claim panel (碰 / 胡) on this so the freeze persists after
-  // the own-turn auto-skip has already cleared skipNextTurn.
+  // [DEPRECATED] kept for backwards-compatibility on stale broadcasts.
   frozenUntilDiscarderIndex?: number;
+  // Penalty freeze, mirrored from host. Released by the offender's own
+  // next clean discard. UI gates claim/pong/hu panels on this.
+  frozenUntilOwnDiscard?: boolean;
   // Player quit the room — their seat is permanently skipped by the
   // engine; UI shows "已退出".
   hasLeft?: boolean;

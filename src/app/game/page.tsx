@@ -374,7 +374,7 @@ export default function GamePage() {
   const isDiscarding = isHumanTurn && game.phase === 'discarding';
   const isPongWindow = game.phase === 'claim-window' && game.pendingDiscard !== null && game.discardedByIndex !== 0;
   const humanFrozen =
-    humanPlayer.skipNextTurn || typeof humanPlayer.frozenUntilDiscarderIndex === 'number';
+    humanPlayer.skipNextTurn || !!humanPlayer.frozenUntilOwnDiscard;
   const canHu =
     game.phase !== 'game-over' &&
     !humanFrozen &&

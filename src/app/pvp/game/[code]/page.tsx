@@ -54,6 +54,7 @@ function toPlayer(sp: SerializedPlayer, overrideHand?: GameCard[]): Player {
     revealedHand: sp.revealedHand,
     revealedSelectedCards: sp.revealedSelectedCards,
     frozenUntilDiscarderIndex: sp.frozenUntilDiscarderIndex,
+    frozenUntilOwnDiscard: sp.frozenUntilOwnDiscard,
     hasLeft: sp.hasLeft,
     selfPongUsedThisTurn: sp.selfPongUsedThisTurn,
   };
@@ -260,13 +261,12 @@ export default function PvpGamePage() {
   // First-come-first-served: any non-discarder can pong. The race
   // resolves naturally because pongCard advances the phase out of
   // 'claim-window' before slower clicks land.
-  // A pong-fail player carries TWO freeze marks: skipNextTurn (one
-  // own-turn auto-skip) and frozenUntilDiscarderIndex (locked out of
-  // every claim window until the original block-discarder operates
-  // again). Either suppresses the claim panel.
+  // Penalty freeze: skipNextTurn (one own-turn auto-skip) +
+  // frozenUntilOwnDiscard (locked out of every claim window until
+  // own next clean discard). Either suppresses the claim panel.
   const meFrozen =
     meSerialized?.skipNextTurn ||
-    typeof meSerialized?.frozenUntilDiscarderIndex === 'number';
+    !!meSerialized?.frozenUntilOwnDiscard;
   const canPong = canClaim && !meFrozen;
   const canHu = (isMyTurn && gameState.phase !== 'claim-window' && !meFrozen)
     || (canClaim && !meFrozen);

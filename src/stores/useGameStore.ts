@@ -117,7 +117,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       if (player.isHuman) continue;
       if (latestGame.claimResponses.includes(player.id)) continue;
 
-      const canPong = !player.skipNextTurn && typeof player.frozenUntilDiscarderIndex !== 'number';
+      const canPong = !player.skipNextTurn && !player.frozenUntilOwnDiscard;
       const decision = canPong
         ? makeAIPongDecision(player, pendingCard, latestGame.settings.aiDifficulty)
         : { shouldPong: false as const };
