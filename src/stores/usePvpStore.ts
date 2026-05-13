@@ -152,8 +152,49 @@ export const usePvpStore = create<PvpStore>()(
             break;
         }
       })
-      .subscribe((status) => {
+      // Presence channel — supabase auto-pings every subscriber and
+      // fires 'leave' on disconnect (close tab / network drop / OS sleep).
+      // Lets the host detect a vanished player without that player having
+      // to send 'leave' explicitly. ~10s detection lag on hard disconnect.
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+        const { isHost: hostNow, rawGameState, room, players: ps, sendMessage: send } = get();
+        const leftIds = (leftPresences as { player_id?: string }[])
+          .map((p) => p.player_id)
+          .filter((id): id is string => typeof id === 'string');
+        if (leftIds.length === 0 || !room) return;
+
+        const hostPid = room.host_id;
+
+        // Case 1: host vanished. Non-host clients cannot run the engine
+        // (rawGameState is host-only). Room is effectively dissolved.
+        if (!hostNow && hostPid && leftIds.includes(hostPid)) {
+          get().unsubscribeRoom();
+          if (typeof window !== 'undefined') window.location.href = '/';
+          return;
+        }
+
+        // Case 2: I'm host. A non-host player disappeared mid-game →
+        // synthetically dispatch their 'leave' so the engine cleanly
+        // marks hasLeft and rotation skips their seat. Stops the table
+        // from waiting forever on a dead client.
+        if (hostNow && rawGameState && rawGameState.phase !== 'game-over') {
+          for (const lid of leftIds) {
+            if (lid === hostPid) continue;
+            const stillThere = (rawGameState.players as { id: string; hasLeft?: boolean }[])
+              .find((p) => p.id === lid && !p.hasLeft);
+            if (stillThere) {
+              get().handlePlayerAction(lid, { type: 'leave' });
+              send({ type: 'player-left', playerId: lid });
+            }
+          }
+          set({ players: ps.filter((p) => !leftIds.includes(p.player_id)) });
+        }
+      })
+      .subscribe(async (status) => {
         if (status !== 'SUBSCRIBED') return;
+        // Track self in presence so others can detect our disconnect.
+        try { await channel.track({ player_id: myPlayerId, t: Date.now() }); } catch {}
+
         const { isHost: iAmHost, myPlayerId: mid, rawGameState } = get();
         if (!iAmHost && mid) {
           // Non-host asks host for the current authoritative state.
