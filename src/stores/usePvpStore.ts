@@ -222,7 +222,17 @@ export const usePvpStore = create<PvpStore>()(
     const orderedPlayers = [...players].sort((a, b) => a.seat_index - b.seat_index);
     const currentPlayerId = orderedPlayers[rawState.currentPlayerIndex]?.player_id;
 
-    if (_fromPlayerId !== currentPlayerId && action.type !== 'pong' && action.type !== 'skip-pong' && action.type !== 'hu') return;
+    // 'leave' is unconditional — any player at any time can quit. Whitelist
+    // it before the current-player gate, otherwise the host would silently
+    // drop a non-current-player's exit and the room would deadlock when
+    // turn rotation lands on the now-unmanned seat.
+    if (
+      action.type !== 'leave' &&
+      _fromPlayerId !== currentPlayerId &&
+      action.type !== 'pong' &&
+      action.type !== 'skip-pong' &&
+      action.type !== 'hu'
+    ) return;
 
     const newState = applyPvpAction(rawState, _fromPlayerId, action, orderedPlayers);
     set({ rawGameState: newState });

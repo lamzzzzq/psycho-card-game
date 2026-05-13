@@ -174,9 +174,14 @@ export default function PvpGamePage() {
 
   // 30-second idle reminder: when it's my turn (drawing or discarding)
   // and I haven't acted, surface a 3s banner nudging me to play.
-  // Resets on turn change or any action (action log length grows).
+  // Deps deliberately narrow — `gameState` itself is NOT a dep because
+  // every realtime broadcast bumps it and would otherwise reset the
+  // timer on every opponent state push. We only reset on:
+  //   - my turn flag flipping
+  //   - currentPlayerIndex changing (turn moved)
+  //   - phase changing (drawing → discarding etc)
+  //   - actionLog growing (someone acted)
   useEffect(() => {
-    if (!gameState) return;
     if (!myIsCurrent) {
       setIdleReminderVisible(false);
       return;
@@ -191,7 +196,7 @@ export default function PvpGamePage() {
       if (hideAt) window.clearTimeout(hideAt);
       setIdleReminderVisible(false);
     };
-  }, [myIsCurrent, gameState?.currentPlayerIndex, gameState?.phase, gameState?.actionLog?.length, gameState]);
+  }, [myIsCurrent, gameState?.currentPlayerIndex, gameState?.phase, gameState?.actionLog?.length]);
 
   const showBanner = useCallback((success: boolean, message: string) => {
     setResultBanner({ success, message });
