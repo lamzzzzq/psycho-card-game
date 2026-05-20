@@ -1,0 +1,152 @@
+/**
+ * Persist a finished game to Supabase.
+ *
+ * Schema lives in supabase/migrations/0001_game_records.sql.
+ * Three tables:
+ *   - big_five_snapshots: 学号 ↔ 当次比赛使用的人格分数对应（不覆盖历史）
+ *   - game_sessions: 一局的元数据
+ *   - game_participants: 一行一人一局（核心查询表）
+ *
+ * Failures are logged but never thrown — saving stats must NEVER block the
+ * end-of-game UI flow.
+ */
+import { supabase } from './supabase';
+import { GameState, BigFiveScores, PlayerId } from '@/types';
+import { getPlayerScore, getRankings } from './game-logic';
+
+export interface SeatMeta {
+  seatIndex: number;
+  playerId: string | null;   // null for AI
+  studentId: string | null;  // null for AI
+  isAi: boolean;
+}
+
+export interface SaveGameSessionInput {
+  mode: 'single' | 'pvp';
+  roomId?: string | null;
+  roomCode?: string | null;
+  startedAt: number;         // unix ms (use first action's timestamp or initGame time)
+  finalState: GameState;
+  seatMeta: SeatMeta[];      // one per seat, in seat order
+}
+
+/** Insert one BigFive snapshot. Returns inserted row id. */
+async function insertSnapshot(input: {
+  playerId: string;
+  studentId: string;
+  scores: BigFiveScores;
+  source: 'assessment' | 'manual' | 'game-start';
+}): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('big_five_snapshots')
+    .insert({
+      player_id: input.playerId,
+      student_id: input.studentId,
+      scores: input.scores,
+      source: input.source,
+    })
+    .select('id')
+    .single();
+  if (error) {
+    console.warn('[game-record] insertSnapshot failed', error);
+    return null;
+  }
+  return data.id;
+}
+
+/**
+ * Save a finished game. Best-effort: never throws, never blocks UI.
+ * Returns the inserted session id, or null if persistence failed.
+ */
+export async function saveGameSession(input: SaveGameSessionInput): Promise<string | null> {
+  try {
+    const ranked = getRankings(input.finalState.players);
+    const winnerId = input.finalState.winner;
+
+    // 1) Snapshot BigFive for every non-AI seat (one snapshot per participant).
+    //    This nails down 学号 ↔ 这一局使用的人格分数 forever.
+    const snapshotByPlayerId = new Map<string, string>();
+    for (const meta of input.seatMeta) {
+      if (meta.isAi || !meta.playerId || !meta.studentId) continue;
+      const seatPlayer = input.finalState.players[meta.seatIndex];
+      if (!seatPlayer) continue;
+      const snapshotId = await insertSnapshot({
+        playerId: meta.playerId,
+        studentId: meta.studentId,
+        scores: seatPlayer.bigFiveScores,
+        source: 'game-start',
+      });
+      if (snapshotId) snapshotByPlayerId.set(meta.playerId, snapshotId);
+    }
+
+    // 2) Create the session row.
+    const { data: session, error: sErr } = await supabase
+      .from('game_sessions')
+      .insert({
+        mode: input.mode,
+        room_id: input.roomId ?? null,
+        room_code: input.roomCode ?? null,
+        started_at: new Date(input.startedAt).toISOString(),
+        ended_at: new Date().toISOString(),
+        total_rounds: input.finalState.settings.totalRounds,
+        rounds_played: input.finalState.currentRound,
+        winner_player_id:
+          input.mode === 'pvp' && winnerId
+            ? (winnerId as unknown as string)
+            : null,  // single-player winner is 'human'|'ai-N', not a UUID
+      })
+      .select('id')
+      .single();
+    if (sErr || !session) {
+      console.warn('[game-record] insert session failed', sErr);
+      return null;
+    }
+
+    // 3) Count actions per player from the actionLog.
+    const counts: Record<string, { huS: number; huF: number; pS: number; pF: number }> = {};
+    for (const a of input.finalState.actionLog) {
+      const pid = a.playerId as string;
+      counts[pid] ??= { huS: 0, huF: 0, pS: 0, pF: 0 };
+      if (a.type === 'hu-success') counts[pid].huS++;
+      else if (a.type === 'hu-fail') counts[pid].huF++;
+      else if (a.type === 'pong-success') counts[pid].pS++;
+      else if (a.type === 'pong-fail') counts[pid].pF++;
+    }
+
+    // 4) One participant row per seat.
+    const rows = input.finalState.players.map((p, idx) => {
+      const meta = input.seatMeta.find((m) => m.seatIndex === idx);
+      const rank = ranked.findIndex((r) => r.id === p.id) + 1;
+      const c = counts[p.id as unknown as string] ?? { huS: 0, huF: 0, pS: 0, pF: 0 };
+      return {
+        session_id: session.id,
+        player_id: meta?.playerId ?? null,
+        student_id: meta?.studentId ?? null,
+        seat_index: idx,
+        is_ai: meta?.isAi ?? !p.isHuman,
+        big_five_snapshot_id: meta?.playerId ? snapshotByPlayerId.get(meta.playerId) ?? null : null,
+        big_five_scores: p.bigFiveScores,
+        declared_count: p.declaredSets.length,
+        remaining_cards: p.hand.length,
+        final_score: getPlayerScore(p),
+        rank: rank > 0 ? rank : idx + 1,
+        is_winner: p.id === winnerId,
+        hu_success_count: c.huS,
+        hu_fail_count: c.huF,
+        pong_success_count: c.pS,
+        pong_fail_count: c.pF,
+      };
+    });
+
+    const { error: pErr } = await supabase.from('game_participants').insert(rows);
+    if (pErr) {
+      console.warn('[game-record] insert participants failed', pErr);
+      // session row already in — return it anyway so caller knows partial success.
+    }
+
+    return session.id;
+  } catch (err) {
+    console.warn('[game-record] saveGameSession exception', err);
+    return null;
+  }
+}

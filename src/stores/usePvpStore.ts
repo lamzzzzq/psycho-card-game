@@ -5,7 +5,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { Room, RoomPlayer, RoomSettings, RealtimeMessage, PvpAction, SerializedGameState } from '@/types/pvp';
-import { getRoomPlayers, updateRoomStatus, kickPlayer, dissolveRoom, saveGameResult } from '@/lib/room-api';
+import { getRoomPlayers, updateRoomStatus, kickPlayer, dissolveRoom } from '@/lib/room-api';
+import { saveGameSession } from '@/lib/game-record';
 import { BigFiveScores } from '@/types';
 import { serializeGameState } from '@/lib/pvp-serializer';
 import { initializePvpGame, applyPvpAction } from '@/lib/pvp-game-logic';
@@ -430,6 +431,8 @@ export const usePvpStore = create<PvpStore>()(
   handlePlayerAction: (_fromPlayerId, action) => {
     const rawState = get().rawGameState;
     if (!rawState) return;
+    // 避免 game-over 后再触发的 action（例如 leave）重复 broadcast / 重复 save。
+    const wasAlreadyWinner = !!rawState.winner;
 
     const { players, room } = get();
     const orderedPlayers = [...players].sort((a, b) => a.seat_index - b.seat_index);
@@ -461,16 +464,28 @@ export const usePvpStore = create<PvpStore>()(
     const hostSerialized = serializeGameState(newState, get().myPlayerId);
     set({ gameState: hostSerialized });
 
-    if (newState.winner) {
+    if (newState.winner && !wasAlreadyWinner) {
       const winnerId = newState.winner;
       get().sendMessage({ type: 'game-over', winnerId });
       if (room) {
-        const rankings = orderedPlayers.map((p, i) => ({
-          playerId: p.player_id,
-          declaredCount: newState.players[i]?.declaredSets?.length ?? 0,
-          remainingCards: newState.players[i]?.hand?.length ?? 0,
+        // New schema: game_sessions + game_participants + big_five_snapshots.
+        // Falls back silently if Supabase is unreachable (best-effort).
+        const startedAt =
+          newState.actionLog[0]?.timestamp ?? Date.now();
+        const seatMeta = orderedPlayers.map((rp, i) => ({
+          seatIndex: i,
+          playerId: rp.player_id,
+          studentId: rp.student_id ?? null,
+          isAi: false,
         }));
-        saveGameResult({ room_id: room.id, winner_id: winnerId, rankings, rounds_played: newState.currentRound });
+        saveGameSession({
+          mode: 'pvp',
+          roomId: room.id,
+          roomCode: room.code,
+          startedAt,
+          finalState: newState,
+          seatMeta,
+        });
         // Reset room status so "再来一局" can navigate back to room
         updateRoomStatus(room.id, 'waiting');
       }
