@@ -177,14 +177,15 @@ function runOneGame(seed: number, rogueRate = 0.0): { state: GameState; actions:
           }
           if (canPong) {
             const decision = makeAIPongDecision(p, state.pendingDiscard, state.settings.aiDifficulty);
-            if (decision.shouldPong && 'dimension' in decision && 'handCardIds' in decision) {
+            if (decision.shouldPong && decision.dimension && decision.handCardIds) {
               const before = getDeclaredDimensions(p);
+              const dim = decision.dimension;
               // ── invariant 2: normal AI 不该自己引发 already-declared trap（ai-engine
               //    line 87-88 已经 gate）— rogue 不算
-              if (before.has(decision.dimension)) {
-                breaks.push(`game#${seed}: AI tried to pong already-declared dim ${decision.dimension}`);
+              if (before.has(dim)) {
+                breaks.push(`game#${seed}: AI tried to pong already-declared dim ${dim}`);
               }
-              state = pongCard(state, idx, decision.dimension, decision.handCardIds);
+              state = pongCard(state, idx, dim, decision.handCardIds);
               handled = true;
               break;
             }
@@ -201,11 +202,8 @@ function runOneGame(seed: number, rogueRate = 0.0): { state: GameState; actions:
         break;
       }
       case 'ai-turn':
-      case 'game-over':
         // shouldn't reach 'ai-turn' (it's a single-player UI flag) — coerce to drawing
-        if (state.phase === 'ai-turn') {
-          state = { ...state, phase: 'drawing' };
-        }
+        state = { ...state, phase: 'drawing' };
         break;
     }
 
