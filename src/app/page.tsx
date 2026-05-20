@@ -19,6 +19,12 @@ export default function Home() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-10">
+      <button
+        onClick={() => router.push('/tutorial')}
+        className="psy-btn psy-btn-accent psy-serif fixed right-4 top-4 z-40 px-4 py-2 text-sm font-semibold shadow-[0_16px_38px_rgba(0,0,0,0.32)] sm:right-8 sm:top-8"
+      >
+        玩法教学
+      </button>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -119,12 +125,6 @@ export default function Home() {
           )}
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-          <button
-            onClick={() => router.push('/tutorial')}
-            className="text-sm text-[var(--psy-accent)] underline decoration-[rgba(200,155,93,0.4)] underline-offset-4 transition hover:text-[var(--psy-ink)]"
-          >
-            📖 玩法教学 / Tutorial
-          </button>
           <button
             onClick={() => router.push('/stats')}
             className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"

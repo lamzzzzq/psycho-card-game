@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DeclaredSet } from '@/types';
+import { DeclaredSet, PersonalityCard } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 import { Card } from './Card';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
@@ -14,6 +14,7 @@ interface DeclaredAreaProps {
 
 export function DeclaredArea({ declaredSets, compact = false, title = '归档记录' }: DeclaredAreaProps) {
   const [open, setOpen] = useState(false);
+  const [detailCard, setDetailCard] = useState<PersonalityCard | null>(null);
 
   const modalNode = (
     <PsyOverlayPanel open={open} onClose={() => setOpen(false)} title={title} variant="centered">
@@ -39,12 +40,59 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {set.cards.map((card) => (
-                    <Card key={card.id} card={card} tiny />
+                    <button
+                      key={card.id}
+                      type="button"
+                      onClick={() => setDetailCard(card)}
+                      className="rounded-[1rem] transition hover:-translate-y-1 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--psy-accent)]"
+                      aria-label={`查看归档卡牌：${card.text}`}
+                    >
+                      <Card card={card} tiny />
+                    </button>
                   ))}
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+    </PsyOverlayPanel>
+  );
+
+  const detailNode = (
+    <PsyOverlayPanel
+      open={detailCard !== null}
+      onClose={() => setDetailCard(null)}
+      title="卡牌详情"
+      variant="centered"
+      panelClassName="max-w-xl"
+      zIndex={92}
+    >
+      {detailCard && (
+        <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-center">
+          <div className="flex justify-center">
+            <Card card={detailCard} revealedDimension={detailCard.dimension} />
+          </div>
+          <div className="space-y-4">
+            <div>
+              <p className="psy-eyebrow text-[10px]">人格描述</p>
+              <p className="mt-2 psy-serif text-xl leading-9 text-[var(--psy-ink)]">{detailCard.text}</p>
+            </div>
+            <div
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold"
+              style={{
+                borderColor: DIMENSION_META[detailCard.dimension].colorHex + '45',
+                backgroundColor: DIMENSION_META[detailCard.dimension].colorHex + '12',
+                color: DIMENSION_META[detailCard.dimension].colorHex,
+              }}
+            >
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: DIMENSION_META[detailCard.dimension].colorHex }}
+              />
+              {DIMENSION_META[detailCard.dimension].name}
+            </div>
+          </div>
         </div>
       )}
     </PsyOverlayPanel>
@@ -89,6 +137,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
           </div>
         </button>
         {modalNode}
+        {detailNode}
       </>
     );
   }
@@ -125,6 +174,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
         )}
       </button>
       {modalNode}
+      {detailNode}
     </>
   );
 }

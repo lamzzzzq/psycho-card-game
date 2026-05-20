@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Serif_SC } from "next/font/google";
-import { LanguageToggle } from "@/components/shared/LanguageToggle";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,7 +34,6 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${notoSerifSc.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-[var(--psy-bg)] text-[var(--psy-ink)]">
-        <LanguageToggle />
         {children}
       </body>
     </html>

@@ -14,6 +14,59 @@ type Step = {
   hint?: string;
 };
 
+type FlowStep = {
+  title: string;
+  body: string;
+  note?: string;
+};
+
+const PVP_FLOW: FlowStep[] = [
+  {
+    title: '进入联机对战',
+    body: '从首页点「联机对战」。这里不是直接进牌桌，而是先进入联机大厅。',
+  },
+  {
+    title: '填写身份信息',
+    body: '输入姓名和学号。学号用于防止同一个人同时占两个活动房间的座位。',
+  },
+  {
+    title: '检查是否完成测评',
+    body: '已测评：系统会用你的五维分数生成本局目标张数。未测评：会先引导去测评，否则你的目标张数没有依据。',
+    note: '测评结果会影响每个维度需要归档几张，所以不同玩家的胡牌路线不同。',
+  },
+  {
+    title: '创建房间 / 加入房间',
+    body: '房主创建房间后拿到房间码并等待其他玩家；非房主输入房间码加入。4 个真实玩家坐齐后才适合开始。',
+  },
+  {
+    title: '开始游戏',
+    body: '房主负责点开始。进入牌桌后，所有人的手牌维度默认不公开，只能靠描述、记忆和每回合查看能力判断。',
+  },
+];
+
+const SOLO_FLOW: FlowStep[] = [
+  {
+    title: '进入单机对战',
+    body: '从首页点「单机对战」。如果没有测评结果，会先去测评；如果已经测评，直接进入单机设置大厅。',
+  },
+  {
+    title: '选择 AI 难度',
+    body: '简单偏随机，中等会做基础归档判断，困难会更积极推测你的牌。',
+  },
+  {
+    title: '选择轮数',
+    body: '5 / 10 / 15 / 无限都可以。无限会一直打到有人食胡或牌局自然结束。',
+  },
+  {
+    title: '确认对手阵容',
+    body: '单机固定是你 + 3 个 AI。AI 会按自己的策略抽牌、弃牌、碰牌和食胡。',
+  },
+  {
+    title: '开始游戏',
+    body: '进入牌桌后流程和联机一致：抽牌、查看、归档、弃牌、响应别人弃牌。',
+  },
+];
+
 const STEPS: Step[] = [
   {
     title: '你的目标',
@@ -82,16 +135,26 @@ const SANDBOX_HAND: GameCard[] = [
   PC(101, 'N', '我经常感到焦虑或忧虑'),
   PC(102, 'N', '我容易情绪波动'),
   PC(103, 'N', '我容易感到压力'),
-  DC(104, '颜色会影响食欲，蓝色会抑制饥饿感'),
+  PC(104, 'C', '我会认真完成我承诺过的事'),
+  PC(105, 'E', '我喜欢参加热闹的聚会和活动'),
+  PC(106, 'A', '我会主动帮助遇到困难的人'),
+  PC(107, 'O', '我对抽象的哲学问题很感兴趣'),
+  PC(108, 'C', '我做事情之前总会制定计划'),
+  DC(109, '颜色会影响食欲，蓝色会抑制饥饿感'),
 ];
-const SANDBOX_DRAWN: PersonalityCard = PC(105, 'N', '我对批评比较敏感');
+const SANDBOX_DRAWN: PersonalityCard = PC(110, 'N', '我对批评比较敏感');
+const SANDBOX_CLAIM_CARD: PersonalityCard = PC(111, 'A', '我愿意体谅别人的处境');
 
 type Scene =
   | 'start'           // 等抽牌
+  | 'viewing'         // 查看 2 张
   | 'after-draw'      // 抽完，等点自摸碰
   | 'pong-picking'    // 选牌中
   | 'pong-failed'     // 演示失败，等点「重置」
   | 'pong-success'    // 归档成功，等出牌
+  | 'claim-window'    // 对手弃牌，等碰/食胡
+  | 'claim-success'   // 截胡碰成功
+  | 'hu-demo'         // 食胡演示
   | 'discard-picking' // 选要弃的牌
   | 'done';           // 完成本回合
 
@@ -100,8 +163,11 @@ interface SandboxState {
   hand: GameCard[];
   drawnCard: GameCard | null;
   selectedIds: number[];
+  revealedIds: number[];
   revealedAll: boolean;          // 自摸碰激活后揭开所有牌的维度（便于教学，真实游戏不会）
   declared: boolean;             // 神经质是否已归档
+  claimDeclared: boolean;
+  penaltyShown: boolean;
   feedback: { tone: 'success' | 'fail' | 'info'; text: string } | null;
   failCount: number;             // 失败次数（用于切换 caption）
 }
@@ -111,20 +177,28 @@ const initialState: SandboxState = {
   hand: SANDBOX_HAND,
   drawnCard: null,
   selectedIds: [],
+  revealedIds: [],
   revealedAll: false,
   declared: false,
+  claimDeclared: false,
+  penaltyShown: false,
   feedback: null,
   failCount: 0,
 };
 
 type Action =
   | { type: 'draw' }
+  | { type: 'view-two' }
+  | { type: 'finish-view' }
   | { type: 'open-pong' }
   | { type: 'toggle-select'; id: number }
   | { type: 'commit-pong' }
   | { type: 'cancel-pong' }
   | { type: 'continue-after-fail' }
   | { type: 'pick-discard'; id: number }
+  | { type: 'open-claim' }
+  | { type: 'commit-claim' }
+  | { type: 'show-hu' }
   | { type: 'reset' };
 
 function reducer(state: SandboxState, action: Action): SandboxState {
@@ -133,9 +207,23 @@ function reducer(state: SandboxState, action: Action): SandboxState {
       if (state.scene !== 'start') return state;
       return {
         ...state,
-        scene: 'after-draw',
+        scene: 'viewing',
         drawnCard: SANDBOX_DRAWN,
-        feedback: { tone: 'success', text: '✓ 抽到一张「神经质」牌！现在手牌 + 刚抽到 = 4 张神经质 + 1 张档案注记。' },
+        feedback: { tone: 'success', text: '抽到一张线索牌。现在选择很多，先演示「查看 2 张牌」。' },
+      };
+    case 'view-two':
+      if (state.scene !== 'viewing') return state;
+      return {
+        ...state,
+        revealedIds: [104, 110],
+        feedback: { tone: 'info', text: '本回合查看了 2 张牌：一张尽责性，一张神经质。真实牌局里只会揭开你选的 2 张。' },
+      };
+    case 'finish-view':
+      if (state.scene !== 'viewing') return state;
+      return {
+        ...state,
+        scene: 'after-draw',
+        feedback: { tone: 'success', text: '现在你知道刚抽到的牌能补齐一组。下一步演示自摸碰。' },
       };
     case 'open-pong':
       if (state.scene !== 'after-draw') return state;
@@ -144,7 +232,7 @@ function reducer(state: SandboxState, action: Action): SandboxState {
         scene: 'pong-picking',
         revealedAll: true, // 教学模式揭开
         selectedIds: [],
-        feedback: { tone: 'info', text: '🎯 选恰好 4 张「神经质」牌（含刚抽到的）。注意：真实游戏中维度默认不显示，这里为了教学揭开了。' },
+        feedback: { tone: 'info', text: '选恰好 4 张同人格描述的牌。教学模式揭开维度，真实游戏不会直接告诉你。' },
       };
     case 'toggle-select':
       if (state.scene !== 'pong-picking') return state;
@@ -171,7 +259,7 @@ function reducer(state: SandboxState, action: Action): SandboxState {
           drawnCard: drawnUsed ? null : state.drawnCard,
           selectedIds: [],
           declared: true,
-          feedback: { tone: 'success', text: '✅ 神经质归档成功！4 张进入公开归档区。归档后必须立即出 1 张牌结束回合。' },
+          feedback: { tone: 'success', text: '归档成功。4 张进入公开归档区，归档后必须立即弃 1 张牌。' },
         };
       }
       // 失败
@@ -183,9 +271,10 @@ function reducer(state: SandboxState, action: Action): SandboxState {
         scene: 'pong-failed',
         feedback: {
           tone: 'fail',
-          text: `❌ 自摸碰失败：${reason}。在真实游戏里你会被罚停一整轮（错过 6 个 claim 窗口 + 跳 1 次自己回合）。教学里我们重置一下让你重来。`,
+          text: `自摸碰失败：${reason}。真实游戏会罚停一整轮，并公开你刚刚押错的牌。`,
         },
         failCount: state.failCount + 1,
+        penaltyShown: true,
       };
     }
     case 'continue-after-fail':
@@ -215,10 +304,33 @@ function reducer(state: SandboxState, action: Action): SandboxState {
         hand: state.hand.filter((c) => c.id !== action.id),
         feedback: {
           tone: 'success',
-          text: '✓ 出牌完成 → 下一玩家。在真实游戏里这张档案注记会进入弃牌堆，其他玩家可以观察你弃的什么。',
+          text: '出牌完成。现在切到别人弃牌时，你如何响应「碰 / 食胡」。',
         },
       };
     }
+    case 'open-claim':
+      if (state.scene !== 'done') return state;
+      return {
+        ...state,
+        scene: 'claim-window',
+        selectedIds: [],
+        feedback: { tone: 'info', text: '对手弃出一张线索牌。你可以尝试截胡碰，也可以判断是否已经能食胡。' },
+      };
+    case 'commit-claim':
+      if (state.scene !== 'claim-window') return state;
+      return {
+        ...state,
+        scene: 'claim-success',
+        claimDeclared: true,
+        feedback: { tone: 'success', text: '截胡碰成功。你用手里的同类牌 + 对手弃牌完成了一组公开归档。' },
+      };
+    case 'show-hu':
+      if (state.scene !== 'claim-window' && state.scene !== 'claim-success') return state;
+      return {
+        ...state,
+        scene: 'hu-demo',
+        feedback: { tone: 'success', text: '食胡用于宣布胜利：当 5 个维度全部完成时按下。误按会公开整副手牌并罚停。' },
+      };
     case 'reset':
       return initialState;
     default:
@@ -231,16 +343,20 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
   const N = DIMENSION_META.N;
 
   const captionByScene: Record<Scene, string> = {
-    start: '这是你的开局：手牌 4 张。假设你的「神经质」目标 = 4 张，你已经有 3 张神经质 + 1 张档案注记，还差 1 张。点击下方「牌堆」抽 1 张。',
-    'after-draw': '抽到了一张神经质牌！正好凑齐 4 张目标。下一步点「自摸碰」试试 ↓',
+    start: '这是你的开局：手牌里有多种人格描述和 1 张档案注记。你需要先抽牌，再决定要查看、归档还是弃牌。',
+    viewing: '每回合可以查看 2 张手牌的真实维度。点击「查看 2 张」后，再继续进入归档判断。',
+    'after-draw': '你现在拥有足够完成一组的线索。下一步点「自摸碰」试试。',
     'pong-picking':
       state.failCount === 0
-        ? '在选牌模式里，从手牌 + 刚抽到的牌中精确选 4 张神经质。先故意选错 1 张（比如点档案注记那张）看会怎么样。'
-        : '选恰好 4 张神经质 → 点「自摸归档」。',
-    'pong-failed': '失败演示。点「继续」回到选牌模式，这次只选神经质。',
-    'pong-success': '归档完成，现在手里只剩 1 张档案注记。点击它出牌结束本回合。',
+        ? '从手牌 + 刚抽到的牌中精确选 4 张同类牌。先故意混入别的牌，看失败惩罚。'
+        : '这次只选 4 张神经质描述牌，然后点「自摸归档」。',
+    'pong-failed': '失败会公开你押错的牌并罚停一整轮。点「继续」回到选牌模式。',
+    'pong-success': '归档完成后还需要弃 1 张牌。选择一张你不想保留的牌结束回合。',
+    'claim-window': '现在是别人弃牌后的判读窗口。你可以截胡碰，也可以在已经满足全部目标时食胡。',
+    'claim-success': '截胡碰也会形成公开归档。这个记录会出现在玩家头像下和归档记录里。',
+    'hu-demo': '食胡是胜利按钮，只在所有目标完成时使用。失败成本很高，所以不要拿它试错。',
     'discard-picking': '点击要弃的牌。',
-    done: '完成本回合演示。真实游戏里：归档 5 个维度全部完成 = 胜利。教学结束 → 去测评开始第一局。',
+    done: '你的回合结束。下一步模拟别人弃牌后的「碰 / 食胡」窗口。',
   };
 
   const renderHand = () => {
@@ -277,8 +393,8 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
                 <Card
                   card={c}
                   compact
-                  revealedDimension={state.revealedAll && dimension ? dimension : null}
-                  revealedAsKnowledge={state.revealedAll && isDummy}
+                  revealedDimension={(state.revealedAll || state.revealedIds.includes(c.id)) && dimension ? dimension : null}
+                  revealedAsKnowledge={(state.revealedAll || state.revealedIds.includes(c.id)) && isDummy}
                   selected={isSelected}
                 />
                 {isDrawn && (
@@ -343,6 +459,19 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
           ) : (
             <span className="text-[var(--psy-muted)]">（暂无）</span>
           )}
+          {state.claimDeclared && (
+            <span
+              className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+              style={{
+                color: DIMENSION_META.A.colorHex,
+                backgroundColor: DIMENSION_META.A.colorHex + '20',
+                border: `1px solid ${DIMENSION_META.A.colorHex}55`,
+              }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: DIMENSION_META.A.colorHex }} />
+              宜人性 3 张
+            </span>
+          )}
         </div>
 
         {/* 牌堆 */}
@@ -367,8 +496,32 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
 
         {/* 操作按钮 */}
         <div className="flex flex-wrap items-center justify-center gap-2">
-          <button disabled className="psy-btn psy-btn-danger px-4 py-1.5 text-xs font-bold opacity-40">
+          <button
+            disabled={state.scene !== 'claim-window' && state.scene !== 'claim-success'}
+            onClick={() => dispatch({ type: 'show-hu' })}
+            className={`psy-btn psy-btn-danger px-4 py-1.5 text-xs font-bold ${
+              state.scene === 'claim-window' || state.scene === 'claim-success' ? 'animate-pulse' : 'opacity-40 cursor-not-allowed'
+            }`}
+          >
             食胡
+          </button>
+          <button
+            disabled={state.scene !== 'viewing' || state.revealedIds.length > 0}
+            onClick={() => dispatch({ type: 'view-two' })}
+            className={`psy-btn psy-btn-ghost px-4 py-1.5 text-xs font-bold ${
+              state.scene === 'viewing' && state.revealedIds.length === 0 ? 'ring-1 ring-[var(--psy-accent)]' : 'opacity-40 cursor-not-allowed'
+            }`}
+          >
+            查看 2 张
+          </button>
+          <button
+            disabled={state.scene !== 'viewing' || state.revealedIds.length === 0}
+            onClick={() => dispatch({ type: 'finish-view' })}
+            className={`psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold ${
+              state.scene === 'viewing' && state.revealedIds.length > 0 ? 'animate-pulse' : 'opacity-40 cursor-not-allowed'
+            }`}
+          >
+            继续判断
           </button>
           <button
             disabled={state.scene !== 'after-draw'}
@@ -422,6 +575,51 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
+        {state.penaltyShown && state.scene === 'pong-failed' && (
+          <div className="rounded-xl border border-red-400/35 bg-red-500/10 px-3 py-2 text-center text-xs font-semibold text-red-300">
+            罚停演示：本轮不能参与别人弃牌的判读窗口，下个自己回合也会被跳过。
+          </div>
+        )}
+
+        {state.scene === 'claim-window' && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid gap-3 rounded-xl border border-[rgba(200,155,93,0.28)] bg-[rgba(200,155,93,0.06)] p-3 text-xs text-[var(--psy-ink-soft)] sm:grid-cols-[auto_1fr_auto]"
+          >
+            <div className="flex justify-center">
+              <Card card={SANDBOX_CLAIM_CARD} compact revealedDimension="A" />
+            </div>
+            <div className="flex flex-col justify-center">
+              <div className="psy-serif text-sm text-[var(--psy-ink)]">小明弃出了一张线索牌</div>
+              <div className="mt-1 leading-6">你判断它和手里的宜人性牌可以凑成一组。真实游戏里需要自己读描述，不会直接显示维度。</div>
+            </div>
+            <button
+              onClick={() => dispatch({ type: 'commit-claim' })}
+              className="psy-btn psy-btn-accent self-center px-4 py-2 text-xs font-bold"
+            >
+              碰
+            </button>
+          </motion.div>
+        )}
+
+        {state.scene === 'claim-success' && (
+          <div className="flex justify-center">
+            <button
+              onClick={() => dispatch({ type: 'show-hu' })}
+              className="psy-btn psy-btn-danger px-4 py-1.5 text-xs font-bold"
+            >
+              继续看食胡
+            </button>
+          </div>
+        )}
+
+        {state.scene === 'hu-demo' && (
+          <div className="rounded-xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm leading-7 text-red-200">
+            食胡只在 5 个维度都完成时按。判定不成立会公开整副手牌并罚停，所以它是确认胜利，不是试探按钮。
+          </div>
+        )}
+
         {/* 手牌 */}
         <div>
           <div className="mb-1.5 flex items-baseline justify-between">
@@ -436,6 +634,17 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
         </div>
 
         {state.scene === 'done' && (
+          <div className="flex justify-center">
+            <button
+              onClick={() => dispatch({ type: 'open-claim' })}
+              className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold"
+            >
+              模拟别人弃牌
+            </button>
+          </div>
+        )}
+
+        {state.scene === 'hu-demo' && (
           <div className="flex justify-center">
             <button
               onClick={() => dispatch({ type: 'reset' })}
@@ -483,6 +692,106 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
   );
 }
 
+function StartFlowGuide() {
+  const [mode, setMode] = useState<'pvp' | 'solo'>('pvp');
+  const [index, setIndex] = useState(0);
+  const steps = mode === 'pvp' ? PVP_FLOW : SOLO_FLOW;
+  const current = steps[index];
+
+  const switchMode = (next: 'pvp' | 'solo') => {
+    setMode(next);
+    setIndex(0);
+  };
+
+  return (
+    <div className="psy-panel psy-etched rounded-[1.6rem] p-5 sm:p-6">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="psy-eyebrow text-[10px]">开始游戏流程</p>
+          <h2 className="psy-serif mt-2 text-2xl text-[var(--psy-ink)]">从首页到开局</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-2 rounded-full border border-[rgba(200,155,93,0.16)] bg-[rgba(255,255,255,0.02)] p-1">
+          <button
+            onClick={() => switchMode('pvp')}
+            className={`rounded-full px-4 py-2 text-sm transition ${
+              mode === 'pvp'
+                ? 'bg-[rgba(200,155,93,0.24)] text-[var(--psy-ink)]'
+                : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
+            }`}
+          >
+            联机对战
+          </button>
+          <button
+            onClick={() => switchMode('solo')}
+            className={`rounded-full px-4 py-2 text-sm transition ${
+              mode === 'solo'
+                ? 'bg-[rgba(200,155,93,0.24)] text-[var(--psy-ink)]'
+                : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
+            }`}
+          >
+            单机对战
+          </button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[13rem_1fr]">
+        <div className="space-y-2">
+          {steps.map((step, i) => (
+            <button
+              key={step.title}
+              onClick={() => setIndex(i)}
+              className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+                i === index
+                  ? 'border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] text-[var(--psy-ink)]'
+                  : 'border-[rgba(200,155,93,0.12)] bg-[rgba(255,255,255,0.02)] text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
+              }`}
+            >
+              <span className="psy-serif mr-2 text-[10px] text-[var(--psy-accent)]">{String(i + 1).padStart(2, '0')}</span>
+              <span className="text-xs">{step.title}</span>
+            </button>
+          ))}
+        </div>
+
+        <motion.div
+          key={`${mode}-${index}`}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-[1.2rem] border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.025)] p-5"
+        >
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h3 className="psy-serif text-xl text-[var(--psy-ink)]">{current.title}</h3>
+            <span className="rounded-full border border-[rgba(200,155,93,0.2)] px-3 py-1 text-xs text-[var(--psy-accent)]">
+              {index + 1}/{steps.length}
+            </span>
+          </div>
+          <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">{current.body}</p>
+          {current.note && (
+            <p className="mt-4 rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.06)] px-3 py-2 text-xs leading-6 text-[var(--psy-accent)]">
+              {current.note}
+            </p>
+          )}
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              onClick={() => setIndex(Math.max(0, index - 1))}
+              disabled={index === 0}
+              className="psy-btn psy-btn-ghost px-4 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              上一步
+            </button>
+            <button
+              onClick={() => setIndex(Math.min(steps.length - 1, index + 1))}
+              disabled={index === steps.length - 1}
+              className="psy-btn psy-btn-accent px-4 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              下一步
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ────────────────────────────────────────────────────────────────
 export default function TutorialPage() {
   const router = useRouter();
@@ -513,10 +822,10 @@ export default function TutorialPage() {
             {/* 主 CTA */}
             <div className="psy-panel psy-etched rounded-[1.6rem] p-6 text-center sm:p-7">
               <h2 className="psy-serif text-2xl text-[var(--psy-ink)] sm:text-3xl">
-                先在沙盒里试一回合
+                先看流程，再进沙盒打一回合
               </h2>
               <p className="mt-2 text-sm leading-6 text-[var(--psy-ink-soft)]">
-                真的可以点击：抽牌 → 选牌 → 故意选错 → 看失败演示 → 重选 → 归档 → 出牌
+                教学覆盖：联机 / 单机开局、答题检查、房间流程、查看手牌、碰、食胡、失败惩罚。
               </p>
               <button
                 onClick={() => setMode('sandbox')}
@@ -525,6 +834,8 @@ export default function TutorialPage() {
                 ▶ 进入交互沙盒
               </button>
             </div>
+
+            <StartFlowGuide />
 
             {/* 概念卡片 */}
             <div>
