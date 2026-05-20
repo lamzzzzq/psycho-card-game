@@ -214,6 +214,39 @@ export default function PvpGamePage() {
     setTimeout(() => setResultBanner(null), 3000);
   }, []);
 
+  // ⚠️ 所有 hooks 必须在 early return 之前调用，否则 zustand persist 触发
+  // 的 rehydration race 会让 hook 数量在前后 render 不一致 → React #310 crash。
+  // 之前的 removeFlyingCard / handleDrawPileHover / handleCardHover useCallback
+  // 在 line 352/405/418，挪到 early return 前才能避免「房主刷新挂掉」的 bug。
+
+  const removeFlyingCard = useCallback((id: number) => {
+    setFlyingCards((prev) => prev.filter((f) => f.id !== id));
+  }, []);
+
+  // handleDrawPileHover 依赖 canDraw（在 early return 后才能算）— 用 ref 读取
+  // 避免把 canDraw 写进 deps 又要在 early return 前定义 canDraw。
+  const canDrawRef = useRef(false);
+  const handleDrawPileHover = useCallback((hovering: boolean) => {
+    if (!drawPileRef.current || !handAreaRef.current) return;
+    if (hovering && canDrawRef.current) {
+      const fromRect = drawPileRef.current.getBoundingClientRect();
+      const toRect = handAreaRef.current.getBoundingClientRect();
+      setArrowFrom({ x: fromRect.left + fromRect.width / 2, y: fromRect.top + fromRect.height / 2 });
+      setArrowTo({ x: toRect.left + toRect.width / 2, y: toRect.top + Math.min(40, toRect.height * 0.35) });
+    } else {
+      setArrowFrom(null);
+      setArrowTo(null);
+    }
+  }, []);
+
+  const handleCardHover = useCallback((el: HTMLElement | null) => {
+    if (!el || !discardPileRef.current) { setArrowFrom(null); setArrowTo(null); return; }
+    const rect = el.getBoundingClientRect();
+    const discardRect = discardPileRef.current.getBoundingClientRect();
+    setArrowFrom({ x: rect.left + rect.width / 2, y: rect.top });
+    setArrowTo({ x: discardRect.left + discardRect.width / 2, y: discardRect.top + discardRect.height / 2 });
+  }, []);
+
   if (!gameState) {
     return (
       <div className="flex flex-1 items-center justify-center px-4">
@@ -349,10 +382,6 @@ export default function PvpGamePage() {
     setArrowTo(null);
   }
 
-  const removeFlyingCard = useCallback((id: number) => {
-    setFlyingCards((prev) => prev.filter((f) => f.id !== id));
-  }, []);
-
   function handleHu() {
     dispatchAction({ type: 'hu' });
   }
@@ -401,27 +430,8 @@ export default function PvpGamePage() {
   }
 
   const canStartView = isMyTurn && gameState.phase === 'discarding' && !viewUsedThisTurn && !viewMode;
-
-  const handleDrawPileHover = useCallback((hovering: boolean) => {
-    if (!drawPileRef.current || !handAreaRef.current) return;
-    if (hovering && canDraw) {
-      const fromRect = drawPileRef.current.getBoundingClientRect();
-      const toRect = handAreaRef.current.getBoundingClientRect();
-      setArrowFrom({ x: fromRect.left + fromRect.width / 2, y: fromRect.top + fromRect.height / 2 });
-      setArrowTo({ x: toRect.left + toRect.width / 2, y: toRect.top + Math.min(40, toRect.height * 0.35) });
-    } else {
-      setArrowFrom(null);
-      setArrowTo(null);
-    }
-  }, [canDraw]);
-
-  const handleCardHover = useCallback((el: HTMLElement | null) => {
-    if (!el || !discardPileRef.current) { setArrowFrom(null); setArrowTo(null); return; }
-    const rect = el.getBoundingClientRect();
-    const discardRect = discardPileRef.current.getBoundingClientRect();
-    setArrowFrom({ x: rect.left + rect.width / 2, y: rect.top });
-    setArrowTo({ x: discardRect.left + discardRect.width / 2, y: discardRect.top + discardRect.height / 2 });
-  }, []);
+  // 把最新 canDraw 同步到 ref，给 early-return 前定义的 handleDrawPileHover 用。
+  canDrawRef.current = canDraw;
 
   // Game over screen
   if (gameState.winner) {

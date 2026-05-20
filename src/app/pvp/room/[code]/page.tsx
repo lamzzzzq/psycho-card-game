@@ -30,7 +30,11 @@ export default function RoomWaitPage() {
 
   useEffect(() => {
     if (!player) { router.replace('/pvp'); return; }
-    usePvpStore.setState({ gameState: null, rawGameState: null });
+    // 不在这里无条件清 gameState — 否则当 status 已经是 'playing'（玩家
+    // 通过 navigation 短暂经过 room page 再跳 game page）时会清掉持久化
+    // 的游戏状态，导致 game page 看到 gameState=null → 4 秒后误判
+    // 「房主似乎不在线」。改到 status === 'waiting' 分支下才清（再来
+    // 一局的真实场景）。
 
     async function loadRoom() {
       try {
@@ -43,9 +47,14 @@ export default function RoomWaitPage() {
         if (roomErr || !roomData) { setError('房间不存在'); setLoading(false); return; }
 
         if (roomData.status === 'playing') {
+          // 游戏进行中：保留 gameState（持久化的旧快照），让 game page
+          // 渲染时有兜底数据；之后 host 会通过 state-request 推最新状态。
           router.replace(`/pvp/game/${code}`);
           return;
         }
+
+        // status === 'waiting' — 此时才安全清旧 gameState 准备新一局。
+        usePvpStore.setState({ gameState: null, rawGameState: null });
 
         const roomObj = roomData as Room;
         setRoom(roomObj);
