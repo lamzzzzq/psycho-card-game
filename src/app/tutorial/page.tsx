@@ -692,6 +692,131 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
   );
 }
 
+function FlowScreenshot({ mode, index }: { mode: 'pvp' | 'solo'; index: number }) {
+  const frameTitle = mode === 'pvp' ? '联机流程截图示意' : '单机流程截图示意';
+
+  const homeChoice = (
+    <div className="space-y-3">
+      <div className="psy-serif text-sm text-[var(--psy-ink)]">人格麻将</div>
+      <div className="grid gap-2">
+        <div className={`${mode === 'pvp' ? 'bg-[rgba(200,155,93,0.28)] text-[var(--psy-ink)]' : 'bg-[rgba(255,255,255,0.04)] text-[var(--psy-muted)]'} rounded-full border border-[rgba(200,155,93,0.24)] px-4 py-2 text-center text-sm`}>
+          联机对战
+        </div>
+        <div className={`${mode === 'solo' ? 'bg-[rgba(200,155,93,0.28)] text-[var(--psy-ink)]' : 'bg-[rgba(255,255,255,0.04)] text-[var(--psy-muted)]'} rounded-full border border-[rgba(200,155,93,0.24)] px-4 py-2 text-center text-sm`}>
+          单机对战
+        </div>
+      </div>
+    </div>
+  );
+
+  const identityForm = (
+    <div className="space-y-3">
+      <div className="psy-serif text-sm text-[var(--psy-ink)]">玩家信息</div>
+      <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] px-3 py-2">
+        <div className="text-[9px] text-[var(--psy-muted)]">姓名</div>
+        <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">示例：林教授</div>
+      </div>
+      <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] px-3 py-2">
+        <div className="text-[9px] text-[var(--psy-muted)]">学号</div>
+        <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">只用于占座校验</div>
+      </div>
+    </div>
+  );
+
+  const assessmentCheck = (
+    <div className="grid gap-2">
+      <div className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-3 py-2">
+        <div className="text-xs font-semibold text-emerald-300">已完成测评</div>
+        <div className="mt-1 text-[10px] leading-5 text-[var(--psy-ink-soft)]">直接生成本局目标张数。</div>
+      </div>
+      <div className="rounded-xl border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.08)] px-3 py-2">
+        <div className="text-xs font-semibold text-[var(--psy-accent)]">未完成测评</div>
+        <div className="mt-1 text-[10px] leading-5 text-[var(--psy-ink-soft)]">先去答题，再回到大厅。</div>
+      </div>
+    </div>
+  );
+
+  const roomPanel = (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] p-3">
+        <div className="psy-serif text-xs text-[var(--psy-ink)]">创建房间</div>
+        <div className="mt-2 rounded-lg bg-[rgba(200,155,93,0.12)] px-3 py-2 text-center text-sm text-[var(--psy-accent)]">房间码 4821</div>
+      </div>
+      <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] p-3">
+        <div className="psy-serif text-xs text-[var(--psy-ink)]">加入房间</div>
+        <div className="mt-2 rounded-lg border border-[rgba(200,155,93,0.2)] px-3 py-2 text-center text-xs text-[var(--psy-muted)]">输入 4 位房间码</div>
+      </div>
+    </div>
+  );
+
+  const startGame = (
+    <div className="space-y-3">
+      <div className="grid grid-cols-4 gap-2">
+        {['你', '小明', '林教授', '老陈'].map((name, i) => (
+          <div key={name} className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2 py-3 text-center">
+            <div className="text-xs text-[var(--psy-ink)]">{name}</div>
+            <div className="mt-1 text-[9px] text-[var(--psy-muted)]">{i === 0 ? '房主' : '已就绪'}</div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">开始游戏</div>
+    </div>
+  );
+
+  const soloSetup = (
+    <div className="space-y-3">
+      <div className="grid grid-cols-3 gap-2">
+        {['简单', '中等', '困难'].map((label, i) => (
+          <div key={label} className={`${i === Math.min(index, 2) ? 'bg-[rgba(200,155,93,0.22)] text-[var(--psy-ink)]' : 'bg-[rgba(255,255,255,0.03)] text-[var(--psy-muted)]'} rounded-xl border border-[rgba(200,155,93,0.18)] px-2 py-3 text-center text-xs`}>
+            {label}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {['5轮', '10轮', '15轮', '无限'].map((label, i) => (
+          <div key={label} className={`${i === 1 ? 'bg-[rgba(200,155,93,0.18)] text-[var(--psy-ink)]' : 'bg-[rgba(255,255,255,0.03)] text-[var(--psy-muted)]'} rounded-xl border border-[rgba(200,155,93,0.16)] px-2 py-2 text-center text-[10px]`}>
+            {label}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const soloOpponents = (
+    <div className="grid grid-cols-3 gap-2">
+      {['小明', '林教授', '老陈'].map((name) => (
+        <div key={name} className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] px-2 py-4 text-center">
+          <div className="text-sm text-[var(--psy-ink)]">{name}</div>
+          <div className="mt-2 text-[9px] leading-4 text-[var(--psy-muted)]">AI 对手</div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const soloStart = (
+    <div className="space-y-3">
+      {soloSetup}
+      <div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">开始对战</div>
+    </div>
+  );
+
+  const pvpFrames = [homeChoice, identityForm, assessmentCheck, roomPanel, startGame];
+  const soloFrames = [homeChoice, assessmentCheck, soloSetup, soloOpponents, soloStart];
+  const frame = mode === 'pvp' ? pvpFrames[index] : soloFrames[index];
+
+  return (
+    <div className="rounded-[1.2rem] border border-[rgba(200,155,93,0.16)] bg-[radial-gradient(circle_at_top,rgba(200,155,93,0.10),transparent_42%),rgba(9,15,23,0.68)] p-3">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="psy-serif text-[10px] text-[var(--psy-accent)]">{frameTitle}</span>
+        <span className="rounded-full border border-[rgba(200,155,93,0.18)] px-2 py-0.5 text-[9px] text-[var(--psy-muted)]">静态示意</span>
+      </div>
+      <div className="min-h-[12rem] rounded-[1rem] border border-[rgba(200,155,93,0.12)] bg-[linear-gradient(180deg,rgba(18,31,45,0.76),rgba(9,15,23,0.86))] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
+        {frame}
+      </div>
+    </div>
+  );
+}
+
 function StartFlowGuide() {
   const [mode, setMode] = useState<'pvp' | 'solo'>('pvp');
   const [index, setIndex] = useState(0);
@@ -758,18 +883,23 @@ function StartFlowGuide() {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-[1.2rem] border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.025)] p-5"
         >
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h3 className="psy-serif text-xl text-[var(--psy-ink)]">{current.title}</h3>
-            <span className="rounded-full border border-[rgba(200,155,93,0.2)] px-3 py-1 text-xs text-[var(--psy-accent)]">
-              {index + 1}/{steps.length}
-            </span>
+          <div className="grid gap-5 xl:grid-cols-[1fr_22rem]">
+            <div>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="psy-serif text-xl text-[var(--psy-ink)]">{current.title}</h3>
+                <span className="rounded-full border border-[rgba(200,155,93,0.2)] px-3 py-1 text-xs text-[var(--psy-accent)]">
+                  {index + 1}/{steps.length}
+                </span>
+              </div>
+              <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">{current.body}</p>
+              {current.note && (
+                <p className="mt-4 rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.06)] px-3 py-2 text-xs leading-6 text-[var(--psy-accent)]">
+                  {current.note}
+                </p>
+              )}
+            </div>
+            <FlowScreenshot mode={mode} index={index} />
           </div>
-          <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">{current.body}</p>
-          {current.note && (
-            <p className="mt-4 rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.06)] px-3 py-2 text-xs leading-6 text-[var(--psy-accent)]">
-              {current.note}
-            </p>
-          )}
           <div className="mt-5 flex justify-end gap-2">
             <button
               onClick={() => setIndex(Math.max(0, index - 1))}
