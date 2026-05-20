@@ -27,7 +27,7 @@ const PVP_FLOW: FlowStep[] = [
   },
   {
     title: '填写身份信息',
-    body: '输入姓名和学号。学号用于防止同一个人同时占两个活动房间的座位。',
+    body: '只输入学号，并再次输入学号确认。学号用于防止同一个人同时占两个活动房间的座位。',
   },
   {
     title: '检查是否完成测评',
@@ -713,12 +713,12 @@ function FlowScreenshot({ mode, index }: { mode: 'pvp' | 'solo'; index: number }
     <div className="space-y-3">
       <div className="psy-serif text-sm text-[var(--psy-ink)]">玩家信息</div>
       <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] px-3 py-2">
-        <div className="text-[9px] text-[var(--psy-muted)]">姓名</div>
-        <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">示例：林教授</div>
+        <div className="text-[9px] text-[var(--psy-muted)]">学号</div>
+        <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">请输入学号</div>
       </div>
       <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] px-3 py-2">
-        <div className="text-[9px] text-[var(--psy-muted)]">学号</div>
-        <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">只用于占座校验</div>
+        <div className="text-[9px] text-[var(--psy-muted)]">确认学号</div>
+        <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">再次输入学号确认</div>
       </div>
     </div>
   );
