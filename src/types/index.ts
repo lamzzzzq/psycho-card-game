@@ -99,6 +99,10 @@ export interface Player {
   // own-turn cleanly before being unfrozen.
   // Cleared in discardCard when the offender's own discard lands.
   frozenUntilOwnDiscard?: boolean;
+  // 加重罚停：fail 触发时设 true。skipPenalizedPlayers 跳过该玩家一次后，
+  // 检测到此标志 → 重新激活 skipNextTurn=true（让下一轮再跳一次）+ 清此
+  // 标志。net effect：罚停期间玩家被 skip 2 个 own-turn 而不是 1 个。
+  extraSkipQueued?: boolean;
   // Player has quit the game. Their seat is AI-piloted for the rest of
   // the match. Other players continue until a winner is declared or the
   // last human standing also leaves.

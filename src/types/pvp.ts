@@ -108,6 +108,9 @@ export interface SerializedPlayer {
   // Penalty freeze, mirrored from host. Released by the offender's own
   // next clean discard. UI gates claim/pong/hu panels on this.
   frozenUntilOwnDiscard?: boolean;
+  // 加重罚停标志：skipPenalizedPlayers 跳过该玩家一次后，若 true 则重新激活
+  // skipNextTurn 让下一圈再跳一次。pong-fail/hu-fail/self-pong-fail 时设。
+  extraSkipQueued?: boolean;
   // Player quit the room — their seat is permanently skipped by the
   // engine; UI shows "已退出".
   hasLeft?: boolean;

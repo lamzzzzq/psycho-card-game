@@ -49,6 +49,9 @@ export function serializeGameState(state: RawGameState, viewerPlayerId: string |
     if (p.frozenUntilOwnDiscard) {
       base.frozenUntilOwnDiscard = true;
     }
+    if (p.extraSkipQueued) {
+      base.extraSkipQueued = true;
+    }
     if (p.hasLeft) {
       base.hasLeft = true;
     }

@@ -308,8 +308,10 @@ describe('penalty freeze — full A→B→C→A cycle reaches normal play', () =
     state = skipPong(state, 0);
     expect(state.phase).toBe('drawing');
     expect(state.currentPlayerIndex).toBe(0); // back to A
-    // C is now unfrozen
-    expect(state.players[2].skipNextTurn).toBe(false);
+    // 加重罚停（extraSkipQueued）：第一次 own-turn skip 后立即激活 skipNextTurn=true
+    // 让下一圈再跳一次。C 还在罚停中。
+    expect(state.players[2].skipNextTurn).toBe(true);
+    expect(state.players[2].extraSkipQueued).toBe(false); // 已 consume
   });
 
   it('after C\'s auto-skip, drawCard on C\'s next visit clears revealedSelectedCards', () => {
@@ -434,7 +436,9 @@ describe('penalty freeze — frozenUntilOwnDiscard (罚停一整轮)', () => {
     state = pongCard(state, 1, 'O', [10, 11]);  // B fails
     state = skipPong(state, 2);                  // C skips → advance to B → auto-skip B → land on C
     expect(state.currentPlayerIndex).toBe(2);
-    expect(state.players[1].skipNextTurn).toBe(false);     // consumed
+    // 加重罚停：第一次 own-skip 触发 extraSkipQueued → 重新激活 skipNextTurn
+    expect(state.players[1].skipNextTurn).toBe(true);
+    expect(state.players[1].extraSkipQueued).toBe(false); // consumed
     expect(state.players[1].frozenUntilOwnDiscard).toBe(true); // CRITICAL: still frozen
 
     // C draws + discards → claim window with C as discarder. B auto-skipped.
@@ -584,6 +588,77 @@ describe('penalty freeze — frozenUntilOwnDiscard (罚停一整轮)', () => {
     const failAction = [...result.actionLog].reverse().find((a) => a.type === 'pong-fail');
     expect(failAction).toBeDefined();
     expect(failAction!.failReason).toBe('wrong-cards');
+  });
+
+  it('加重罚停：pong-fail 后 extraSkipQueued=true，第一次 own-skip 后重新激活 skipNextTurn', () => {
+    // B fails → both flags set
+    const state = makeGameState({
+      phase: 'claim-window',
+      discardedByIndex: 0,
+      currentPlayerIndex: 0,
+      pendingDiscard: makeCard('O', { id: 100 }),
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({
+          id: 'B' as PlayerId,
+          hand: [makeCard('O', { id: 10 }), makeCard('C', { id: 11 })],
+        }),
+        makePlayer({ id: 'C' as PlayerId, hand: [] }),
+      ],
+    });
+    const afterFail = pongCard(state, 1, 'O', [10, 11]);
+    expect(afterFail.players[1].skipNextTurn).toBe(true);
+    expect(afterFail.players[1].extraSkipQueued).toBe(true);
+    expect(afterFail.players[1].frozenUntilOwnDiscard).toBe(true);
+  });
+
+  it('加重罚停：skipPenalizedPlayers 单次调用 consume 一次后立即激活 skipNextTurn 第二次', () => {
+    // 直接构造 currentPlayerIndex=B + B 罚停状态
+    const state = makeGameState({
+      phase: 'drawing',
+      currentPlayerIndex: 1,
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({
+          id: 'B' as PlayerId,
+          skipNextTurn: true,
+          extraSkipQueued: true,
+          frozenUntilOwnDiscard: true,
+        }),
+        makePlayer({ id: 'C' as PlayerId }),
+      ],
+    });
+    const result = skipPenalizedPlayers(state);
+    // B 被跳了一次，extraSkipQueued consume 后重新激活 skipNextTurn
+    expect(result.players[1].skipNextTurn).toBe(true);
+    expect(result.players[1].extraSkipQueued).toBe(false);
+    expect(result.players[1].frozenUntilOwnDiscard).toBe(true);
+    // turn advance 到下一玩家
+    expect(result.currentPlayerIndex).not.toBe(1);
+  });
+
+  it('加重罚停：第二次 own-turn 也被跳过后 skipNextTurn 彻底 consume', () => {
+    // 模拟第一次跳已经完成的状态：skipNextTurn=true，extraSkipQueued=false
+    const state = makeGameState({
+      phase: 'drawing',
+      currentPlayerIndex: 1,
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({
+          id: 'B' as PlayerId,
+          skipNextTurn: true,
+          extraSkipQueued: false,
+          frozenUntilOwnDiscard: true,
+        }),
+        makePlayer({ id: 'C' as PlayerId }),
+      ],
+    });
+    const result = skipPenalizedPlayers(state);
+    // 第二次跳：skipNextTurn=false 彻底 consume
+    expect(result.players[1].skipNextTurn).toBe(false);
+    expect(result.players[1].extraSkipQueued).toBe(false);
+    // frozenUntilOwnDiscard 仍 true（等 B 自己 discard 解冻）
+    expect(result.players[1].frozenUntilOwnDiscard).toBe(true);
   });
 
   it('a dummy-card own discard also clears the freeze', () => {

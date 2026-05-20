@@ -788,14 +788,21 @@ export default function PvpGamePage() {
                 {canPong && (
                   <button
                     onClick={handlePong}
+                    disabled={selectedCardIds.length === 0}
                     className={
                       pendingDimDeclared
-                        ? 'psy-btn psy-btn-ghost px-4 py-1.5 text-xs font-bold opacity-60'
-                        : 'psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold'
+                        ? 'psy-btn psy-btn-ghost px-4 py-1.5 text-xs font-bold opacity-60 disabled:cursor-not-allowed disabled:opacity-35'
+                        : 'psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35'
                     }
-                    title={pendingDimDeclared ? '⚠️ 已归档维度 · 提交将判失败 + 罚停' : undefined}
+                    title={
+                      selectedCardIds.length === 0
+                        ? '请先点击手牌选择同维度卡再碰'
+                        : pendingDimDeclared
+                        ? '⚠️ 已归档维度 · 提交将判失败 + 罚停'
+                        : undefined
+                    }
                   >
-                    碰{pendingDimDeclared ? '（⚠️ 已归档）' : '！'}{selectedCardIds.length > 0 ? `（已选 ${selectedCardIds.length} 张）` : ''}
+                    碰{pendingDimDeclared ? '（⚠️ 已归档）' : '！'}{selectedCardIds.length > 0 ? `（已选 ${selectedCardIds.length} 张）` : '（请先选牌）'}
                   </button>
                 )}
                 {!meFrozen && (

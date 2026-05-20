@@ -153,7 +153,10 @@ function finalizeClaimWindow(state: GameState): GameState {
 // as a deadlock guard (see bug #6 fix).
 export function skipPenalizedPlayers(state: GameState): GameState {
   let current = state;
-  for (let i = 0; i < current.players.length; i++) {
+  // 加重罚停：每个 frozen 玩家可能被 skip 2 次（extraSkipQueued 触发第二次）。
+  // loop 上限改成 N*2 + safety margin，确保单次调用 consume 完所有 queued skip。
+  const maxIters = current.players.length * 3;
+  for (let i = 0; i < maxIters; i++) {
     if (current.phase !== 'drawing') return current;
     const p = current.players[current.currentPlayerIndex];
     // hasLeft: permanent seat skip. Their turn is dead-air; we advance
@@ -180,7 +183,16 @@ export function skipPenalizedPlayers(state: GameState): GameState {
       // through the auto-skipped turn — the offender doesn't get to
       // discard during a skip, so the freeze can't clear until they
       // play a real next turn.
-      if (idx === skippedIdx) return { ...pl, skipNextTurn: false };
+      // 加重罚停：如果 extraSkipQueued=true，被跳过一次后立即重新激活
+      // skipNextTurn（下一圈再跳一次）+ 清 extraSkipQueued。net 效果：
+      // pong-fail / hu-fail / self-pong-fail 后罚停 2 个 own-turn skip
+      // 而不是 1 个。
+      if (idx === skippedIdx) {
+        if (pl.extraSkipQueued) {
+          return { ...pl, skipNextTurn: true, extraSkipQueued: false };
+        }
+        return { ...pl, skipNextTurn: false };
+      }
       return pl;
     });
     const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
@@ -271,11 +283,13 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
     // HU FAIL — same penalty model as pong-fail: skip own next turn +
     // frozen until own next clean discard. Plus full-hand reveal
     // (heavier reveal than pong-fail; matches the stakes of declaring hu).
+    // extraSkipQueued=true 让 skipPenalizedPlayers 跳过该玩家时再 queue 一次。
     const newPlayers = state.players.map((p, i) =>
       i === playerIndex
         ? {
             ...p,
             skipNextTurn: true,
+            extraSkipQueued: true,
             frozenUntilOwnDiscard: true,
             revealedHand: true,
           }
@@ -614,6 +628,7 @@ export function pongCard(
         ? {
             ...p,
             skipNextTurn: true,
+            extraSkipQueued: true,
             frozenUntilOwnDiscard: true,
             revealedSelectedCards: exposedCards,
           }
@@ -768,6 +783,7 @@ export function selfPongCard(
           ...p,
           hand: handWithDrawnReturned,
           skipNextTurn: true,
+          extraSkipQueued: true,
           frozenUntilOwnDiscard: true,
           revealedSelectedCards: exposedCards,
         }
