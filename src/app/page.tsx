@@ -124,14 +124,6 @@ export default function Home() {
             </button>
           )}
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-          <button
-            onClick={() => router.push('/stats')}
-            className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
-          >
-            查看数据统计
-          </button>
-        </div>
       </motion.div>
     </div>
   );
