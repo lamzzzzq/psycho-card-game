@@ -752,7 +752,7 @@ function FlowScreenshot({ mode, index }: { mode: 'pvp' | 'solo'; index: number }
   const startGame = (
     <div className="space-y-3">
       <div className="grid grid-cols-4 gap-2">
-        {['你', '小明', '林教授', '老陈'].map((name, i) => (
+        {['你', '11', '12', '13'].map((name, i) => (
           <div key={name} className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2 py-3 text-center">
             <div className="text-xs text-[var(--psy-ink)]">{name}</div>
             <div className="mt-1 text-[9px] text-[var(--psy-muted)]">{i === 0 ? '房主' : '已就绪'}</div>
