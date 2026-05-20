@@ -124,6 +124,8 @@ export interface GameAction {
   card?: GameCard;
   dimension?: Dimension;
   cardCount?: number;
+  // 'wrong-cards' (cards/count mismatch) | 'already-declared' (该维度已归档)
+  failReason?: 'wrong-cards' | 'already-declared';
   timestamp: number;
 }
 

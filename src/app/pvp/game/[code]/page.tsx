@@ -271,17 +271,28 @@ export default function PvpGamePage() {
   // First-come-first-served: any non-discarder can pong. The race
   // resolves naturally because pongCard advances the phase out of
   // 'claim-window' before slower clicks land.
-  // Penalty freeze: skipNextTurn (one own-turn auto-skip) +
-  // frozenUntilOwnDiscard (locked out of every claim window until
-  // own next clean discard). Either suppresses the claim panel.
+  // Penalty freeze 拆两层：
+  //   meFrozen = 任一 flag (skipNextTurn 或 frozenUntilOwnDiscard) → 禁止 pong/hu
+  //   meFrozenLockout = 真正"无法操作"的状态：
+  //     - skipNextTurn=true（不该到自己回合，被 skipPenalizedPlayers 跳）
+  //     - frozenUntilOwnDiscard=true 且非自己回合（claim window 被锁）
+  //   own-turn frozenUntilOwnDiscard-only：不算 lockout — 必须 draw+discard 解冻。
   const meFrozen =
     meSerialized?.skipNextTurn ||
     !!meSerialized?.frozenUntilOwnDiscard;
+  const meFrozenLockout =
+    !!meSerialized?.skipNextTurn ||
+    (!!meSerialized?.frozenUntilOwnDiscard && !isMyTurn);
+  const meAwaitingOwnDischarge =
+    !!meSerialized?.frozenUntilOwnDiscard && isMyTurn && !meSerialized?.skipNextTurn;
   const canPong = canClaim && !meFrozen;
   const canHu = (isMyTurn && gameState.phase !== 'claim-window' && !meFrozen)
     || (canClaim && !meFrozen);
-  const canDraw = isMyTurn && gameState.phase === 'drawing';
-  const isDiscarding = isMyTurn && gameState.phase === 'discarding';
+  // canDraw/isDiscarding 加 !skipNextTurn 防御：skipPenalizedPlayers 应已跳过
+  // 该玩家，若 race 导致 currentPlayerIndex 停在 skipNextTurn 玩家身上，UI 也不
+  // 让点。frozenUntilOwnDiscard-only 状态允许 draw/discard（spec 解冻路径）。
+  const canDraw = isMyTurn && gameState.phase === 'drawing' && !meSerialized?.skipNextTurn;
+  const isDiscarding = isMyTurn && gameState.phase === 'discarding' && !meSerialized?.skipNextTurn;
 
   // Convert serialized players to Player objects for components
   const mePlayer = meSerialized ? toPlayer(meSerialized, meSerialized.hand) : null;
@@ -462,6 +473,8 @@ export default function PvpGamePage() {
   // selfPongCard's strict count + dim check judges correctness on commit.
   // Once-per-turn rule: if already used this turn, no candidates.
   const meAlreadySelfPonged = !!mePlayer?.selfPongUsedThisTurn;
+  // 已归档维度也加入候选（强 trap 规则）：UI 显示但视觉降级。
+  // 玩家选卡 → 提交 → engine 判 already-declared → fail + 罚停。
   const selfPongCandidates: Dimension[] = [];
   if (
     mePlayer &&
@@ -472,7 +485,6 @@ export default function PvpGamePage() {
     (gameState.phase === 'drawing' || gameState.phase === 'discarding')
   ) {
     for (const d of DIMENSIONS) {
-      if (declaredDims.has(d)) continue;
       selfPongCandidates.push(d);
     }
   }
@@ -484,7 +496,9 @@ export default function PvpGamePage() {
     const pc = gameState.pendingDiscard;
     if (!isPersonalityCard(pc)) return null;
     const d = pc.dimension;
-    if (declaredDims.has(d)) return null;
+    // 已归档维度仍允许点（强 trap）：sameInHand 不再 gate 这种情况，
+    // 让玩家有机会主动 commit → fail + 罚停。
+    if (declaredDims.has(d)) return d;
     const sameInHand = mePlayer.hand.filter(
       (c) => isPersonalityCard(c) && c.dimension === d
     ).length;
@@ -650,12 +664,19 @@ export default function PvpGamePage() {
       {/* My player area */}
       {mePlayer && (
         <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
-          {/* Penalty banner — visible & loud */}
-          {meFrozen && (
+          {/* Penalty banner — 真正 lockout 时显示"罚停"，own-turn 解冻轮换成提示 */}
+          {meFrozenLockout && (
             <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
               <span>⛔</span>
               <span className="hidden sm:inline">你被罚停一轮 — 下个本应出牌的回合会被自动跳过，期间无法参与碰/食胡</span>
               <span className="sm:hidden">罚停一轮 · 下回合跳过 · 期间不可碰/胡</span>
+            </div>
+          )}
+          {meAwaitingOwnDischarge && (
+            <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-accent)] sm:text-sm">
+              <span>⏳</span>
+              <span className="hidden sm:inline">解冻轮 — 正常出牌一次即可解除罚停（期间仍不可碰/胡）</span>
+              <span className="sm:hidden">解冻轮 · 出牌一次解除</span>
             </div>
           )}
           {/* Big Five scores */}
@@ -722,7 +743,13 @@ export default function PvpGamePage() {
           {/* Claim window — opponent discarded. First-come-first-served:
               any non-discarder may pong / pass / hu. Whoever clicks
               first wins the race. */}
-          {canClaim && gameState.pendingDiscard && (
+          {canClaim && gameState.pendingDiscard && (() => {
+            const pendingPersonality = isPersonalityCard(gameState.pendingDiscard)
+              ? gameState.pendingDiscard
+              : null;
+            const pendingDimDeclared =
+              pendingPersonality !== null && declaredDims.has(pendingPersonality.dimension);
+            return (
             <div className="psy-panel space-y-3 rounded-[1.35rem] border p-4">
               <div className="flex items-center justify-between">
                 <h3 className="psy-serif text-sm font-medium text-[var(--psy-accent)]">
@@ -738,11 +765,17 @@ export default function PvpGamePage() {
                   </div>
                 </div>
                 <div className="text-xs text-[var(--psy-ink-soft)]">
-                  <ul className="list-disc pl-4 space-y-1 marker:text-orange-400">
-                    <li>选出与弃牌同一人格的手牌后点「碰」</li>
-                    <li>总张数要达到该维度要求</li>
-                    <li>混入其他人格牌会受罚</li>
-                  </ul>
+                  {pendingDimDeclared ? (
+                    <p className="text-[var(--psy-danger)] font-medium">
+                      ⚠️ 该维度你已归档 — 再次碰将判失败 + 罚停。建议「过」。
+                    </p>
+                  ) : (
+                    <ul className="list-disc pl-4 space-y-1 marker:text-orange-400">
+                      <li>选出与弃牌同一人格的手牌后点「碰」</li>
+                      <li>总张数要达到该维度要求</li>
+                      <li>混入其他人格牌会受罚</li>
+                    </ul>
+                  )}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -755,9 +788,14 @@ export default function PvpGamePage() {
                 {canPong && (
                   <button
                     onClick={handlePong}
-                    className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold"
+                    className={
+                      pendingDimDeclared
+                        ? 'psy-btn psy-btn-ghost px-4 py-1.5 text-xs font-bold opacity-60'
+                        : 'psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold'
+                    }
+                    title={pendingDimDeclared ? '⚠️ 已归档维度 · 提交将判失败 + 罚停' : undefined}
                   >
-                    碰！{selectedCardIds.length > 0 ? `（已选 ${selectedCardIds.length} 张）` : ''}
+                    碰{pendingDimDeclared ? '（⚠️ 已归档）' : '！'}{selectedCardIds.length > 0 ? `（已选 ${selectedCardIds.length} 张）` : ''}
                   </button>
                 )}
                 {!meFrozen && (
@@ -770,7 +808,8 @@ export default function PvpGamePage() {
                 )}
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* Action buttons (my turn only) */}
           {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && !viewMode && !pongIntent && (
@@ -811,7 +850,11 @@ export default function PvpGamePage() {
                 onClick={() => {
                   if (meFrozen || meAlreadySelfPonged) return;
                   if (selfPongCandidates.length === 0) return;
-                  setPongIntent({ type: 'self', dimension: selfPongCandidates[0] });
+                  // 默认选第一个未归档维度，避免点击「自摸碰」直接落到 trap 维度
+                  const defaultDim =
+                    selfPongCandidates.find((d) => !declaredDims.has(d)) ??
+                    selfPongCandidates[0];
+                  setPongIntent({ type: 'self', dimension: defaultDim });
                   setSelectedCardIds([]);
                 }}
                 disabled={
@@ -848,7 +891,9 @@ export default function PvpGamePage() {
               </p>
               {pongIntent.type === 'self' && selfPongCandidates.length > 1 && (
                 <div className="flex flex-wrap justify-center gap-1.5">
-                  {selfPongCandidates.map((d) => (
+                  {selfPongCandidates.map((d) => {
+                    const isDeclared = declaredDims.has(d);
+                    return (
                     <button
                       key={d}
                       onClick={() => {
@@ -856,21 +901,31 @@ export default function PvpGamePage() {
                         setSelectedCardIds([]);
                       }}
                       className="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition"
+                      title={isDeclared ? '⚠️ 已归档维度 · 提交将判失败 + 罚停' : undefined}
                       style={{
                         borderColor: pongIntent.dimension === d
                           ? DIMENSION_META[d].colorHex
+                          : isDeclared
+                          ? 'rgba(220,106,79,0.35)'
                           : 'rgba(200,155,93,0.18)',
                         backgroundColor: pongIntent.dimension === d
                           ? DIMENSION_META[d].colorHex + '20'
+                          : isDeclared
+                          ? 'rgba(220,106,79,0.06)'
                           : 'rgba(255,255,255,0.02)',
                         color: pongIntent.dimension === d
                           ? DIMENSION_META[d].colorHex
+                          : isDeclared
+                          ? 'rgba(220,106,79,0.65)'
                           : 'var(--psy-ink-soft)',
+                        textDecoration: isDeclared ? 'line-through' : undefined,
+                        opacity: isDeclared && pongIntent.dimension !== d ? 0.6 : 1,
                       }}
                     >
-                      {DIMENSION_META[d].name}
+                      {DIMENSION_META[d].name}{isDeclared ? ' ⚠️' : ''}
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
               <div className="flex justify-center gap-2">

@@ -305,25 +305,48 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
       return allClaimersResponded(nextState) ? finalizeClaimWindow(nextState) : nextState;
     }
 
-    // Own-turn hu-fail: spec says penalty is 罚停一轮 (skip next turn),
-    // current turn continues normally. Player still needs to discard
-    // (if they had drawn) or draw+discard (if they hadn't). The skip-
-    // next-turn flag is honored when the turn wraps back to this player,
-    // via the defensive guard in drawCard + the usual skipPenalizedPlayers
-    // calls from discardCard / finalizeClaimWindow.
-    return {
+    // Own-turn hu-fail: 立即结束本回合 + 罚停下一轮 + 锁定 claim windows
+    // 直到自己再次完成 own-discard。等价于 self-pong-fail 的「罚停一整轮」语义。
+    //   1. drawnCard 还回手牌 — 不让玩家用 discard 解冻 frozenUntilOwnDiscard。
+    //   2. advance turn + skipPenalizedPlayers — 本回合就让位。
+    //   3. skipNextTurn 让下一圈到该玩家时再被跳过一回合。
+    // 之前的旧实现：当回合继续 draw+discard，结果 UI banner 显示罚停但按钮没禁，
+    // 玩家事实上「能出牌」+ 当回合 discard 又把 frozenUntilOwnDiscard 清掉了。
+    const handWithDrawnReturned: GameCard[] = state.drawnCard
+      ? [...newPlayers[playerIndex].hand, state.drawnCard]
+      : newPlayers[playerIndex].hand;
+    const finalPlayers = newPlayers.map((p, i) =>
+      i === playerIndex ? { ...p, hand: handWithDrawnReturned } : p
+    );
+    const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+      playerIndex,
+      state.currentRound,
+      state.settings.totalRounds,
+      state.players.length
+    );
+    return skipPenalizedPlayers({
       ...state,
-      players: newPlayers,
+      players: finalPlayers,
+      drawnCard: null,
+      currentPlayerIndex: nextPlayerIndex,
+      currentRound: nextRound,
+      phase: isGameOver ? 'game-over' : 'drawing',
       actionLog: [...state.actionLog, action],
-    };
+      winner: isGameOver ? determineWinner(finalPlayers) : null,
+    });
   }
 }
 
 export function drawCard(state: GameState): GameState {
-  // NOTE: We intentionally do NOT auto-skip penalized current players
-  // here. Per spec, own-turn hu-fail continues the current turn (penalty
-  // is 罚停下一轮, not 罚停本轮). skipPenalizedPlayers is only called
-  // after a turn advance (discardCard / finalizeClaimWindow / pongCard).
+  // 防御性 guard：skipNextTurn=true 的玩家不该收到 drawCard — turn advance 时
+  // skipPenalizedPlayers 应已经跳过他。出现这种状态说明上游漏了 skipPenalizedPlayers
+  // 调用，兜底强制跳过避免死锁。
+  // 注意：只查 skipNextTurn，不查 frozenUntilOwnDiscard — 后者的解冻条件就是
+  // own draw + discard，禁掉 draw 会造成无法解冻的死锁。
+  const guardPlayer = state.players[state.currentPlayerIndex];
+  if (guardPlayer?.skipNextTurn) {
+    return skipPenalizedPlayers(state);
+  }
 
   let drawPile = state.drawPile;
   let discardPile = state.discardPile;
@@ -497,15 +520,9 @@ export function pongCard(
   const targets = getTargetCounts(ponger.bigFiveScores);
   const targetCount = targets[dimension];
 
-  if (getDeclaredDimensions(ponger).has(dimension)) {
-    console.warn('[pong-silent] #4 dimension-already-declared', {
-      pongerIndex,
-      pongerId: ponger.id,
-      dimension,
-      declaredDimensions: Array.from(getDeclaredDimensions(ponger)),
-    });
-    return state;
-  }
+  // 已归档维度强 trap：玩家明知碰过仍 commit → 当 pong-fail 处理 + 罚停。
+  // UI 端会显示已归档维度按钮但视觉降级，玩家可在选卡前取消（pongIntent 清空）。
+  const alreadyDeclared = getDeclaredDimensions(ponger).has(dimension);
 
   const selectedHandCards = ponger.hand.filter((c) => handCardIds.includes(c.id));
   const allPongCards = [...selectedHandCards, pendingCard];
@@ -517,6 +534,7 @@ export function pongCard(
   // cards of this dimension."
   const exactCount = allPongCards.length === targetCount;
   const allCorrect =
+    !alreadyDeclared &&
     exactCount &&
     allPongCards.every(
       (c) => isPersonalityCard(c) && c.dimension === dimension
@@ -603,6 +621,7 @@ export function pongCard(
       type: 'pong-fail',
       dimension,
       cardCount: allPongCards.length,
+      failReason: alreadyDeclared ? 'already-declared' : 'wrong-cards',
       timestamp: Date.now(),
     };
 
@@ -644,7 +663,8 @@ export function selfPongCard(
 
   const ponger = state.players[pongerIndex];
   if (isFrozen(ponger)) return state;
-  if (getDeclaredDimensions(ponger).has(dimension)) return state;
+  // 已归档维度强 trap：玩家明知碰过仍提交自摸 → 走 SELF-PONG FAIL 罚停。
+  const alreadyDeclared = getDeclaredDimensions(ponger).has(dimension);
   // One self-pong per turn. Cleared when the player draws on their
   // next turn (drawCard).
   if (ponger.selfPongUsedThisTurn) return state;
@@ -661,6 +681,7 @@ export function selfPongCard(
 
   const exactCount = selected.length === targetCount;
   const allCorrect =
+    !alreadyDeclared &&
     exactCount &&
     selected.every(
       (c) => isPersonalityCard(c) && c.dimension === dimension
@@ -748,6 +769,7 @@ export function selfPongCard(
     type: 'pong-fail',
     dimension,
     cardCount: selected.length,
+    failReason: alreadyDeclared ? 'already-declared' : 'wrong-cards',
     timestamp: Date.now(),
   };
 

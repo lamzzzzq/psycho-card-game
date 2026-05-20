@@ -133,6 +133,65 @@ describe('pong-fail penalty (visibility)', () => {
   });
 });
 
+describe('own-turn hu-fail — 立即 advance turn (banner-vs-action 一致性 fix)', () => {
+  it('phase=drawing 时 own-turn hu-fail：立即 advance turn，下家接管', () => {
+    const state = makeGameState({
+      phase: 'drawing',
+      currentPlayerIndex: 0,
+      players: [
+        makePlayer({ id: 'A' as PlayerId, hand: [makeCard('O', { id: 1 })] }),
+        makePlayer({ id: 'B' as PlayerId }),
+        makePlayer({ id: 'C' as PlayerId }),
+      ],
+      drawPile: [makeCard('A', { id: 99 })],
+    });
+    const result = attemptHu(state, 0);
+    expect(result.phase).toBe('drawing');
+    expect(result.currentPlayerIndex).toBe(1); // 不再停在 A
+    expect(result.players[0].skipNextTurn).toBe(true);
+    expect(result.players[0].frozenUntilOwnDiscard).toBe(true);
+    expect(result.drawnCard).toBeNull();
+  });
+
+  it('phase=discarding 时 own-turn hu-fail：drawnCard 还回手牌 + advance turn', () => {
+    const drawn = makeCard('A', { id: 500 });
+    const state = makeGameState({
+      phase: 'discarding',
+      currentPlayerIndex: 0,
+      drawnCard: drawn,
+      players: [
+        makePlayer({ id: 'A' as PlayerId, hand: [makeCard('O', { id: 10 })] }),
+        makePlayer({ id: 'B' as PlayerId }),
+        makePlayer({ id: 'C' as PlayerId }),
+      ],
+    });
+    const result = attemptHu(state, 0);
+    expect(result.currentPlayerIndex).toBe(1);
+    expect(result.drawnCard).toBeNull();
+    // drawnCard 500 应被塞回 A 手牌
+    expect(result.players[0].hand.map((c) => c.id).sort()).toEqual([10, 500]);
+    expect(result.players[0].skipNextTurn).toBe(true);
+    expect(result.players[0].frozenUntilOwnDiscard).toBe(true);
+    expect(result.players[0].revealedHand).toBe(true);
+  });
+
+  it('own-turn hu-fail 当回合 frozenUntilOwnDiscard 不会被 discard 立即清掉', () => {
+    // 新 spec 关键不变量：当回合不再调 discardCard（因为已 advance turn），
+    // 所以 frozenUntilOwnDiscard 必然保留到下一圈玩家自己的解冻轮。
+    const state = makeGameState({
+      phase: 'discarding',
+      currentPlayerIndex: 0,
+      drawnCard: makeCard('A', { id: 7 }),
+      players: [
+        makePlayer({ id: 'A' as PlayerId, hand: [makeCard('O', { id: 8 })] }),
+        makePlayer({ id: 'B' as PlayerId }),
+      ],
+    });
+    const result = attemptHu(state, 0);
+    expect(result.players[0].frozenUntilOwnDiscard).toBe(true);
+  });
+});
+
 describe('penalty freeze — C cannot act in B\'s claim window', () => {
   // Build a "post pong-fail" state: C is penalized, claim window
   // closed, currentPlayerIndex advanced to B, C still has skipNextTurn.
@@ -436,6 +495,95 @@ describe('penalty freeze — frozenUntilOwnDiscard (罚停一整轮)', () => {
     // Turn advanced past C.
     expect(state.currentPlayerIndex).not.toBe(2);
     expect(state.drawnCard).toBeNull();
+  });
+
+  it('强 trap: 已归档维度 pong → fail + 罚停 + failReason="already-declared"', () => {
+    // B 已经归档 O 维度。A 出了一张 O，B 仍然 commit pong O → 应判 fail。
+    const state = makeGameState({
+      phase: 'claim-window',
+      discardedByIndex: 0,
+      currentPlayerIndex: 0,
+      pendingDiscard: makeCard('O', { id: 100 }),
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({
+          id: 'B' as PlayerId,
+          hand: [makeCard('O', { id: 10 }), makeCard('O', { id: 11 })],
+          declaredSets: [
+            {
+              dimension: 'O',
+              cards: [
+                makeCard('O', { id: 90 }),
+                makeCard('O', { id: 91 }),
+                makeCard('O', { id: 92 }),
+              ],
+              round: 1,
+            },
+          ],
+        }),
+        makePlayer({ id: 'C' as PlayerId }),
+      ],
+    });
+    const result = pongCard(state, 1, 'O', [10, 11]);
+    expect(result.players[1].skipNextTurn).toBe(true);
+    expect(result.players[1].frozenUntilOwnDiscard).toBe(true);
+    // 找最后一个 pong-fail（actionLog 末尾可能因 finalizeClaimWindow 追加了 skip）
+    const failAction = [...result.actionLog].reverse().find((a) => a.type === 'pong-fail');
+    expect(failAction).toBeDefined();
+    expect(failAction!.failReason).toBe('already-declared');
+  });
+
+  it('强 trap: 已归档维度 self-pong → fail + 罚停 + failReason="already-declared"', () => {
+    const drawn = makeCard('O', { id: 500 });
+    const state = makeGameState({
+      phase: 'discarding',
+      currentPlayerIndex: 0,
+      drawnCard: drawn,
+      players: [
+        makePlayer({
+          id: 'A' as PlayerId,
+          hand: [makeCard('O', { id: 10 }), makeCard('O', { id: 11 })],
+          declaredSets: [
+            {
+              dimension: 'O',
+              cards: [
+                makeCard('O', { id: 90 }),
+                makeCard('O', { id: 91 }),
+                makeCard('O', { id: 92 }),
+              ],
+              round: 1,
+            },
+          ],
+        }),
+        makePlayer({ id: 'B' as PlayerId }),
+      ],
+    });
+    const result = selfPongCard(state, 0, 'O', [10, 11, 500]);
+    expect(result.players[0].skipNextTurn).toBe(true);
+    expect(result.players[0].frozenUntilOwnDiscard).toBe(true);
+    const failAction = [...result.actionLog].reverse().find((a) => a.type === 'pong-fail');
+    expect(failAction).toBeDefined();
+    expect(failAction!.failReason).toBe('already-declared');
+  });
+
+  it('普通 pong-fail (count/dim 错) failReason="wrong-cards"', () => {
+    const state = makeGameState({
+      phase: 'claim-window',
+      discardedByIndex: 0,
+      currentPlayerIndex: 0,
+      pendingDiscard: makeCard('O', { id: 100 }),
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({
+          id: 'B' as PlayerId,
+          hand: [makeCard('O', { id: 10 }), makeCard('C', { id: 11 })],
+        }),
+      ],
+    });
+    const result = pongCard(state, 1, 'O', [10, 11]);
+    const failAction = [...result.actionLog].reverse().find((a) => a.type === 'pong-fail');
+    expect(failAction).toBeDefined();
+    expect(failAction!.failReason).toBe('wrong-cards');
   });
 
   it('a dummy-card own discard also clears the freeze', () => {

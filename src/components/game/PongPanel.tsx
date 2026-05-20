@@ -44,16 +44,14 @@ export function PongPanel({
   if (!isPersonalityCard(pendingCard)) return null;
 
   const pendingDim = pendingCard.dimension;
-  // Can the human claim this for any dimension?
-  // The pending card's dimension determines what you'd declare
   const handCardsOfDim = player.hand.filter(
     (c) => isPersonalityCard(c) && c.dimension === pendingDim
   );
   const totalWithPending = handCardsOfDim.length + 1;
-  const canClaimThisDim = !declaredDims.has(pendingDim) && totalWithPending >= targets[pendingDim];
-
-  // No more disable on count threshold — let the player commit with any
-  // selection. They eat the penalty if they're wrong; that's their call.
+  const isAlreadyDeclared = declaredDims.has(pendingDim);
+  // 已归档维度也允许玩家点（强 trap）；点了 commit → engine 判 fail + 罚停。
+  // 不要 gate sameInHand 阈值 — 玩家自己判断，错就吃罚。
+  const canClaimThisDim = isAlreadyDeclared || totalWithPending >= targets[pendingDim];
 
   return (
     <motion.div
@@ -88,7 +86,11 @@ export function PongPanel({
         </div>
 
         <div className="flex-1 space-y-1 text-[11px] text-[var(--psy-ink-soft)] sm:text-xs">
-          {canClaimThisDim ? (
+          {isAlreadyDeclared ? (
+            <p className="text-[var(--psy-danger)] font-medium">
+              ⚠️ 该维度你已归档 — 再次碰将判失败 + 罚停。可暂不归档。
+            </p>
+          ) : canClaimThisDim ? (
             <div className="space-y-2">
               <p className="text-[var(--psy-ink)]">
                 你可以尝试据此完成一组人格归档。

@@ -370,11 +370,18 @@ export default function GamePage() {
   const humanPlayer = game.players[0];
   const opponents = game.players.slice(1);
   const isHumanTurn = game.currentPlayerIndex === 0;
-  const canDraw = isHumanTurn && game.phase === 'drawing';
-  const isDiscarding = isHumanTurn && game.phase === 'discarding';
   const isPongWindow = game.phase === 'claim-window' && game.pendingDiscard !== null && game.discardedByIndex !== 0;
   const humanFrozen =
     humanPlayer.skipNextTurn || !!humanPlayer.frozenUntilOwnDiscard;
+  const humanFrozenLockout =
+    humanPlayer.skipNextTurn ||
+    (!!humanPlayer.frozenUntilOwnDiscard && !isHumanTurn);
+  const humanAwaitingOwnDischarge =
+    !!humanPlayer.frozenUntilOwnDiscard && isHumanTurn && !humanPlayer.skipNextTurn;
+  // canDraw/isDiscarding 加 !skipNextTurn 防御 — skipPenalizedPlayers 应已跳过该
+  // 玩家；frozenUntilOwnDiscard-only 状态允许出牌（spec 解冻路径）。
+  const canDraw = isHumanTurn && game.phase === 'drawing' && !humanPlayer.skipNextTurn;
+  const isDiscarding = isHumanTurn && game.phase === 'discarding' && !humanPlayer.skipNextTurn;
   const canHu =
     game.phase !== 'game-over' &&
     !humanFrozen &&
@@ -396,6 +403,7 @@ export default function GamePage() {
   // judges correctness on commit (selfPongCard's strict count + dim check).
   //
   // Once-per-turn rule: if already used this turn, no candidates.
+  // 已归档维度也加入候选（强 trap）：UI 显示，玩家选卡 + 提交 → engine 判 fail + 罚停。
   const selfPongCandidates: Dimension[] = [];
   if (
     isHumanTurn &&
@@ -404,20 +412,18 @@ export default function GamePage() {
     (game.phase === 'drawing' || game.phase === 'discarding')
   ) {
     for (const d of DIMENSIONS) {
-      if (declaredDims.has(d)) continue;
       selfPongCandidates.push(d);
     }
   }
 
-  // Other-pong: only the pending discard's dimension is a candidate,
-  // and only if it can be combined with (target - 1) same-dim hand cards.
+  // Other-pong: 已归档维度也允许（强 trap），玩家点 → 选卡 → 提交 → fail。
   const otherPongCandidate: Dimension | null = (() => {
     if (!isPongWindow || !game.pendingDiscard || humanFrozen) return null;
     if (game.claimResponses.includes(humanPlayer.id)) return null;
     const pc = game.pendingDiscard;
     if (!isPersonalityCard(pc)) return null;
     const d = pc.dimension;
-    if (declaredDims.has(d)) return null;
+    if (declaredDims.has(d)) return d;  // 强 trap：允许点
     const sameInHand = humanPlayer.hand.filter(
       (c) => isPersonalityCard(c) && c.dimension === d
     ).length;
@@ -539,12 +545,19 @@ export default function GamePage() {
 
       {/* Human player area */}
       <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
-        {/* Penalty banner for human player — visible & loud */}
-        {humanFrozen && (
+        {/* Penalty banner — lockout 时显示红色"罚停"，own-turn 解冻轮显示提示 */}
+        {humanFrozenLockout && (
           <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
             <span>⛔</span>
             <span className="hidden sm:inline">你被罚停一轮 — 下个本应出牌的回合会被自动跳过，期间无法参与碰/食胡</span>
             <span className="sm:hidden">罚停一轮 · 下回合跳过 · 期间不可碰/胡</span>
+          </div>
+        )}
+        {humanAwaitingOwnDischarge && (
+          <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-accent)] sm:text-sm">
+            <span>⏳</span>
+            <span className="hidden sm:inline">解冻轮 — 正常出牌一次即可解除罚停（期间仍不可碰/胡）</span>
+            <span className="sm:hidden">解冻轮 · 出牌一次解除</span>
           </div>
         )}
         {/* Row 1: My personality scores */}
@@ -649,7 +662,11 @@ export default function GamePage() {
                 onClick={() => {
                   if (humanPlayer.selfPongUsedThisTurn || humanFrozen) return;
                   if (selfPongCandidates.length === 0) return;
-                  setPongIntent({ type: 'self', dimension: selfPongCandidates[0] });
+                  // 默认选第一个未归档维度，防止误触 trap
+                  const defaultDim =
+                    selfPongCandidates.find((d) => !declaredDims.has(d)) ??
+                    selfPongCandidates[0];
+                  setPongIntent({ type: 'self', dimension: defaultDim });
                   setSelectedCardIds([]);
                 }}
                 disabled={
@@ -742,7 +759,9 @@ export default function GamePage() {
             {/* Self-pong dimension switcher (only when there are multiple candidates) */}
             {pongIntent.type === 'self' && selfPongCandidates.length > 1 && (
               <div className="flex flex-wrap justify-center gap-1.5">
-                {selfPongCandidates.map((d) => (
+                {selfPongCandidates.map((d) => {
+                  const isDeclared = declaredDims.has(d);
+                  return (
                   <button
                     key={d}
                     onClick={() => {
@@ -750,21 +769,31 @@ export default function GamePage() {
                       setSelectedCardIds([]);
                     }}
                     className="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition"
+                    title={isDeclared ? '⚠️ 已归档维度 · 提交将判失败 + 罚停' : undefined}
                     style={{
                       borderColor: pongIntent.dimension === d
                         ? DIMENSION_META[d].colorHex
+                        : isDeclared
+                        ? 'rgba(220,106,79,0.35)'
                         : 'rgba(200,155,93,0.18)',
                       backgroundColor: pongIntent.dimension === d
                         ? DIMENSION_META[d].colorHex + '20'
+                        : isDeclared
+                        ? 'rgba(220,106,79,0.06)'
                         : 'rgba(255,255,255,0.02)',
                       color: pongIntent.dimension === d
                         ? DIMENSION_META[d].colorHex
+                        : isDeclared
+                        ? 'rgba(220,106,79,0.65)'
                         : 'var(--psy-ink-soft)',
+                      textDecoration: isDeclared ? 'line-through' : undefined,
+                      opacity: isDeclared && pongIntent.dimension !== d ? 0.6 : 1,
                     }}
                   >
-                    {DIMENSION_META[d].name}
+                    {DIMENSION_META[d].name}{isDeclared ? ' ⚠️' : ''}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             )}
             <div className="flex justify-center gap-2">
