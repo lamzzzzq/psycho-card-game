@@ -312,6 +312,11 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
     //   3. skipNextTurn 让下一圈到该玩家时再被跳过一回合。
     // 之前的旧实现：当回合继续 draw+discard，结果 UI banner 显示罚停但按钮没禁，
     // 玩家事实上「能出牌」+ 当回合 discard 又把 frozenUntilOwnDiscard 清掉了。
+    //
+    // ⚠️ 边界：最后一回合 own-turn hu-fail 会触发 isGameOver=true，winner 由
+    // getRankings 推断（declaredSets desc, hand asc）。被罚停玩家此时手牌 +1
+    // (drawnCard 还回) + declaredSets 一张没加 → 通常 rank 垫底。这是设计
+    // 取舍：旧实现允许该玩家最后再补一张人格组，新实现一律不补。
     const handWithDrawnReturned: GameCard[] = state.drawnCard
       ? [...newPlayers[playerIndex].hand, state.drawnCard]
       : newPlayers[playerIndex].hand;
@@ -664,6 +669,12 @@ export function selfPongCard(
   const ponger = state.players[pongerIndex];
   if (isFrozen(ponger)) return state;
   // 已归档维度强 trap：玩家明知碰过仍提交自摸 → 走 SELF-PONG FAIL 罚停。
+  // 优先级顺序（前者命中即 return / fail 不再判后续）：
+  //   1. isFrozen → silent reject（受罚状态不可参与任何动作，UI 也禁掉了按钮）
+  //   2. selfPongUsedThisTurn → silent reject（本回合已用过一次，硬规则优先于
+  //      trap；不会把"再次提交已归档维度"算作 fail，否则玩家无法理解为啥被罚）
+  //   3. alreadyDeclared 进入 FAIL 分支（强 trap）— 必须先成功过一次，且未
+  //      在本回合用掉 self-pong 名额，再 commit 同维度才会触发
   const alreadyDeclared = getDeclaredDimensions(ponger).has(dimension);
   // One self-pong per turn. Cleared when the player draws on their
   // next turn (drawCard).

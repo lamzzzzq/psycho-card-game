@@ -8,6 +8,7 @@ import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
 import { usePvpStore } from '@/stores/usePvpStore';
 import { upsertPlayer, createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerActiveRoom } from '@/lib/room-api';
+import { retryPendingSaves } from '@/lib/game-record';
 import { supabase } from '@/lib/supabase';
 import { PlayerInfo, DeckId } from '@/types/pvp';
 import { BigFiveScores, DIMENSIONS } from '@/types';
@@ -40,6 +41,11 @@ export default function PvpLobbyPage() {
   const [manualScoresInput, setManualScoresInput] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
   const [rawInputs, setRawInputs] = useState<Record<string, string>>({ O: '3', C: '3', E: '3', A: '3', N: '3' });
   const [activeRoom, setActiveRoom] = useState<{ code: string; status: string; roomId: string } | null>(null);
+
+  // 补传上局未成功保存的对局数据（host 崩溃 / 网络断 / Supabase 超时遗留）
+  useEffect(() => {
+    void retryPendingSaves();
+  }, []);
 
   useEffect(() => {
     if (!player) return;

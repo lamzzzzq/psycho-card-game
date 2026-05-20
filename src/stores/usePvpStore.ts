@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { Room, RoomPlayer, RoomSettings, RealtimeMessage, PvpAction, SerializedGameState } from '@/types/pvp';
 import { getRoomPlayers, updateRoomStatus, kickPlayer, dissolveRoom } from '@/lib/room-api';
-import { saveGameSession } from '@/lib/game-record';
+import { saveGameSession, retryPendingSaves } from '@/lib/game-record';
 import { BigFiveScores } from '@/types';
 import { serializeGameState } from '@/lib/pvp-serializer';
 import { initializePvpGame, applyPvpAction } from '@/lib/pvp-game-logic';
@@ -403,6 +403,9 @@ export const usePvpStore = create<PvpStore>()(
       .sort((a, b) => a.seat_index - b.seat_index)
       .slice(0, maxPlayers);
     const rawState = initializePvpGame(orderedPlayers, bigFiveMap, room.settings);
+    // 记开局时刻，game-record 用这个值而不是 actionLog[0].timestamp（actionLog 第一项
+    // 可能是 leave 之类的非"开局"动作，会误把 started_at 染成动作时间）。
+    (rawState as { gameStartedAt?: number }).gameStartedAt = Date.now();
 
     // Store full state internally (host only)
     set({ rawGameState: rawState });
@@ -471,14 +474,19 @@ export const usePvpStore = create<PvpStore>()(
         // New schema: game_sessions + game_participants + big_five_snapshots.
         // Falls back silently if Supabase is unreachable (best-effort).
         const startedAt =
-          newState.actionLog[0]?.timestamp ?? Date.now();
+          (newState as { gameStartedAt?: number }).gameStartedAt ??
+          newState.actionLog[0]?.timestamp ??
+          Date.now();
         const seatMeta = orderedPlayers.map((rp, i) => ({
           seatIndex: i,
           playerId: rp.player_id,
           studentId: rp.student_id ?? null,
           isAi: false,
         }));
-        saveGameSession({
+        // fire-and-forget but with internal 5s timeout + localStorage retry
+        // buffer (saveGameSession 内部处理超时和暂存)。这里仍不 await，避免阻塞
+        // UI；真正的 host 崩溃保护靠 retryPendingSaves() 下次启动补传。
+        void saveGameSession({
           mode: 'pvp',
           roomId: room.id,
           roomCode: room.code,

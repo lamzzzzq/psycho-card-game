@@ -11,7 +11,7 @@
  * end-of-game UI flow.
  */
 import { supabase } from './supabase';
-import { GameState, BigFiveScores, PlayerId } from '@/types';
+import { GameState, BigFiveScores, Player, PlayerId } from '@/types';
 import { getPlayerScore, getRankings } from './game-logic';
 
 export interface SeatMeta {
@@ -54,14 +54,81 @@ async function insertSnapshot(input: {
   return data.id;
 }
 
+// 失败/超时 payload 暂存在 localStorage，下次启动时 retrySavePending() 重传。
+const PENDING_KEY = 'psycho-card-pending-saves';
+const SAVE_TIMEOUT_MS = 5000;
+
+function readPending(): SaveGameSessionInput[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(PENDING_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePending(items: SaveGameSessionInput[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(items));
+  } catch {}
+}
+
+function bufferForRetry(input: SaveGameSessionInput) {
+  const items = readPending();
+  items.push(input);
+  // 上限 10 局，老的丢掉避免无限增长
+  writePending(items.slice(-10));
+}
+
 /**
- * Save a finished game. Best-effort: never throws, never blocks UI.
+ * Retry any pending saves left over from a previous session.
+ * Call once on app startup (e.g. PVP lobby mount).
+ */
+export async function retryPendingSaves(): Promise<void> {
+  const items = readPending();
+  if (items.length === 0) return;
+  const remaining: SaveGameSessionInput[] = [];
+  for (const item of items) {
+    const id = await saveOnce(item, SAVE_TIMEOUT_MS);
+    if (!id) remaining.push(item);
+  }
+  writePending(remaining);
+}
+
+/**
+ * Save a finished game. Best-effort with timeout + localStorage retry buffer.
  * Returns the inserted session id, or null if persistence failed.
+ * Host crash window narrowed from minutes (fire-and-forget) to ~5s + retry.
  */
 export async function saveGameSession(input: SaveGameSessionInput): Promise<string | null> {
+  const id = await saveOnce(input, SAVE_TIMEOUT_MS);
+  if (!id) {
+    console.warn('[game-record] save timed out or failed — buffered to localStorage for retry');
+    bufferForRetry(input);
+  }
+  return id;
+}
+
+async function saveOnce(input: SaveGameSessionInput, timeoutMs: number): Promise<string | null> {
+  const work = saveInner(input);
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
+  return Promise.race([work, timeout]);
+}
+
+async function saveInner(input: SaveGameSessionInput): Promise<string | null> {
   try {
-    const ranked = getRankings(input.finalState.players);
+    // rank 排序：先剔除 hasLeft 玩家排到尾部，再按 getRankings (declaredSets desc,
+    // hand asc) 在活人内部排。否则 last-standing winner 可能因 declaredSets=0
+    // 被退出玩家挤到 rank=2 而 is_winner=true，数据自相矛盾。
     const winnerId = input.finalState.winner;
+    const activePlayers = input.finalState.players.filter((p) => !p.hasLeft);
+    const leftPlayers = input.finalState.players.filter((p) => p.hasLeft);
+    const ranked: Player[] = [
+      ...getRankings(activePlayers),
+      ...getRankings(leftPlayers),
+    ];
 
     // 1) Snapshot BigFive for every non-AI seat (one snapshot per participant).
     //    This nails down 学号 ↔ 这一局使用的人格分数 forever.

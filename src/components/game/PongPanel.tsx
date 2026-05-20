@@ -131,9 +131,14 @@ export function PongPanel({
           {canClaimThisDim && (
             <button
               onClick={() => onClaim(pendingDim, selectedCardIds)}
-              className="psy-btn psy-btn-accent px-3 py-1.5 text-[11px] font-bold sm:px-4 sm:py-2 sm:text-xs"
+              className={
+                isAlreadyDeclared
+                  ? 'psy-btn psy-btn-ghost px-3 py-1.5 text-[11px] font-bold opacity-60 sm:px-4 sm:py-2 sm:text-xs'
+                  : 'psy-btn psy-btn-accent px-3 py-1.5 text-[11px] font-bold sm:px-4 sm:py-2 sm:text-xs'
+              }
+              title={isAlreadyDeclared ? '⚠️ 已归档维度 · 提交将判失败 + 罚停' : undefined}
             >
-              归档判定{selectedCardIds.length > 0 ? `（已选 ${selectedCardIds.length} 张）` : ''}
+              归档判定{isAlreadyDeclared ? '（⚠️ 已归档）' : ''}{selectedCardIds.length > 0 ? `（已选 ${selectedCardIds.length} 张）` : ''}
             </button>
           )}
         </div>
