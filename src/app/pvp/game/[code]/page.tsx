@@ -137,6 +137,9 @@ export default function PvpGamePage() {
     // clients exit cleanly instead of staring at a frozen table forever.
     const gameInProgress = gs && gs.phase !== 'game-over';
     if (isHost && gameInProgress) {
+      // 中途退出：先把当前对局存成「中断局」(winner=null)，再解散。
+      // 只有 host 有 rawGameState，所以这是唯一能保住中断数据的时机。
+      try { usePvpStore.getState().persistInterruptedGame(); } catch {}
       try { send({ type: 'room-dissolved' }); } catch {}
       const rId = room?.id;
       if (rId) {

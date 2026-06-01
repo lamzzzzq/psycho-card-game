@@ -50,9 +50,15 @@ interface PvpStore {
   // Host-only
   startGame: () => void;
   handlePlayerAction: (fromPlayerId: string, action: PvpAction) => void;
+  // Host 中途退出/解散时，把当前未结束的对局存成「中断局」(winner=null)。
+  persistInterruptedGame: () => void;
 
   reset: () => void;
 }
+
+// 模块级去重：同一局（按 gameStartedAt）只存一次中断记录，避免退出流程
+// 多处触发导致重复写入。
+const interruptedSaved = new Set<number>();
 
 export const usePvpStore = create<PvpStore>()(
   persist(
@@ -498,6 +504,40 @@ export const usePvpStore = create<PvpStore>()(
         updateRoomStatus(room.id, 'waiting');
       }
     }
+  },
+
+  persistInterruptedGame: () => {
+    const { isHost, rawGameState, room, players } = get();
+    // 只有 host 持有完整 rawGameState 才能存；游戏没开始 / 已正常结束都不在此存。
+    if (!isHost || !rawGameState || !room) return;
+    if (rawGameState.phase === 'game-over') return; // 正常结束已由 winner 路径存过
+
+    const key: number | undefined =
+      (rawGameState as { gameStartedAt?: number }).gameStartedAt ??
+      rawGameState.actionLog?.[0]?.timestamp;
+    if (key != null) {
+      if (interruptedSaved.has(key)) return;
+      interruptedSaved.add(key);
+    }
+
+    const orderedPlayers = [...players].sort((a, b) => a.seat_index - b.seat_index);
+    const startedAt = key ?? Date.now();
+    const seatMeta = orderedPlayers.map((rp, i) => ({
+      seatIndex: i,
+      playerId: rp.player_id,
+      studentId: rp.student_id ?? null,
+      isAi: false,
+    }));
+    // winner=null → game-record 写入 winner_player_id=null，课堂查询可区分中断局。
+    // fire-and-forget（内部 5s 超时 + localStorage 重试）。
+    void saveGameSession({
+      mode: 'pvp',
+      roomId: room.id,
+      roomCode: room.code,
+      startedAt,
+      finalState: { ...rawGameState, winner: null },
+      seatMeta,
+    });
   },
 
   reset: () => {
