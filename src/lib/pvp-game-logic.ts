@@ -33,7 +33,7 @@ export function initializePvpGame(
 ): GameState {
   const allScores = orderedPlayers.map(p => bigFiveMap[p.player_id] ?? randomBigFive());
 
-  const deck = createShuffledDeck();
+  const deck = createShuffledDeck(allScores.length);
   const { hands, remaining } = dealCardsVariable(deck, allScores);
 
   const players: Player[] = orderedPlayers.map((p, i) => ({

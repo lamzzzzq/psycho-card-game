@@ -39,7 +39,7 @@ export function initializeGame(
   const aiScoresList = AI_PERSONAS.map(() => generateAIScores());
   const allScores = [humanScores, ...aiScoresList];
 
-  const deck = createShuffledDeck();
+  const deck = createShuffledDeck(allScores.length);
   const { hands, remaining } = dealCardsVariable(deck, allScores);
 
   const players: Player[] = [
@@ -597,6 +597,34 @@ export function pongCard(
       };
     }
 
+    // Edge case (empty-hand deadlock): a non-winning pong can consume the
+    // ponger's ENTIRE hand (e.g. their last 2 cards were both the ponged
+    // dimension). They'd then be stuck in 'discarding' with no card to
+    // discard and no drawnCard → permanent deadlock. In that case the
+    // stolen turn simply ends: advance to the next player.
+    const pongerNewHand = newPlayers[pongerIndex].hand;
+    if (pongerNewHand.length === 0) {
+      const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+        pongerIndex,
+        state.currentRound,
+        state.settings.totalRounds,
+        state.players.length
+      );
+      return skipPenalizedPlayers({
+        ...state,
+        players: newPlayers,
+        pendingDiscard: null,
+        discardedByIndex: -1,
+        claimResponses: [],
+        currentPlayerIndex: nextPlayerIndex,
+        currentRound: nextRound,
+        phase: isGameOver ? 'game-over' : 'drawing',
+        drawnCard: null,
+        actionLog: [...state.actionLog, action],
+        winner: isGameOver ? determineWinner(newPlayers) : null,
+      });
+    }
+
     // Pong steals the turn: ponger plays next. Per bug #7, ponger does
     // NOT draw a new card — they must immediately discard one from hand.
     // phase='discarding' + drawnCard=null signals this state.
@@ -748,6 +776,28 @@ export function selfPongCard(
         phase: 'game-over',
         winner: ponger.id,
       };
+    }
+
+    // Empty-hand deadlock guard (same as pongCard): if the self-pong
+    // consumed every card the player could discard (hand empty AND no
+    // leftover drawnCard), there's nothing to discard — end the turn.
+    if (newHand.length === 0 && newDrawn === null) {
+      const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+        pongerIndex,
+        state.currentRound,
+        state.settings.totalRounds,
+        state.players.length
+      );
+      return skipPenalizedPlayers({
+        ...state,
+        players: newPlayers,
+        drawnCard: null,
+        currentPlayerIndex: nextPlayerIndex,
+        currentRound: nextRound,
+        phase: isGameOver ? 'game-over' : 'drawing',
+        actionLog: [...state.actionLog, action],
+        winner: isGameOver ? determineWinner(newPlayers) : null,
+      });
     }
 
     // Stays in discarding — player still owes one discard.
