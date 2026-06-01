@@ -939,12 +939,20 @@ export default function TutorialPage() {
               人格麻将 · 教学
             </h1>
           </div>
-          <button
-            onClick={() => router.push('/')}
-            className="psy-btn psy-btn-ghost px-4 py-2 text-sm"
-          >
-            返回首页
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/rules')}
+              className="psy-btn px-4 py-2 text-sm"
+            >
+              规则 Hardcopy
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              className="psy-btn psy-btn-ghost px-4 py-2 text-sm"
+            >
+              返回首页
+            </button>
+          </div>
         </div>
 
         {mode === 'list' && (
