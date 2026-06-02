@@ -7,7 +7,7 @@ import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
 import { usePvpStore } from '@/stores/usePvpStore';
-import { upsertPlayer, createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerActiveRoom } from '@/lib/room-api';
+import { upsertPlayer, createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerActiveRoom, STALE_ROOM_MS } from '@/lib/room-api';
 import { retryPendingSaves } from '@/lib/game-record';
 import { supabase } from '@/lib/supabase';
 import { PlayerInfo, DeckId } from '@/types/pvp';
@@ -53,17 +53,25 @@ export default function PvpLobbyPage() {
     (async () => {
       const { data, error } = await supabase
         .from('room_players')
-        .select('room_id, rooms!inner(id, code, status)')
+        .select('room_id, rooms!inner(id, code, status, created_at)')
         .eq('player_id', player.id);
       if (cancelled || error) return;
       const rows = (data ?? []) as unknown as Array<{
-        rooms: { id: string; code: string; status: string } | { id: string; code: string; status: string }[] | null;
+        rooms: { id: string; code: string; status: string; created_at: string } | { id: string; code: string; status: string; created_at: string }[] | null;
       }>;
       const pickRoom = (r: typeof rows[number]) => (Array.isArray(r.rooms) ? r.rooms[0] : r.rooms);
+      const cutoff = Date.now() - STALE_ROOM_MS;
+      // 只认 6 小时内创建的 waiting/playing 房为活跃；更老的当僵尸房。
       const active = rows
         .map(pickRoom)
-        .find((room) => room && (room.status === 'waiting' || room.status === 'playing'));
+        .find((room) => room && (room.status === 'waiting' || room.status === 'playing')
+          && new Date(room.created_at).getTime() >= cutoff);
       if (!active) {
+        // 没有活跃房：若名下还挂着（过期的）room_players 记录，自动清掉，
+        // 免得「已在房间内」幽灵提示一直跟着这个学号。
+        if (rows.length > 0) {
+          try { await leaveAllRooms(player.id); } catch {}
+        }
         usePvpStore.getState().reset();
         return;
       }

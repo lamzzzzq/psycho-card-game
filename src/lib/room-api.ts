@@ -105,18 +105,26 @@ export async function leaveAllRooms(playerId: string) {
   await supabase.from('room_players').delete().eq('player_id', playerId);
 }
 
+// 房间过期阈值：超过这个时间还停在 waiting/playing 的房间视为废弃
+// （关页面没点退出留下的僵尸房）。真实对局 session 撑死 1 小时，6 小时很安全。
+// 用于「已在房间内」判定，避免几周前的旧房永久把玩家卡在外面。
+export const STALE_ROOM_MS = 6 * 60 * 60 * 1000;
+
 // Find the player's currently-active room (if any). Used to detect
 // student-ID collisions: if a different device tries to create/join
 // with the same ID while a room is still active, we surface a clear
 // error instead of silently kicking the original session.
+// 只认「6 小时内创建」的房间为活跃，过期房一律忽略。
 export async function getPlayerActiveRoom(
   playerId: string
 ): Promise<{ code: string; status: string; roomId: string } | null> {
+  const cutoff = new Date(Date.now() - STALE_ROOM_MS).toISOString();
   const { data, error } = await supabase
     .from('room_players')
-    .select('room_id, rooms!inner(code, status)')
+    .select('room_id, rooms!inner(code, status, created_at)')
     .eq('player_id', playerId)
     .in('rooms.status', ['waiting', 'playing'])
+    .gte('rooms.created_at', cutoff)
     .limit(1)
     .maybeSingle();
   if (error || !data) return null;
