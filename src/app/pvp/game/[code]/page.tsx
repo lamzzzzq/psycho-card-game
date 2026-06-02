@@ -89,6 +89,11 @@ export default function PvpGamePage() {
     dimension: Dimension;
   } | null>(null);
   const [idleReminderVisible, setIdleReminderVisible] = useState(false);
+  // 抢牌窗口提交锁 + 「本轮已被抢」提示
+  const [claimSubmitted, setClaimSubmitted] = useState(false);
+  const [stolenToast, setStolenToast] = useState(false);
+  const pongAttemptRef = useRef(false);   // 我本轮是否点过「碰」
+  const prevPhaseRef = useRef<string | null>(null);
   const drawPileRef = useRef<HTMLDivElement>(null);
   const discardPileRef = useRef<HTMLDivElement>(null);
   const handAreaRef = useRef<HTMLDivElement>(null);
@@ -162,6 +167,31 @@ export default function PvpGamePage() {
   useEffect(() => {
     if (gameState?.phase !== 'claim-window') setSelectedCardIds([]);
   }, [gameState?.phase]);
+
+  // 抢牌窗口的提交锁 + 「本轮已被抢」提示。
+  // - 离开 claim-window：解锁，准备下一个窗口。
+  // - claim-window → discarding（有人碰成功、轮到他出牌）且赢家不是我、而我点过「碰」
+  //   → 闪一句「本轮已被抢」，让落败者明白不是按键失灵。
+  useEffect(() => {
+    const phase = gameState?.phase;
+    const prev = prevPhaseRef.current;
+    prevPhaseRef.current = phase ?? null;
+    if (phase !== 'claim-window') {
+      setClaimSubmitted(false);
+      if (
+        prev === 'claim-window' &&
+        phase === 'discarding' &&
+        pongAttemptRef.current &&
+        gameState?.players[gameState.currentPlayerIndex]?.id !== myPlayerId
+      ) {
+        setStolenToast(true);
+        const t = setTimeout(() => setStolenToast(false), 2200);
+        pongAttemptRef.current = false;
+        return () => clearTimeout(t);
+      }
+      pongAttemptRef.current = false;
+    }
+  }, [gameState?.phase, gameState?.currentPlayerIndex, myPlayerId]);
 
   // Reset "view cards" state whenever the active turn changes (own or other).
   useEffect(() => {
@@ -386,16 +416,22 @@ export default function PvpGamePage() {
   }
 
   function handleHu() {
+    if (isClaimWindow) setClaimSubmitted(true); // 抢牌窗口里的胡也算"已提交"
     dispatchAction({ type: 'hu' });
   }
 
   function handlePong() {
     if (!gameState?.pendingDiscard || !('dimension' in gameState.pendingDiscard)) return;
+    if (claimSubmitted) return; // 已提交，防重复点
     const dim = (gameState.pendingDiscard as any).dimension as Dimension;
+    pongAttemptRef.current = true;
+    setClaimSubmitted(true);
     dispatchAction({ type: 'pong', dimension: dim, handCardIds: selectedCardIds });
   }
 
   function handleSkipPong() {
+    if (claimSubmitted) return;
+    setClaimSubmitted(true);
     dispatchAction({ type: 'skip-pong' });
   }
 
@@ -637,6 +673,18 @@ export default function PvpGamePage() {
         </motion.div>
       )}
 
+      {stolenToast && (
+        <motion.div
+          initial={{ opacity: 0, y: -10, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-[65] max-w-[90vw] rounded-xl border border-[rgba(200,155,93,0.5)] bg-[rgba(40,30,18,0.95)] px-5 py-2.5 text-xs font-bold text-[var(--psy-ink)] shadow-2xl sm:top-20 sm:px-6 sm:py-3 sm:text-sm"
+        >
+          ⚡ 本轮已被抢 — 别人先碰到了
+        </motion.div>
+      )}
+
       {/* Opponents */}
       <div className="mb-1 grid shrink-0 grid-cols-3 gap-2 sm:mb-4 sm:h-[6.5rem] sm:gap-3">
         {opponentPlayers.map(opp => (
@@ -791,6 +839,11 @@ export default function PvpGamePage() {
                   )}
                 </div>
               </div>
+              {claimSubmitted ? (
+                <div className="psy-serif animate-pulse py-1.5 text-center text-xs text-[var(--psy-muted)]">
+                  已提交，等待结算…
+                </div>
+              ) : (
               <div className="flex gap-2">
                 <button
                   onClick={handleSkipPong}
@@ -827,6 +880,7 @@ export default function PvpGamePage() {
                   </button>
                 )}
               </div>
+              )}
             </div>
             );
           })()}
