@@ -132,6 +132,10 @@ function runOneGame(seed: number, rogueRate = 0.0): { state: GameState; actions:
         state = drawCard(state);
         break;
       }
+      // 'ai-turn' 是单机 UI 标记：AI 摸完牌后要出牌。之前误把它 coerce 成
+      // 'drawing'，导致 AI 一直摸不弃、靠摸空牌库结束（牌库扩大后 action 数
+      // 偶发超 5000 假死）。正确做法：和 discarding 一样走 AI 出牌逻辑。
+      case 'ai-turn':
       case 'discarding': {
         const cur = state.players[state.currentPlayerIndex];
         const drawn = state.drawnCard ?? cur.hand[0];
@@ -201,10 +205,6 @@ function runOneGame(seed: number, rogueRate = 0.0): { state: GameState; actions:
         }
         break;
       }
-      case 'ai-turn':
-        // shouldn't reach 'ai-turn' (it's a single-player UI flag) — coerce to drawing
-        state = { ...state, phase: 'drawing' };
-        break;
     }
 
     // ── invariant 3: 没人能在 claim-window 中以 frozenUntilOwnDiscard=true

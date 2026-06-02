@@ -228,18 +228,17 @@ export default function StatsPage() {
               </div>
             ) : (
               <div className="overflow-hidden rounded-[1.4rem] border border-[rgba(200,155,93,0.18)]">
-                <div className="psy-eyebrow grid grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr_0.9fr_0.8fr] gap-px border-b border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.05)] px-3 py-3 text-[10px] sm:px-5">
+                <div className="psy-eyebrow grid grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr_0.8fr] gap-px border-b border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.05)] px-3 py-3 text-[10px] sm:px-5">
                   <div>学号</div>
                   <div className="text-center">场次</div>
                   <div className="text-center">胜场</div>
-                  <div className="text-center">均分</div>
                   <div className="text-center">均申报</div>
                   <div className="text-center">最佳名次</div>
                 </div>
                 {summary.map((s, i) => (
                   <div
                     key={s.studentId}
-                    className="grid grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr_0.9fr_0.8fr] items-center gap-px border-t border-[rgba(200,155,93,0.08)] px-3 py-3 text-sm transition hover:bg-[rgba(200,155,93,0.04)] sm:px-5"
+                    className="grid grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr_0.8fr] items-center gap-px border-t border-[rgba(200,155,93,0.08)] px-3 py-3 text-sm transition hover:bg-[rgba(200,155,93,0.04)] sm:px-5"
                     style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}
                   >
                     <div className="font-mono text-[var(--psy-ink)] tabular-nums">{s.studentId}</div>
@@ -247,7 +246,6 @@ export default function StatsPage() {
                     <div className="text-center font-mono tabular-nums">
                       <span className={s.wins > 0 ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-muted)]'}>{s.wins}</span>
                     </div>
-                    <div className="text-center font-mono text-[var(--psy-ink-soft)] tabular-nums">{s.avgScore}</div>
                     <div className="text-center font-mono text-[var(--psy-ink-soft)] tabular-nums">{s.avgDeclared}</div>
                     <div className="text-center font-mono text-[var(--psy-ink-soft)] tabular-nums">#{s.bestRank}</div>
                   </div>
@@ -290,7 +288,7 @@ export default function StatsPage() {
                             {p.is_winner && <span>🏆</span>}
                             <span className="font-mono tabular-nums">{p.is_ai ? 'AI' : p.student_id}</span>
                             <span className="text-xs text-[var(--psy-muted)]">
-                              #{p.rank} · 申报{p.declared_count} · {p.final_score}分
+                              #{p.rank} · 申报{p.declared_count}组 · 剩{p.remaining_cards}张
                             </span>
                           </div>
                         ))}

@@ -1,7 +1,7 @@
 'use client';
 
 import { Player } from '@/types';
-import { getPlayerScore } from '@/lib/game-logic';
+import { getRankings } from '@/lib/game-logic';
 
 interface ScoreBoardProps {
   players: Player[];
@@ -10,9 +10,8 @@ interface ScoreBoardProps {
 }
 
 export function ScoreBoard({ players, currentRound, totalRounds }: ScoreBoardProps) {
-  const sorted = [...players].sort(
-    (a, b) => getPlayerScore(b) - getPlayerScore(a)
-  );
+  // 排名口径统一：先比归档维度数（多者前），同数比剩余手牌（少者前）。
+  const sorted = getRankings(players);
 
   return (
     <div className="psy-panel space-y-3 rounded-[1.2rem] p-4">
@@ -33,7 +32,7 @@ export function ScoreBoard({ players, currentRound, totalRounds }: ScoreBoardPro
               </span>
             </div>
             <span className="font-mono text-[var(--psy-ink)] tabular-nums">
-              {getPlayerScore(player).toFixed(1)}
+              归档 {player.declaredSets.length}/5
             </span>
           </div>
         ))}

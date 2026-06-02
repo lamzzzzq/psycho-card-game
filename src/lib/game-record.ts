@@ -82,15 +82,24 @@ function bufferForRetry(input: SaveGameSessionInput) {
   writePending(items.slice(-10));
 }
 
+// 暂存存档的最长重试时效。超过这个时间还没传上去的，丢弃不再补传——
+// 否则几周前的旧局会在某次打开时被翻出来、盖上"今天"的 ended_at 落库，
+// 污染课堂数据（曾出现 5/20 的局 6/2 才补传的情况）。host 崩溃后数小时内
+// 重开补传这种正常场景不受影响。
+const MAX_RETRY_AGE_MS = 24 * 60 * 60 * 1000;
+
 /**
  * Retry any pending saves left over from a previous session.
  * Call once on app startup (e.g. PVP lobby mount).
+ * 过期（> MAX_RETRY_AGE_MS）的暂存存档直接丢弃，不补传。
  */
 export async function retryPendingSaves(): Promise<void> {
   const items = readPending();
   if (items.length === 0) return;
+  const now = Date.now();
   const remaining: SaveGameSessionInput[] = [];
   for (const item of items) {
+    if (now - item.startedAt > MAX_RETRY_AGE_MS) continue; // 过期，丢弃
     const id = await saveOnce(item, SAVE_TIMEOUT_MS);
     if (!id) remaining.push(item);
   }

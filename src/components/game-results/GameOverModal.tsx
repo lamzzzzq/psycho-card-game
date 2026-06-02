@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Player, DIMENSIONS, isPersonalityCard } from '@/types';
 import { getRankings } from '@/lib/game-logic';
 import { DIMENSION_META } from '@/data/dimensions';
-import { calculatePenaltyScore } from '@/lib/scoring';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
 
 interface GameOverModalProps {
@@ -46,7 +45,6 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverM
         <div className="space-y-2">
           {ranked.map((player, i) => {
             const declaredCount = player.declaredSets.length;
-            const penalty = calculatePenaltyScore(player.hand);
             const medals = ['🥇', '🥈', '🥉', ''];
             const isFirst = i === 0;
             return (
@@ -72,7 +70,7 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverM
                     </div>
                     {player.hand.length > 0 && (
                       <div className="text-[10px] text-[var(--psy-danger)]">
-                        剩余 {player.hand.length} 张 ({penalty})
+                        剩余 {player.hand.length} 张
                       </div>
                     )}
                   </div>
