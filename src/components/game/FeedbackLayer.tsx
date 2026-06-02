@@ -79,7 +79,7 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[])
         ...p,
         {
           id: ++popIdRef.current,
-          text: '💥 食胡失败',
+          text: '💥 食胡失敗',
           playerName: nameOf(latest.playerId),
           kind: 'hu-fail',
         },
@@ -89,7 +89,7 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[])
         ...p,
         {
           id: ++popIdRef.current,
-          text: '💥 碰失败',
+          text: '💥 碰失敗',
           playerName: nameOf(latest.playerId),
           kind: 'pong-fail',
         },
@@ -110,7 +110,7 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[])
 
 /**
  * Watches currentPlayerIndex. When it flips TO the viewer, flashes a
- * prominent "轮到你了!" banner. Silent for opponent turns.
+ * prominent "輪到你了!" banner. Silent for opponent turns.
  */
 export function useYourTurnNotifier(
   currentPlayerIndex: number | undefined,
@@ -166,7 +166,7 @@ export function YourTurnBanner({ bannerKey }: { bannerKey: number | null }) {
               Your Turn
             </div>
             <div className="mt-1 psy-serif text-3xl font-black text-[var(--psy-ink)]">
-              轮到你了！
+              輪到你了！
             </div>
           </div>
         </motion.div>

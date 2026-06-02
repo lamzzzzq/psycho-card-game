@@ -58,7 +58,7 @@ export function PsyOverlayPanel({
   panelClassName = '',
   hideAbove,
   zIndex,
-  closeLabel = '关闭',
+  closeLabel = '關閉',
 }: PsyOverlayPanelProps) {
   useEffect(() => {
     if (!open) return;

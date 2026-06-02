@@ -289,9 +289,9 @@ export default function GamePage() {
     if (beforeGame && afterGame) {
       const lastAction = afterGame.actionLog[afterGame.actionLog.length - 1];
       if (lastAction?.type === 'hu-success') {
-        showBanner(true, '食胡！你赢了！');
+        showBanner(true, '食胡！你贏了！');
       } else if (lastAction?.type === 'hu-fail') {
-        showBanner(false, '食胡失败！手牌公开，罚停一轮');
+        showBanner(false, '食胡失敗！手牌公開，罰停一輪');
       }
     }
   }, [playerHu]);
@@ -309,7 +309,7 @@ export default function GamePage() {
       if (lastAction?.type === 'pong-success') {
         showBanner(true, `自摸碰！${DIMENSION_META[pongIntent.dimension].name} 完成！`);
       } else if (lastAction?.type === 'pong-fail') {
-        showBanner(false, '自摸碰失败！手牌公开，跳过下轮');
+        showBanner(false, '自摸碰失敗！手牌公開，跳過下輪');
       }
     }
   }, [playerSelfPong, pongIntent, selectedCardIds]);
@@ -325,7 +325,7 @@ export default function GamePage() {
       if (lastAction?.type === 'pong-success') {
         showBanner(true, `碰！${DIMENSION_META[dimension].name} 完成！`);
       } else if (lastAction?.type === 'pong-fail') {
-        showBanner(false, '碰失败！手牌公开，跳过下轮');
+        showBanner(false, '碰失敗！手牌公開，跳過下輪');
       }
     }
   }, [playerPong]);
@@ -362,7 +362,7 @@ export default function GamePage() {
   if (!game) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="psy-serif text-[var(--psy-muted)]">加载中…</p>
+        <p className="psy-serif text-[var(--psy-muted)]">加載中…</p>
       </div>
     );
   }
@@ -378,8 +378,8 @@ export default function GamePage() {
     (!!humanPlayer.frozenUntilOwnDiscard && !isHumanTurn);
   const humanAwaitingOwnDischarge =
     !!humanPlayer.frozenUntilOwnDiscard && isHumanTurn && !humanPlayer.skipNextTurn;
-  // canDraw/isDiscarding 加 !skipNextTurn 防御 — skipPenalizedPlayers 应已跳过该
-  // 玩家；frozenUntilOwnDiscard-only 状态允许出牌（spec 解冻路径）。
+  // canDraw/isDiscarding 加 !skipNextTurn 防禦 — skipPenalizedPlayers 應已跳過該
+  // 玩家；frozenUntilOwnDiscard-only 狀態允許出牌（spec 解凍路徑）。
   const canDraw = isHumanTurn && game.phase === 'drawing' && !humanPlayer.skipNextTurn;
   const isDiscarding = isHumanTurn && game.phase === 'discarding' && !humanPlayer.skipNextTurn;
   const canHu =
@@ -403,7 +403,7 @@ export default function GamePage() {
   // judges correctness on commit (selfPongCard's strict count + dim check).
   //
   // Once-per-turn rule: if already used this turn, no candidates.
-  // 已归档维度也加入候选（强 trap）：UI 显示，玩家选卡 + 提交 → engine 判 fail + 罚停。
+  // 已歸檔維度也加入候選（強 trap）：UI 顯示，玩家選卡 + 提交 → engine 判 fail + 罰停。
   const selfPongCandidates: Dimension[] = [];
   if (
     isHumanTurn &&
@@ -416,14 +416,14 @@ export default function GamePage() {
     }
   }
 
-  // Other-pong: 已归档维度也允许（强 trap），玩家点 → 选卡 → 提交 → fail。
+  // Other-pong: 已歸檔維度也允許（強 trap），玩家點 → 選卡 → 提交 → fail。
   const otherPongCandidate: Dimension | null = (() => {
     if (!isPongWindow || !game.pendingDiscard || humanFrozen) return null;
     if (game.claimResponses.includes(humanPlayer.id)) return null;
     const pc = game.pendingDiscard;
     if (!isPersonalityCard(pc)) return null;
     const d = pc.dimension;
-    if (declaredDims.has(d)) return d;  // 强 trap：允许点
+    if (declaredDims.has(d)) return d;  // 強 trap：允許點
     const sameInHand = humanPlayer.hand.filter(
       (c) => isPersonalityCard(c) && c.dimension === d
     ).length;
@@ -466,10 +466,10 @@ export default function GamePage() {
           onClick={() => setExitConfirmOpen(true)}
           className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] px-3 py-1 text-[10px] text-[var(--psy-muted)] transition hover:border-[rgba(220,80,80,0.4)] hover:text-[var(--psy-danger)] sm:text-[11px]"
         >
-          ← 退出对局
+          ← 退出對局
         </button>
         <span className="psy-serif text-[10px] uppercase tracking-[0.32em] text-[var(--psy-muted)] sm:text-[11px]">
-          人格麻将
+          人格麻將
         </span>
       </div>
 
@@ -477,14 +477,14 @@ export default function GamePage() {
       <PsyOverlayPanel
         open={exitConfirmOpen}
         onClose={() => setExitConfirmOpen(false)}
-        title="确认退出本局？"
+        title="確認退出本局？"
         variant="centered"
       >
         <div className="space-y-5 px-1 py-2">
           <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">
-            退出后本局进度将丢失，且无法恢复。
+            退出後本局進度將丟失，且無法恢復。
             <br />
-            确认后将直接结束本局并回到大厅。
+            確認後將直接結束本局並回到大廳。
           </p>
           <div className="flex justify-end gap-3">
             <button
@@ -501,7 +501,7 @@ export default function GamePage() {
               }}
               className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
             >
-              确认退出
+              確認退出
             </button>
           </div>
         </div>
@@ -545,19 +545,19 @@ export default function GamePage() {
 
       {/* Human player area */}
       <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
-        {/* Penalty banner — lockout 时显示红色"罚停"，own-turn 解冻轮显示提示 */}
+        {/* Penalty banner — lockout 時顯示紅色"罰停"，own-turn 解凍輪顯示提示 */}
         {humanFrozenLockout && (
           <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
             <span>⛔</span>
-            <span className="hidden sm:inline">你被罚停一轮 — 下个本应出牌的回合会被自动跳过，期间无法参与碰/食胡</span>
-            <span className="sm:hidden">罚停一轮 · 下回合跳过 · 期间不可碰/胡</span>
+            <span className="hidden sm:inline">你被罰停一輪 — 下個本應出牌的回合會被自動跳過，期間無法參與碰/食胡</span>
+            <span className="sm:hidden">罰停一輪 · 下回合跳過 · 期間不可碰/胡</span>
           </div>
         )}
         {humanAwaitingOwnDischarge && (
           <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-accent)] sm:text-sm">
             <span>⏳</span>
-            <span className="hidden sm:inline">解冻轮 — 正常出牌一次即可解除罚停（期间仍不可碰/胡）</span>
-            <span className="sm:hidden">解冻轮 · 出牌一次解除</span>
+            <span className="hidden sm:inline">解凍輪 — 正常出牌一次即可解除罰停（期間仍不可碰/胡）</span>
+            <span className="sm:hidden">解凍輪 · 出牌一次解除</span>
           </div>
         )}
         {/* Row 1: My personality scores */}
@@ -596,7 +596,7 @@ export default function GamePage() {
                   className="text-[10px] font-medium"
                   style={{ color: isDone ? meta.colorHex : 'var(--psy-ink-soft)' }}
                 >
-                  {isDone ? '✓' : `${target}张`}
+                  {isDone ? '✓' : `${target}張`}
                 </span>
               </div>
             );
@@ -609,14 +609,14 @@ export default function GamePage() {
 
         <div className="flex shrink-0 flex-col gap-1.5 sm:hidden">
           <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
-            <span className="psy-serif text-[var(--psy-accent)]">第 {game.currentRound}{game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 轮</span>
+            <span className="psy-serif text-[var(--psy-accent)]">第 {game.currentRound}{game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪</span>
             <span className="truncate">已完成 {humanPlayer.declaredSets.length}/5</span>
             <span className={`font-mono tabular-nums ${timer <= 5 ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-accent)]'}`}>{timer}s</span>
           </div>
           <div className="flex items-center justify-end gap-1">
             <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">人格</button>
-            <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">归档</button>
-            <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">记录</button>
+            <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">歸檔</button>
+            <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">記錄</button>
           </div>
         </div>
 
@@ -662,7 +662,7 @@ export default function GamePage() {
                 onClick={() => {
                   if (humanPlayer.selfPongUsedThisTurn || humanFrozen) return;
                   if (selfPongCandidates.length === 0) return;
-                  // 默认选第一个未归档维度，防止误触 trap
+                  // 默認選第一個未歸檔維度，防止誤觸 trap
                   const defaultDim =
                     selfPongCandidates.find((d) => !declaredDims.has(d)) ??
                     selfPongCandidates[0];
@@ -677,10 +677,10 @@ export default function GamePage() {
                 className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
                 title={
                   humanFrozen
-                    ? '罚停中，本轮无法自摸碰'
+                    ? '罰停中，本輪無法自摸碰'
                     : humanPlayer.selfPongUsedThisTurn
-                    ? '本回合自摸碰已用，下回合再来'
-                    : '自摸碰 · 你自己判断维度和张数'
+                    ? '本回合自摸碰已用，下回合再來'
+                    : '自摸碰 · 你自己判斷維度和張數'
                 }
               >
                 自摸碰
@@ -691,9 +691,9 @@ export default function GamePage() {
               <button
                 onClick={() => { setViewMode(true); setPickedViewIds([]); }}
                 className="psy-btn psy-btn-ghost px-4 py-2 text-sm font-medium"
-                title="本回合可查看 2 张自己的手牌的人格"
+                title="本回合可查看 2 張自己的手牌的人格"
               >
-                🔍 查看 2 张牌（1/1）
+                🔍 查看 2 張牌（1/1）
               </button>
             )}
             {isHumanTurn && isDiscarding && viewUsedThisTurn && (
@@ -708,7 +708,7 @@ export default function GamePage() {
                 className="psy-btn psy-btn-accent px-6 py-2 text-sm font-medium"
               >
                 {game.players[game.currentPlayerIndex].avatar}{' '}
-                {game.players[game.currentPlayerIndex].name} 的回合 — 点击执行
+                {game.players[game.currentPlayerIndex].name} 的回合 — 點擊執行
               </button>
             )}
           </div>
@@ -717,7 +717,7 @@ export default function GamePage() {
         {viewMode && (
           <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
             <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-              🔍 选 2 张你想要查看的手牌（{pickedViewIds.length}/2）
+              🔍 選 2 張你想要查看的手牌（{pickedViewIds.length}/2）
             </p>
             <div className="flex justify-center gap-2">
               <button
@@ -747,14 +747,14 @@ export default function GamePage() {
         {pongIntent && (
           <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
             <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-              {pongIntent.type === 'self' ? '🎯 自摸碰' : '🎯 碰对方弃牌'} ·{' '}
+              {pongIntent.type === 'self' ? '🎯 自摸碰' : '🎯 碰對方棄牌'} ·{' '}
               <span style={{ color: DIMENSION_META[pongIntent.dimension].colorHex }}>
                 {DIMENSION_META[pongIntent.dimension].name}
               </span>{' '}
-              · 请精确选择{' '}
-              <span className="text-white font-bold">{pongIntentRequiredSelectCount}</span> 张
-              {pongIntent.type === 'self' ? '同维度牌（含刚抽到的）' : '同维度手牌（连同弃牌共凑 ' + pongIntentTarget + ' 张）'}
-              （已选 <span className="text-white font-bold">{selectedCardIds.length}</span>）
+              · 請精確選擇{' '}
+              <span className="text-white font-bold">{pongIntentRequiredSelectCount}</span> 張
+              {pongIntent.type === 'self' ? '同維度牌（含剛抽到的）' : '同維度手牌（連同棄牌共湊 ' + pongIntentTarget + ' 張）'}
+              （已選 <span className="text-white font-bold">{selectedCardIds.length}</span>）
             </p>
             {/* Self-pong dimension switcher (only when there are multiple candidates) */}
             {pongIntent.type === 'self' && selfPongCandidates.length > 1 && (
@@ -769,7 +769,7 @@ export default function GamePage() {
                       setSelectedCardIds([]);
                     }}
                     className="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition"
-                    title={isDeclared ? '⚠️ 已归档维度 · 提交将判失败 + 罚停' : undefined}
+                    title={isDeclared ? '⚠️ 已歸檔維度 · 提交將判失敗 + 罰停' : undefined}
                     style={{
                       borderColor: pongIntent.dimension === d
                         ? DIMENSION_META[d].colorHex
@@ -815,7 +815,7 @@ export default function GamePage() {
                 disabled={selectedCardIds.length !== pongIntentRequiredSelectCount}
                 className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:opacity-40"
               >
-                {pongIntent.type === 'self' ? '自摸归档' : '归档判定'}
+                {pongIntent.type === 'self' ? '自摸歸檔' : '歸檔判定'}
               </button>
             </div>
           </div>
@@ -855,11 +855,11 @@ export default function GamePage() {
         {isHumanActive && (
           <div className="hidden items-center justify-center gap-2 sm:flex">
             {canDraw && (
-              <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">点击牌堆抽一张牌</p>
+              <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">點擊牌堆抽一張牌</p>
             )}
             {isDiscarding && !game.drawnCard && (
               <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">
-                碰牌成功 — 请直接出一张手牌
+                碰牌成功 — 請直接出一張手牌
               </p>
             )}
             <span className={`text-sm font-mono font-bold ${timer <= 5 ? 'text-red-300 animate-pulse' : timer <= 10 ? 'text-[var(--psy-accent)]' : 'text-[var(--psy-muted)]'}`}>
@@ -870,7 +870,7 @@ export default function GamePage() {
 
         {/* Round info */}
         <div className="hidden text-center text-xs text-[var(--psy-muted)] sm:block">
-          第 {game.currentRound}{game.settings.totalRounds > 0 ? ` / ${game.settings.totalRounds}` : ''} 轮
+          第 {game.currentRound}{game.settings.totalRounds > 0 ? ` / ${game.settings.totalRounds}` : ''} 輪
         </div>
       </div>
 
@@ -888,7 +888,7 @@ export default function GamePage() {
               return (
                 <div key={d} className="rounded-xl border px-3 py-2" style={{ borderColor: meta.colorHex + '33', backgroundColor: meta.colorHex + '12' }}>
                   <div className="psy-serif text-sm" style={{ color: meta.colorHex }}>{meta.name}</div>
-                  <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">分数 {score.toFixed(1)} · {isDone ? '已完成' : `目标 ${targets[d]} 张`}</div>
+                  <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">分數 {score.toFixed(1)} · {isDone ? '已完成' : `目標 ${targets[d]} 張`}</div>
                 </div>
               );
             })}
@@ -896,14 +896,14 @@ export default function GamePage() {
         </div>
       </MobileGameSheet>
       <MobileGameSheet
-        title="已归档人格"
+        title="已歸檔人格"
         open={mobileSheet === 'declared'}
         onClose={() => setMobileSheet(null)}
       >
-        {humanPlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={humanPlayer.declaredSets} /> : <p className="text-sm text-[var(--psy-muted)]">暂时还没有完成归档的维度。</p>}
+        {humanPlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={humanPlayer.declaredSets} /> : <p className="text-sm text-[var(--psy-muted)]">暫時還沒有完成歸檔的維度。</p>}
       </MobileGameSheet>
       <MobileGameSheet
-        title="行动记录"
+        title="行動記錄"
         open={mobileSheet === 'log'}
         onClose={() => setMobileSheet(null)}
       >

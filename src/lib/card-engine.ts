@@ -4,18 +4,18 @@ import { DUMMY_CARD_TEXTS } from '@/data/dummy-cards';
 import { shuffle } from './utils';
 import { getInitialHandSize } from './scoring';
 
-// 牌库按人数缩放（2026-06 平衡决策，见 docs/DECK_BALANCE.md / 模拟数据）：
-//   - 4 人：80 人格 + 12 dummy（大手牌 sum-1 需要更大牌库防发牌发光）
+// 牌庫按人數縮放（2026-06 平衡決策，見 docs/DECK_BALANCE.md / 模擬數據）：
+//   - 4 人：80 人格 + 12 dummy（大手牌 sum-1 需要更大牌庫防發牌發光）
 //   - 2-3 人：60 人格 + 8 dummy
-// dummy 数控制在 ~12%，保证「每回合手上 dummy 轮均 ≤ 1」。
+// dummy 數控制在 ~12%，保證「每回合手上 dummy 輪均 ≤ 1」。
 export function deckConfigFor(playerCount: number): { personality: number; dummy: number } {
   return playerCount >= 4 ? { personality: 80, dummy: 12 } : { personality: 60, dummy: 8 };
 }
 
-// 生成 `count` 张人格牌，均匀分布在 5 个维度（count/5 张/维度）。
-// 真实题库有 12 题/维度（共 60）。当 count > 60（如 4 人的 80），按维度
-// 循环复用该维度的题面补足，分配新的唯一 id。⚠️ 仅 `dimension` 影响玩法，
-// text 是占位文案 —— 真实的 80 张牌面内容准备好后替换本函数即可。
+// 生成 `count` 張人格牌，均勻分佈在 5 個維度（count/5 張/維度）。
+// 真實題庫有 12 題/維度（共 60）。當 count > 60（如 4 人的 80），按維度
+// 循環複用該維度的題面補足，分配新的唯一 id。⚠️ 僅 `dimension` 影響玩法，
+// text 是佔位文案 —— 真實的 80 張牌面內容準備好後替換本函數即可。
 export function generatePersonalityCards(count: number = 60): PersonalityCard[] {
   const base: PersonalityCard[] = QUESTIONS.map((q) => ({
     id: q.id,
@@ -30,7 +30,7 @@ export function generatePersonalityCards(count: number = 60): PersonalityCard[] 
   for (const c of base) byDim[c.dimension].push(c);
 
   const out: PersonalityCard[] = [];
-  let placeholderId = 5000; // 5000+ 占位牌；真实题面 1-60，dummy 1000+
+  let placeholderId = 5000; // 5000+ 佔位牌；真實題面 1-60，dummy 1000+
   for (const d of DIMENSIONS) {
     const pool = byDim[d];
     for (let i = 0; i < perDim; i++) {
@@ -67,17 +67,17 @@ export function dealCardsVariable(
   playerScores: BigFiveScores[],
   minDrawReserve: number = playerScores.length
 ): { hands: GameCard[][]; remaining: GameCard[] } {
-  // 想要的手牌（sum-1）。极端高分下总和可能超过牌库 → 会截断后发玩家、
-  // 抽牌堆归零、第一回合秒死。护栏：若总和 > 牌库 - 预留，从最大的手牌
-  // 逐张削减，直到能塞下且至少留 minDrawReserve 张抽牌堆。
-  // 正常/偏高分（总和 ≤ 牌库-预留）不会触发，每人照拿 sum-1。
+  // 想要的手牌（sum-1）。極端高分下總和可能超過牌庫 → 會截斷後發玩家、
+  // 抽牌堆歸零、第一回合秒死。護欄：若總和 > 牌庫 - 預留，從最大的手牌
+  // 逐張削減，直到能塞下且至少留 minDrawReserve 張抽牌堆。
+  // 正常/偏高分（總和 ≤ 牌庫-預留）不會觸發，每人照拿 sum-1。
   const sizes = playerScores.map(getInitialHandSize);
   const maxDealable = Math.max(0, deck.length - minDrawReserve);
   let total = sizes.reduce((a, b) => a + b, 0);
   while (total > maxDealable) {
     let maxIdx = 0;
     for (let i = 1; i < sizes.length; i++) if (sizes[i] > sizes[maxIdx]) maxIdx = i;
-    if (sizes[maxIdx] <= 1) break; // 兜底：手牌已削到 1，无法再削（牌库 < 人数才会到这）
+    if (sizes[maxIdx] <= 1) break; // 兜底：手牌已削到 1，無法再削（牌庫 < 人數纔會到這）
     sizes[maxIdx] -= 1;
     total -= 1;
   }

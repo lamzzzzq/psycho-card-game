@@ -12,7 +12,7 @@ interface DeclaredAreaProps {
   title?: string;
 }
 
-export function DeclaredArea({ declaredSets, compact = false, title = '归档记录' }: DeclaredAreaProps) {
+export function DeclaredArea({ declaredSets, compact = false, title = '歸檔記錄' }: DeclaredAreaProps) {
   const [open, setOpen] = useState(false);
   const [detailCard, setDetailCard] = useState<PersonalityCard | null>(null);
 
@@ -20,7 +20,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
     <PsyOverlayPanel open={open} onClose={() => setOpen(false)} title={title} variant="centered">
       {declaredSets.length === 0 ? (
         <div className="rounded-xl border border-[rgba(200,155,93,0.12)] bg-[rgba(255,255,255,0.02)] px-4 py-8 text-center text-sm text-[var(--psy-muted)]">
-          暂无完成的归档
+          暫無完成的歸檔
         </div>
       ) : (
         <div className="space-y-4">
@@ -35,7 +35,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
                 <div className="mb-3 flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: meta.colorHex }} />
                   <span className="text-sm font-medium" style={{ color: meta.colorHex }}>
-                    {meta.name} · {set.cards.length} 张
+                    {meta.name} · {set.cards.length} 張
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -45,7 +45,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
                       type="button"
                       onClick={() => setDetailCard(card)}
                       className="rounded-[1rem] transition hover:-translate-y-1 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--psy-accent)]"
-                      aria-label={`查看归档卡牌：${card.text}`}
+                      aria-label={`查看歸檔卡牌：${card.text}`}
                     >
                       <Card card={card} tiny />
                     </button>
@@ -63,7 +63,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
     <PsyOverlayPanel
       open={detailCard !== null}
       onClose={() => setDetailCard(null)}
-      title="卡牌详情"
+      title="卡牌詳情"
       variant="centered"
       panelClassName="max-w-xl"
       zIndex={92}
@@ -107,10 +107,10 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
           className="w-full rounded-[0.9rem] border border-[rgba(200,155,93,0.12)] bg-[rgba(255,255,255,0.02)] px-2.5 py-1.5 text-left transition hover:border-[rgba(200,155,93,0.22)]"
         >
           <div className="flex items-center gap-2">
-            <div className="psy-serif shrink-0 text-[10px] text-[var(--psy-muted)]">归档</div>
+            <div className="psy-serif shrink-0 text-[10px] text-[var(--psy-muted)]">歸檔</div>
             <div className="min-w-0 flex-1">
               {declaredSets.length === 0 ? (
-                <div className="truncate text-[10px] text-[var(--psy-muted)]">暂无公开归档</div>
+                <div className="truncate text-[10px] text-[var(--psy-muted)]">暫無公開歸檔</div>
               ) : (
                 <div className="flex flex-wrap items-center gap-1.5">
                   {declaredSets.map((set) => {
@@ -126,7 +126,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
                       >
                         <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.colorHex }} />
                         <span className="text-[9px]" style={{ color: meta.colorHex }}>
-                          {meta.name} {set.cards.length}张
+                          {meta.name} {set.cards.length}張
                         </span>
                       </div>
                     );
@@ -155,7 +155,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
         </div>
         {declaredSets.length === 0 ? (
           <div className="mt-2 rounded-xl border border-[rgba(200,155,93,0.12)] bg-[rgba(255,255,255,0.02)] px-2 py-4 text-center text-[11px] text-[var(--psy-muted)]">
-            暂无完成的归档
+            暫無完成的歸檔
           </div>
         ) : (
           <div className="mt-2 flex flex-col gap-2">
@@ -165,7 +165,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '归档记
                 <div key={set.dimension} className="flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.colorHex }} />
                   <span className="text-[9px] font-medium" style={{ color: meta.colorHex }}>
-                    {meta.name} {set.cards.length} 张
+                    {meta.name} {set.cards.length} 張
                   </span>
                 </div>
               );

@@ -33,12 +33,12 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverM
         <div className="space-y-2 text-center">
           <div className="text-4xl">{isHumanWinner ? '🏆' : '😤'}</div>
           <h2 className="psy-serif text-2xl text-[var(--psy-ink)]">
-            {isHumanWinner ? '你赢了！' : `${winner.name} 获胜`}
+            {isHumanWinner ? '你贏了！' : `${winner.name} 獲勝`}
           </h2>
           <p className="text-sm text-[var(--psy-muted)]">
             {hasFullWinner
-              ? `${isHumanWinner ? '你' : winner.name}成功 DECLARE 了所有人格维度！`
-              : '回合结束！按 DECLARE 进度和剩余手牌排名'}
+              ? `${isHumanWinner ? '你' : winner.name}成功 DECLARE 了所有人格維度！`
+              : '回合結束！按 DECLARE 進度和剩餘手牌排名'}
           </p>
         </div>
 
@@ -70,7 +70,7 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverM
                     </div>
                     {player.hand.length > 0 && (
                       <div className="text-[10px] text-[var(--psy-danger)]">
-                        剩余 {player.hand.length} 张
+                        剩餘 {player.hand.length} 張
                       </div>
                     )}
                   </div>
@@ -83,10 +83,10 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverM
 
         <div className="flex gap-3">
           <button onClick={onPlayAgain} className="psy-btn psy-btn-accent flex-1 py-3 font-medium">
-            再来一局
+            再來一局
           </button>
           <button onClick={onBackToLobby} className="psy-btn psy-btn-ghost px-6 py-3 text-sm">
-            返回大厅
+            返回大廳
           </button>
         </div>
       </motion.div>

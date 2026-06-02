@@ -50,14 +50,14 @@ interface PvpStore {
   // Host-only
   startGame: () => void;
   handlePlayerAction: (fromPlayerId: string, action: PvpAction) => void;
-  // Host 中途退出/解散时，把当前未结束的对局存成「中断局」(winner=null)。
+  // Host 中途退出/解散時，把當前未結束的對局存成「中斷局」(winner=null)。
   persistInterruptedGame: () => void;
 
   reset: () => void;
 }
 
-// 模块级去重：同一局（按 gameStartedAt）只存一次中断记录，避免退出流程
-// 多处触发导致重复写入。
+// 模塊級去重：同一局（按 gameStartedAt）只存一次中斷記錄，避免退出流程
+// 多處觸發導致重複寫入。
 const interruptedSaved = new Set<number>();
 
 export const usePvpStore = create<PvpStore>()(
@@ -168,7 +168,7 @@ export const usePvpStore = create<PvpStore>()(
           case 'game-over':
             // Host saves result, everyone sees it in gameState.
             // Also clear any stale offline UI — once the game is over
-            // we don't want lingering "离线中" badges if someone happened
+            // we don't want lingering "離線中" badges if someone happened
             // to disconnect right at the end.
             for (const t of offlineTimers.values()) clearTimeout(t);
             offlineTimers.clear();
@@ -217,7 +217,7 @@ export const usePvpStore = create<PvpStore>()(
         // tabbed away / refreshed can come back and resume. Give them
         // the same 3-min grace as everyone else. Non-host clients can't
         // act during the gap (action-requests have nowhere to land),
-        // so the UI shows a "房主暂时离线" banner via offlinePlayerIds.
+        // so the UI shows a "房主暫時離線" banner via offlinePlayerIds.
         if (!hostNow && hostPid && leftIds.includes(hostPid)) {
           // Mark host as offline locally; show the banner.
           set(s => s.offlinePlayerIds.includes(hostPid)
@@ -409,8 +409,8 @@ export const usePvpStore = create<PvpStore>()(
       .sort((a, b) => a.seat_index - b.seat_index)
       .slice(0, maxPlayers);
     const rawState = initializePvpGame(orderedPlayers, bigFiveMap, room.settings);
-    // 记开局时刻，game-record 用这个值而不是 actionLog[0].timestamp（actionLog 第一项
-    // 可能是 leave 之类的非"开局"动作，会误把 started_at 染成动作时间）。
+    // 記開局時刻，game-record 用這個值而不是 actionLog[0].timestamp（actionLog 第一項
+    // 可能是 leave 之類的非"開局"動作，會誤把 started_at 染成動作時間）。
     (rawState as { gameStartedAt?: number }).gameStartedAt = Date.now();
 
     // Store full state internally (host only)
@@ -440,7 +440,7 @@ export const usePvpStore = create<PvpStore>()(
   handlePlayerAction: (_fromPlayerId, action) => {
     const rawState = get().rawGameState;
     if (!rawState) return;
-    // 避免 game-over 后再触发的 action（例如 leave）重复 broadcast / 重复 save。
+    // 避免 game-over 後再觸發的 action（例如 leave）重複 broadcast / 重複 save。
     const wasAlreadyWinner = !!rawState.winner;
 
     const { players, room } = get();
@@ -490,8 +490,8 @@ export const usePvpStore = create<PvpStore>()(
           isAi: false,
         }));
         // fire-and-forget but with internal 5s timeout + localStorage retry
-        // buffer (saveGameSession 内部处理超时和暂存)。这里仍不 await，避免阻塞
-        // UI；真正的 host 崩溃保护靠 retryPendingSaves() 下次启动补传。
+        // buffer (saveGameSession 內部處理超時和暫存)。這裏仍不 await，避免阻塞
+        // UI；真正的 host 崩潰保護靠 retryPendingSaves() 下次啓動補傳。
         void saveGameSession({
           mode: 'pvp',
           roomId: room.id,
@@ -500,7 +500,7 @@ export const usePvpStore = create<PvpStore>()(
           finalState: newState,
           seatMeta,
         });
-        // Reset room status so "再来一局" can navigate back to room
+        // Reset room status so "再來一局" can navigate back to room
         updateRoomStatus(room.id, 'waiting');
       }
     }
@@ -508,9 +508,9 @@ export const usePvpStore = create<PvpStore>()(
 
   persistInterruptedGame: () => {
     const { isHost, rawGameState, room, players } = get();
-    // 只有 host 持有完整 rawGameState 才能存；游戏没开始 / 已正常结束都不在此存。
+    // 只有 host 持有完整 rawGameState 才能存；遊戲沒開始 / 已正常結束都不在此存。
     if (!isHost || !rawGameState || !room) return;
-    if (rawGameState.phase === 'game-over') return; // 正常结束已由 winner 路径存过
+    if (rawGameState.phase === 'game-over') return; // 正常結束已由 winner 路徑存過
 
     const key: number | undefined =
       (rawGameState as { gameStartedAt?: number }).gameStartedAt ??
@@ -528,8 +528,8 @@ export const usePvpStore = create<PvpStore>()(
       studentId: rp.student_id ?? null,
       isAi: false,
     }));
-    // winner=null → game-record 写入 winner_player_id=null，课堂查询可区分中断局。
-    // fire-and-forget（内部 5s 超时 + localStorage 重试）。
+    // winner=null → game-record 寫入 winner_player_id=null，課堂查詢可區分中斷局。
+    // fire-and-forget（內部 5s 超時 + localStorage 重試）。
     void saveGameSession({
       mode: 'pvp',
       roomId: room.id,

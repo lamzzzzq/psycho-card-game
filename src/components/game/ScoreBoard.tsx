@@ -10,15 +10,15 @@ interface ScoreBoardProps {
 }
 
 export function ScoreBoard({ players, currentRound, totalRounds }: ScoreBoardProps) {
-  // 排名口径统一：先比归档维度数（多者前），同数比剩余手牌（少者前）。
+  // 排名口徑統一：先比歸檔維度數（多者前），同數比剩餘手牌（少者前）。
   const sorted = getRankings(players);
 
   return (
     <div className="psy-panel space-y-3 rounded-[1.2rem] p-4">
       <div className="flex items-center justify-between text-sm">
-        <span className="psy-serif text-[var(--psy-ink)]">计分板</span>
+        <span className="psy-serif text-[var(--psy-ink)]">計分板</span>
         <span className="text-[var(--psy-muted)]">
-          第 {currentRound} / {totalRounds} 轮
+          第 {currentRound} / {totalRounds} 輪
         </span>
       </div>
       <div className="space-y-2">
@@ -32,7 +32,7 @@ export function ScoreBoard({ players, currentRound, totalRounds }: ScoreBoardPro
               </span>
             </div>
             <span className="font-mono text-[var(--psy-ink)] tabular-nums">
-              归档 {player.declaredSets.length}/5
+              歸檔 {player.declaredSets.length}/5
             </span>
           </div>
         ))}

@@ -41,7 +41,7 @@ export default function AssessmentPage() {
   if (!hydrated) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="psy-serif text-[var(--psy-muted)]">加载中…</p>
+        <p className="psy-serif text-[var(--psy-muted)]">加載中…</p>
       </div>
     );
   }
@@ -95,7 +95,7 @@ export default function AssessmentPage() {
             抽取你的人格原型
           </h1>
           <p className="mx-auto max-w-2xl text-sm leading-7 text-[var(--psy-ink-soft)]">
-            每一道陈述题都像翻开一张隐喻牌面。你给出的倾向，会在结尾汇聚成五维人格图谱，并影响后续牌局目标。
+            每一道陳述題都像翻開一張隱喻牌面。你給出的傾向，會在結尾匯聚成五維人格圖譜，並影響後續牌局目標。
           </p>
         </div>
 
@@ -104,14 +104,14 @@ export default function AssessmentPage() {
             onClick={() => setShowManualInput(!showManualInput)}
             className="text-xs text-[var(--psy-muted)] transition underline decoration-[rgba(200,155,93,0.3)] underline-offset-4 hover:text-[var(--psy-ink-soft)]"
           >
-            {showManualInput ? '返回测评' : '跳过测评，手动输入分数'}
+            {showManualInput ? '返回測評' : '跳過測評，手動輸入分數'}
           </button>
         </div>
 
         {/* Manual input panel */}
         {showManualInput ? (
           <div className="psy-panel psy-etched space-y-5 rounded-[1.7rem] p-6">
-            <h3 className="psy-serif text-lg font-medium text-[var(--psy-ink)]">手动录入人格刻度</h3>
+            <h3 className="psy-serif text-lg font-medium text-[var(--psy-ink)]">手動錄入人格刻度</h3>
             <div className="space-y-3">
               {DIMENSIONS.map((d) => {
                 const meta = DIMENSION_META[d];
@@ -158,7 +158,7 @@ export default function AssessmentPage() {
               }}
               className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[linear-gradient(135deg,#9b6430_0%,#d4a469_100%)] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95"
             >
-              确认分数，进入游戏
+              確認分數，進入遊戲
             </button>
           </div>
         ) : (
@@ -184,7 +184,7 @@ export default function AssessmentPage() {
             disabled={currentIndex === 0}
             className="rounded-full border border-[rgba(200,155,93,0.18)] px-4 py-2 text-sm text-[var(--psy-ink-soft)] transition hover:bg-[rgba(200,155,93,0.08)] disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            上一题
+            上一題
           </button>
           <button
             onClick={toggleOrder}
@@ -194,21 +194,21 @@ export default function AssessmentPage() {
                 : 'border-[rgba(200,155,93,0.18)] text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
             }`}
           >
-            {orderMode === 'sequential' ? '打乱顺序' : '按维度排列'}
+            {orderMode === 'sequential' ? '打亂順序' : '按維度排列'}
           </button>
           <button
             onClick={handleNext}
             disabled={currentIndex === total - 1}
             className="rounded-full border border-[rgba(200,155,93,0.18)] px-4 py-2 text-sm text-[var(--psy-ink-soft)] transition hover:bg-[rgba(200,155,93,0.08)] disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            下一题
+            下一題
           </button>
         </div>
 
         {/* Question map: 60 tiles showing answered/unanswered/current */}
         <div className="psy-panel psy-etched space-y-3 rounded-[1.5rem] p-4">
           <div className="flex items-center justify-between text-xs text-[var(--psy-muted)]">
-            <span>题目导航</span>
+            <span>題目導航</span>
             <span>{progress}/60 已作答</span>
           </div>
           <div className="grid grid-cols-12 gap-1">
@@ -240,7 +240,7 @@ export default function AssessmentPage() {
           <div className="flex justify-center gap-3 text-[10px] text-[var(--psy-muted)]">
             <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(200,155,93,0.6)' }} /> 已答</span>
             <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(200,155,93,0.25)' }} /> 未答</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded bg-white ring-1 ring-white" /> 当前</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded bg-white ring-1 ring-white" /> 當前</span>
           </div>
         </div>
         </>

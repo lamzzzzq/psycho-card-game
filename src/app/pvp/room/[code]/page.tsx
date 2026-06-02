@@ -30,11 +30,11 @@ export default function RoomWaitPage() {
 
   useEffect(() => {
     if (!player) { router.replace('/pvp'); return; }
-    // 不在这里无条件清 gameState — 否则当 status 已经是 'playing'（玩家
-    // 通过 navigation 短暂经过 room page 再跳 game page）时会清掉持久化
-    // 的游戏状态，导致 game page 看到 gameState=null → 4 秒后误判
-    // 「房主似乎不在线」。改到 status === 'waiting' 分支下才清（再来
-    // 一局的真实场景）。
+    // 不在這裏無條件清 gameState — 否則當 status 已經是 'playing'（玩家
+    // 通過 navigation 短暫經過 room page 再跳 game page）時會清掉持久化
+    // 的遊戲狀態，導致 game page 看到 gameState=null → 4 秒後誤判
+    // 「房主似乎不在線」。改到 status === 'waiting' 分支下才清（再來
+    // 一局的真實場景）。
 
     async function loadRoom() {
       try {
@@ -44,16 +44,16 @@ export default function RoomWaitPage() {
           .eq('code', code)
           .single();
 
-        if (roomErr || !roomData) { setError('房间不存在'); setLoading(false); return; }
+        if (roomErr || !roomData) { setError('房間不存在'); setLoading(false); return; }
 
         if (roomData.status === 'playing') {
-          // 游戏进行中：保留 gameState（持久化的旧快照），让 game page
-          // 渲染时有兜底数据；之后 host 会通过 state-request 推最新状态。
+          // 遊戲進行中：保留 gameState（持久化的舊快照），讓 game page
+          // 渲染時有兜底數據；之後 host 會通過 state-request 推最新狀態。
           router.replace(`/pvp/game/${code}`);
           return;
         }
 
-        // status === 'waiting' — 此时才安全清旧 gameState 准备新一局。
+        // status === 'waiting' — 此時才安全清舊 gameState 準備新一局。
         usePvpStore.setState({ gameState: null, rawGameState: null });
 
         const roomObj = roomData as Room;
@@ -84,7 +84,7 @@ export default function RoomWaitPage() {
           }, 300);
         }
       } catch (e: any) {
-        setError(e.message ?? '加载失败');
+        setError(e.message ?? '加載失敗');
       } finally {
         setLoading(false);
       }
@@ -176,7 +176,7 @@ export default function RoomWaitPage() {
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">加载房间…</p>
+        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">加載房間…</p>
       </div>
     );
   }
@@ -186,7 +186,7 @@ export default function RoomWaitPage() {
       <div className="flex flex-1 flex-col items-center justify-center gap-4">
         <p className="text-[var(--psy-danger)]">{error}</p>
         <button onClick={() => router.replace('/pvp')} className="psy-btn psy-btn-ghost px-6 py-2 text-sm">
-          返回大厅
+          返回大廳
         </button>
       </div>
     );
@@ -207,7 +207,7 @@ export default function RoomWaitPage() {
           <div className="psy-serif text-7xl font-medium tracking-[0.32em] text-[var(--psy-accent)] tabular-nums sm:text-8xl">
             {code}
           </div>
-          <p className="text-sm text-[var(--psy-muted)]">分享给朋友，一起加入这局心理博弈。</p>
+          <p className="text-sm text-[var(--psy-muted)]">分享給朋友，一起加入這局心理博弈。</p>
           <div className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(200,155,93,0.18),transparent_68%)]" />
         </div>
 
@@ -219,7 +219,7 @@ export default function RoomWaitPage() {
                 onClick={handleLeave}
                 className="text-xs text-[var(--psy-danger)] underline decoration-[rgba(220,106,79,0.32)] underline-offset-4 transition hover:opacity-80"
               >
-                离开房间
+                離開房間
               </button>
             )}
           </div>
@@ -279,7 +279,7 @@ export default function RoomWaitPage() {
                           )}
                         </div>
                         <div className="text-xs text-[var(--psy-muted)]">
-                          {p.big_five ? '已完成测评 ✓' : '未完成测评'}
+                          {p.big_five ? '已完成測評 ✓' : '未完成測評'}
                         </div>
                       </div>
                       {isHost && !isMe && (
@@ -302,10 +302,10 @@ export default function RoomWaitPage() {
 
         {isHost && (
           <section className="psy-panel psy-etched space-y-5 rounded-[1.6rem] p-6">
-            <p className="psy-eyebrow text-[10px]">房间设置</p>
+            <p className="psy-eyebrow text-[10px]">房間設置</p>
 
             <div className="space-y-2">
-              <p className="text-xs text-[var(--psy-muted)]">最多玩家数</p>
+              <p className="text-xs text-[var(--psy-muted)]">最多玩家數</p>
               <div className="grid grid-cols-2 gap-2">
                 {[3, 4].map((n) => (
                   <button
@@ -320,7 +320,7 @@ export default function RoomWaitPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs text-[var(--psy-muted)]">游戏轮数（0 = 无限）</p>
+              <p className="text-xs text-[var(--psy-muted)]">遊戲輪數（0 = 無限）</p>
               <div className="grid grid-cols-4 gap-2">
                 {[0, 3, 5, 10].map((n) => (
                   <button
@@ -343,11 +343,11 @@ export default function RoomWaitPage() {
               disabled={!canStart || starting}
               className="psy-btn psy-btn-accent psy-serif w-full py-4 text-lg font-semibold"
             >
-              {starting ? '启动中…' : canStart ? '开始游戏' : `等待玩家（${players.length}/2）`}
+              {starting ? '啓動中…' : canStart ? '開始遊戲' : `等待玩家（${players.length}/2）`}
             </button>
           ) : (
             <div className="psy-serif animate-pulse rounded-[1.4rem] border border-dashed border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] py-4 text-center text-sm text-[var(--psy-muted)]">
-              等待房主开始游戏…
+              等待房主開始遊戲…
             </div>
           )}
 
@@ -356,7 +356,7 @@ export default function RoomWaitPage() {
               onClick={handleDissolve}
               className="psy-btn psy-btn-danger w-full py-2.5 text-sm"
             >
-              解散房间
+              解散房間
             </button>
           )}
         </div>

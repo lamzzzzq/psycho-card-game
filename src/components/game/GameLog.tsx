@@ -12,50 +12,50 @@ interface GameLogProps {
 
 function getActionLabel(action: GameAction) {
   // Draw never exposes card contents — that's private information until
-  // the holder chooses to discard / declare it. Only show "摸了一张牌".
+  // the holder chooses to discard / declare it. Only show "摸了一張牌".
   if (action.type === 'draw') {
-    return { tone: 'neutral' as const, prefix: '摸了一张牌' };
+    return { tone: 'neutral' as const, prefix: '摸了一張牌' };
   }
 
   if (action.type === 'discard' && action.card) {
     if (isDummyCard(action.card)) {
       return {
         tone: 'neutral' as const,
-        prefix: '弃掉了档案注记',
+        prefix: '棄掉了檔案註記',
         detail: action.card.text,
       };
     }
     if (isPersonalityCard(action.card)) {
       return {
         tone: 'neutral' as const,
-        prefix: '弃掉了一张线索牌',
+        prefix: '棄掉了一張線索牌',
         detail: action.card.text,
       };
     }
   }
   if (action.type === 'discard') {
-    return { tone: 'neutral' as const, prefix: '弃了一张牌' };
+    return { tone: 'neutral' as const, prefix: '棄了一張牌' };
   }
   if (action.type === 'hu-success') {
-    return { tone: 'success' as const, prefix: '食胡！游戏结束' };
+    return { tone: 'success' as const, prefix: '食胡！遊戲結束' };
   }
   if (action.type === 'hu-fail') {
-    return { tone: 'danger' as const, prefix: '食胡失败！手牌公开，罚停一轮' };
+    return { tone: 'danger' as const, prefix: '食胡失敗！手牌公開，罰停一輪' };
   }
   if (action.type === 'pong-success' && action.dimension) {
     return {
       tone: 'dimension' as const,
-      prefix: `碰牌成功${action.cardCount ? ` (${action.cardCount}张)` : ''}`,
+      prefix: `碰牌成功${action.cardCount ? ` (${action.cardCount}張)` : ''}`,
       colorHex: DIMENSION_META[action.dimension].colorHex,
     };
   }
   if (action.type === 'pong-fail' && action.dimension) {
     return {
       tone: 'danger' as const,
-      prefix: '碰牌失败！手牌公开',
+      prefix: '碰牌失敗！手牌公開',
     };
   }
-  return { tone: 'muted' as const, prefix: '跳过本轮' };
+  return { tone: 'muted' as const, prefix: '跳過本輪' };
 }
 
 export function GameLog({ actions, players }: GameLogProps) {
@@ -70,15 +70,15 @@ export function GameLog({ actions, players }: GameLogProps) {
         type="button"
         onClick={() => setOpen(true)}
         className="psy-panel psy-etched w-full space-y-2 overflow-hidden rounded-[1.35rem] p-3 text-left transition hover:border-[rgba(200,155,93,0.34)]"
-        aria-label="查看完整行动记录"
+        aria-label="查看完整行動記錄"
       >
         <div className="flex items-center justify-between gap-3">
-          <span className="psy-serif text-sm font-medium text-[var(--psy-ink)]">行动记录</span>
+          <span className="psy-serif text-sm font-medium text-[var(--psy-ink)]">行動記錄</span>
           <span className="text-[10px] text-[var(--psy-accent)]">查看全部</span>
         </div>
         <div className="psy-scroll max-h-32 space-y-1.5 overflow-y-auto pr-1">
           {recentActions.length === 0 ? (
-            <p className="text-xs text-[var(--psy-muted)]">暂无线索流动</p>
+            <p className="text-xs text-[var(--psy-muted)]">暫無線索流動</p>
           ) : (
             recentActions.map((action, i) => {
               const player = getPlayer(action.playerId);
@@ -143,19 +143,19 @@ export function GameLog({ actions, players }: GameLogProps) {
             >
               <div className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: 'rgba(200,155,93,0.12)' }}>
                 <h3 className="psy-serif text-sm font-bold text-[var(--psy-ink)]">
-                  行动记录 · 共 {actions.length} 条
+                  行動記錄 · 共 {actions.length} 條
                 </h3>
                 <button
                   onClick={() => setOpen(false)}
                   className="psy-btn psy-btn-ghost px-3 py-1 text-xs"
                 >
-                  关闭
+                  關閉
                 </button>
               </div>
 
               <div className="psy-scroll flex-1 overflow-y-auto px-5 py-4">
                 {allActions.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-[var(--psy-muted)]">暂无线索流动</p>
+                  <p className="py-8 text-center text-sm text-[var(--psy-muted)]">暫無線索流動</p>
                 ) : (
                   <div className="space-y-2">
                     {allActions.map((action, i) => {
@@ -175,7 +175,7 @@ export function GameLog({ actions, players }: GameLogProps) {
                           <span className="text-base">{player.avatar}</span>
                           <div className="min-w-0 flex-1">
                             <div className="psy-serif text-sm text-[var(--psy-ink)]">{player.name}</div>
-                            <div className="mt-1 text-xs text-[var(--psy-muted)]">第 {action.round} 轮</div>
+                            <div className="mt-1 text-xs text-[var(--psy-muted)]">第 {action.round} 輪</div>
                           </div>
                           <div className="min-w-0 flex-[1.4] text-sm">
                             <div

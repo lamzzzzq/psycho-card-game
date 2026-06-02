@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { DIMENSIONS } from '@/types';
 
-// 一行 = 一人一局（game_participants 关联 game_sessions）。
+// 一行 = 一人一局（game_participants 關聯 game_sessions）。
 // 真相源 schema：supabase/migrations/0001_game_records.sql。
 interface SessionMeta {
   room_code: string | null;
@@ -44,10 +44,10 @@ interface StudentAgg {
 }
 
 const CSV_HEADERS = [
-  '学号', '房间', '结束时间', '模式', '轮数',
+  '學號', '房間', '結束時間', '模式', '輪數',
   'O', 'C', 'E', 'A', 'N',
-  '申报组数', '剩余手牌', '最终得分', '名次', '是否获胜', '是否中断局',
-  '胡成功', '胡失败', '碰成功', '碰失败',
+  '申報組數', '剩餘手牌', '最終得分', '名次', '是否獲勝', '是否中斷局',
+  '胡成功', '胡失敗', '碰成功', '碰失敗',
 ];
 
 function csvEscape(v: unknown): string {
@@ -89,12 +89,12 @@ export default function StatsPage() {
           )
           .order('session_id', { ascending: false });
         if (error) throw error;
-        // supabase 嵌套返回 game_sessions 为对象
+        // supabase 嵌套返回 game_sessions 爲對象
         setRows((data ?? []) as unknown as ParticipantRow[]);
       } catch (e) {
         console.error('Failed to fetch stats:', e);
         setErrMsg(
-          '读取数据失败。请确认 Supabase 已执行 supabase/migrations/0001_game_records.sql 建好 3 张表。'
+          '讀取數據失敗。請確認 Supabase 已執行 supabase/migrations/0001_game_records.sql 建好 3 張表。'
         );
       } finally {
         setLoading(false);
@@ -132,7 +132,7 @@ export default function StatsPage() {
       .sort((a, b) => b.games - a.games || b.wins - a.wins);
   }, [humanRows]);
 
-  // 明细按局分组
+  // 明細按局分組
   const bySession = useMemo(() => {
     const m = new Map<string, ParticipantRow[]>();
     for (const r of rows) {
@@ -149,7 +149,7 @@ export default function StatsPage() {
 
   function downloadCsv() {
     const lines = [CSV_HEADERS.join(','), ...humanRows.map(rowToCsv)];
-    // ﻿ BOM 让 Excel 正确识别 UTF-8 中文
+    // ﻿ BOM 讓 Excel 正確識別 UTF-8 中文
     const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -164,7 +164,7 @@ export default function StatsPage() {
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">加载统计数据…</p>
+        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">加載統計數據…</p>
       </div>
     );
   }
@@ -177,20 +177,20 @@ export default function StatsPage() {
             onClick={() => router.push('/')}
             className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
           >
-            ← 返回首页
+            ← 返回首頁
           </button>
           <p className="psy-eyebrow">DECK ARCHIVES</p>
-          <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">数据统计</h1>
-          <p className="text-base leading-7 text-[var(--psy-ink-soft)]">参与者出勤与对战记录的归档卷宗。</p>
+          <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">數據統計</h1>
+          <p className="text-base leading-7 text-[var(--psy-ink-soft)]">參與者出勤與對戰記錄的歸檔卷宗。</p>
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="psy-chip">{summary.length} 名参与者</span>
-            <span className="psy-chip">{sessionCount} 场对局</span>
+            <span className="psy-chip">{summary.length} 名參與者</span>
+            <span className="psy-chip">{sessionCount} 場對局</span>
             <button
               onClick={downloadCsv}
               disabled={humanRows.length === 0}
               className="psy-serif ml-auto rounded-full border border-[var(--psy-border-strong)] bg-[var(--psy-accent-soft)] px-4 py-1.5 text-sm text-[var(--psy-accent)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              ⬇ 导出 CSV（{humanRows.length} 行）
+              ⬇ 導出 CSV（{humanRows.length} 行）
             </button>
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function StatsPage() {
                       : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
                   }`}
                 >
-                  {v === 'summary' ? '汇总统计' : '对局明细'}
+                  {v === 'summary' ? '彙總統計' : '對局明細'}
                 </button>
               );
             })}
@@ -224,15 +224,15 @@ export default function StatsPage() {
           {view === 'summary' ? (
             summary.length === 0 ? (
               <div className="rounded-[1.4rem] border border-[rgba(200,155,93,0.14)] bg-[rgba(255,255,255,0.02)] px-6 py-12 text-center text-sm text-[var(--psy-muted)]">
-                暂无对局数据
+                暫無對局數據
               </div>
             ) : (
               <div className="overflow-hidden rounded-[1.4rem] border border-[rgba(200,155,93,0.18)]">
                 <div className="psy-eyebrow grid grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr_0.8fr] gap-px border-b border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.05)] px-3 py-3 text-[10px] sm:px-5">
-                  <div>学号</div>
-                  <div className="text-center">场次</div>
-                  <div className="text-center">胜场</div>
-                  <div className="text-center">均申报</div>
+                  <div>學號</div>
+                  <div className="text-center">場次</div>
+                  <div className="text-center">勝場</div>
+                  <div className="text-center">均申報</div>
                   <div className="text-center">最佳名次</div>
                 </div>
                 {summary.map((s, i) => (
@@ -256,7 +256,7 @@ export default function StatsPage() {
             <div className="space-y-3">
               {bySession.length === 0 ? (
                 <div className="rounded-[1.4rem] border border-[rgba(200,155,93,0.14)] bg-[rgba(255,255,255,0.02)] px-6 py-12 text-center text-sm text-[var(--psy-muted)]">
-                  暂无对局记录
+                  暫無對局記錄
                 </div>
               ) : (
                 bySession.map((parts) => {
@@ -268,10 +268,10 @@ export default function StatsPage() {
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-[var(--psy-muted)]">
                           {s?.ended_at ? new Date(s.ended_at).toLocaleString('zh-CN') : '—'}
-                          {s?.room_code ? ` · 房间 ${s.room_code}` : ''}
+                          {s?.room_code ? ` · 房間 ${s.room_code}` : ''}
                         </span>
                         <span className="psy-eyebrow text-[10px] text-[var(--psy-muted)]">
-                          {s?.rounds_played ?? '?'} 轮{interrupted ? ' · 中断局' : ''}
+                          {s?.rounds_played ?? '?'} 輪{interrupted ? ' · 中斷局' : ''}
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -288,7 +288,7 @@ export default function StatsPage() {
                             {p.is_winner && <span>🏆</span>}
                             <span className="font-mono tabular-nums">{p.is_ai ? 'AI' : p.student_id}</span>
                             <span className="text-xs text-[var(--psy-muted)]">
-                              #{p.rank} · 申报{p.declared_count}组 · 剩{p.remaining_cards}张
+                              #{p.rank} · 申報{p.declared_count}組 · 剩{p.remaining_cards}張
                             </span>
                           </div>
                         ))}

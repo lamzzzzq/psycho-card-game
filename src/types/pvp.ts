@@ -2,7 +2,7 @@ import { BigFiveScores, Dimension, GameCard, GameAction } from './index';
 
 // Player identity (persisted to localStorage + Supabase)
 export interface PlayerInfo {
-  id: string; // student ID (学号) as unique identifier
+  id: string; // student ID (學號) as unique identifier
   studentId: string;
   bigFive: BigFiveScores | null;
 }
@@ -48,7 +48,7 @@ export type RealtimeMessage =
   | { type: 'player-kicked'; playerId: string }
   | { type: 'room-dissolved' }
   // Tentative offline: presence dropped but within grace period.
-  // UI shows "离线中" badge until host promotes to player-left or
+  // UI shows "離線中" badge until host promotes to player-left or
   // the player reconnects (player-online).
   | { type: 'player-offline'; playerId: string }
   | { type: 'player-online'; playerId: string }
@@ -108,8 +108,8 @@ export interface SerializedPlayer {
   // Penalty freeze, mirrored from host. Released by the offender's own
   // next clean discard. UI gates claim/pong/hu panels on this.
   frozenUntilOwnDiscard?: boolean;
-  // 加重罚停标志：skipPenalizedPlayers 跳过该玩家一次后，若 true 则重新激活
-  // skipNextTurn 让下一圈再跳一次。pong-fail/hu-fail/self-pong-fail 时设。
+  // 加重罰停標誌：skipPenalizedPlayers 跳過該玩家一次後，若 true 則重新激活
+  // skipNextTurn 讓下一圈再跳一次。pong-fail/hu-fail/self-pong-fail 時設。
   extraSkipQueued?: boolean;
   // Player quit the room — their seat is permanently skipped by the
   // engine; UI shows "已退出".

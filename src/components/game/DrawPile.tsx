@@ -48,7 +48,7 @@ export function DrawPile({ count, canDraw, onDraw }: DrawPileProps) {
           />
         )}
       </motion.button>
-      <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">剩余 {count} 张</span>
+      <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">剩餘 {count} 張</span>
     </div>
   );
 }

@@ -47,12 +47,12 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
     : hasRevealedSubset
     ? player.revealedSelectedCards!
     : [];
-  const modalTitle = showCards ? '公开档案 · 全手牌' : '判定样本 · 失败的碰';
+  const modalTitle = showCards ? '公開檔案 · 全手牌' : '判定樣本 · 失敗的碰';
   const modalAccent = showCards ? 'var(--psy-accent)' : 'var(--psy-danger)';
   const triggerLabel = showCards
-    ? `查看公开档案（${player.hand.length}）`
+    ? `查看公開檔案（${player.hand.length}）`
     : hasRevealedSubset
-    ? `查看判定样本（${player.revealedSelectedCards!.length}）`
+    ? `查看判定樣本（${player.revealedSelectedCards!.length}）`
     : '';
 
   return (
@@ -71,14 +71,14 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
               {player.name}
             </div>
             <div className="text-[9px] text-[var(--psy-muted)] sm:text-[10px]">
-              {player.hand.length} 张
+              {player.hand.length} 張
               {!isPenalized && !hasLeft && !isTentativeOffline && isCurrentTurn && (
                 <span className="ml-1 text-[var(--psy-accent)]">· 思考中</span>
               )}
-              {player.revealedHand && <span className="ml-1 text-[var(--psy-accent)]">· 档案公开</span>}
+              {player.revealedHand && <span className="ml-1 text-[var(--psy-accent)]">· 檔案公開</span>}
               {hasLeft && <span className="ml-1 text-[var(--psy-danger)]">· 已退出</span>}
               {!hasLeft && isTentativeOffline && (
-                <span className="ml-1 text-amber-300">· 离线中</span>
+                <span className="ml-1 text-amber-300">· 離線中</span>
               )}
             </div>
           </div>
@@ -115,7 +115,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
           }}
         >
           <span>⚠</span>
-          <span>离线中（3 分钟内未回则离场）</span>
+          <span>離線中（3 分鐘內未回則離場）</span>
         </div>
       )}
 
@@ -130,7 +130,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
           }}
         >
           <span>🚪</span>
-          <span>已退出对局</span>
+          <span>已退出對局</span>
         </div>
       )}
 
@@ -145,12 +145,12 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
           }}
         >
           <span>⛔</span>
-          <span>罚停一轮</span>
+          <span>罰停一輪</span>
         </div>
       )}
 
       {/* Archive */}
-      <DeclaredArea declaredSets={player.declaredSets} compact title={`${player.name} 的归档`} />
+      <DeclaredArea declaredSets={player.declaredSets} compact title={`${player.name} 的歸檔`} />
 
       {/* Reveal trigger — opens modal */}
       {(showCards || hasRevealedSubset) && (
@@ -196,13 +196,13 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
                   <h3 className="psy-serif text-sm font-bold text-[var(--psy-ink)]">
                     {modalTitle}
                     <span className="ml-2 text-xs font-normal text-[var(--psy-muted)]">
-                      {player.avatar} {player.name} · 共 {modalCards.length} 张
+                      {player.avatar} {player.name} · 共 {modalCards.length} 張
                     </span>
                   </h3>
                   <button
                     onClick={() => setOpenModal(false)}
                     className="px-2 py-1 text-sm text-[var(--psy-ink-soft)] hover:text-white"
-                    aria-label="关闭"
+                    aria-label="關閉"
                   >
                     ✕
                   </button>
@@ -210,7 +210,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
 
                 <div className="psy-scroll flex-1 overflow-y-auto px-5 py-4">
                   {modalCards.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-[var(--psy-muted)]">暂无可显示的牌</p>
+                    <p className="py-8 text-center text-sm text-[var(--psy-muted)]">暫無可顯示的牌</p>
                   ) : (
                     <div className="grid grid-cols-3 justify-items-center gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
                       {modalCards.map((card) => (

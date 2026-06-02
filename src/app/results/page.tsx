@@ -16,7 +16,7 @@ export default function ResultsPage() {
   if (!hydrated) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="psy-serif text-[var(--psy-muted)]">加载中…</p>
+        <p className="psy-serif text-[var(--psy-muted)]">加載中…</p>
       </div>
     );
   }
@@ -25,12 +25,12 @@ export default function ResultsPage() {
     return (
       <div className="flex flex-1 items-center justify-center">
         <div className="space-y-4 text-center">
-          <p className="text-[var(--psy-muted)]">尚未完成测评</p>
+          <p className="text-[var(--psy-muted)]">尚未完成測評</p>
           <button
             onClick={() => router.push('/assessment')}
             className="psy-btn psy-btn-accent px-6 py-2 text-sm font-medium"
           >
-            开始测评
+            開始測評
           </button>
         </div>
       </div>
@@ -49,10 +49,10 @@ export default function ResultsPage() {
             Final Persona Spread
           </p>
           <h1 className="psy-serif text-4xl text-[var(--psy-ink)]">
-            你的人格画像
+            你的人格畫像
           </h1>
           <p className="mx-auto max-w-2xl text-sm leading-7 text-[var(--psy-ink-soft)]">
-            这张人格图谱既是你的心理轮廓，也是后续牌局中需要完成的维度目标。
+            這張人格圖譜既是你的心理輪廓，也是後續牌局中需要完成的維度目標。
           </p>
         </div>
 
@@ -60,9 +60,9 @@ export default function ResultsPage() {
           <div className="space-y-4">
             <RadarChart scores={bigFiveScores} />
             <div className="psy-panel psy-etched rounded-[1.6rem] p-5">
-              <p className="psy-serif text-sm text-[var(--psy-ink)]">解读提示</p>
+              <p className="psy-serif text-sm text-[var(--psy-ink)]">解讀提示</p>
               <p className="mt-3 text-sm leading-7 text-[var(--psy-ink-soft)]">
-                分数越高，意味着你在对应维度中越容易积累目标张数；分数越低，则该维度更克制，也更需要谨慎判断。
+                分數越高，意味着你在對應維度中越容易積累目標張數；分數越低，則該維度更剋制，也更需要謹慎判斷。
               </p>
             </div>
           </div>
@@ -79,13 +79,13 @@ export default function ResultsPage() {
             onClick={() => router.push('/pvp')}
             className="psy-serif flex-1 rounded-full border border-[rgba(200,155,93,0.44)] bg-[linear-gradient(135deg,#9b6430_0%,#d4a469_100%)] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95"
           >
-            联机对战
+            聯機對戰
           </button>
           <button
             onClick={() => router.push('/lobby')}
             className="flex-1 rounded-full border border-[rgba(200,155,93,0.24)] bg-[rgba(255,255,255,0.02)] py-3 font-semibold text-[var(--psy-ink)] transition hover:bg-[rgba(200,155,93,0.08)]"
           >
-            单机对战
+            單機對戰
           </button>
           <button
             onClick={() => {
@@ -94,7 +94,7 @@ export default function ResultsPage() {
             }}
             className="rounded-full border border-[rgba(200,155,93,0.24)] px-6 py-3 text-sm font-medium text-[var(--psy-ink-soft)] transition hover:bg-[rgba(200,155,93,0.08)]"
           >
-            重新测评
+            重新測評
           </button>
         </div>
       </motion.div>

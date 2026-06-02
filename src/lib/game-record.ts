@@ -3,9 +3,9 @@
  *
  * Schema lives in supabase/migrations/0001_game_records.sql.
  * Three tables:
- *   - big_five_snapshots: 学号 ↔ 当次比赛使用的人格分数对应（不覆盖历史）
- *   - game_sessions: 一局的元数据
- *   - game_participants: 一行一人一局（核心查询表）
+ *   - big_five_snapshots: 學號 ↔ 當次比賽使用的人格分數對應（不覆蓋歷史）
+ *   - game_sessions: 一局的元數據
+ *   - game_participants: 一行一人一局（核心查詢表）
  *
  * Failures are logged but never thrown — saving stats must NEVER block the
  * end-of-game UI flow.
@@ -54,7 +54,7 @@ async function insertSnapshot(input: {
   return data.id;
 }
 
-// 失败/超时 payload 暂存在 localStorage，下次启动时 retrySavePending() 重传。
+// 失敗/超時 payload 暫存在 localStorage，下次啓動時 retrySavePending() 重傳。
 const PENDING_KEY = 'psycho-card-pending-saves';
 const SAVE_TIMEOUT_MS = 5000;
 
@@ -78,20 +78,20 @@ function writePending(items: SaveGameSessionInput[]) {
 function bufferForRetry(input: SaveGameSessionInput) {
   const items = readPending();
   items.push(input);
-  // 上限 10 局，老的丢掉避免无限增长
+  // 上限 10 局，老的丟掉避免無限增長
   writePending(items.slice(-10));
 }
 
-// 暂存存档的最长重试时效。超过这个时间还没传上去的，丢弃不再补传——
-// 否则几周前的旧局会在某次打开时被翻出来、盖上"今天"的 ended_at 落库，
-// 污染课堂数据（曾出现 5/20 的局 6/2 才补传的情况）。host 崩溃后数小时内
-// 重开补传这种正常场景不受影响。
+// 暫存存檔的最長重試時效。超過這個時間還沒傳上去的，丟棄不再補傳——
+// 否則幾周前的舊局會在某次打開時被翻出來、蓋上"今天"的 ended_at 落庫，
+// 污染課堂數據（曾出現 5/20 的局 6/2 才補傳的情況）。host 崩潰後數小時內
+// 重開補傳這種正常場景不受影響。
 const MAX_RETRY_AGE_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Retry any pending saves left over from a previous session.
  * Call once on app startup (e.g. PVP lobby mount).
- * 过期（> MAX_RETRY_AGE_MS）的暂存存档直接丢弃，不补传。
+ * 過期（> MAX_RETRY_AGE_MS）的暫存存檔直接丟棄，不補傳。
  */
 export async function retryPendingSaves(): Promise<void> {
   const items = readPending();
@@ -99,7 +99,7 @@ export async function retryPendingSaves(): Promise<void> {
   const now = Date.now();
   const remaining: SaveGameSessionInput[] = [];
   for (const item of items) {
-    if (now - item.startedAt > MAX_RETRY_AGE_MS) continue; // 过期，丢弃
+    if (now - item.startedAt > MAX_RETRY_AGE_MS) continue; // 過期，丟棄
     const id = await saveOnce(item, SAVE_TIMEOUT_MS);
     if (!id) remaining.push(item);
   }
@@ -129,8 +129,8 @@ async function saveOnce(input: SaveGameSessionInput, timeoutMs: number): Promise
 async function saveInner(input: SaveGameSessionInput): Promise<string | null> {
   try {
     // rank 排序：先剔除 hasLeft 玩家排到尾部，再按 getRankings (declaredSets desc,
-    // hand asc) 在活人内部排。否则 last-standing winner 可能因 declaredSets=0
-    // 被退出玩家挤到 rank=2 而 is_winner=true，数据自相矛盾。
+    // hand asc) 在活人內部排。否則 last-standing winner 可能因 declaredSets=0
+    // 被退出玩家擠到 rank=2 而 is_winner=true，數據自相矛盾。
     const winnerId = input.finalState.winner;
     const activePlayers = input.finalState.players.filter((p) => !p.hasLeft);
     const leftPlayers = input.finalState.players.filter((p) => p.hasLeft);
@@ -140,7 +140,7 @@ async function saveInner(input: SaveGameSessionInput): Promise<string | null> {
     ];
 
     // 1) Snapshot BigFive for every non-AI seat (one snapshot per participant).
-    //    This nails down 学号 ↔ 这一局使用的人格分数 forever.
+    //    This nails down 學號 ↔ 這一局使用的人格分數 forever.
     const snapshotByPlayerId = new Map<string, string>();
     for (const meta of input.seatMeta) {
       if (meta.isAi || !meta.playerId || !meta.studentId) continue;

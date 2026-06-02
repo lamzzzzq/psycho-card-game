@@ -39,7 +39,7 @@ export function LanguageToggle() {
           aria-disabled={true}
           onClick={() => setShowLockHint(true)}
           className="psy-serif flex items-center gap-1 rounded-full px-2.5 py-1 text-[var(--psy-muted)] transition hover:text-[var(--psy-ink-soft)]"
-          title="即将上线"
+          title="即將上線"
         >
           <span>EN</span>
           <span aria-hidden>🔒</span>
@@ -51,7 +51,7 @@ export function LanguageToggle() {
           className="psy-serif ml-2 rounded-full border px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)] shadow"
           style={{ borderColor: 'rgba(200,155,93,0.22)', background: 'rgba(20,28,38,0.85)' }}
         >
-          英文版即将上线
+          英文版即將上線
         </div>
       )}
     </div>

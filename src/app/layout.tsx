@@ -19,8 +19,8 @@ const notoSerifSc = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "PsychoCardGame - 心理卡牌对战",
-  description: "基于 Big Five 人格测评的心理学卡牌游戏",
+  title: "PsychoCardGame - 心理卡牌對戰",
+  description: "基於 Big Five 人格測評的心理學卡牌遊戲",
 };
 
 export default function RootLayout({

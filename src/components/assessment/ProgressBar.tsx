@@ -33,7 +33,7 @@ export function ProgressBar({ current, total, currentDimension }: ProgressBarPro
         />
       </div>
       <p className="text-xs leading-6 text-[var(--psy-ink-soft)]">
-        当前正在抽取 <span className="psy-serif" style={{ color: meta.colorHex }}>{meta.name}</span> 维度的人格线索。
+        當前正在抽取 <span className="psy-serif" style={{ color: meta.colorHex }}>{meta.name}</span> 維度的人格線索。
       </p>
     </div>
   );

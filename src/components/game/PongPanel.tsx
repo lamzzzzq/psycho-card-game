@@ -49,8 +49,8 @@ export function PongPanel({
   );
   const totalWithPending = handCardsOfDim.length + 1;
   const isAlreadyDeclared = declaredDims.has(pendingDim);
-  // 已归档维度也允许玩家点（强 trap）；点了 commit → engine 判 fail + 罚停。
-  // 不要 gate sameInHand 阈值 — 玩家自己判断，错就吃罚。
+  // 已歸檔維度也允許玩家點（強 trap）；點了 commit → engine 判 fail + 罰停。
+  // 不要 gate sameInHand 閾值 — 玩家自己判斷，錯就喫罰。
   const canClaimThisDim = isAlreadyDeclared || totalWithPending >= targets[pendingDim];
 
   return (
@@ -61,11 +61,11 @@ export function PongPanel({
     >
       <div className="flex items-center justify-between">
         <h3 className="psy-serif text-sm font-semibold tracking-[0.04em] text-[var(--psy-accent)] sm:text-base">
-          心理判读窗口
+          心理判讀窗口
         </h3>
         <div className="hidden text-right sm:block">
           <div className="text-xs text-[var(--psy-muted)]">
-            {discardedByName} 弃出了这张线索牌
+            {discardedByName} 棄出了這張線索牌
           </div>
           <div className="mt-1 max-w-[16rem] line-clamp-1 text-[11px] text-[var(--psy-ink-soft)]">
             {pendingCard.text}
@@ -79,7 +79,7 @@ export function PongPanel({
       {/* Show the pending discard card */}
       <div className="flex items-center gap-3 sm:gap-4">
         <div className="flex flex-col items-center gap-1">
-          <span className="psy-serif text-[10px] uppercase tracking-[0.18em] text-[var(--psy-muted)]">弃牌样本</span>
+          <span className="psy-serif text-[10px] uppercase tracking-[0.18em] text-[var(--psy-muted)]">棄牌樣本</span>
           <div className="rounded-xl p-1" style={{ backgroundColor: 'rgba(200, 155, 93, 0.08)', boxShadow: 'inset 0 0 0 1px rgba(200,155,93,0.18)' }}>
             <Card card={pendingCard} tiny />
           </div>
@@ -88,22 +88,22 @@ export function PongPanel({
         <div className="flex-1 space-y-1 text-[11px] text-[var(--psy-ink-soft)] sm:text-xs">
           {isAlreadyDeclared ? (
             <p className="text-[var(--psy-danger)] font-medium">
-              ⚠️ 该维度你已归档 — 再次碰将判失败 + 罚停。可暂不归档。
+              ⚠️ 該維度你已歸檔 — 再次碰將判失敗 + 罰停。可暫不歸檔。
             </p>
           ) : canClaimThisDim ? (
             <div className="space-y-2">
               <p className="text-[var(--psy-ink)]">
-                你可以尝试据此完成一组人格归档。
+                你可以嘗試據此完成一組人格歸檔。
               </p>
               <ul className="list-disc pl-4 space-y-0.5 text-[var(--psy-ink-soft)] marker:text-[var(--psy-accent)] sm:space-y-1">
-                <li>只选你判断为同一人格描述的手牌</li>
-                <li>总张数要达到你的该维度要求</li>
-                <li>混入其他人格牌会受罚</li>
+                <li>只選你判斷爲同一人格描述的手牌</li>
+                <li>總張數要達到你的該維度要求</li>
+                <li>混入其他人格牌會受罰</li>
               </ul>
             </div>
           ) : (
             <p className="text-[var(--psy-muted)]">
-              你暂时无法用这张牌完成归档。
+              你暫時無法用這張牌完成歸檔。
             </p>
           )}
         </div>
@@ -113,7 +113,7 @@ export function PongPanel({
       <div className="flex items-center justify-between">
         <div className="text-xs text-[var(--psy-ink-soft)]">
           {canClaimThisDim && selectedCardIds.length > 0 && (
-            <>已选 <span className="text-white font-medium">{selectedCardIds.length}</span> 张候选牌</>
+            <>已選 <span className="text-white font-medium">{selectedCardIds.length}</span> 張候選牌</>
           )}
         </div>
         <div className="flex gap-2">
@@ -126,7 +126,7 @@ export function PongPanel({
               backgroundColor: 'rgba(255,255,255,0.02)',
             }}
           >
-            暂不归档
+            暫不歸檔
           </button>
           {canClaimThisDim && (
             <button
@@ -139,13 +139,13 @@ export function PongPanel({
               }
               title={
                 selectedCardIds.length === 0
-                  ? '请先点击手牌选择同维度卡'
+                  ? '請先點擊手牌選擇同維度卡'
                   : isAlreadyDeclared
-                  ? '⚠️ 已归档维度 · 提交将判失败 + 罚停'
+                  ? '⚠️ 已歸檔維度 · 提交將判失敗 + 罰停'
                   : undefined
               }
             >
-              归档判定{isAlreadyDeclared ? '（⚠️ 已归档）' : ''}{selectedCardIds.length > 0 ? `（已选 ${selectedCardIds.length} 张）` : '（请先选牌）'}
+              歸檔判定{isAlreadyDeclared ? '（⚠️ 已歸檔）' : ''}{selectedCardIds.length > 0 ? `（已選 ${selectedCardIds.length} 張）` : '（請先選牌）'}
             </button>
           )}
         </div>

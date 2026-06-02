@@ -153,8 +153,8 @@ function finalizeClaimWindow(state: GameState): GameState {
 // as a deadlock guard (see bug #6 fix).
 export function skipPenalizedPlayers(state: GameState): GameState {
   let current = state;
-  // 加重罚停：每个 frozen 玩家可能被 skip 2 次（extraSkipQueued 触发第二次）。
-  // loop 上限改成 N*2 + safety margin，确保单次调用 consume 完所有 queued skip。
+  // 加重罰停：每個 frozen 玩家可能被 skip 2 次（extraSkipQueued 觸發第二次）。
+  // loop 上限改成 N*2 + safety margin，確保單次調用 consume 完所有 queued skip。
   const maxIters = current.players.length * 3;
   for (let i = 0; i < maxIters; i++) {
     if (current.phase !== 'drawing') return current;
@@ -183,10 +183,10 @@ export function skipPenalizedPlayers(state: GameState): GameState {
       // through the auto-skipped turn — the offender doesn't get to
       // discard during a skip, so the freeze can't clear until they
       // play a real next turn.
-      // 加重罚停：如果 extraSkipQueued=true，被跳过一次后立即重新激活
+      // 加重罰停：如果 extraSkipQueued=true，被跳過一次後立即重新激活
       // skipNextTurn（下一圈再跳一次）+ 清 extraSkipQueued。net 效果：
-      // pong-fail / hu-fail / self-pong-fail 后罚停 2 个 own-turn skip
-      // 而不是 1 个。
+      // pong-fail / hu-fail / self-pong-fail 後罰停 2 個 own-turn skip
+      // 而不是 1 個。
       if (idx === skippedIdx) {
         if (pl.extraSkipQueued) {
           return { ...pl, skipNextTurn: true, extraSkipQueued: false };
@@ -283,7 +283,7 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
     // HU FAIL — same penalty model as pong-fail: skip own next turn +
     // frozen until own next clean discard. Plus full-hand reveal
     // (heavier reveal than pong-fail; matches the stakes of declaring hu).
-    // extraSkipQueued=true 让 skipPenalizedPlayers 跳过该玩家时再 queue 一次。
+    // extraSkipQueued=true 讓 skipPenalizedPlayers 跳過該玩家時再 queue 一次。
     const newPlayers = state.players.map((p, i) =>
       i === playerIndex
         ? {
@@ -319,18 +319,18 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
       return allClaimersResponded(nextState) ? finalizeClaimWindow(nextState) : nextState;
     }
 
-    // Own-turn hu-fail: 立即结束本回合 + 罚停下一轮 + 锁定 claim windows
-    // 直到自己再次完成 own-discard。等价于 self-pong-fail 的「罚停一整轮」语义。
-    //   1. drawnCard 还回手牌 — 不让玩家用 discard 解冻 frozenUntilOwnDiscard。
-    //   2. advance turn + skipPenalizedPlayers — 本回合就让位。
-    //   3. skipNextTurn 让下一圈到该玩家时再被跳过一回合。
-    // 之前的旧实现：当回合继续 draw+discard，结果 UI banner 显示罚停但按钮没禁，
-    // 玩家事实上「能出牌」+ 当回合 discard 又把 frozenUntilOwnDiscard 清掉了。
+    // Own-turn hu-fail: 立即結束本回合 + 罰停下一輪 + 鎖定 claim windows
+    // 直到自己再次完成 own-discard。等價於 self-pong-fail 的「罰停一整輪」語義。
+    //   1. drawnCard 還回手牌 — 不讓玩家用 discard 解凍 frozenUntilOwnDiscard。
+    //   2. advance turn + skipPenalizedPlayers — 本回合就讓位。
+    //   3. skipNextTurn 讓下一圈到該玩家時再被跳過一回合。
+    // 之前的舊實現：當回合繼續 draw+discard，結果 UI banner 顯示罰停但按鈕沒禁，
+    // 玩家事實上「能出牌」+ 當回合 discard 又把 frozenUntilOwnDiscard 清掉了。
     //
-    // ⚠️ 边界：最后一回合 own-turn hu-fail 会触发 isGameOver=true，winner 由
-    // getRankings 推断（declaredSets desc, hand asc）。被罚停玩家此时手牌 +1
-    // (drawnCard 还回) + declaredSets 一张没加 → 通常 rank 垫底。这是设计
-    // 取舍：旧实现允许该玩家最后再补一张人格组，新实现一律不补。
+    // ⚠️ 邊界：最後一回合 own-turn hu-fail 會觸發 isGameOver=true，winner 由
+    // getRankings 推斷（declaredSets desc, hand asc）。被罰停玩家此時手牌 +1
+    // (drawnCard 還回) + declaredSets 一張沒加 → 通常 rank 墊底。這是設計
+    // 取捨：舊實現允許該玩家最後再補一張人格組，新實現一律不補。
     const handWithDrawnReturned: GameCard[] = state.drawnCard
       ? [...newPlayers[playerIndex].hand, state.drawnCard]
       : newPlayers[playerIndex].hand;
@@ -357,11 +357,11 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
 }
 
 export function drawCard(state: GameState): GameState {
-  // 防御性 guard：skipNextTurn=true 的玩家不该收到 drawCard — turn advance 时
-  // skipPenalizedPlayers 应已经跳过他。出现这种状态说明上游漏了 skipPenalizedPlayers
-  // 调用，兜底强制跳过避免死锁。
-  // 注意：只查 skipNextTurn，不查 frozenUntilOwnDiscard — 后者的解冻条件就是
-  // own draw + discard，禁掉 draw 会造成无法解冻的死锁。
+  // 防禦性 guard：skipNextTurn=true 的玩家不該收到 drawCard — turn advance 時
+  // skipPenalizedPlayers 應已經跳過他。出現這種狀態說明上游漏了 skipPenalizedPlayers
+  // 調用，兜底強制跳過避免死鎖。
+  // 注意：只查 skipNextTurn，不查 frozenUntilOwnDiscard — 後者的解凍條件就是
+  // own draw + discard，禁掉 draw 會造成無法解凍的死鎖。
   const guardPlayer = state.players[state.currentPlayerIndex];
   if (guardPlayer?.skipNextTurn) {
     return skipPenalizedPlayers(state);
@@ -522,7 +522,7 @@ export function pongCard(
     return state;
   }
 
-  // Penalized players can't pong (matches hu-fail/pong-fail 罚停一轮 rule).
+  // Penalized players can't pong (matches hu-fail/pong-fail 罰停一輪 rule).
   if (isFrozen(state.players[pongerIndex])) {
     const p = state.players[pongerIndex];
     console.warn('[pong-silent] #3 frozen', {
@@ -539,8 +539,8 @@ export function pongCard(
   const targets = getTargetCounts(ponger.bigFiveScores);
   const targetCount = targets[dimension];
 
-  // 已归档维度强 trap：玩家明知碰过仍 commit → 当 pong-fail 处理 + 罚停。
-  // UI 端会显示已归档维度按钮但视觉降级，玩家可在选卡前取消（pongIntent 清空）。
+  // 已歸檔維度強 trap：玩家明知碰過仍 commit → 當 pong-fail 處理 + 罰停。
+  // UI 端會顯示已歸檔維度按鈕但視覺降級，玩家可在選卡前取消（pongIntent 清空）。
   const alreadyDeclared = getDeclaredDimensions(ponger).has(dimension);
 
   const selectedHandCards = ponger.hand.filter((c) => handCardIds.includes(c.id));
@@ -647,7 +647,7 @@ export function pongCard(
     //   1. skipNextTurn — auto-skip at their next own turn
     //   2. frozenUntilOwnDiscard — locked out of every claim window
     //      until the offender themselves completes a fresh draw+discard
-    //      (after the auto-skip turn). Equivalent to "罚停一整轮":
+    //      (after the auto-skip turn). Equivalent to "罰停一整輪":
     //      no claim participation for the full cycle, then skip own turn,
     //      then play one real turn to clear.
     const exposedCards = selectedHandCards;
@@ -711,13 +711,13 @@ export function selfPongCard(
 
   const ponger = state.players[pongerIndex];
   if (isFrozen(ponger)) return state;
-  // 已归档维度强 trap：玩家明知碰过仍提交自摸 → 走 SELF-PONG FAIL 罚停。
-  // 优先级顺序（前者命中即 return / fail 不再判后续）：
-  //   1. isFrozen → silent reject（受罚状态不可参与任何动作，UI 也禁掉了按钮）
-  //   2. selfPongUsedThisTurn → silent reject（本回合已用过一次，硬规则优先于
-  //      trap；不会把"再次提交已归档维度"算作 fail，否则玩家无法理解为啥被罚）
-  //   3. alreadyDeclared 进入 FAIL 分支（强 trap）— 必须先成功过一次，且未
-  //      在本回合用掉 self-pong 名额，再 commit 同维度才会触发
+  // 已歸檔維度強 trap：玩家明知碰過仍提交自摸 → 走 SELF-PONG FAIL 罰停。
+  // 優先級順序（前者命中即 return / fail 不再判後續）：
+  //   1. isFrozen → silent reject（受罰狀態不可參與任何動作，UI 也禁掉了按鈕）
+  //   2. selfPongUsedThisTurn → silent reject（本回合已用過一次，硬規則優先於
+  //      trap；不會把"再次提交已歸檔維度"算作 fail，否則玩家無法理解爲啥被罰）
+  //   3. alreadyDeclared 進入 FAIL 分支（強 trap）— 必須先成功過一次，且未
+  //      在本回合用掉 self-pong 名額，再 commit 同維度纔會觸發
   const alreadyDeclared = getDeclaredDimensions(ponger).has(dimension);
   // One self-pong per turn. Cleared when the player draws on their
   // next turn (drawCard).
@@ -810,7 +810,7 @@ export function selfPongCard(
     };
   }
 
-  // SELF-PONG FAIL — full "罚停一整轮" treatment.
+  // SELF-PONG FAIL — full "罰停一整輪" treatment.
   //   1. drawnCard returns to hand — letting the offender discard would
   //      immediately clear frozenUntilOwnDiscard, nullifying the freeze.
   //   2. skipNextTurn=true — the offender ALSO loses their next own-turn

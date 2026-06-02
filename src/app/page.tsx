@@ -12,9 +12,9 @@ export default function Home() {
   const progress = getProgress();
   const hasResults = hydrated && bigFiveScores !== null;
   const features = [
-    { glyph: '✦', title: '自我评估', note: '先完成测评，得到你自己的五维倾向' },
-    { glyph: '◈', title: '抽牌归档', note: '凑齐同一人格维度的手牌，公开归档' },
-    { glyph: '☽', title: '识人破局', note: '对手的每张弃牌，都暴露了他的人格' },
+    { glyph: '✦', title: '自我評估', note: '先完成測評，得到你自己的五維傾向' },
+    { glyph: '◈', title: '抽牌歸檔', note: '湊齊同一人格維度的手牌，公開歸檔' },
+    { glyph: '☽', title: '識人破局', note: '對手的每張棄牌，都暴露了他的人格' },
   ];
 
   return (
@@ -23,7 +23,7 @@ export default function Home() {
         onClick={() => router.push('/tutorial')}
         className="psy-btn psy-btn-accent psy-serif fixed right-4 top-4 z-40 px-4 py-2 text-sm font-semibold shadow-[0_16px_38px_rgba(0,0,0,0.32)] sm:right-8 sm:top-8"
       >
-        玩法教学
+        玩法教學
       </button>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -37,22 +37,22 @@ export default function Home() {
                 Personalities Mahjong
               </p>
               <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">
-                人格麻将
+                人格麻將
               </h1>
               <p className="max-w-xl text-lg leading-8 text-[var(--psy-ink-soft)]">
-                把人格测评、心理线索判断与卡牌对战编织在一起。先读懂自己，再在牌桌上读懂别人。
+                把人格測評、心理線索判斷與卡牌對戰編織在一起。先讀懂自己，再在牌桌上讀懂別人。
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3 text-xs text-[var(--psy-muted)]">
               <span className="rounded-full border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.08)] px-3 py-1.5">
-                五维人格映射
+                五維人格映射
               </span>
               <span className="rounded-full border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.08)] px-3 py-1.5">
-                塔罗式卡牌视觉
+                塔羅式卡牌視覺
               </span>
               <span className="rounded-full border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.08)] px-3 py-1.5">
-                单机 / 联机双模式
+                單機 / 聯機雙模式
               </span>
             </div>
 
@@ -71,7 +71,7 @@ export default function Home() {
             <div className="relative w-full max-w-sm">
               <div className="psy-panel psy-etched rounded-[2rem] p-6">
                 <div className="mb-5 flex items-center justify-between text-[10px] uppercase tracking-[0.35em] text-[var(--psy-muted)]">
-                  <span>人格牌阵</span>
+                  <span>人格牌陣</span>
                   <span>No. 0</span>
                 </div>
                 <div className="rounded-[1.7rem] border border-[rgba(200,155,93,0.26)] bg-[linear-gradient(180deg,rgba(20,31,45,0.96),rgba(11,18,28,0.98))] p-6">
@@ -83,10 +83,10 @@ export default function Home() {
                   <div className="space-y-4 text-center">
                     <div>
                       <p className="psy-serif text-sm tracking-[0.25em] text-[var(--psy-ink-soft)]">ARCANA OF SELF</p>
-                      <p className="mt-2 psy-serif text-2xl text-[var(--psy-ink)]">人格镜像</p>
+                      <p className="mt-2 psy-serif text-2xl text-[var(--psy-ink)]">人格鏡像</p>
                     </div>
                     <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">
-                      你的五维得分会转化成不同维度的收集目标。每一张牌，既是自我描述，也是对手留下的线索。
+                      你的五維得分會轉化成不同維度的收集目標。每一張牌，既是自我描述，也是對手留下的線索。
                     </p>
                   </div>
                 </div>
@@ -101,26 +101,26 @@ export default function Home() {
             onClick={() => router.push('/pvp')}
             className="psy-btn psy-btn-accent psy-serif w-full px-6 py-3.5 text-base font-semibold"
           >
-            联机对战
+            聯機對戰
           </button>
           <button
             onClick={() => hasResults ? router.push('/lobby') : router.push('/assessment')}
             className="psy-btn psy-btn-ghost w-full px-6 py-3.5 font-medium"
           >
-            单机对战{!hasResults && <span className="ml-2 text-xs text-[var(--psy-accent)]">需先测评</span>}
+            單機對戰{!hasResults && <span className="ml-2 text-xs text-[var(--psy-accent)]">需先測評</span>}
           </button>
           <button
             onClick={() => router.push('/assessment')}
             className="psy-btn psy-btn-ghost w-full px-6 py-3.5 font-medium"
           >
-            {progress > 0 ? `继续测评 (${progress}/60)` : hasResults ? '重新测评' : '开始测评'}
+            {progress > 0 ? `繼續測評 (${progress}/60)` : hasResults ? '重新測評' : '開始測評'}
           </button>
           {hasResults && (
             <button
               onClick={() => router.push('/results')}
               className="psy-btn psy-btn-ghost w-full px-6 py-3.5 font-medium"
             >
-              查看人格报告
+              查看人格報告
             </button>
           )}
         </div>

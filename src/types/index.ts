@@ -93,15 +93,15 @@ export interface Player {
   frozenUntilDiscarderIndex?: number;
   // Penalty freeze: stays true from the moment a pong-fail / self-pong-fail
   // / hu-fail happens until the offender themselves completes a full
-  // draw + discard. Equivalent to "罚停一整轮" — the offender misses
+  // draw + discard. Equivalent to "罰停一整輪" — the offender misses
   // every claim window during the freeze, has their own next turn
   // auto-skipped (via skipNextTurn), then must play one fresh
   // own-turn cleanly before being unfrozen.
   // Cleared in discardCard when the offender's own discard lands.
   frozenUntilOwnDiscard?: boolean;
-  // 加重罚停：fail 触发时设 true。skipPenalizedPlayers 跳过该玩家一次后，
-  // 检测到此标志 → 重新激活 skipNextTurn=true（让下一轮再跳一次）+ 清此
-  // 标志。net effect：罚停期间玩家被 skip 2 个 own-turn 而不是 1 个。
+  // 加重罰停：fail 觸發時設 true。skipPenalizedPlayers 跳過該玩家一次後，
+  // 檢測到此標誌 → 重新激活 skipNextTurn=true（讓下一輪再跳一次）+ 清此
+  // 標誌。net effect：罰停期間玩家被 skip 2 個 own-turn 而不是 1 個。
   extraSkipQueued?: boolean;
   // Player has quit the game. Their seat is AI-piloted for the rest of
   // the match. Other players continue until a winner is declared or the
@@ -128,7 +128,7 @@ export interface GameAction {
   card?: GameCard;
   dimension?: Dimension;
   cardCount?: number;
-  // 'wrong-cards' (cards/count mismatch) | 'already-declared' (该维度已归档)
+  // 'wrong-cards' (cards/count mismatch) | 'already-declared' (該維度已歸檔)
   failReason?: 'wrong-cards' | 'already-declared';
   timestamp: number;
 }

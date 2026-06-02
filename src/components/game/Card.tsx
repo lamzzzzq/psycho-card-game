@@ -16,7 +16,7 @@ interface CardProps {
   // Used both by cheat mode (Shift hold) and the per-turn "view 2 cards"
   // reveal — both feed through the same prop so badges never overlap.
   revealedDimension?: import('@/types').Dimension | null;
-  // When true on a dummy card, surface a top-right "知识牌" badge in
+  // When true on a dummy card, surface a top-right "知識牌" badge in
   // the same slot as revealedDimension. Mutually exclusive — dimension
   // cards take precedence.
   revealedAsKnowledge?: boolean;
@@ -116,7 +116,7 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
       )}
       {dummy && !compact && !tiny && (
         <div className="flex items-center gap-1">
-          <span className="psy-serif text-[8px] text-[var(--psy-muted)]">档案注记</span>
+          <span className="psy-serif text-[8px] text-[var(--psy-muted)]">檔案註記</span>
         </div>
       )}
       {!dummy && !compact && !tiny && <div />}
@@ -144,7 +144,7 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
         </div>
       )}
 
-      {/* Knowledge-card badge (top-right) — shown when a dummy/档案注记
+      {/* Knowledge-card badge (top-right) — shown when a dummy/檔案註記
           card is revealed (view-mode pick or cheat). Same slot as
           revealedDimension; dimension cards take precedence. */}
       {!revealedDimension && revealedAsKnowledge && dummy && !tiny && (
@@ -163,7 +163,7 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
               className="h-1.5 w-1.5 rounded-full"
               style={{ backgroundColor: '#cdb78d' }}
             />
-            <span>知识牌</span>
+            <span>知識牌</span>
           </span>
         </div>
       )}

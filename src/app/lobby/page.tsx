@@ -20,19 +20,19 @@ export default function LobbyPage() {
     return (
       <div className="flex flex-1 items-center justify-center px-6 py-10">
         <div className="psy-panel psy-etched w-full max-w-md space-y-4 rounded-[1.8rem] p-8 text-center">
-          <p className="psy-serif text-lg text-[var(--psy-ink)]">请先完成人格测评</p>
-          <p className="text-sm text-[var(--psy-muted)]">完整人格刻度会决定你在牌局中的归档目标。</p>
+          <p className="psy-serif text-lg text-[var(--psy-ink)]">請先完成人格測評</p>
+          <p className="text-sm text-[var(--psy-muted)]">完整人格刻度會決定你在牌局中的歸檔目標。</p>
           <button
             onClick={() => router.push('/assessment')}
             className="psy-btn psy-btn-accent px-6 py-2 text-sm font-medium"
           >
-            开始测评
+            開始測評
           </button>
           <button
             onClick={() => router.push('/')}
             className="block mx-auto text-xs text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
           >
-            ← 返回首页
+            ← 返回首頁
           </button>
         </div>
       </div>
@@ -45,16 +45,16 @@ export default function LobbyPage() {
   };
 
   const difficultyOptions: { value: AIDifficulty; label: string; desc: string }[] = [
-    { value: 'easy', label: '简单', desc: '凭直觉出牌' },
-    { value: 'medium', label: '中等', desc: '会记牌分析' },
-    { value: 'hard', label: '困难', desc: '推测你的心理' },
+    { value: 'easy', label: '簡單', desc: '憑直覺出牌' },
+    { value: 'medium', label: '中等', desc: '會記牌分析' },
+    { value: 'hard', label: '困難', desc: '推測你的心理' },
   ];
 
   const roundOptions = [
-    { value: 5, label: '5 轮', desc: '快速' },
-    { value: 10, label: '10 轮', desc: '标准' },
-    { value: 15, label: '15 轮', desc: '持久' },
-    { value: 0, label: '∞ 无限', desc: '直到有人胡' },
+    { value: 5, label: '5 輪', desc: '快速' },
+    { value: 10, label: '10 輪', desc: '標準' },
+    { value: 15, label: '15 輪', desc: '持久' },
+    { value: 0, label: '∞ 無限', desc: '直到有人胡' },
   ];
 
   return (
@@ -68,14 +68,14 @@ export default function LobbyPage() {
           <div className="mx-auto max-w-3xl space-y-8">
             <div className="text-center space-y-3">
               <div className="psy-serif text-[11px] tracking-[0.28em] text-[var(--psy-accent)]">BATTLE CHAMBER</div>
-              <h1 className="psy-serif text-4xl text-[var(--psy-ink)] sm:text-5xl">对战大厅</h1>
-              <p className="text-sm text-[var(--psy-muted)]">设置游戏参数，准备进入人格博弈。</p>
+              <h1 className="psy-serif text-4xl text-[var(--psy-ink)] sm:text-5xl">對戰大廳</h1>
+              <p className="text-sm text-[var(--psy-muted)]">設置遊戲參數，準備進入人格博弈。</p>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
               <div className="space-y-6">
                 <section className="space-y-3">
-                  <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">AI 难度</label>
+                  <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">AI 難度</label>
                   <div className="grid gap-3 sm:grid-cols-3">
                     {difficultyOptions.map((opt) => {
                       const active = difficulty === opt.value;
@@ -101,7 +101,7 @@ export default function LobbyPage() {
                 </section>
 
                 <section className="space-y-3">
-                  <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">游戏轮数</label>
+                  <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">遊戲輪數</label>
                   <div className="grid gap-3 sm:grid-cols-4">
                     {roundOptions.map((r) => {
                       const active = totalRounds === r.value;
@@ -128,7 +128,7 @@ export default function LobbyPage() {
               </div>
 
               <section className="space-y-3">
-                <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">对手档案</label>
+                <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">對手檔案</label>
                 <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
                   {AI_PERSONAS.map((p) => (
                     <div
@@ -155,7 +155,7 @@ export default function LobbyPage() {
                 onClick={handleStart}
                 className="psy-btn psy-btn-accent min-w-[16rem] px-10 py-3 text-base font-semibold sm:min-w-[20rem]"
               >
-                开始对战
+                開始對戰
               </button>
             </div>
           </div>

@@ -62,7 +62,7 @@ export function DiscardPile({
         className={`flex flex-col items-center gap-2 ${
           canOpen ? 'cursor-pointer hover:scale-105 active:scale-95 transition-transform' : ''
         }`}
-        aria-label="查看弃牌堆"
+        aria-label="查看棄牌堆"
       >
         {topCard ? (
           <div className="relative">
@@ -87,10 +87,10 @@ export function DiscardPile({
           </div>
         ) : (
           <div className="flex h-24 w-18 items-center justify-center rounded-[1.1rem] border border-dashed sm:h-36 sm:w-24 sm:rounded-[1.25rem]" style={{ borderColor: 'rgba(200,155,93,0.14)' }}>
-            <span className="psy-serif text-[11px] text-[var(--psy-muted)] sm:text-xs">弃牌堆</span>
+            <span className="psy-serif text-[11px] text-[var(--psy-muted)] sm:text-xs">棄牌堆</span>
           </div>
         )}
-        <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">已弃 {count} 张</span>
+        <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">已棄 {count} 張</span>
       </button>
 
       <AnimatePresence>
@@ -113,13 +113,13 @@ export function DiscardPile({
             >
               <div className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: 'rgba(200,155,93,0.12)' }}>
                 <h3 className="psy-serif text-sm font-bold text-[var(--psy-ink)]">
-                  弃牌堆 · 共 {pile.length} 张{' '}
+                  棄牌堆 · 共 {pile.length} 張{' '}
                   <span className="text-xs font-normal text-[var(--psy-muted)]">（最新在上）</span>
                 </h3>
                 <button
                   onClick={() => setOpen(false)}
                   className="px-2 py-1 text-sm text-[var(--psy-ink-soft)] hover:text-white"
-                  aria-label="关闭"
+                  aria-label="關閉"
                 >
                   ✕
                 </button>
@@ -127,7 +127,7 @@ export function DiscardPile({
 
               <div className="psy-scroll flex-1 overflow-y-auto px-5 py-4">
                 {historyDesc.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-[var(--psy-muted)]">暂无弃牌</p>
+                  <p className="py-8 text-center text-sm text-[var(--psy-muted)]">暫無棄牌</p>
                 ) : (
                   <ul className="space-y-2">
                     {historyDesc.map((entry, i) => {

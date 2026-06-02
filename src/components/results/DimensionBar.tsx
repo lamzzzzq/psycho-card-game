@@ -13,7 +13,7 @@ interface DimensionBarProps {
 export function DimensionBar({ dimension, score, delay = 0 }: DimensionBarProps) {
   const meta = DIMENSION_META[dimension];
   const percent = (score / 5) * 100;
-  const label = score >= 3.5 ? meta.highLabel : score <= 2.5 ? meta.lowLabel : '适中均衡';
+  const label = score >= 3.5 ? meta.highLabel : score <= 2.5 ? meta.lowLabel : '適中均衡';
 
   return (
     <div className="psy-panel psy-etched space-y-3 rounded-[1.35rem] p-4">

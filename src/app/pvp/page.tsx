@@ -16,8 +16,8 @@ import { DIMENSION_META } from '@/data/dimensions';
 
 const DECK_OPTIONS: { id: DeckId; name: string; subtitle: string; locked: boolean }[] = [
   { id: 'big-five', name: 'Big Five', subtitle: '五因素人格 · OCEAN', locked: false },
-  { id: 'hexaco', name: 'HEXACO', subtitle: '六因素人格 · 含诚信维度', locked: true },
-  { id: 'cpai', name: '中国人格 CPAI', subtitle: '本土化人格量表', locked: true },
+  { id: 'hexaco', name: 'HEXACO', subtitle: '六因素人格 · 含誠信維度', locked: true },
+  { id: 'cpai', name: '中國人格 CPAI', subtitle: '本土化人格量表', locked: true },
 ];
 
 type Tab = 'create' | 'join';
@@ -42,7 +42,7 @@ export default function PvpLobbyPage() {
   const [rawInputs, setRawInputs] = useState<Record<string, string>>({ O: '3', C: '3', E: '3', A: '3', N: '3' });
   const [activeRoom, setActiveRoom] = useState<{ code: string; status: string; roomId: string } | null>(null);
 
-  // 补传上局未成功保存的对局数据（host 崩溃 / 网络断 / Supabase 超时遗留）
+  // 補傳上局未成功保存的對局數據（host 崩潰 / 網絡斷 / Supabase 超時遺留）
   useEffect(() => {
     void retryPendingSaves();
   }, []);
@@ -61,14 +61,14 @@ export default function PvpLobbyPage() {
       }>;
       const pickRoom = (r: typeof rows[number]) => (Array.isArray(r.rooms) ? r.rooms[0] : r.rooms);
       const cutoff = Date.now() - STALE_ROOM_MS;
-      // 只认 6 小时内创建的 waiting/playing 房为活跃；更老的当僵尸房。
+      // 只認 6 小時內創建的 waiting/playing 房爲活躍；更老的當殭屍房。
       const active = rows
         .map(pickRoom)
         .find((room) => room && (room.status === 'waiting' || room.status === 'playing')
           && new Date(room.created_at).getTime() >= cutoff);
       if (!active) {
-        // 没有活跃房：若名下还挂着（过期的）room_players 记录，自动清掉，
-        // 免得「已在房间内」幽灵提示一直跟着这个学号。
+        // 沒有活躍房：若名下還掛着（過期的）room_players 記錄，自動清掉，
+        // 免得「已在房間內」幽靈提示一直跟着這個學號。
         if (rows.length > 0) {
           try { await leaveAllRooms(player.id); } catch {}
         }
@@ -105,7 +105,7 @@ export default function PvpLobbyPage() {
   if (!hydrated) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="psy-serif text-[var(--psy-muted)]">加载中…</p>
+        <p className="psy-serif text-[var(--psy-muted)]">加載中…</p>
       </div>
     );
   }
@@ -130,12 +130,12 @@ export default function PvpLobbyPage() {
     // the one we already know about → it's the same device, allowed.
     const localId = player?.id;
     if (localId === id && activeRoom?.code === active.code) return null;
-    return `学号「${id}」已在房间 ${active.code} 中（${active.status === 'playing' ? '游戏中' : '等待中'}）。请换一个学号或先让对方退出。`;
+    return `學號「${id}」已在房間 ${active.code} 中（${active.status === 'playing' ? '遊戲中' : '等待中'}）。請換一個學號或先讓對方退出。`;
   }
 
   async function handleCreate() {
-    if (!studentId.trim()) { setError('请输入学号'); return; }
-    if (studentId.trim() !== studentIdConfirm.trim()) { setError('两次输入的学号不一致'); return; }
+    if (!studentId.trim()) { setError('請輸入學號'); return; }
+    if (studentId.trim() !== studentIdConfirm.trim()) { setError('兩次輸入的學號不一致'); return; }
     setLoading(true);
     setError('');
     try {
@@ -148,16 +148,16 @@ export default function PvpLobbyPage() {
       const room = await createRoom(info.id, { maxPlayers, totalRounds, deck });
       router.push(`/pvp/room/${room.code}`);
     } catch (e: any) {
-      setError(e.message ?? '创建失败');
+      setError(e.message ?? '創建失敗');
     } finally {
       setLoading(false);
     }
   }
 
   async function handleJoin() {
-    if (!studentId.trim()) { setError('请输入学号'); return; }
-    if (studentId.trim() !== studentIdConfirm.trim()) { setError('两次输入的学号不一致'); return; }
-    if (joinCode.length !== 4) { setError('请输入 4 位房间码'); return; }
+    if (!studentId.trim()) { setError('請輸入學號'); return; }
+    if (studentId.trim() !== studentIdConfirm.trim()) { setError('兩次輸入的學號不一致'); return; }
+    if (joinCode.length !== 4) { setError('請輸入 4 位房間碼'); return; }
     setLoading(true);
     setError('');
     try {
@@ -170,7 +170,7 @@ export default function PvpLobbyPage() {
       await joinRoom(joinCode, info.id);
       router.push(`/pvp/room/${joinCode}`);
     } catch (e: any) {
-      setError(e.message ?? '加入失败');
+      setError(e.message ?? '加入失敗');
     } finally {
       setLoading(false);
     }
@@ -190,12 +190,12 @@ export default function PvpLobbyPage() {
             onClick={() => router.push('/')}
             className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
           >
-            ← 返回首页
+            ← 返回首頁
           </button>
           <p className="psy-eyebrow">DUEL CHAMBER</p>
-          <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">联机对战</h1>
+          <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">聯機對戰</h1>
           <p className="text-base leading-7 text-[var(--psy-ink-soft)]">
-            创建房间或输入房间码加入，与真实玩家同桌博弈。
+            創建房間或輸入房間碼加入，與真實玩家同桌博弈。
           </p>
         </div>
 
@@ -207,17 +207,17 @@ export default function PvpLobbyPage() {
             <div className="flex items-center gap-2 text-sm text-[var(--psy-ink)]">
               <span className="psy-eyebrow text-[10px] text-[var(--psy-accent)]">RESUME</span>
               <span>
-                你还在房间{' '}
+                你還在房間{' '}
                 <span className="psy-serif font-medium text-[var(--psy-accent)]">{activeRoom.code}</span> 中
-                {activeRoom.status === 'playing' ? '（游戏进行中）' : '（等待中）'}
+                {activeRoom.status === 'playing' ? '（遊戲進行中）' : '（等待中）'}
               </span>
             </div>
             <div className="flex gap-2">
               <button onClick={resumeActiveRoom} className="psy-btn psy-btn-accent flex-1 px-4 py-2 text-sm font-medium">
-                返回房间
+                返回房間
               </button>
               <button onClick={leaveActiveRoom} className="psy-btn psy-btn-ghost flex-1 px-4 py-2 text-sm">
-                离开房间
+                離開房間
               </button>
             </div>
           </div>
@@ -228,44 +228,44 @@ export default function PvpLobbyPage() {
           <div className="space-y-3">
             <input
               className="psy-input"
-              placeholder="请输入学号"
+              placeholder="請輸入學號"
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
               maxLength={20}
             />
             <input
               className={`psy-input ${idMismatch ? 'is-error' : ''}`}
-              placeholder="再次输入学号确认"
+              placeholder="再次輸入學號確認"
               value={studentIdConfirm}
               onChange={(e) => setStudentIdConfirm(e.target.value)}
               maxLength={20}
             />
             {idMismatch && (
-              <p className="text-xs text-[var(--psy-danger)]">两次输入的学号不一致</p>
+              <p className="text-xs text-[var(--psy-danger)]">兩次輸入的學號不一致</p>
             )}
           </div>
 
           {bigFiveScores ? (
             <div className="psy-chip">
               <span className="text-[var(--psy-success)]">✓</span>
-              <span>已完成人格测评</span>
+              <span>已完成人格測評</span>
             </div>
           ) : (
             <div className="space-y-3">
               <div className="psy-chip" style={{ borderColor: 'rgba(220,106,79,0.32)', background: 'var(--psy-danger-soft)', color: 'var(--psy-ink)' }}>
-                未完成测评 · 将使用随机人格数据
+                未完成測評 · 將使用隨機人格數據
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <button onClick={() => router.push('/assessment')} className="psy-btn psy-btn-accent px-3 py-2 text-xs">
-                  完整测评（60 题）
+                  完整測評（60 題）
                 </button>
                 <button onClick={() => setShowManualInput(!showManualInput)} className="psy-btn psy-btn-ghost px-3 py-2 text-xs">
-                  手动输入分数
+                  手動輸入分數
                 </button>
               </div>
               {showManualInput && (
                 <div className="space-y-3 rounded-[1.2rem] border border-[rgba(200,155,93,0.16)] bg-[rgba(255,255,255,0.02)] p-4">
-                  <p className="psy-eyebrow text-[10px]">Big Five 分数 · 1.0 – 5.0</p>
+                  <p className="psy-eyebrow text-[10px]">Big Five 分數 · 1.0 – 5.0</p>
                   <div className="space-y-2">
                     {DIMENSIONS.map((d) => {
                       const meta = DIMENSION_META[d];
@@ -311,7 +311,7 @@ export default function PvpLobbyPage() {
                     }}
                     className="psy-btn psy-btn-accent w-full py-2 text-xs font-medium"
                   >
-                    确认分数
+                    確認分數
                   </button>
                 </div>
               )}
@@ -332,7 +332,7 @@ export default function PvpLobbyPage() {
                     : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
                 }`}
               >
-                {t === 'create' ? '创建房间' : '加入房间'}
+                {t === 'create' ? '創建房間' : '加入房間'}
               </button>
             );
           })}
@@ -351,12 +351,12 @@ export default function PvpLobbyPage() {
                       onClick={() => !opt.locked && setDeck(opt.id)}
                       disabled={opt.locked}
                       className={`psy-tile flex flex-col items-start gap-1 px-3 py-3 text-left transition ${active ? 'is-active' : ''} ${opt.locked ? 'opacity-55 cursor-not-allowed' : ''}`}
-                      title={opt.locked ? '即将上线' : ''}
+                      title={opt.locked ? '即將上線' : ''}
                     >
                       <div className="flex w-full items-center justify-between">
                         <span className="psy-serif text-sm text-[var(--psy-ink)]">{opt.name}</span>
                         {opt.locked && (
-                          <span className="text-[9px] text-[var(--psy-muted)]">🔒 即将上线</span>
+                          <span className="text-[9px] text-[var(--psy-muted)]">🔒 即將上線</span>
                         )}
                       </div>
                       <span className="text-[10px] leading-snug text-[var(--psy-muted)]">{opt.subtitle}</span>
@@ -367,7 +367,7 @@ export default function PvpLobbyPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="psy-eyebrow text-[10px]">最多玩家数</p>
+              <p className="psy-eyebrow text-[10px]">最多玩家數</p>
               <div className="grid grid-cols-2 gap-2">
                 {[3, 4].map((n) => (
                   <button
@@ -382,7 +382,7 @@ export default function PvpLobbyPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="psy-eyebrow text-[10px]">游戏轮数（0 = 无限）</p>
+              <p className="psy-eyebrow text-[10px]">遊戲輪數（0 = 無限）</p>
               <div className="grid grid-cols-4 gap-2">
                 {[0, 3, 5, 10].map((n) => (
                   <button
@@ -401,13 +401,13 @@ export default function PvpLobbyPage() {
               disabled={loading}
               className="psy-btn psy-btn-accent psy-serif w-full py-3 text-base font-semibold"
             >
-              {loading ? '创建中…' : '创建房间'}
+              {loading ? '創建中…' : '創建房間'}
             </button>
           </section>
         ) : (
           <section className="psy-panel psy-etched space-y-5 rounded-[1.6rem] p-6">
             <div className="space-y-2">
-              <p className="psy-eyebrow text-[10px]">4 位房间码</p>
+              <p className="psy-eyebrow text-[10px]">4 位房間碼</p>
               <input
                 className="psy-input psy-serif text-center text-3xl font-medium tabular-nums tracking-[0.4em]"
                 placeholder="0000"
@@ -422,7 +422,7 @@ export default function PvpLobbyPage() {
               disabled={loading}
               className="psy-btn psy-btn-accent psy-serif w-full py-3 text-base font-semibold"
             >
-              {loading ? '加入中…' : '加入房间'}
+              {loading ? '加入中…' : '加入房間'}
             </button>
           </section>
         )}

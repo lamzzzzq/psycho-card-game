@@ -92,7 +92,7 @@ export default function RulesPage() {
       `}</style>
 
       <div className="rules-toolbar no-print">
-        <button className="rules-btn" onClick={() => router.push('/tutorial')}>← 返回教学</button>
+        <button className="rules-btn" onClick={() => router.push('/tutorial')}>← 返回教學</button>
         <button className="rules-btn rules-btn-primary" onClick={() => window.print()}>🖨 列印 / 存 PDF</button>
       </div>
 

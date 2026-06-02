@@ -81,7 +81,7 @@ export function PlayerHand({
     if (isDeclaring && onToggleSelect) { onToggleSelect(cardId); return; }
     if (isDiscarding) {
       // Click toggles selection only. The actual discard requires the
-      // explicit "提交弃牌" button — double-clicking a card no longer
+      // explicit "提交棄牌" button — double-clicking a card no longer
       // commits, to prevent mis-taps.
       setDiscardPickId((prev) => (prev === cardId ? null : cardId));
       return;
@@ -109,7 +109,7 @@ export function PlayerHand({
           className="flex flex-col items-center gap-2"
         >
           <p className="psy-serif text-sm text-[var(--psy-accent)]">
-            {discardPickId === null ? '先圈定一张要舍弃的线索牌' : '点「提交弃牌」确认（再次点击该牌可取消选中）'}
+            {discardPickId === null ? '先圈定一張要捨棄的線索牌' : '點「提交棄牌」確認（再次點擊該牌可取消選中）'}
           </p>
           {discardPickId !== null && (
             <div className="flex gap-2">
@@ -127,7 +127,7 @@ export function PlayerHand({
                 }}
                 className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold"
               >
-                提交弃牌
+                提交棄牌
               </button>
             </div>
           )}
@@ -136,13 +136,13 @@ export function PlayerHand({
       {isDeclaring && (
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-          选出你认为属于同一人格线索的牌
+          選出你認爲屬於同一人格線索的牌
         </motion.p>
       )}
       {viewMode && (
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-          选出 2 张你想要查看的手牌（{pickedViewIds.length}/2）
+          選出 2 張你想要查看的手牌（{pickedViewIds.length}/2）
         </motion.p>
       )}
 
