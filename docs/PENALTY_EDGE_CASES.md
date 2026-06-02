@@ -1,7 +1,7 @@
 # 罚停机制 · Edge Case 手动测试清单
 
 > 用途：6 月初测试前，逐条手动验证罚停（碰失败 / 自摸碰失败 / 食胡失败）的边界行为。
-> 真相源代码：`src/lib/game-logic.ts`。自动化测试：`src/lib/__tests__/penalty-freeze.test.ts` + `pong-empty-hand.test.ts`（共 84 条，全绿）。
+> 真相源代码：`src/lib/game-logic.ts`。自动化测试：`src/lib/__tests__/penalty-freeze.test.ts` + `pong-empty-hand.test.ts`（全套 98 条，全绿）。
 >
 > 测试建议用 **3 人联机**（PVP 默认 3 人 5 轮），座位记为 A→B→C。
 
@@ -178,5 +178,5 @@ reveal 在犯规者**下次真正摸牌**时清除（要熬过整个罚停期）
 
 ## 验证方式
 
-- **自动化**：`npm test`（应 84/84 绿）。
+- **自动化**：`npm test`（应 98/98 绿）。
 - **手动**：上面每个 CASE 按「设置 → 操作 → 预期」走一遍，发现不符就记下 CASE 编号反馈给我。
