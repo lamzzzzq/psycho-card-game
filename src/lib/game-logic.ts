@@ -439,6 +439,9 @@ export function discardCard(state: GameState, cardId: number): GameState {
     playerId: player.id,
     type: 'discard',
     card: cardToDiscard,
+    // 這次出牌若把自己的凍結解除（解凍輪 own discard）→ 標記，方便日誌顯示
+    // 「解除罰停」，讓玩家直觀看到罰停確實結束了。
+    clearedPenalty: !!player.frozenUntilOwnDiscard,
     timestamp: Date.now(),
   };
 

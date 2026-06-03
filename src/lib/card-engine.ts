@@ -65,7 +65,11 @@ export function createShuffledDeck(playerCount: number = 4): GameCard[] {
 export function dealCardsVariable(
   deck: GameCard[],
   playerScores: BigFiveScores[],
-  minDrawReserve: number = playerScores.length
+  minDrawReserve: number = playerScores.length,
+  // 開局每手 dummy 上限。隨機切牌時每手期望 ~1.7 張 dummy（2~3 張常見），
+  // 開局體驗差。發牌改為「每手最多 maxDummyPerHand 張」，多餘 dummy 進抽牌堆，
+  // 靠之後摸牌零散出現（攤到各回合，稀態仍 ≤1）。見 docs/DECK_BALANCE.md。
+  maxDummyPerHand: number = 1
 ): { hands: GameCard[][]; remaining: GameCard[] } {
   // 想要的手牌（sum-1）。極端高分下總和可能超過牌庫 → 會截斷後發玩家、
   // 抽牌堆歸零、第一回合秒死。護欄：若總和 > 牌庫 - 預留，從最大的手牌
@@ -82,14 +86,48 @@ export function dealCardsVariable(
     total -= 1;
   }
 
-  const hands: GameCard[][] = [];
-  let index = 0;
-  for (const handSize of sizes) {
-    hands.push(deck.slice(index, index + handSize));
-    index += handSize;
+  // deck 已洗過 → 兩個池內部順序仍隨機，不需再洗。
+  const personality = deck.filter((c) => !c.isDummy);
+  const dummies = deck.filter((c) => c.isDummy);
+
+  // 每手 dummy 配額：默認 min(maxDummyPerHand, handSize)。正常/偏高分到此為止，
+  // 每手 ≤1 張 dummy。
+  const quota = sizes.map((s) => Math.min(maxDummyPerHand, s, dummies.length));
+  // 病態極值（如 4 人全測 ~5）人格牌(80)不夠填總手牌 → 缺口必須由 dummy 補。
+  // 把這些「被迫的」dummy 用 round-robin 平攤到各手，避免全堆在最後幾手（曾出現
+  // 單手 5 張）。攤勻後最壞 = ⌈缺口/人數⌉，不會某一手暴增。
+  const shortfall = Math.max(0, total - personality.length);
+  const target = Math.min(dummies.length, Math.max(quota.reduce((a, b) => a + b, 0), shortfall));
+  let placed = quota.reduce((a, b) => a + b, 0);
+  while (placed < target) {
+    // 給「還有空位且當前 dummy 最少」的手 +1，保證平攤。
+    let idx = -1;
+    for (let i = 0; i < quota.length; i++) {
+      if (quota[i] < sizes[i] && (idx < 0 || quota[i] < quota[idx])) idx = i;
+    }
+    if (idx < 0) break;
+    quota[idx]++;
+    placed++;
   }
 
-  return { hands, remaining: deck.slice(index) };
+  let pIdx = 0;
+  let dIdx = 0;
+  const hands: GameCard[][] = [];
+  sizes.forEach((handSize, h) => {
+    const hand: GameCard[] = [];
+    const dWant = Math.min(quota[h], dummies.length - dIdx);
+    for (let i = 0; i < dWant; i++) hand.push(dummies[dIdx++]);
+    while (hand.length < handSize) {
+      if (pIdx < personality.length) hand.push(personality[pIdx++]);
+      else if (dIdx < dummies.length) hand.push(dummies[dIdx++]); // 兜底
+      else break;
+    }
+    hands.push(shuffle(hand)); // 打散手內順序，dummy 不固定排在最前
+  });
+
+  // 剩餘人格牌 + 剩餘 dummy 合併重洗 → 抽牌堆（多出來的 dummy 都在這裏）。
+  const remaining = shuffle([...personality.slice(pIdx), ...dummies.slice(dIdx)]);
+  return { hands, remaining };
 }
 
 export function dealCards(

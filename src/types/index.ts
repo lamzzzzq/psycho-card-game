@@ -130,6 +130,8 @@ export interface GameAction {
   cardCount?: number;
   // 'wrong-cards' (cards/count mismatch) | 'already-declared' (該維度已歸檔)
   failReason?: 'wrong-cards' | 'already-declared';
+  // discard 動作清除了該玩家的罰停凍結（解凍輪出牌）→ 日誌標「解除罰停」。
+  clearedPenalty?: boolean;
   timestamp: number;
 }
 

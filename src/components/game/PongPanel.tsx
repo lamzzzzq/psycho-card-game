@@ -86,11 +86,9 @@ export function PongPanel({
         </div>
 
         <div className="flex-1 space-y-1 text-[11px] text-[var(--psy-ink-soft)] sm:text-xs">
-          {isAlreadyDeclared ? (
-            <p className="text-[var(--psy-danger)] font-medium">
-              ⚠️ 該維度你已歸檔 — 再次碰將判失敗 + 罰停。可暫不歸檔。
-            </p>
-          ) : canClaimThisDim ? (
+          {/* 不洩露「已歸檔」資訊（強 trap）：已歸檔維度與正常可碰維度顯示完全
+              相同的引導，玩家自行判斷。碰了若重複/混維度，由引擎判失敗 + 罰停。 */}
+          {canClaimThisDim ? (
             <div className="space-y-2">
               <p className="text-[var(--psy-ink)]">
                 你可以嘗試據此完成一組人格歸檔。
@@ -132,20 +130,14 @@ export function PongPanel({
             <button
               onClick={() => onClaim(pendingDim, selectedCardIds)}
               disabled={selectedCardIds.length === 0}
-              className={
-                isAlreadyDeclared
-                  ? 'psy-btn psy-btn-ghost px-3 py-1.5 text-[11px] font-bold opacity-60 disabled:cursor-not-allowed disabled:opacity-30 sm:px-4 sm:py-2 sm:text-xs'
-                  : 'psy-btn psy-btn-accent px-3 py-1.5 text-[11px] font-bold disabled:cursor-not-allowed disabled:opacity-30 sm:px-4 sm:py-2 sm:text-xs'
-              }
+              className="psy-btn psy-btn-accent px-3 py-1.5 text-[11px] font-bold disabled:cursor-not-allowed disabled:opacity-30 sm:px-4 sm:py-2 sm:text-xs"
               title={
                 selectedCardIds.length === 0
                   ? '請先點擊手牌選擇同維度卡'
-                  : isAlreadyDeclared
-                  ? '⚠️ 已歸檔維度 · 提交將判失敗 + 罰停'
                   : undefined
               }
             >
-              歸檔判定{isAlreadyDeclared ? '（⚠️ 已歸檔）' : ''}{selectedCardIds.length > 0 ? `（已選 ${selectedCardIds.length} 張）` : '（請先選牌）'}
+              歸檔判定{selectedCardIds.length > 0 ? `（已選 ${selectedCardIds.length} 張）` : '（請先選牌）'}
             </button>
           )}
         </div>

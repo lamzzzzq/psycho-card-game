@@ -804,13 +804,7 @@ export default function PvpGamePage() {
           {/* Claim window — opponent discarded. First-come-first-served:
               any non-discarder may pong / pass / hu. Whoever clicks
               first wins the race. */}
-          {canClaim && gameState.pendingDiscard && (() => {
-            const pendingPersonality = isPersonalityCard(gameState.pendingDiscard)
-              ? gameState.pendingDiscard
-              : null;
-            const pendingDimDeclared =
-              pendingPersonality !== null && declaredDims.has(pendingPersonality.dimension);
-            return (
+          {canClaim && gameState.pendingDiscard && (
             <div className="psy-panel space-y-3 rounded-[1.35rem] border p-4">
               <div className="flex items-center justify-between">
                 <h3 className="psy-serif text-sm font-medium text-[var(--psy-accent)]">
@@ -825,18 +819,14 @@ export default function PvpGamePage() {
                     <Card card={gameState.pendingDiscard} />
                   </div>
                 </div>
+                {/* 不洩露「已歸檔」資訊（強 trap）：所有維度顯示相同引導，玩家自行
+                    判斷。碰了若重複歸檔/混維度，由引擎判失敗 + 罰停（提示「重複碰」）。 */}
                 <div className="text-xs text-[var(--psy-ink-soft)]">
-                  {pendingDimDeclared ? (
-                    <p className="text-[var(--psy-danger)] font-medium">
-                      ⚠️ 該維度你已歸檔 — 再次碰將判失敗 + 罰停。建議「過」。
-                    </p>
-                  ) : (
-                    <ul className="list-disc pl-4 space-y-1 marker:text-orange-400">
-                      <li>選出與棄牌同一人格的手牌後點「碰」</li>
-                      <li>總張數要達到該維度要求</li>
-                      <li>混入其他人格牌會受罰</li>
-                    </ul>
-                  )}
+                  <ul className="list-disc pl-4 space-y-1 marker:text-orange-400">
+                    <li>選出與棄牌同一人格的手牌後點「碰」</li>
+                    <li>總張數要達到該維度要求</li>
+                    <li>混入其他人格牌會受罰</li>
+                  </ul>
                 </div>
               </div>
               {claimSubmitted ? (
@@ -855,20 +845,14 @@ export default function PvpGamePage() {
                   <button
                     onClick={handlePong}
                     disabled={selectedCardIds.length === 0}
-                    className={
-                      pendingDimDeclared
-                        ? 'psy-btn psy-btn-ghost px-4 py-1.5 text-xs font-bold opacity-60 disabled:cursor-not-allowed disabled:opacity-35'
-                        : 'psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35'
-                    }
+                    className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35"
                     title={
                       selectedCardIds.length === 0
                         ? '請先點擊手牌選擇同維度卡再碰'
-                        : pendingDimDeclared
-                        ? '⚠️ 已歸檔維度 · 提交將判失敗 + 罰停'
                         : undefined
                     }
                   >
-                    碰{pendingDimDeclared ? '（⚠️ 已歸檔）' : '！'}{selectedCardIds.length > 0 ? `（已選 ${selectedCardIds.length} 張）` : '（請先選牌）'}
+                    碰！{selectedCardIds.length > 0 ? `（已選 ${selectedCardIds.length} 張）` : '（請先選牌）'}
                   </button>
                 )}
                 {!meFrozen && (
@@ -882,8 +866,7 @@ export default function PvpGamePage() {
               </div>
               )}
             </div>
-            );
-          })()}
+          )}
 
           {/* Action buttons (my turn only) */}
           {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && !viewMode && !pongIntent && (

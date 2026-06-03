@@ -89,7 +89,8 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[])
         ...p,
         {
           id: ++popIdRef.current,
-          text: '💥 碰失敗',
+          // 重複碰已歸檔維度 → 明確提示「重複碰」，其餘失敗統一「碰失敗」。
+          text: latest.failReason === 'already-declared' ? '💥 重複碰' : '💥 碰失敗',
           playerName: nameOf(latest.playerId),
           kind: 'pong-fail',
         },

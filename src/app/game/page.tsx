@@ -325,7 +325,9 @@ export default function GamePage() {
       if (lastAction?.type === 'pong-success') {
         showBanner(true, `碰！${DIMENSION_META[dimension].name} 完成！`);
       } else if (lastAction?.type === 'pong-fail') {
-        showBanner(false, '碰失敗！手牌公開，跳過下輪');
+        showBanner(false, lastAction.failReason === 'already-declared'
+          ? '重複碰！該維度已歸檔，手牌公開，跳過下輪'
+          : '碰失敗！手牌公開，跳過下輪');
       }
     }
   }, [playerPong]);

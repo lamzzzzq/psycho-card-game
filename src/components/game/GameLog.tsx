@@ -10,52 +10,59 @@ interface GameLogProps {
   players: Player[];
 }
 
-function getActionLabel(action: GameAction) {
+interface ActionLabel {
+  tone: 'neutral' | 'success' | 'danger' | 'dimension' | 'muted';
+  prefix: string;
+  detail?: string;
+  colorHex?: string;
+  badge?: string; // 額外綠色標記，如「解除罰停」
+}
+
+function getActionLabel(action: GameAction): ActionLabel {
   // Draw never exposes card contents — that's private information until
   // the holder chooses to discard / declare it. Only show "摸了一張牌".
   if (action.type === 'draw') {
-    return { tone: 'neutral' as const, prefix: '摸了一張牌' };
+    return { tone: 'neutral', prefix: '摸了一張牌' };
   }
 
-  if (action.type === 'discard' && action.card) {
-    if (isDummyCard(action.card)) {
-      return {
-        tone: 'neutral' as const,
-        prefix: '棄掉了檔案註記',
-        detail: action.card.text,
-      };
-    }
-    if (isPersonalityCard(action.card)) {
-      return {
-        tone: 'neutral' as const,
-        prefix: '棄掉了一張線索牌',
-        detail: action.card.text,
-      };
-    }
-  }
   if (action.type === 'discard') {
-    return { tone: 'neutral' as const, prefix: '棄了一張牌' };
+    // 解凍輪出牌 → 標「解除罰停」綠色 badge，讓玩家直觀看到罰停結束。
+    const badge = action.clearedPenalty ? '✅ 解除罰停' : undefined;
+    if (action.card && isDummyCard(action.card)) {
+      return { tone: 'neutral', prefix: '棄掉了檔案註記', detail: action.card.text, badge };
+    }
+    if (action.card && isPersonalityCard(action.card)) {
+      return { tone: 'neutral', prefix: '棄掉了一張線索牌', detail: action.card.text, badge };
+    }
+    return { tone: 'neutral', prefix: '棄了一張牌', badge };
   }
   if (action.type === 'hu-success') {
-    return { tone: 'success' as const, prefix: '食胡！遊戲結束' };
+    return { tone: 'success', prefix: '食胡！遊戲結束' };
   }
   if (action.type === 'hu-fail') {
-    return { tone: 'danger' as const, prefix: '食胡失敗！手牌公開，罰停一輪' };
+    return { tone: 'danger', prefix: '食胡失敗！手牌公開', detail: '罰停：跳過接下來 2 個自己的回合' };
   }
   if (action.type === 'pong-success' && action.dimension) {
     return {
-      tone: 'dimension' as const,
+      tone: 'dimension',
       prefix: `碰牌成功${action.cardCount ? ` (${action.cardCount}張)` : ''}`,
       colorHex: DIMENSION_META[action.dimension].colorHex,
     };
   }
-  if (action.type === 'pong-fail' && action.dimension) {
+  if (action.type === 'pong-fail') {
+    const why =
+      action.failReason === 'already-declared'
+        ? '該維度已歸檔（重複碰）'
+        : '牌不對 / 張數不夠';
     return {
-      tone: 'danger' as const,
+      tone: 'danger',
       prefix: '碰牌失敗！手牌公開',
+      detail: `${why} · 罰停：跳過接下來 2 個自己的回合`,
     };
   }
-  return { tone: 'muted' as const, prefix: '跳過本輪' };
+  // type === 'skip'：只由 skipPenalizedPlayers 產生（主動「過」不記錄），
+  // 所以一律是罰停導致的自動跳過。明確標出原因，避免誤以為是正常跳過。
+  return { tone: 'muted', prefix: '⛔ 因罰停 · 本回合被自動跳過' };
 }
 
 export function GameLog({ actions, players }: GameLogProps) {
@@ -96,8 +103,12 @@ export function GameLog({ actions, players }: GameLogProps) {
                 >
                   <span className="text-[var(--psy-ink-soft)]">{player.avatar}</span>
                   <div className="min-w-0">
+                    <div className="psy-serif text-[11px] font-semibold text-[var(--psy-ink)] truncate">
+                      {player.name}
+                      <span className="ml-1 text-[9px] font-normal text-[var(--psy-muted)]">第{action.round}輪</span>
+                    </div>
                     <div
-                      className={`${
+                      className={`mt-0.5 ${
                         label.tone === 'success'
                           ? 'font-medium text-[var(--psy-success)]'
                           : label.tone === 'danger'
@@ -109,6 +120,9 @@ export function GameLog({ actions, players }: GameLogProps) {
                       style={label.tone === 'dimension' ? { color: label.colorHex } : undefined}
                     >
                       {label.prefix}
+                      {label.badge && (
+                        <span className="ml-1 text-[10px] font-semibold text-[var(--psy-success)]">{label.badge}</span>
+                      )}
                     </div>
                     {label.detail && (
                       <div className="mt-0.5 line-clamp-1 text-[10px] text-[var(--psy-muted)]">
@@ -191,6 +205,9 @@ export function GameLog({ actions, players }: GameLogProps) {
                               style={label.tone === 'dimension' ? { color: label.colorHex } : undefined}
                             >
                               {label.prefix}
+                              {label.badge && (
+                                <span className="ml-1.5 text-xs font-semibold text-[var(--psy-success)]">{label.badge}</span>
+                              )}
                             </div>
                             {label.detail && (
                               <div className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--psy-muted)]">
