@@ -60,6 +60,12 @@ export default function LobbyPage() {
   return (
     // 移动端：内容顶部对齐 + 底部留白给 sticky CTA；桌面端垂直居中。
     <div className="flex flex-1 flex-col items-center px-4 pt-8 pb-28 sm:px-6 lg:justify-center lg:pb-8">
+      <button
+        onClick={() => router.push('/')}
+        className="psy-btn psy-btn-ghost psy-serif fixed left-4 top-4 z-40 px-3.5 py-2 text-sm font-medium shadow-[0_16px_38px_rgba(0,0,0,0.32)] sm:left-8 sm:top-8"
+      >
+        ← 返回主頁
+      </button>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -84,14 +90,8 @@ export default function LobbyPage() {
                         <button
                           key={opt.value}
                           onClick={() => setDifficulty(opt.value)}
-                          className="psy-etched rounded-2xl border p-2.5 text-center transition sm:rounded-[1.4rem] sm:p-4"
-                          style={{
-                            borderColor: active ? 'rgba(200,155,93,0.46)' : 'rgba(200,155,93,0.16)',
-                            background: active
-                              ? 'linear-gradient(180deg, rgba(64,46,27,0.92), rgba(27,22,17,0.96))'
-                              : 'linear-gradient(180deg, rgba(20,31,46,0.78), rgba(11,20,31,0.92))',
-                            boxShadow: active ? '0 18px 32px rgba(72, 49, 18, 0.24)' : 'none',
-                          }}
+                          aria-pressed={active}
+                          className={`psy-tile ${active ? 'is-active' : ''}`}
                         >
                           <div className="psy-serif text-base text-[var(--psy-ink)] sm:text-lg">{opt.label}</div>
                           <div className="mt-1 text-[11px] leading-tight text-[var(--psy-muted)] sm:mt-2 sm:text-xs">{opt.desc}</div>
@@ -110,14 +110,8 @@ export default function LobbyPage() {
                         <button
                           key={r.value}
                           onClick={() => setTotalRounds(r.value)}
-                          className="psy-etched rounded-2xl border p-2.5 text-center transition sm:rounded-[1.3rem] sm:p-4"
-                          style={{
-                            borderColor: active ? 'rgba(200,155,93,0.46)' : 'rgba(200,155,93,0.16)',
-                            background: active
-                              ? 'linear-gradient(180deg, rgba(56,41,26,0.92), rgba(21,18,15,0.96))'
-                              : 'linear-gradient(180deg, rgba(20,31,46,0.78), rgba(11,20,31,0.92))',
-                            boxShadow: active ? '0 18px 32px rgba(72, 49, 18, 0.22)' : 'none',
-                          }}
+                          aria-pressed={active}
+                          className={`psy-tile ${active ? 'is-active' : ''}`}
                         >
                           <div className="psy-serif text-base text-[var(--psy-ink)] sm:text-lg">{r.label}</div>
                           <div className="mt-1 text-[11px] leading-tight text-[var(--psy-muted)] sm:mt-2 sm:text-xs">{r.desc}</div>
