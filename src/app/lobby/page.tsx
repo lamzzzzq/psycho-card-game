@@ -58,32 +58,33 @@ export default function LobbyPage() {
   ];
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
+    // 移动端：内容顶部对齐 + 底部留白给 sticky CTA；桌面端垂直居中。
+    <div className="flex flex-1 flex-col items-center px-4 pt-8 pb-28 sm:px-6 lg:justify-center lg:pb-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-5xl"
       >
-        <div className="psy-panel psy-etched rounded-[2rem] px-6 py-8 sm:px-10 sm:py-10">
-          <div className="mx-auto max-w-3xl space-y-8">
-            <div className="text-center space-y-3">
+        <div className="psy-panel psy-etched rounded-[1.6rem] px-4 py-6 sm:rounded-[2rem] sm:px-10 sm:py-10">
+          <div className="mx-auto max-w-3xl space-y-6 sm:space-y-8">
+            <div className="text-center space-y-2 sm:space-y-3">
               <div className="psy-serif text-[11px] tracking-[0.28em] text-[var(--psy-accent)]">BATTLE CHAMBER</div>
-              <h1 className="psy-serif text-4xl text-[var(--psy-ink)] sm:text-5xl">對戰大廳</h1>
-              <p className="text-sm text-[var(--psy-muted)]">設置遊戲參數，準備進入人格博弈。</p>
+              <h1 className="psy-serif text-3xl text-[var(--psy-ink)] sm:text-5xl">對戰大廳</h1>
+              <p className="text-xs text-[var(--psy-muted)] sm:text-sm">設置遊戲參數，準備進入人格博弈。</p>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-              <div className="space-y-6">
-                <section className="space-y-3">
+              <div className="space-y-5 sm:space-y-6">
+                <section className="space-y-2.5 sm:space-y-3">
                   <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">AI 難度</label>
-                  <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
                     {difficultyOptions.map((opt) => {
                       const active = difficulty === opt.value;
                       return (
                         <button
                           key={opt.value}
                           onClick={() => setDifficulty(opt.value)}
-                          className="psy-etched rounded-[1.4rem] border p-4 text-center transition"
+                          className="psy-etched rounded-2xl border p-2.5 text-center transition sm:rounded-[1.4rem] sm:p-4"
                           style={{
                             borderColor: active ? 'rgba(200,155,93,0.46)' : 'rgba(200,155,93,0.16)',
                             background: active
@@ -92,24 +93,24 @@ export default function LobbyPage() {
                             boxShadow: active ? '0 18px 32px rgba(72, 49, 18, 0.24)' : 'none',
                           }}
                         >
-                          <div className="psy-serif text-lg text-[var(--psy-ink)]">{opt.label}</div>
-                          <div className="mt-2 text-xs text-[var(--psy-muted)]">{opt.desc}</div>
+                          <div className="psy-serif text-base text-[var(--psy-ink)] sm:text-lg">{opt.label}</div>
+                          <div className="mt-1 text-[11px] leading-tight text-[var(--psy-muted)] sm:mt-2 sm:text-xs">{opt.desc}</div>
                         </button>
                       );
                     })}
                   </div>
                 </section>
 
-                <section className="space-y-3">
+                <section className="space-y-2.5 sm:space-y-3">
                   <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">遊戲輪數</label>
-                  <div className="grid gap-3 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
                     {roundOptions.map((r) => {
                       const active = totalRounds === r.value;
                       return (
                         <button
                           key={r.value}
                           onClick={() => setTotalRounds(r.value)}
-                          className="psy-etched rounded-[1.3rem] border p-4 text-center transition"
+                          className="psy-etched rounded-2xl border p-2.5 text-center transition sm:rounded-[1.3rem] sm:p-4"
                           style={{
                             borderColor: active ? 'rgba(200,155,93,0.46)' : 'rgba(200,155,93,0.16)',
                             background: active
@@ -118,8 +119,8 @@ export default function LobbyPage() {
                             boxShadow: active ? '0 18px 32px rgba(72, 49, 18, 0.22)' : 'none',
                           }}
                         >
-                          <div className="psy-serif text-lg text-[var(--psy-ink)]">{r.label}</div>
-                          <div className="mt-2 text-xs text-[var(--psy-muted)]">{r.desc}</div>
+                          <div className="psy-serif text-base text-[var(--psy-ink)] sm:text-lg">{r.label}</div>
+                          <div className="mt-1 text-[11px] leading-tight text-[var(--psy-muted)] sm:mt-2 sm:text-xs">{r.desc}</div>
                         </button>
                       );
                     })}
@@ -127,21 +128,22 @@ export default function LobbyPage() {
                 </section>
               </div>
 
-              <section className="space-y-3">
+              <section className="space-y-2.5 sm:space-y-3">
                 <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">對手檔案</label>
-                <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                {/* 移动端：3 列紧凑（头像+名字，简介隐藏）；sm+：完整卡片 */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-1">
                   {AI_PERSONAS.map((p) => (
                     <div
                       key={p.id}
-                      className="psy-panel psy-etched rounded-[1.4rem] p-4 text-center lg:text-left"
+                      className="psy-panel psy-etched rounded-2xl p-2.5 text-center sm:rounded-[1.4rem] sm:p-4 lg:text-left"
                     >
-                      <div className="flex flex-col items-center gap-3 lg:flex-row lg:items-start">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(200,155,93,0.2)] bg-[rgba(200,155,93,0.08)] text-2xl">
+                      <div className="flex flex-col items-center gap-2 sm:gap-3 lg:flex-row lg:items-start">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(200,155,93,0.2)] bg-[rgba(200,155,93,0.08)] text-xl sm:h-12 sm:w-12 sm:text-2xl">
                           {p.avatar}
                         </div>
                         <div className="space-y-1">
-                          <div className="psy-serif text-lg text-[var(--psy-ink)]">{p.name}</div>
-                          <div className="text-xs leading-5 text-[var(--psy-muted)]">{p.description}</div>
+                          <div className="psy-serif text-sm text-[var(--psy-ink)] sm:text-lg">{p.name}</div>
+                          <div className="hidden text-xs leading-5 text-[var(--psy-muted)] sm:block">{p.description}</div>
                         </div>
                       </div>
                     </div>
@@ -149,18 +151,19 @@ export default function LobbyPage() {
                 </div>
               </section>
             </div>
-
-            <div className="flex justify-center pt-2">
-              <button
-                onClick={handleStart}
-                className="psy-btn psy-btn-accent min-w-[16rem] px-10 py-3 text-base font-semibold sm:min-w-[20rem]"
-              >
-                開始對戰
-              </button>
-            </div>
           </div>
         </div>
       </motion.div>
+
+      {/* 開始對戰：移动端 sticky 底栏，桌面端静态居中。放在 motion.div 之外。 */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[rgba(200,155,93,0.18)] bg-[rgba(11,18,28,0.92)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:static lg:mt-6 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+        <button
+          onClick={handleStart}
+          className="psy-btn psy-btn-accent mx-auto block w-full max-w-md px-10 py-3 text-base font-semibold lg:w-auto lg:min-w-[20rem]"
+        >
+          開始對戰
+        </button>
+      </div>
     </div>
   );
 }
