@@ -123,8 +123,17 @@ function runOneGame(seed: number, rogueRate = 0.0): { state: GameState; actions:
           );
           if (lastHu?.type === 'hu-fail') {
             const after = state.players.find(p => p.id === before.id)!;
-            if (!after.frozenUntilOwnDiscard) {
-              breaks.push(`game#${seed}: hu-fail player ${before.id} without frozenUntilOwnDiscard`);
+            // 新模型：罚停 = 错过 2 个出牌位，跳完即解冻。own-turn hu-fail 后
+            // attemptHu 内部已 advance+skipPenalizedPlayers，若桌面多数被冻/离开，
+            // 该玩家的 2 次 skip 可能在同一链里消费完 → frozen 已清。所以只要
+            // 「仍有罚停 flag」或「fail 后已有该玩家 skip 记录」即视为已受罚。
+            const stillPenalized = after.skipNextTurn || !!after.frozenUntilOwnDiscard;
+            const huFailIdx = state.actionLog.lastIndexOf(lastHu);
+            const skippedAfter = state.actionLog
+              .slice(huFailIdx + 1)
+              .some(a => a.type === 'skip' && a.playerId === before.id);
+            if (!stillPenalized && !skippedAfter) {
+              breaks.push(`game#${seed}: hu-fail player ${before.id} 未受任何罚停`);
             }
           }
           break;

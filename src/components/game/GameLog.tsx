@@ -26,8 +26,8 @@ function getActionLabel(action: GameAction): ActionLabel {
   }
 
   if (action.type === 'discard') {
-    // 解凍輪出牌 → 標「解除罰停」綠色 badge，讓玩家直觀看到罰停結束。
-    const badge = action.clearedPenalty ? '✅ 解除罰停' : undefined;
+    // 兜底：正常流程已在第 2 跳解凍，此處一般不觸發（保留防殘留邊角）。
+    const badge = action.clearedPenalty ? '✅ 罰停解除' : undefined;
     if (action.card && isDummyCard(action.card)) {
       return { tone: 'neutral', prefix: '棄掉了檔案註記', detail: action.card.text, badge };
     }
@@ -60,9 +60,13 @@ function getActionLabel(action: GameAction): ActionLabel {
       detail: `${why} · 罰停：跳過接下來 2 個自己的回合`,
     };
   }
-  // type === 'skip'：只由 skipPenalizedPlayers 產生（主動「過」不記錄），
-  // 所以一律是罰停導致的自動跳過。明確標出原因，避免誤以為是正常跳過。
-  return { tone: 'muted', prefix: '⛔ 因罰停 · 本回合被自動跳過' };
+  // type === 'skip'：只由罰停自動跳過產生（主動「過」不記錄）。最後一跳會帶
+  // clearedPenalty → 標「✅ 罰停解除」，讓玩家直觀看到第 2 跳後即恢復。
+  return {
+    tone: 'muted',
+    prefix: '⛔ 因罰停 · 本回合被自動跳過',
+    badge: action.clearedPenalty ? '✅ 罰停解除' : undefined,
+  };
 }
 
 export function GameLog({ actions, players }: GameLogProps) {

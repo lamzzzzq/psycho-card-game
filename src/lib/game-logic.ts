@@ -144,6 +144,47 @@ function finalizeClaimWindow(state: GameState): GameState {
   return skipPenalizedPlayers(advanced);
 }
 
+// 消費一名罰停玩家的「一次跳過」：
+//   - 仍有加重跳過（extraSkipQueued）→ 保留 skipNextTurn、清 extraSkipQueued（這是第 1 跳）。
+//   - 否則 → 這是最後一跳，清 skipNextTurn + frozenUntilOwnDiscard（立即解凍）。
+// 與 skipPenalizedPlayers 內的逐人邏輯保持一致（DRY）。
+function consumeOnePenaltySkip(pl: Player): Player {
+  if (pl.extraSkipQueued) {
+    return { ...pl, skipNextTurn: true, extraSkipQueued: false };
+  }
+  return { ...pl, skipNextTurn: false, frozenUntilOwnDiscard: false };
+}
+
+// 碰牌偷走出牌權：指針從 discarder 直接跳到 ponger，中間 (discarder+1 … ponger-1)
+// 的座位被略過。按「每格都走過」規則（option B），這些被略過的座位若正處於罰停
+// （skipNextTurn=true），這一次「被略過」也計作他被跳過一次，與正常 skip 等價。
+// 回傳更新後的 players + 為每個被計跳的座位生成的 skip 日誌。
+function consumeBypassedPenaltySkips(
+  players: Player[],
+  discarderIndex: number,
+  pongerIndex: number,
+  round: number
+): { players: Player[]; skipActions: GameAction[] } {
+  const n = players.length;
+  const skipActions: GameAction[] = [];
+  let updated = players;
+  if (discarderIndex < 0) return { players: updated, skipActions };
+  for (let i = (discarderIndex + 1) % n; i !== pongerIndex; i = (i + 1) % n) {
+    const pl = updated[i];
+    if (!pl.skipNextTurn) continue; // 只對罰停中的座位補計
+    const willClearFreeze = !pl.extraSkipQueued && !!pl.frozenUntilOwnDiscard;
+    updated = updated.map((p, idx) => (idx === i ? consumeOnePenaltySkip(p) : p));
+    skipActions.push({
+      round,
+      playerId: pl.id,
+      type: 'skip',
+      clearedPenalty: willClearFreeze,
+      timestamp: Date.now(),
+    });
+  }
+  return { players: updated, skipActions };
+}
+
 // Auto-skip any penalized player (skipNextTurn=true) at the head of the turn
 // queue. Clears the flag + revealedHand, logs a skip action, and recurses up
 // to playerCount times (guard against all-penalized infinite loop).
@@ -163,10 +204,14 @@ export function skipPenalizedPlayers(state: GameState): GameState {
     // immediately, do NOT clear hasLeft (they're out for good).
     if (!p.skipNextTurn && !p.hasLeft) return current;
 
+    // 這次 skip 若是罰停的最後一跳（extraSkipQueued 已消費），完成後立即解凍
+    // → 日誌標「解除罰停」。net：罰停 = 錯過 2 個自己的出牌位，跳完即自由。
+    const willClearFreeze = !p.extraSkipQueued && !!p.frozenUntilOwnDiscard;
     const skipAction: GameAction = {
       round: current.currentRound,
       playerId: p.id,
       type: 'skip',
+      clearedPenalty: willClearFreeze,
       timestamp: Date.now(),
     };
     // Only clear skipNextTurn here — reveals (from hu-fail/pong-fail) must
@@ -191,7 +236,8 @@ export function skipPenalizedPlayers(state: GameState): GameState {
         if (pl.extraSkipQueued) {
           return { ...pl, skipNextTurn: true, extraSkipQueued: false };
         }
-        return { ...pl, skipNextTurn: false };
+        // 最後一跳完成 → 立即解凍（清 frozenUntilOwnDiscard），玩家恢復碰/胡/出牌。
+        return { ...pl, skipNextTurn: false, frozenUntilOwnDiscard: false };
       }
       return pl;
     });
@@ -600,12 +646,18 @@ export function pongCard(
       };
     }
 
+    // Option B：碰牌偷走出牌權，指針從 discarder 跳到 ponger，中間被略過的
+    // 罰停座位也補計一次跳過（與「每格都走過」一致）。生成對應 skip 日誌。
+    const { players: playersAfterBypass, skipActions: bypassSkips } =
+      consumeBypassedPenaltySkips(newPlayers, state.discardedByIndex, pongerIndex, state.currentRound);
+    const logWithPong = [...state.actionLog, action, ...bypassSkips];
+
     // Edge case (empty-hand deadlock): a non-winning pong can consume the
     // ponger's ENTIRE hand (e.g. their last 2 cards were both the ponged
     // dimension). They'd then be stuck in 'discarding' with no card to
     // discard and no drawnCard → permanent deadlock. In that case the
     // stolen turn simply ends: advance to the next player.
-    const pongerNewHand = newPlayers[pongerIndex].hand;
+    const pongerNewHand = playersAfterBypass[pongerIndex].hand;
     if (pongerNewHand.length === 0) {
       const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
         pongerIndex,
@@ -615,7 +667,7 @@ export function pongCard(
       );
       return skipPenalizedPlayers({
         ...state,
-        players: newPlayers,
+        players: playersAfterBypass,
         pendingDiscard: null,
         discardedByIndex: -1,
         claimResponses: [],
@@ -623,8 +675,8 @@ export function pongCard(
         currentRound: nextRound,
         phase: isGameOver ? 'game-over' : 'drawing',
         drawnCard: null,
-        actionLog: [...state.actionLog, action],
-        winner: isGameOver ? determineWinner(newPlayers) : null,
+        actionLog: logWithPong,
+        winner: isGameOver ? determineWinner(playersAfterBypass) : null,
       });
     }
 
@@ -633,14 +685,14 @@ export function pongCard(
     // phase='discarding' + drawnCard=null signals this state.
     return skipPenalizedPlayers({
       ...state,
-      players: newPlayers,
+      players: playersAfterBypass,
       pendingDiscard: null,
       discardedByIndex: -1,
       claimResponses: [],
       currentPlayerIndex: pongerIndex,
       phase: 'discarding',
       drawnCard: null,
-      actionLog: [...state.actionLog, action],
+      actionLog: logWithPong,
       winner: null,
     });
   } else {

@@ -637,7 +637,7 @@ describe('penalty freeze — frozenUntilOwnDiscard (罚停一整轮)', () => {
     expect(result.currentPlayerIndex).not.toBe(1);
   });
 
-  it('加重罚停：第二次 own-turn 也被跳过后 skipNextTurn 彻底 consume', () => {
+  it('加重罚停：第二次 own-turn 跳过完成即立即解冻（2 跳后自由）', () => {
     // 模拟第一次跳已经完成的状态：skipNextTurn=true，extraSkipQueued=false
     const state = makeGameState({
       phase: 'drawing',
@@ -657,8 +657,11 @@ describe('penalty freeze — frozenUntilOwnDiscard (罚停一整轮)', () => {
     // 第二次跳：skipNextTurn=false 彻底 consume
     expect(result.players[1].skipNextTurn).toBe(false);
     expect(result.players[1].extraSkipQueued).toBe(false);
-    // frozenUntilOwnDiscard 仍 true（等 B 自己 discard 解冻）
-    expect(result.players[1].frozenUntilOwnDiscard).toBe(true);
+    // 新模型：第 2 跳完成 → frozenUntilOwnDiscard 立即清除（不再等自己 discard）。
+    expect(result.players[1].frozenUntilOwnDiscard).toBe(false);
+    // 该 skip 应带 clearedPenalty 标记（日志显示「✅ 罰停解除」）。
+    const lastSkip = [...result.actionLog].reverse().find((a) => a.type === 'skip' && a.playerId === ('B' as PlayerId));
+    expect(lastSkip?.clearedPenalty).toBe(true);
   });
 
   it('a dummy-card own discard also clears the freeze', () => {
@@ -678,5 +681,62 @@ describe('penalty freeze — frozenUntilOwnDiscard (罚停一整轮)', () => {
     state = drawCard(state);
     state = discardCard(state, state.drawnCard!.id);
     expect(state.players[1].frozenUntilOwnDiscard).toBe(false);
+  });
+});
+
+describe('option B — 碰牌偷走出牌权时，被略过的罚停座位补计一次跳过', () => {
+  // 4 人 A(0) B(1) C(2) D(3)。A 弃 O，D 碰成功 → 指针从 0 跳到 3，
+  // 中间座位 1、2 被略过。其中罚停的座位应补计一次跳过。
+  function pongState(bMods: Partial<ReturnType<typeof makePlayer>>, cMods: Partial<ReturnType<typeof makePlayer>>) {
+    return makeGameState({
+      phase: 'claim-window',
+      discardedByIndex: 0,
+      currentPlayerIndex: 0,
+      pendingDiscard: makeCard('O', { id: 100 }),
+      claimResponses: [],
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({ id: 'B' as PlayerId, ...bMods }),
+        makePlayer({ id: 'C' as PlayerId, ...cMods }),
+        // D 默认 Big Five 3.0 → target O = 3：手里 2 张 O + 桌上 1 张 = 3，碰成功。
+        makePlayer({ id: 'D' as PlayerId, hand: [makeCard('O', { id: 1 }), makeCard('O', { id: 2 })] }),
+      ],
+    });
+  }
+
+  it('被略过的座位若在第 1 跳（extraSkipQueued）→ 补计一次，仍剩一跳', () => {
+    const state = pongState(
+      { skipNextTurn: true, extraSkipQueued: true, frozenUntilOwnDiscard: true },
+      {}
+    );
+    const result = pongCard(state, 3, 'O', [1, 2]);
+    // 碰成功
+    expect(result.actionLog.some((a) => a.type === 'pong-success')).toBe(true);
+    // B 被碰牌略过 → 补计一次跳过：extraSkipQueued consume，skipNextTurn 仍 true，未解冻
+    expect(result.players[1].extraSkipQueued).toBe(false);
+    expect(result.players[1].skipNextTurn).toBe(true);
+    expect(result.players[1].frozenUntilOwnDiscard).toBe(true);
+    // 该略过应生成一条 B 的 skip 日志
+    expect(result.actionLog.some((a) => a.type === 'skip' && a.playerId === ('B' as PlayerId))).toBe(true);
+  });
+
+  it('被略过的座位若在最后一跳 → 补计后立即解冻', () => {
+    const state = pongState(
+      {},
+      { skipNextTurn: true, extraSkipQueued: false, frozenUntilOwnDiscard: true }
+    );
+    const result = pongCard(state, 3, 'O', [1, 2]);
+    // C 被略过 → 最后一跳 consume：彻底解冻
+    expect(result.players[2].skipNextTurn).toBe(false);
+    expect(result.players[2].frozenUntilOwnDiscard).toBe(false);
+    const cSkip = result.actionLog.find((a) => a.type === 'skip' && a.playerId === ('C' as PlayerId));
+    expect(cSkip?.clearedPenalty).toBe(true);
+  });
+
+  it('未罚停的被略过座位不受影响（不生成 skip）', () => {
+    const state = pongState({}, {});
+    const result = pongCard(state, 3, 'O', [1, 2]);
+    expect(result.players[1].skipNextTurn).toBeFalsy();
+    expect(result.actionLog.some((a) => a.type === 'skip')).toBe(false);
   });
 });
