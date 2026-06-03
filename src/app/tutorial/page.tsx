@@ -860,12 +860,13 @@ function StartFlowGuide() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[13rem_1fr]">
-        <div className="space-y-2">
+        {/* 移动端：横向滚动 chips；lg：纵向步骤列表 */}
+        <div className="psy-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:space-y-2 lg:overflow-visible lg:px-0 lg:pb-0">
           {steps.map((step, i) => (
             <button
               key={step.title}
               onClick={() => setIndex(i)}
-              className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+              className={`shrink-0 whitespace-nowrap rounded-xl border px-3 py-2 text-left transition lg:w-full lg:shrink ${
                 i === index
                   ? 'border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] text-[var(--psy-ink)]'
                   : 'border-[rgba(200,155,93,0.12)] bg-[rgba(255,255,255,0.02)] text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
@@ -928,27 +929,27 @@ export default function TutorialPage() {
   const [mode, setMode] = useState<'list' | 'sandbox'>('list');
 
   return (
-    <div className="flex flex-1 flex-col items-center px-6 py-10">
-      <div className="w-full max-w-4xl space-y-8">
-        <div className="flex items-center justify-between">
+    <div className="flex flex-1 flex-col items-center px-4 py-8 sm:px-6 sm:py-10">
+      <div className="w-full max-w-4xl space-y-6 sm:space-y-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="psy-serif text-xs uppercase tracking-[0.42em] text-[var(--psy-ink-soft)]">
+            <p className="psy-serif text-[11px] uppercase tracking-[0.42em] text-[var(--psy-ink-soft)] sm:text-xs">
               Tutorial
             </p>
-            <h1 className="psy-serif text-4xl text-[var(--psy-ink)] sm:text-5xl">
+            <h1 className="psy-serif text-3xl text-[var(--psy-ink)] sm:text-5xl">
               人格麻將 · 教學
             </h1>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => router.push('/rules')}
-              className="psy-btn px-4 py-2 text-sm"
+              className="psy-btn flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
             >
               規則 Hardcopy
             </button>
             <button
               onClick={() => router.push('/')}
-              className="psy-btn psy-btn-ghost px-4 py-2 text-sm"
+              className="psy-btn psy-btn-ghost flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
             >
               返回首頁
             </button>
