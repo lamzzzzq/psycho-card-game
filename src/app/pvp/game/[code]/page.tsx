@@ -729,8 +729,8 @@ export default function PvpGamePage() {
           {meFrozenLockout && (
             <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
               <span>⛔</span>
-              <span className="hidden sm:inline">你被罰停一輪 — 下個本應出牌的回合會被自動跳過，期間無法參與碰/食胡</span>
-              <span className="sm:hidden">罰停一輪 · 下回合跳過 · 期間不可碰/胡</span>
+              <span className="hidden sm:inline">你被罰停 — 接下來輪到你的兩個回合會被自動跳過，期間無法參與碰/食胡</span>
+              <span className="sm:hidden">罰停中 · 接下來兩個回合跳過 · 不可碰/胡</span>
             </div>
           )}
           {meAwaitingOwnDischarge && (

@@ -145,7 +145,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
           }}
         >
           <span>⛔</span>
-          <span>罰停一輪</span>
+          <span>罰停中</span>
         </div>
       )}
 
