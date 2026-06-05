@@ -30,6 +30,9 @@
 html,
 body {
   min-height: 100%;
+  /* 兜底：杜绝任何宽于视口的元素造成横向平移（clip 不建立滚动容器，不影响 fixed/sticky）。 */
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 body {

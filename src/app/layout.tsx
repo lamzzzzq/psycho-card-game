@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 
@@ -21,6 +21,14 @@ const notoSerifSc = Noto_Serif_SC({
 export const metadata: Metadata = {
   title: "PsychoCardGame - 心理卡牌對戰",
   description: "基於 Big Five 人格測評的心理學卡牌遊戲",
+};
+
+// 缺 viewport meta 时手机会按桌面宽度(~980px)缩放 → 显示不全 + 可左右平移。
+// 显式声明确保移动端 full-width；viewportFit:cover 配合 safe-area 底栏。
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
