@@ -37,21 +37,24 @@ async function insertSnapshot(input: {
   scores: BigFiveScores;
   source: 'assessment' | 'manual' | 'game-start';
 }): Promise<string | null> {
-  const { data, error } = await supabase
+  // 客户端生成 id：big_five_snapshots 开了 INSERT-only RLS（隐私，不给 SELECT），
+  // 所以不能用 .insert().select('id') 回读——那样 RETURNING 会被 RLS 拦住整条回滚。
+  const id =
+    typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined;
+  const { error } = await supabase
     .from('big_five_snapshots')
     .insert({
+      ...(id ? { id } : {}),
       player_id: input.playerId,
       student_id: input.studentId,
       scores: input.scores,
       source: input.source,
-    })
-    .select('id')
-    .single();
+    });
   if (error) {
     console.warn('[game-record] insertSnapshot failed', error);
     return null;
   }
-  return data.id;
+  return id ?? null;
 }
 
 // 失敗/超時 payload 暫存在 localStorage，下次啓動時 retrySavePending() 重傳。

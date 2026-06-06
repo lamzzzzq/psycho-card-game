@@ -6,16 +6,29 @@ function generateRoomCode(): string {
   return String(Math.floor(1000 + Math.random() * 9000));
 }
 
-// Register or update player in DB
+// Register or update player in DB.
+// 注意：players 开了 INSERT-only RLS（隐私，锁了 SELECT）。Supabase 的 .upsert()
+// 编译成 INSERT ON CONFLICT DO UPDATE，需要 SELECT 权限读冲突行 → 会被 RLS 拒（401）。
+// 所以改成「先 INSERT，遇唯一冲突(23505)再 plain UPDATE」——两步都不需要 SELECT 策略。
 export async function upsertPlayer(player: PlayerInfo) {
   const { error } = await supabase
     .from('players')
-    .upsert({
+    .insert({
       id: player.id,
       student_id: player.studentId,
       big_five: player.bigFive,
     });
-  if (error) throw error;
+  if (!error) return;
+  if (error.code === '23505') {
+    // 已存在 → 更新最新分数
+    const { error: updateError } = await supabase
+      .from('players')
+      .update({ student_id: player.studentId, big_five: player.bigFive })
+      .eq('id', player.id);
+    if (updateError) throw updateError;
+    return;
+  }
+  throw error;
 }
 
 // Create a new room

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { QUESTIONS } from '@/data/questions';
@@ -11,6 +11,7 @@ import { QuestionCard } from '@/components/assessment/QuestionCard';
 import { ProgressBar } from '@/components/assessment/ProgressBar';
 import { LikertScore, Question, BigFiveScores, DIMENSIONS } from '@/types';
 import { shuffle } from '@/lib/utils';
+import { saveAssessmentResponses } from '@/lib/assessment-record';
 
 type QuestionOrder = 'sequential' | 'shuffled';
 
@@ -22,13 +23,19 @@ function getOrderedQuestions(mode: QuestionOrder): Question[] {
 export default function AssessmentPage() {
   const router = useRouter();
   const hydrated = useHydrated();
-  const { answers, setAnswer, calculateScores, setManualScores, getProgress, bigFiveScores } = useAssessmentStore();
+  const { studentId, setStudentId, answers, setAnswer, calculateScores, setManualScores, getProgress, bigFiveScores } = useAssessmentStore();
+  const [studentIdInput, setStudentIdInput] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [orderMode, setOrderMode] = useState<QuestionOrder>('sequential');
   const [orderedQuestions, setOrderedQuestions] = useState<Question[]>(QUESTIONS);
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualScores, setManualInputScores] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
   const [rawInputs, setRawInputs] = useState<Record<string, string>>({ O: '3', C: '3', E: '3', A: '3', N: '3' });
+
+  // 已完成测评则跳到结果页（放 effect 里，避免 render 期调 router.push）
+  useEffect(() => {
+    if (bigFiveScores) router.push('/results');
+  }, [bigFiveScores, router]);
 
   const toggleOrder = () => {
     const newMode = orderMode === 'sequential' ? 'shuffled' : 'sequential';
@@ -46,10 +53,58 @@ export default function AssessmentPage() {
     );
   }
 
-  // If already completed, redirect to results
+  // If already completed, the effect above redirects to results
   if (bigFiveScores) {
-    router.push('/results');
     return null;
+  }
+
+  // 学号 gate：先收集学号，raw 答案按学号存
+  if (!studentId) {
+    const trimmed = studentIdInput.trim();
+    return (
+      <div className="flex flex-1 items-center justify-center px-6 py-8">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="psy-panel psy-etched w-full max-w-md space-y-6 rounded-[1.7rem] p-8 text-center"
+        >
+          <div className="space-y-3">
+            <p className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-ink-soft)]">
+              Persona Reading
+            </p>
+            <h1 className="psy-serif text-2xl text-[var(--psy-ink)]">輸入學號</h1>
+            <p className="mx-auto max-w-sm text-sm leading-7 text-[var(--psy-ink-soft)]">
+              學號用於記錄你的測評結果，方便課堂統計。請使用同一台設備、同一個瀏覽器，不要清除緩存。
+            </p>
+          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (trimmed) setStudentId(trimmed);
+            }}
+            className="space-y-4"
+          >
+            <input
+              type="text"
+              inputMode="numeric"
+              autoFocus
+              value={studentIdInput}
+              onChange={(e) => setStudentIdInput(e.target.value)}
+              placeholder="例如 20231234"
+              className="w-full rounded-xl border px-4 py-3 text-center text-lg text-[var(--psy-ink)]"
+              style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(200,155,93,0.18)' }}
+            />
+            <button
+              type="submit"
+              disabled={!trimmed}
+              className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[#9b6430] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              開始測評
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
   }
 
   const total = orderedQuestions.length;
@@ -65,6 +120,10 @@ export default function AssessmentPage() {
       const currentProgress = useAssessmentStore.getState().getProgress();
       if (isLast && currentProgress >= total) {
         calculateScores();
+        // 写题目级 raw（非阻塞，失败不影响流程）
+        const sid = useAssessmentStore.getState().studentId;
+        const allAnswers = useAssessmentStore.getState().answers;
+        if (sid) void saveAssessmentResponses(sid, allAnswers);
         router.push('/results');
       } else if (safeIndex < total - 1) {
         setCurrentIndex((i) => Math.min(i + 1, total - 1));

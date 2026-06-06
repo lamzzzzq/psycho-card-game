@@ -7,10 +7,12 @@ import { QUESTIONS } from '@/data/questions';
 import { calculateBigFiveScores } from '@/lib/scoring';
 
 interface AssessmentState {
+  studentId: string | null;
   answers: Record<number, LikertScore>;
   bigFiveScores: BigFiveScores | null;
   completedAt: string | null;
 
+  setStudentId: (id: string) => void;
   setAnswer: (questionId: number, score: LikertScore) => void;
   calculateScores: () => BigFiveScores;
   setManualScores: (scores: BigFiveScores) => void;
@@ -23,9 +25,12 @@ interface AssessmentState {
 export const useAssessmentStore = create<AssessmentState>()(
   persist(
     (set, get) => ({
+      studentId: null,
       answers: {},
       bigFiveScores: null,
       completedAt: null,
+
+      setStudentId: (id) => set({ studentId: id.trim() }),
 
       setAnswer: (questionId, score) => {
         set((state) => ({
