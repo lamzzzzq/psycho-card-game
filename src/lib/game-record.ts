@@ -203,8 +203,9 @@ async function saveInner(input: SaveGameSessionInput): Promise<string | null> {
         student_id: meta?.studentId ?? null,
         seat_index: idx,
         is_ai: meta?.isAi ?? !p.isHuman,
+        // 分数只存进 big_five_snapshots（已锁 SELECT），这里仅留 FK，不再反规范化分数列，
+        // 避免 anon 经公开的 /stats 读到「学号→分数」。见 identity-plan 隐私残留 todo。
         big_five_snapshot_id: meta?.playerId ? snapshotByPlayerId.get(meta.playerId) ?? null : null,
-        big_five_scores: p.bigFiveScores,
         declared_count: p.declaredSets.length,
         remaining_cards: p.hand.length,
         final_score: getPlayerScore(p),

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
-import { DIMENSIONS } from '@/types';
 
 // 一行 = 一人一局（game_participants 關聯 game_sessions）。
 // 真相源 schema：supabase/migrations/0001_game_records.sql。
@@ -21,7 +20,6 @@ interface ParticipantRow {
   session_id: string;
   student_id: string | null;
   is_ai: boolean;
-  big_five_scores: Record<string, number> | null;
   declared_count: number;
   remaining_cards: number;
   final_score: number;
@@ -43,9 +41,10 @@ interface StudentAgg {
   bestRank: number;
 }
 
+// 注意：分数列（O/C/E/A/N）已移出公开 CSV（隐私）。分数在 big_five_snapshots（已锁表），
+// 老师从 Supabase 后台经 game_participants.big_five_snapshot_id join 获取。
 const CSV_HEADERS = [
   '學號', '房間', '結束時間', '模式', '輪數',
-  'O', 'C', 'E', 'A', 'N',
   '申報組數', '剩餘手牌', '最終得分', '名次', '是否獲勝', '是否中斷局',
   '胡成功', '胡失敗', '碰成功', '碰失敗',
 ];
@@ -57,7 +56,6 @@ function csvEscape(v: unknown): string {
 
 function rowToCsv(r: ParticipantRow): string {
   const s = r.game_sessions;
-  const bf = r.big_five_scores ?? {};
   const interrupted = s ? s.winner_player_id == null : false;
   return [
     r.student_id ?? (r.is_ai ? 'AI' : ''),
@@ -65,7 +63,6 @@ function rowToCsv(r: ParticipantRow): string {
     s?.ended_at ? new Date(s.ended_at).toLocaleString('zh-CN') : '',
     s?.mode ?? '',
     s?.rounds_played ?? '',
-    ...DIMENSIONS.map((d) => bf[d] ?? ''),
     r.declared_count, r.remaining_cards, r.final_score, r.rank,
     r.is_winner ? '是' : '', interrupted ? '是' : '',
     r.hu_success_count, r.hu_fail_count, r.pong_success_count, r.pong_fail_count,
@@ -85,7 +82,7 @@ export default function StatsPage() {
         const { data, error } = await supabase
           .from('game_participants')
           .select(
-            'id, session_id, student_id, is_ai, big_five_scores, declared_count, remaining_cards, final_score, rank, is_winner, hu_success_count, hu_fail_count, pong_success_count, pong_fail_count, game_sessions ( room_code, mode, started_at, ended_at, rounds_played, winner_player_id )'
+            'id, session_id, student_id, is_ai, declared_count, remaining_cards, final_score, rank, is_winner, hu_success_count, hu_fail_count, pong_success_count, pong_fail_count, game_sessions ( room_code, mode, started_at, ended_at, rounds_played, winner_player_id )'
           )
           .order('session_id', { ascending: false });
         if (error) throw error;
