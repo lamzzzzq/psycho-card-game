@@ -117,11 +117,3 @@ export interface SerializedPlayer {
   // Once-per-turn self-pong gate, mirrored for UI to disable the button.
   selfPongUsedThisTurn?: boolean;
 }
-
-// Game result for DB
-export interface GameResult {
-  room_id: string;
-  winner_id: string;
-  rankings: { playerId: string; declaredCount: number; remainingCards: number }[];
-  rounds_played: number;
-}

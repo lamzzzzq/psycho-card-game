@@ -193,13 +193,3 @@ export async function getRoomPlayers(roomId: string): Promise<RoomPlayer[]> {
   }));
 }
 
-// Save game result
-export async function saveGameResult(result: {
-  room_id: string;
-  winner_id: string;
-  rankings: any[];
-  rounds_played: number;
-}) {
-  const { error } = await supabase.from('game_results').insert(result);
-  if (error) throw error;
-}
