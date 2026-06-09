@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
+import { LocaleSync } from "@/components/shared/LocaleSync";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${notoSerifSc.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-[var(--psy-bg)] text-[var(--psy-ink)]">
+        <LocaleSync />
         {children}
       </body>
     </html>

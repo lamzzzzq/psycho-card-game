@@ -300,3 +300,25 @@ a:focus-visible,
 .psy-btn:focus-visible {
   outline-offset: 4px;
 }
+
+/* ── 教學沙盒：強引導高亮 ──────────────────────────────────────
+   給「當前該點的目標」套上明顯的金色脈動光暈，比細描邊醒目得多。 */
+@keyframes tutSpotlight {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(200, 155, 93, 0.9), 0 0 18px 3px rgba(200, 155, 93, 0.42);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(212, 164, 105, 1), 0 0 34px 10px rgba(200, 155, 93, 0.7);
+  }
+}
+.tut-spotlight {
+  position: relative;
+  border-radius: 0.9rem;
+  animation: tutSpotlight 1.25s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tut-spotlight {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(212, 164, 105, 1), 0 0 22px 5px rgba(200, 155, 93, 0.6);
+  }
+}

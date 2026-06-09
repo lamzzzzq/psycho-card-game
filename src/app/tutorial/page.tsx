@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/game/Card';
 import { DIMENSION_META } from '@/data/dimensions';
+import { DIMENSIONS } from '@/types';
 import type { GameCard, PersonalityCard, DummyCard, Dimension } from '@/types';
 
 // ─── Static doc: 概念分組 ────────────────────────────────────────────────
@@ -96,8 +97,8 @@ const STEPS: Step[] = [
   },
   {
     title: '罰停（失敗的懲罰）',
-    body: '「碰失敗 / 自摸碰失敗 / 食胡失敗」三者懲罰相同：接下來輪到你的兩個回合會被自動跳過（不抽牌、不出牌），第二次跳過完成後立即解除。\n罰停期間：\n• 你押錯的那幾張牌（碰 / 自摸碰）或整副手牌（食胡）立即公開；\n• 任何人棄牌進入判讀窗口時，你都不能參與（不能碰、不能食胡）。\n所有玩家都會在你頭像下看到「⛔ 罰停中」標識。',
-    hint: '一次誤判 ≈ 損失自己接下來兩個回合的出牌機會，務必想清楚再下手。罰停期間也不能宣告食胡。',
+    body: '「碰失敗 / 自摸碰失敗 / 食胡失敗」三者懲罰相同：下次輪到你時罰停一回合，自動跳過（不抽牌、不出牌）後立即解除。\n罰停期間：\n• 你押錯的那幾張牌（碰 / 自摸碰）或整副手牌（食胡）立即公開；\n• 任何人棄牌進入判讀窗口時，你都不能參與（不能碰、不能食胡）。\n所有玩家都會在你頭像下看到「⛔ 罰停中」標識。',
+    hint: '一次誤判 ≈ 損失下一個出牌回合，務必想清楚再下手。罰停期間也不能宣告食胡。',
   },
   {
     title: '查看 2 張牌（每回合 1 次）',
@@ -149,6 +150,7 @@ type Scene =
   | 'start'           // 等抽牌
   | 'viewing'         // 查看 2 張
   | 'after-draw'      // 抽完，等點自摸碰
+  | 'pong-dimension'  // 自摸碰後先選人格維度
   | 'pong-picking'    // 選牌中
   | 'pong-failed'     // 演示失敗，等點「重置」
   | 'pong-success'    // 歸檔成功，等出牌
@@ -165,7 +167,8 @@ interface SandboxState {
   selectedIds: number[];
   revealedIds: number[];
   revealedAll: boolean;          // 自摸碰激活後揭開所有牌的維度（便於教學，真實遊戲不會）
-  declared: boolean;             // 神經質是否已歸檔
+  chosenDim: Dimension | null;   // 自摸碰選定要歸檔的人格維度
+  declared: boolean;             // 是否已歸檔
   claimDeclared: boolean;
   penaltyShown: boolean;
   feedback: { tone: 'success' | 'fail' | 'info'; text: string } | null;
@@ -179,6 +182,7 @@ const initialState: SandboxState = {
   selectedIds: [],
   revealedIds: [],
   revealedAll: false,
+  chosenDim: null,
   declared: false,
   claimDeclared: false,
   penaltyShown: false,
@@ -191,6 +195,7 @@ type Action =
   | { type: 'view-two' }
   | { type: 'finish-view' }
   | { type: 'open-pong' }
+  | { type: 'choose-dim'; dim: Dimension }
   | { type: 'toggle-select'; id: number }
   | { type: 'commit-pong' }
   | { type: 'cancel-pong' }
@@ -229,11 +234,23 @@ function reducer(state: SandboxState, action: Action): SandboxState {
       if (state.scene !== 'after-draw') return state;
       return {
         ...state,
-        scene: 'pong-picking',
-        revealedAll: true, // 教學模式揭開
+        scene: 'pong-dimension',
+        revealedAll: true, // 教學模式揭開維度，方便玩家看牌選維度
         selectedIds: [],
-        feedback: { tone: 'info', text: '選恰好 4 張同人格描述的牌。教學模式揭開維度，真實遊戲不會直接告訴你。' },
+        chosenDim: null,
+        feedback: { tone: 'info', text: '自摸碰要先選定一個人格維度。提示：手牌裏有 4 張「神經質」，選它。' },
       };
+    case 'choose-dim': {
+      if (state.scene !== 'pong-dimension') return state;
+      const name = DIMENSION_META[action.dim].name;
+      return {
+        ...state,
+        scene: 'pong-picking',
+        chosenDim: action.dim,
+        selectedIds: [],
+        feedback: { tone: 'info', text: `已選擇「${name}」。現在從手牌精確選擇 4 張「${name}」的牌。` },
+      };
+    }
     case 'toggle-select':
       if (state.scene !== 'pong-picking') return state;
       return {
@@ -246,9 +263,10 @@ function reducer(state: SandboxState, action: Action): SandboxState {
       if (state.scene !== 'pong-picking') return state;
       const pool: GameCard[] = [...state.hand, ...(state.drawnCard ? [state.drawnCard] : [])];
       const selected = pool.filter((c) => state.selectedIds.includes(c.id));
-      const allNeuro = selected.every((c) => !c.isDummy && 'dimension' in c && c.dimension === 'N');
+      const dim = state.chosenDim;
+      const allMatch = !!dim && selected.every((c) => !c.isDummy && 'dimension' in c && c.dimension === dim);
       const correctCount = selected.length === 4;
-      if (allNeuro && correctCount) {
+      if (allMatch && correctCount) {
         // 成功：4 張神經質從手牌移除，drawnCard 也消耗
         const remaining = state.hand.filter((c) => !state.selectedIds.includes(c.id));
         const drawnUsed = state.drawnCard && state.selectedIds.includes(state.drawnCard.id);
@@ -263,34 +281,38 @@ function reducer(state: SandboxState, action: Action): SandboxState {
         };
       }
       // 失敗
+      const dimName = dim ? DIMENSION_META[dim].name : '該維度';
       const reason = !correctCount
         ? `選了 ${selected.length} 張，必須正好 4 張`
-        : '選中的牌裏有非神經質（檔案註記不算神經質）';
+        : `選中的牌裏有非「${dimName}」（檔案註記不算任何維度）`;
       return {
         ...state,
         scene: 'pong-failed',
         feedback: {
           tone: 'fail',
-          text: `自摸碰失敗：${reason}。真實遊戲會罰停（跳過接下來兩個自己的回合），並公開你剛剛押錯的牌。`,
+          text: `自摸碰失敗：${reason}。真實遊戲會罰停一回合（下次輪到你時自動跳過），並公開你剛剛押錯的牌。`,
         },
         failCount: state.failCount + 1,
         penaltyShown: true,
       };
     }
-    case 'continue-after-fail':
+    case 'continue-after-fail': {
       if (state.scene !== 'pong-failed') return state;
+      const name = state.chosenDim ? DIMENSION_META[state.chosenDim].name : '同維度';
       return {
         ...state,
         scene: 'pong-picking',
         selectedIds: [],
-        feedback: { tone: 'info', text: '試試這次只選神經質（綠色標記的 4 張）。' },
+        feedback: { tone: 'info', text: `試試這次只選 4 張「${name}」（高亮的牌）。` },
       };
+    }
     case 'cancel-pong':
-      if (state.scene !== 'pong-picking') return state;
+      if (state.scene !== 'pong-picking' && state.scene !== 'pong-dimension') return state;
       return {
         ...state,
         scene: 'after-draw',
         selectedIds: [],
+        chosenDim: null,
         revealedAll: false,
         feedback: null,
       };
@@ -341,17 +363,20 @@ function reducer(state: SandboxState, action: Action): SandboxState {
 function InteractiveSandbox({ onClose }: { onClose: () => void }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const N = DIMENSION_META.N;
+  const archived = state.chosenDim ? DIMENSION_META[state.chosenDim] : N;
 
+  const chosenName = state.chosenDim ? DIMENSION_META[state.chosenDim].name : '';
   const captionByScene: Record<Scene, string> = {
     start: '這是你的開局：手牌裏有多種人格描述和 1 張檔案註記。你需要先抽牌，再決定要查看、歸檔還是棄牌。',
     viewing: '每回合可以查看 2 張手牌的真實維度。點擊「查看 2 張」後，再繼續進入歸檔判斷。',
-    'after-draw': '你現在擁有足夠完成一組的線索。下一步點「自摸碰」試試。',
+    'after-draw': '你現在擁有足夠完成一組的線索。下一步點高亮的「自摸碰」試試。',
+    'pong-dimension': '自摸碰要先選定一個人格維度。在下方五個維度裏選擇高亮的「神經質」（手牌裏正好有 4 張）。',
     'pong-picking':
-      state.failCount === 0
-        ? '從手牌 + 剛抽到的牌中精確選 4 張同類牌。先故意混入別的牌，看失敗懲罰。'
-        : '這次只選 4 張神經質描述牌，然後點「自摸歸檔」。',
-    'pong-failed': '失敗會公開你押錯的牌並罰停（跳過接下來兩個自己的回合）。點「繼續」回到選牌模式。',
-    'pong-success': '歸檔完成後還需要棄 1 張牌。選擇一張你不想保留的牌結束回合。',
+      state.selectedIds.length === 4
+        ? `已選 4 張「${chosenName}」。點高亮的「自摸歸檔」完成歸檔。`
+        : `從手牌精確選擇 4 張「${chosenName}」的牌（高亮的牌就是，已選 ${state.selectedIds.length}/4）。`,
+    'pong-failed': '失敗會公開你押錯的牌並罰停一回合（下次輪到你時自動跳過）。點「繼續」回到選牌模式。',
+    'pong-success': '歸檔成功！現在必須棄 1 張牌結束回合。點下方高亮的手牌中任意一張棄掉。',
     'claim-window': '現在是別人棄牌後的判讀窗口。你可以截胡碰，也可以在已經滿足全部目標時食胡。',
     'claim-success': '截胡碰也會形成公開歸檔。這個記錄會出現在玩家頭像下和歸檔記錄裏。',
     'hu-demo': '食胡是勝利按鈕，只在所有目標完成時使用。失敗成本很高，所以不要拿它試錯。',
@@ -374,6 +399,10 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             const dimension = !isDummy ? (c as PersonalityCard).dimension : null;
             const canClickToSelect = state.scene === 'pong-picking';
             const canClickToDiscard = state.scene === 'pong-success' && !isDrawn;
+            // 引導高亮：選牌階段高亮「目標維度且還沒選」的牌；棄牌階段高亮所有可棄手牌。
+            const spotlight =
+              (canClickToSelect && !isSelected && dimension === state.chosenDim) ||
+              canClickToDiscard;
             return (
               <motion.div
                 key={c.id}
@@ -384,7 +413,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
                 transition={{ type: 'spring', stiffness: 280, damping: 22 }}
                 className={`relative ${
                   isSelected ? 'ring-2 ring-emerald-400 rounded-[1.1rem]' : ''
-                } ${(canClickToSelect || canClickToDiscard) ? 'cursor-pointer' : ''}`}
+                } ${spotlight ? 'tut-spotlight' : ''} ${(canClickToSelect || canClickToDiscard) ? 'cursor-pointer' : ''}`}
                 onClick={() => {
                   if (canClickToSelect) dispatch({ type: 'toggle-select', id: c.id });
                   else if (canClickToDiscard) dispatch({ type: 'pick-discard', id: c.id });
@@ -410,14 +439,22 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
     );
   };
 
+  const feedbackToneClass =
+    state.feedback?.tone === 'success'
+      ? 'border-emerald-400/45 bg-emerald-500/12 text-emerald-300'
+      : state.feedback?.tone === 'fail'
+      ? 'border-red-400/45 bg-red-500/12 text-red-300'
+      : 'border-amber-400/45 bg-amber-500/12 text-amber-300';
+
   return (
+    <>
     <motion.div
       key="sandbox"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.3 }}
-      className="psy-panel psy-etched rounded-[1.8rem] p-5 sm:p-7"
+      className="psy-panel psy-etched rounded-[1.8rem] p-5 pb-8 sm:p-7 sm:pb-8 mb-44"
     >
       <div className="mb-4 flex items-center justify-between">
         <span className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-muted)]">
@@ -448,13 +485,13 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             <span
               className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
               style={{
-                color: N.colorHex,
-                backgroundColor: N.colorHex + '20',
-                border: `1px solid ${N.colorHex}55`,
+                color: archived.colorHex,
+                backgroundColor: archived.colorHex + '20',
+                border: `1px solid ${archived.colorHex}55`,
               }}
             >
-              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: N.colorHex }} />
-              神經質 4 張
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: archived.colorHex }} />
+              {archived.name} 4 張
             </span>
           ) : (
             <span className="text-[var(--psy-muted)]">（暫無）</span>
@@ -488,7 +525,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">
               {state.scene === 'start' ? '點擊抽牌 ↓' : '牌堆'}
             </span>
-            <div className={state.scene === 'start' ? 'ring-2 ring-[var(--psy-accent)] rounded-[1.1rem]' : ''}>
+            <div className={state.scene === 'start' ? 'tut-spotlight' : ''}>
               <Card card={PC(999, 'N', '')} faceUp={false} compact />
             </div>
           </button>
@@ -509,7 +546,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             disabled={state.scene !== 'viewing' || state.revealedIds.length > 0}
             onClick={() => dispatch({ type: 'view-two' })}
             className={`psy-btn psy-btn-ghost px-4 py-1.5 text-xs font-bold ${
-              state.scene === 'viewing' && state.revealedIds.length === 0 ? 'ring-1 ring-[var(--psy-accent)]' : 'opacity-40 cursor-not-allowed'
+              state.scene === 'viewing' && state.revealedIds.length === 0 ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
             }`}
           >
             查看 2 張
@@ -518,7 +555,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             disabled={state.scene !== 'viewing' || state.revealedIds.length === 0}
             onClick={() => dispatch({ type: 'finish-view' })}
             className={`psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold ${
-              state.scene === 'viewing' && state.revealedIds.length > 0 ? 'animate-pulse' : 'opacity-40 cursor-not-allowed'
+              state.scene === 'viewing' && state.revealedIds.length > 0 ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
             }`}
           >
             繼續判斷
@@ -528,7 +565,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             onClick={() => dispatch({ type: 'open-pong' })}
             className={`psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold transition ${
               state.scene === 'after-draw'
-                ? 'animate-pulse ring-2 ring-[var(--psy-accent)]'
+                ? 'tut-spotlight'
                 : 'opacity-40 cursor-not-allowed'
             }`}
           >
@@ -536,7 +573,39 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* 選牌模式的 commit/cancel */}
+        {/* 自摸碰第一步：選人格維度 */}
+        {state.scene === 'pong-dimension' && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center gap-3 rounded-xl border border-[rgba(200,155,93,0.28)] bg-[rgba(200,155,93,0.08)] px-3 py-3 text-xs text-[var(--psy-accent)]"
+          >
+            <span>🎯 第一步 · 選擇要歸檔的人格維度</span>
+            <div className="flex flex-wrap justify-center gap-2">
+              {DIMENSIONS.map((d) => {
+                const meta = DIMENSION_META[d];
+                return (
+                  <button
+                    key={d}
+                    onClick={() => dispatch({ type: 'choose-dim', dim: d })}
+                    className={`psy-btn px-3 py-1.5 text-[11px] font-bold ${d === 'N' ? 'tut-spotlight' : ''}`}
+                    style={{ color: meta.colorHex, borderColor: meta.colorHex + '66' }}
+                  >
+                    {meta.name}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => dispatch({ type: 'cancel-pong' })}
+              className="psy-btn psy-btn-ghost px-3 py-1 text-[10px]"
+            >
+              取消
+            </button>
+          </motion.div>
+        )}
+
+        {/* 自摸碰第二步：選牌 + commit/cancel */}
         {state.scene === 'pong-picking' && (
           <motion.div
             initial={{ opacity: 0, y: 6 }}
@@ -544,7 +613,11 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             className="flex flex-col items-center gap-2 rounded-xl border border-[rgba(200,155,93,0.28)] bg-[rgba(200,155,93,0.08)] px-3 py-2 text-xs text-[var(--psy-accent)]"
           >
             <span>
-              🎯 自摸碰 · <span style={{ color: N.colorHex }}>神經質</span> · 請精確選擇 4 張（已選 {state.selectedIds.length}）
+              🎯 第二步 · 自摸碰 ·{' '}
+              <span style={{ color: state.chosenDim ? DIMENSION_META[state.chosenDim].colorHex : N.colorHex }}>
+                {chosenName}
+              </span>{' '}
+              · 請精確選擇 4 張（已選 {state.selectedIds.length}/4）
             </span>
             <div className="flex gap-2">
               <button
@@ -555,7 +628,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
               </button>
               <button
                 onClick={() => dispatch({ type: 'commit-pong' })}
-                className="psy-btn psy-btn-accent px-3 py-1 text-[10px] font-bold"
+                className={`psy-btn psy-btn-accent px-3 py-1 text-[10px] font-bold ${state.selectedIds.length === 4 ? 'tut-spotlight' : ''}`}
               >
                 自摸歸檔
               </button>
@@ -577,7 +650,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
 
         {state.penaltyShown && state.scene === 'pong-failed' && (
           <div className="rounded-xl border border-red-400/35 bg-red-500/10 px-3 py-2 text-center text-xs font-semibold text-red-300">
-            罰停演示：本輪不能參與別人棄牌的判讀窗口，下個自己回合也會被跳過。
+            罰停一回合演示：本輪不能參與別人棄牌的判讀窗口，下次輪到你時自動跳過。
           </div>
         )}
 
@@ -656,39 +729,41 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
         )}
       </div>
 
-      {/* 旁註 */}
-      <motion.p
-        key={state.scene + '-' + state.failCount}
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        className="mt-4 rounded-xl border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.06)] px-4 py-3 text-sm leading-7 text-[var(--psy-ink-soft)]"
-      >
-        {captionByScene[state.scene]}
-      </motion.p>
-
-      {/* 反饋 banner */}
-      <AnimatePresence>
-        {state.feedback && (
-          <motion.div
-            key={state.feedback.text}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className={`mt-3 rounded-xl border px-4 py-2 text-xs leading-6 ${
-              state.feedback.tone === 'success'
-                ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300'
-                : state.feedback.tone === 'fail'
-                ? 'border-red-400/40 bg-red-500/10 text-red-300'
-                : 'border-amber-400/40 bg-amber-500/10 text-amber-300'
-            }`}
-          >
-            {state.feedback.text}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
+
+    {/* 固定在視窗底部、永遠可見的指引欄。渲染在 motion.div 之外，
+        避免 framer transform 祖先讓 fixed 失效。 */}
+    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[rgba(200,155,93,0.3)] bg-[rgba(11,18,28,0.97)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] backdrop-blur-md">
+      <div className="mx-auto max-w-4xl space-y-2">
+        <div className="flex items-start gap-2">
+          <span className="psy-eyebrow mt-0.5 shrink-0 text-[10px] text-[var(--psy-accent)]">指引</span>
+          <motion.p
+            key={state.scene + '-' + state.selectedIds.length}
+            initial={{ opacity: 0, y: 3 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22 }}
+            className="text-sm leading-6 text-[var(--psy-ink)]"
+          >
+            {captionByScene[state.scene]}
+          </motion.p>
+        </div>
+        <AnimatePresence>
+          {state.feedback && (
+            <motion.p
+              key={state.feedback.text}
+              initial={{ opacity: 0, y: 3 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              className={`rounded-lg border px-3 py-1.5 text-xs leading-5 ${feedbackToneClass}`}
+            >
+              {state.feedback.text}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+    </>
   );
 }
 

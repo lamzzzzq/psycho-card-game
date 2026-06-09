@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
+import { useLocaleStore, STRINGS } from '@/lib/i18n';
+import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
 export default function Home() {
   const router = useRouter();
@@ -11,20 +13,22 @@ export default function Home() {
   const { bigFiveScores, getProgress } = useAssessmentStore();
   const progress = getProgress();
   const hasResults = hydrated && bigFiveScores !== null;
-  const features = [
-    { glyph: '✦', title: '自我評估', note: '先完成測評，得到你自己的五維傾向' },
-    { glyph: '◈', title: '抽牌歸檔', note: '湊齊同一人格維度的手牌，公開歸檔' },
-    { glyph: '☽', title: '識人破局', note: '對手的每張棄牌，都暴露了他的人格' },
-  ];
+  // SSR/首屏用 zh 与服务端一致，hydrate 后切到持久化/?lang 的语言，避免 mismatch。
+  const locale = useLocaleStore((s) => s.locale);
+  const loc = hydrated ? locale : 'zh';
+  const t = STRINGS[loc].home;
+  const c = STRINGS[loc].common;
+  const features = t.features;
 
   return (
     // 移动端：内容从顶部流动 + 底部留白给 sticky CTA 栏；桌面：垂直居中。
     <div className="flex flex-1 flex-col items-center px-5 pt-10 pb-40 sm:px-6 lg:justify-center lg:pb-10">
+      <LanguageToggle />
       <button
         onClick={() => router.push('/tutorial')}
         className="psy-btn psy-btn-accent psy-serif fixed right-4 top-4 z-40 px-4 py-2 text-sm font-semibold shadow-[0_16px_38px_rgba(0,0,0,0.32)] sm:right-8 sm:top-8"
       >
-        玩法教學
+        {c.tutorial}
       </button>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -35,30 +39,18 @@ export default function Home() {
           <div className="space-y-5 sm:space-y-6">
             <div className="space-y-3">
               <p className="psy-serif text-[10px] uppercase tracking-[0.42em] text-[var(--psy-ink-soft)] sm:text-xs">
-                Personalities Mahjong
+                {t.eyebrow}
               </p>
               <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">
-                人格麻將
+                {t.title}
               </h1>
               <p className="max-w-xl text-base leading-7 text-[var(--psy-ink-soft)] sm:text-lg sm:leading-8">
-                把人格測評、心理線索判斷與卡牌對戰編織在一起。先讀懂自己，再在牌桌上讀懂別人。
+                {t.intro}
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2 text-xs text-[var(--psy-muted)] sm:gap-3">
-              <span className="rounded-full border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.08)] px-3 py-1.5">
-                五維人格映射
-              </span>
-              <span className="rounded-full border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.08)] px-3 py-1.5">
-                塔羅式卡牌視覺
-              </span>
-              <span className="rounded-full border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.08)] px-3 py-1.5">
-                單機 / 聯機雙模式
-              </span>
-            </div>
-
-            {/* 移动端：紧凑横向行（icon + 文案）；sm+：原竖向卡片 */}
-            <div className="grid gap-2 sm:grid-cols-3 sm:gap-3">
+            {/* 移动端：紧凑横向行（icon + 文案）；sm+：原竖向卡片。4 张卡 → 2×2 */}
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
               {features.map((item) => (
                 <div
                   key={item.title}
@@ -81,7 +73,7 @@ export default function Home() {
             <div className="relative w-full max-w-sm">
               <div className="psy-panel psy-etched rounded-[2rem] p-6">
                 <div className="mb-5 flex items-center justify-between text-[10px] uppercase tracking-[0.35em] text-[var(--psy-muted)]">
-                  <span>人格牌陣</span>
+                  <span>{t.cardEyebrow}</span>
                   <span>No. 0</span>
                 </div>
                 <div className="rounded-[1.7rem] border border-[rgba(200,155,93,0.26)] bg-[linear-gradient(180deg,rgba(20,31,45,0.96),rgba(11,18,28,0.98))] p-6">
@@ -92,11 +84,11 @@ export default function Home() {
                   </div>
                   <div className="space-y-4 text-center">
                     <div>
-                      <p className="psy-serif text-sm tracking-[0.25em] text-[var(--psy-ink-soft)]">ARCANA OF SELF</p>
-                      <p className="mt-2 psy-serif text-2xl text-[var(--psy-ink)]">人格鏡像</p>
+                      <p className="psy-serif text-sm tracking-[0.25em] text-[var(--psy-ink-soft)]">{t.cardArcana}</p>
+                      <p className="mt-2 psy-serif text-2xl text-[var(--psy-ink)]">{t.cardTitle}</p>
                     </div>
                     <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">
-                      你的五維得分會轉化成不同維度的收集目標。每一張牌，既是自我描述，也是對手留下的線索。
+                      {t.cardBody}
                     </p>
                   </div>
                 </div>
@@ -115,26 +107,26 @@ export default function Home() {
             onClick={() => router.push('/pvp')}
             className="psy-btn psy-btn-accent psy-serif col-span-2 w-full px-6 py-3.5 text-base font-semibold lg:col-span-1"
           >
-            聯機對戰
+            {t.pvp}
           </button>
           <button
             onClick={() => (hasResults ? router.push('/lobby') : router.push('/assessment'))}
             className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
           >
-            單機對戰{!hasResults && <span className="ml-1.5 text-xs text-[var(--psy-accent)]">需先測評</span>}
+            {t.single}{!hasResults && <span className="ml-1.5 text-xs text-[var(--psy-accent)]">{t.needAssess}</span>}
           </button>
           <button
             onClick={() => router.push('/assessment')}
             className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
           >
-            {progress > 0 ? `繼續測評 (${progress}/60)` : hasResults ? '重新測評' : '開始測評'}
+            {progress > 0 ? `${t.continueAssess} (${progress}/60)` : hasResults ? t.reassess : t.startAssess}
           </button>
           {hasResults && (
             <button
               onClick={() => router.push('/results')}
               className="psy-btn psy-btn-ghost col-span-2 w-full px-6 py-3 font-medium sm:py-3.5 lg:col-span-1"
             >
-              查看人格報告
+              {t.report}
             </button>
           )}
         </div>

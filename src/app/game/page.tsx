@@ -291,7 +291,7 @@ export default function GamePage() {
       if (lastAction?.type === 'hu-success') {
         showBanner(true, '食胡！你贏了！');
       } else if (lastAction?.type === 'hu-fail') {
-        showBanner(false, '食胡失敗！手牌公開，罰停兩個回合');
+        showBanner(false, '食胡失敗！手牌公開，罰停一回合');
       }
     }
   }, [playerHu]);
@@ -551,8 +551,8 @@ export default function GamePage() {
         {humanFrozenLockout && (
           <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
             <span>⛔</span>
-            <span className="hidden sm:inline">你被罰停 — 接下來輪到你的兩個回合會被自動跳過，期間無法參與碰/食胡</span>
-            <span className="sm:hidden">罰停中 · 接下來兩個回合跳過 · 不可碰/胡</span>
+            <span className="hidden sm:inline">你被罰停一回合 — 下次輪到你時自動跳過，期間無法參與碰/食胡</span>
+            <span className="sm:hidden">罰停一回合 · 輪到你時跳過 · 不可碰/胡</span>
           </div>
         )}
         {humanAwaitingOwnDischarge && (

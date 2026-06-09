@@ -1,59 +1,63 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useLocaleStore, type Locale } from '@/lib/i18n';
+import { useHydrated } from '@/stores/useHydration';
 
-// Locked language toggle. Only Chinese is implemented; English shows a
-// "coming soon" hint when clicked. Full i18n migration is deferred.
+// 中文 / EN 双语切换。切换写入 locale store + 同步 URL ?lang（便于分享 /?lang=en）。
+// 房间与语言无关：两个链接连同一房间码即同桌。
 export function LanguageToggle() {
-  const [showLockHint, setShowLockHint] = useState(false);
+  const locale = useLocaleStore((s) => s.locale);
+  const setLocale = useLocaleStore((s) => s.setLocale);
+  const hydrated = useHydrated();
+  const current: Locale = hydrated ? locale : 'zh';
 
-  useEffect(() => {
-    if (!showLockHint) return;
-    const t = setTimeout(() => setShowLockHint(false), 2200);
-    return () => clearTimeout(t);
-  }, [showLockHint]);
+  const choose = (l: Locale) => {
+    setLocale(l);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('lang', l);
+      window.history.replaceState({}, '', url.toString());
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const tabs: { id: Locale; label: string }[] = [
+    { id: 'zh', label: '中文' },
+    { id: 'en', label: 'EN' },
+  ];
 
   return (
-    <div className="fixed right-3 top-3 z-40 flex items-center">
+    <div className="fixed left-3 top-3 z-40 sm:left-6 sm:top-6">
       <div
         className="flex items-center gap-1 rounded-full border p-0.5 text-[10px] backdrop-blur"
-        style={{
-          borderColor: 'rgba(200,155,93,0.22)',
-          background: 'rgba(20,28,38,0.55)',
-        }}
+        style={{ borderColor: 'rgba(200,155,93,0.22)', background: 'rgba(20,28,38,0.55)' }}
       >
-        <button
-          type="button"
-          aria-pressed={true}
-          className="psy-serif rounded-full px-2.5 py-1 font-medium text-[var(--psy-ink)]"
-          style={{
-            background: 'linear-gradient(180deg,rgba(64,46,27,0.92),rgba(27,22,17,0.96))',
-            boxShadow: '0 6px 14px rgba(72,49,18,0.24)',
-          }}
-        >
-          中文
-        </button>
-        <button
-          type="button"
-          aria-pressed={false}
-          aria-disabled={true}
-          onClick={() => setShowLockHint(true)}
-          className="psy-serif flex items-center gap-1 rounded-full px-2.5 py-1 text-[var(--psy-muted)] transition hover:text-[var(--psy-ink-soft)]"
-          title="即將上線"
-        >
-          <span>EN</span>
-          <span aria-hidden>🔒</span>
-        </button>
+        {tabs.map((t) => {
+          const active = current === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => choose(t.id)}
+              className={`psy-serif rounded-full px-2.5 py-1 font-medium transition ${
+                active ? 'text-[var(--psy-ink)]' : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
+              }`}
+              style={
+                active
+                  ? {
+                      background: 'linear-gradient(180deg,rgba(64,46,27,0.92),rgba(27,22,17,0.96))',
+                      boxShadow: '0 6px 14px rgba(72,49,18,0.24)',
+                    }
+                  : undefined
+              }
+            >
+              {t.label}
+            </button>
+          );
+        })}
       </div>
-      {showLockHint && (
-        <div
-          role="status"
-          className="psy-serif ml-2 rounded-full border px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)] shadow"
-          style={{ borderColor: 'rgba(200,155,93,0.22)', background: 'rgba(20,28,38,0.85)' }}
-        >
-          英文版即將上線
-        </div>
-      )}
     </div>
   );
 }

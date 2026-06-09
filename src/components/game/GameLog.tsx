@@ -40,7 +40,7 @@ function getActionLabel(action: GameAction): ActionLabel {
     return { tone: 'success', prefix: '食胡！遊戲結束' };
   }
   if (action.type === 'hu-fail') {
-    return { tone: 'danger', prefix: '食胡失敗！手牌公開', detail: '罰停：跳過接下來 2 個自己的回合' };
+    return { tone: 'danger', prefix: '食胡失敗！手牌公開', detail: '罰停一回合' };
   }
   if (action.type === 'pong-success' && action.dimension) {
     return {
@@ -57,7 +57,7 @@ function getActionLabel(action: GameAction): ActionLabel {
     return {
       tone: 'danger',
       prefix: '碰牌失敗！手牌公開',
-      detail: `${why} · 罰停：跳過接下來 2 個自己的回合`,
+      detail: `${why} · 罰停一回合`,
     };
   }
   // type === 'skip'：只由罰停自動跳過產生（主動「過」不記錄）。最後一跳會帶
