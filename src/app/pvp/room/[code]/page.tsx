@@ -62,7 +62,21 @@ export default function RoomWaitPage() {
         setMyPlayerId(player!.id);
 
         const playerList = await getRoomPlayers(roomObj.id);
-        setPlayers(playerList);
+        // players 表的 SELECT 已被 RLS 锁（隐私）→ getRoomPlayers 的 join 拿不到
+        // 自己这一行的 student_id/big_five（恒为 null），自己又收不到自己的 broadcast
+        // (self:false)。用本地已知信息补上自己这一行，否则 host 开局会用 null/随机分数
+        // 建局并存档（污染数据）。其他玩家信息靠 broadcast(player-joined/big-five-updated) 收齐。
+        const patchedList = playerList.map((p) =>
+          p.player_id === player!.id
+            ? {
+                ...p,
+                student_id: player!.studentId,
+                big_five: player!.bigFive ?? bigFiveScores ?? null,
+                avatar: player!.avatar,
+              }
+            : p
+        );
+        setPlayers(patchedList);
 
         const amHost = roomObj.host_id === player!.id;
         usePvpStore.setState({ isHost: amHost });
@@ -78,6 +92,7 @@ export default function RoomWaitPage() {
                 id: player!.id,
                 studentId: player!.studentId,
                 bigFive: player!.bigFive,
+                avatar: player!.avatar,
               },
               seatIndex: myPlayer?.seat_index ?? playerList.length - 1,
             });

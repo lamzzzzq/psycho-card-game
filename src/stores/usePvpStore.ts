@@ -100,6 +100,7 @@ export const usePvpStore = create<PvpStore>()(
                   seat_index: payload.seatIndex,
                   student_id: payload.player.studentId,
                   big_five: payload.player.bigFive,
+                  avatar: payload.player.avatar,
                 }],
               };
             });

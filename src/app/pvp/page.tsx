@@ -20,6 +20,9 @@ const DECK_OPTIONS: { id: DeckId; name: string; subtitle: string; locked: boolea
   { id: 'cpai', name: '中國人格 CPAI', subtitle: '本土化人格量表', locked: true },
 ];
 
+// 头像占位符：12 个 emoji，3×4 网格。后续可替换为真实 avatar 资源。
+const AVATARS = ['🦊', '🐱', '🐯', '🐼', '🐨', '🦁', '🐮', '🐸', '🐧', '🦉', '🐙', '🦄'];
+
 type Tab = 'create' | 'join';
 
 export default function PvpLobbyPage() {
@@ -31,6 +34,7 @@ export default function PvpLobbyPage() {
   const [tab, setTab] = useState<Tab>('create');
   const [studentId, setStudentId] = useState(player?.studentId ?? '');
   const [studentIdConfirm, setStudentIdConfirm] = useState('');
+  const [avatar, setAvatar] = useState(player?.avatar ?? AVATARS[0]);
   const [joinCode, setJoinCode] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(3);
   const [totalRounds, setTotalRounds] = useState(5);
@@ -112,7 +116,7 @@ export default function PvpLobbyPage() {
 
   async function ensurePlayer() {
     const sid = studentId.trim();
-    const info: PlayerInfo = { id: sid, studentId: sid, bigFive: bigFiveScores };
+    const info: PlayerInfo = { id: sid, studentId: sid, bigFive: bigFiveScores, avatar };
     await upsertPlayer(info);
     setPlayer(info);
     return info;
@@ -243,6 +247,29 @@ export default function PvpLobbyPage() {
             {idMismatch && (
               <p className="text-xs text-[var(--psy-danger)]">兩次輸入的學號不一致</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="psy-eyebrow text-[10px]">選擇頭像</p>
+              <span className="text-xl leading-none">{avatar}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {AVATARS.map((emoji) => {
+                const active = avatar === emoji;
+                return (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => setAvatar(emoji)}
+                    aria-pressed={active}
+                    className={`psy-tile flex items-center justify-center py-2.5 text-2xl leading-none transition ${active ? 'is-active' : ''}`}
+                  >
+                    {emoji}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {bigFiveScores ? (

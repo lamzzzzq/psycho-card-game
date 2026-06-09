@@ -5,6 +5,7 @@ export interface PlayerInfo {
   id: string; // student ID (學號) as unique identifier
   studentId: string;
   bigFive: BigFiveScores | null;
+  avatar?: string; // 玩家选的 emoji 头像（占位符），随 player-joined 广播流转
 }
 
 // Room status
@@ -39,6 +40,7 @@ export interface RoomPlayer {
   // Joined from players table
   student_id?: string;
   big_five?: BigFiveScores | null;
+  avatar?: string; // emoji 头像（来自 broadcast / 本地自补，players 表不存）
 }
 
 // Realtime message types
