@@ -11,7 +11,7 @@ import { QuestionCard } from '@/components/assessment/QuestionCard';
 import { ProgressBar } from '@/components/assessment/ProgressBar';
 import { LikertScore, Question, BigFiveScores, DIMENSIONS } from '@/types';
 import { shuffle } from '@/lib/utils';
-import { saveAssessmentResponses } from '@/lib/assessment-record';
+import { saveAssessmentResult } from '@/lib/assessment-record';
 
 type QuestionOrder = 'sequential' | 'shuffled';
 
@@ -119,11 +119,11 @@ export default function AssessmentPage() {
     setTimeout(() => {
       const currentProgress = useAssessmentStore.getState().getProgress();
       if (isLast && currentProgress >= total) {
-        calculateScores();
-        // 写题目级 raw（非阻塞，失败不影响流程）
+        const scores = calculateScores();
+        // 答完即把「答案 + 分数」写成一行（非阻塞，失败不影响流程）
         const sid = useAssessmentStore.getState().studentId;
         const allAnswers = useAssessmentStore.getState().answers;
-        if (sid) void saveAssessmentResponses(sid, allAnswers);
+        if (sid) void saveAssessmentResult(sid, allAnswers, scores, 'assessment');
         router.push('/results');
       } else if (safeIndex < total - 1) {
         setCurrentIndex((i) => Math.min(i + 1, total - 1));
@@ -213,6 +213,9 @@ export default function AssessmentPage() {
             <button
               onClick={() => {
                 setManualScores(manualScores);
+                // 手动填分也存一行（答案为空，source=manual）
+                const sid = useAssessmentStore.getState().studentId;
+                if (sid) void saveAssessmentResult(sid, {}, manualScores, 'manual');
                 router.push('/results');
               }}
               className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[linear-gradient(135deg,#9b6430_0%,#d4a469_100%)] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95"
