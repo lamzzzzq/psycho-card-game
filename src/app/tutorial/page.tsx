@@ -132,19 +132,28 @@ const PC = (id: number, dim: Dimension, text: string, facet = 'demo'): Personali
 });
 const DC = (id: number, text: string): DummyCard => ({ id, text, isDummy: true });
 
+// 歸檔 4 張神經質後，手裏留兩對（盡責性 104/108、宜人性 105/106）+ 兩張單張 +
+// 知識牌 → 無論玩家棄哪一張，都至少剩一對可用於「截胡碰」演示。
 const SANDBOX_HAND: GameCard[] = [
   PC(101, 'N', '我經常感到焦慮或憂慮'),
   PC(102, 'N', '我容易情緒波動'),
   PC(103, 'N', '我容易感到壓力'),
   PC(104, 'C', '我會認真完成我承諾過的事'),
-  PC(105, 'E', '我喜歡參加熱鬧的聚會和活動'),
+  PC(105, 'A', '我願意體諒別人的感受'),
   PC(106, 'A', '我會主動幫助遇到困難的人'),
   PC(107, 'O', '我對抽象的哲學問題很感興趣'),
   PC(108, 'C', '我做事情之前總會制定計劃'),
   DC(109, '顏色會影響食慾，藍色會抑制飢餓感'),
 ];
 const SANDBOX_DRAWN: PersonalityCard = PC(110, 'N', '我對批評比較敏感');
-const SANDBOX_CLAIM_CARD: PersonalityCard = PC(111, 'A', '我願意體諒別人的處境');
+// 對手棄牌（截胡碰用）：維度在 open-claim 時按手裏現存的對子動態選定。
+const CLAIM_CARDS: Record<Dimension, PersonalityCard> = {
+  O: PC(111, 'O', '我喜歡探索新奇的點子'),
+  C: PC(111, 'C', '我做事一向井井有條'),
+  E: PC(111, 'E', '我在人群裏很有活力'),
+  A: PC(111, 'A', '我會站在別人的角度想'),
+  N: PC(111, 'N', '我對批評比較敏感'),
+};
 
 type Scene =
   | 'start'           // 等抽牌
@@ -168,6 +177,7 @@ interface SandboxState {
   revealedIds: number[];
   revealedAll: boolean;          // 自摸碰激活後揭開所有牌的維度（便於教學，真實遊戲不會）
   chosenDim: Dimension | null;   // 自摸碰選定要歸檔的人格維度
+  claimDim: Dimension | null;    // 截胡碰演示的維度（按手牌動態定）
   declared: boolean;             // 是否已歸檔
   claimDeclared: boolean;
   penaltyShown: boolean;
@@ -183,6 +193,7 @@ const initialState: SandboxState = {
   revealedIds: [],
   revealedAll: false,
   chosenDim: null,
+  claimDim: null,
   declared: false,
   claimDeclared: false,
   penaltyShown: false,
@@ -252,7 +263,7 @@ function reducer(state: SandboxState, action: Action): SandboxState {
       };
     }
     case 'toggle-select':
-      if (state.scene !== 'pong-picking') return state;
+      if (state.scene !== 'pong-picking' && state.scene !== 'claim-window') return state;
       return {
         ...state,
         selectedIds: state.selectedIds.includes(action.id)
@@ -330,22 +341,48 @@ function reducer(state: SandboxState, action: Action): SandboxState {
         },
       };
     }
-    case 'open-claim':
+    case 'open-claim': {
       if (state.scene !== 'done') return state;
+      // 找手裏還有 ≥2 張的維度作為截胡演示維度（兩對保證至少有一個）。
+      const counts: Partial<Record<Dimension, number>> = {};
+      for (const c of state.hand) {
+        if (!c.isDummy && 'dimension' in c) counts[c.dimension] = (counts[c.dimension] ?? 0) + 1;
+      }
+      const claimDim = (DIMENSIONS.find((d) => (counts[d] ?? 0) >= 2) ?? 'C') as Dimension;
+      const name = DIMENSION_META[claimDim].name;
       return {
         ...state,
         scene: 'claim-window',
         selectedIds: [],
-        feedback: { tone: 'info', text: '對手棄出一張線索牌。你可以嘗試截胡碰，也可以判斷是否已經能食胡。' },
+        claimDim,
+        feedback: { tone: 'info', text: `對手棄出一張「${name}」線索牌。從手牌選 2 張「${name}」，加這張棄牌湊成一組。` },
       };
-    case 'commit-claim':
-      if (state.scene !== 'claim-window') return state;
+    }
+    case 'commit-claim': {
+      if (state.scene !== 'claim-window' || !state.claimDim) return state;
+      const dim = state.claimDim;
+      const picked = state.hand.filter((c) => state.selectedIds.includes(c.id));
+      const ok = picked.length === 2 && picked.every((c) => !c.isDummy && 'dimension' in c && c.dimension === dim);
+      if (!ok) {
+        const name = DIMENSION_META[dim].name;
+        return {
+          ...state,
+          feedback: {
+            tone: 'fail',
+            text: `截胡碰需要正好 2 張「${name}」手牌（已選 ${picked.length}）。真實遊戲選錯會判失敗並罰停一回合。`,
+          },
+        };
+      }
+      // 成功：2 張手牌 + 棄牌 = 3 張公開歸檔，被碰的 2 張從手牌移除
       return {
         ...state,
         scene: 'claim-success',
+        hand: state.hand.filter((c) => !state.selectedIds.includes(c.id)),
+        selectedIds: [],
         claimDeclared: true,
-        feedback: { tone: 'success', text: '截胡碰成功。你用手裏的同類牌 + 對手棄牌完成了一組公開歸檔。' },
+        feedback: { tone: 'success', text: '截胡碰成功。你用手裏 2 張同類牌 + 對手棄牌完成了一組公開歸檔。' },
       };
+    }
     case 'show-hu':
       if (state.scene !== 'claim-window' && state.scene !== 'claim-success') return state;
       return {
@@ -364,6 +401,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const N = DIMENSION_META.N;
   const archived = state.chosenDim ? DIMENSION_META[state.chosenDim] : N;
+  const claimed = state.claimDim ? DIMENSION_META[state.claimDim] : DIMENSION_META.A;
 
   const chosenName = state.chosenDim ? DIMENSION_META[state.chosenDim].name : '';
   const captionByScene: Record<Scene, string> = {
@@ -377,7 +415,9 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
         : `從手牌精確選擇 4 張「${chosenName}」的牌（高亮的牌就是，已選 ${state.selectedIds.length}/4）。`,
     'pong-failed': '失敗會公開你押錯的牌並罰停一回合（下次輪到你時自動跳過）。點「繼續」回到選牌模式。',
     'pong-success': '歸檔成功！現在必須棄 1 張牌結束回合。點下方高亮的手牌中任意一張棄掉。',
-    'claim-window': '現在是別人棄牌後的判讀窗口。你可以截胡碰，也可以在已經滿足全部目標時食胡。',
+    'claim-window': state.claimDim
+      ? `別人棄牌後的判讀窗口：從手牌選 2 張高亮的「${DIMENSION_META[state.claimDim].name}」，加那張棄牌湊一組，再點「碰」（已選 ${state.selectedIds.length}/2）。`
+      : '現在是別人棄牌後的判讀窗口。你可以截胡碰，也可以在已經滿足全部目標時食胡。',
     'claim-success': '截胡碰也會形成公開歸檔。這個記錄會出現在玩家頭像下和歸檔記錄裏。',
     'hu-demo': '食胡是勝利按鈕，只在所有目標完成時使用。失敗成本很高，所以不要拿它試錯。',
     'discard-picking': '點擊要棄的牌。',
@@ -397,11 +437,14 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             const isSelected = state.selectedIds.includes(c.id);
             const isDummy = c.isDummy === true;
             const dimension = !isDummy ? (c as PersonalityCard).dimension : null;
-            const canClickToSelect = state.scene === 'pong-picking';
+            const inPick = state.scene === 'pong-picking';
+            const inClaim = state.scene === 'claim-window';
+            const canClickToSelect = inPick || inClaim;
             const canClickToDiscard = state.scene === 'pong-success' && !isDrawn;
-            // 引導高亮：選牌階段高亮「目標維度且還沒選」的牌；棄牌階段高亮所有可棄手牌。
+            const targetDim = inPick ? state.chosenDim : inClaim ? state.claimDim : null;
+            // 引導高亮：選牌/截胡階段高亮「目標維度且還沒選」的牌；棄牌階段高亮所有可棄手牌。
             const spotlight =
-              (canClickToSelect && !isSelected && dimension === state.chosenDim) ||
+              (canClickToSelect && !isSelected && dimension === targetDim) ||
               canClickToDiscard;
             return (
               <motion.div
@@ -500,13 +543,13 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             <span
               className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
               style={{
-                color: DIMENSION_META.A.colorHex,
-                backgroundColor: DIMENSION_META.A.colorHex + '20',
-                border: `1px solid ${DIMENSION_META.A.colorHex}55`,
+                color: claimed.colorHex,
+                backgroundColor: claimed.colorHex + '20',
+                border: `1px solid ${claimed.colorHex}55`,
               }}
             >
-              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: DIMENSION_META.A.colorHex }} />
-              宜人性 3 張
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: claimed.colorHex }} />
+              {claimed.name} 3 張
             </span>
           )}
         </div>
@@ -654,22 +697,24 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {state.scene === 'claim-window' && (
+        {state.scene === 'claim-window' && state.claimDim && (
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             className="grid gap-3 rounded-xl border border-[rgba(200,155,93,0.28)] bg-[rgba(200,155,93,0.06)] p-3 text-xs text-[var(--psy-ink-soft)] sm:grid-cols-[auto_1fr_auto]"
           >
             <div className="flex justify-center">
-              <Card card={SANDBOX_CLAIM_CARD} compact revealedDimension="A" />
+              <Card card={CLAIM_CARDS[state.claimDim]} compact revealedDimension={state.claimDim} />
             </div>
             <div className="flex flex-col justify-center">
               <div className="psy-serif text-sm text-[var(--psy-ink)]">小明棄出了一張線索牌</div>
-              <div className="mt-1 leading-6">你判斷它和手裏的宜人性牌可以湊成一組。真實遊戲裏需要自己讀描述，不會直接顯示維度。</div>
+              <div className="mt-1 leading-6">
+                從下方手牌選 <b style={{ color: DIMENSION_META[state.claimDim].colorHex }}>2 張「{DIMENSION_META[state.claimDim].name}」</b>（高亮的牌），加這張棄牌湊成一組。已選 {state.selectedIds.length}/2。
+              </div>
             </div>
             <button
               onClick={() => dispatch({ type: 'commit-claim' })}
-              className="psy-btn psy-btn-accent self-center px-4 py-2 text-xs font-bold"
+              className={`psy-btn psy-btn-accent self-center px-4 py-2 text-xs font-bold ${state.selectedIds.length === 2 ? 'tut-spotlight' : ''}`}
             >
               碰
             </button>
