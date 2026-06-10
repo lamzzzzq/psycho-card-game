@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
-import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
 export default function Home() {
   const router = useRouter();
@@ -23,7 +22,6 @@ export default function Home() {
   return (
     // 移动端：内容从顶部流动 + 底部留白给 sticky CTA 栏；桌面：垂直居中。
     <div className="flex flex-1 flex-col items-center px-5 pt-10 pb-40 sm:px-6 lg:justify-center lg:pb-10">
-      <LanguageToggle />
       <button
         onClick={() => router.push('/tutorial')}
         className="psy-btn psy-btn-accent psy-serif fixed right-4 top-4 z-40 px-4 py-2 text-sm font-semibold shadow-[0_16px_38px_rgba(0,0,0,0.32)] sm:right-8 sm:top-8"
