@@ -9,7 +9,7 @@ import { DIMENSION_META } from '@/data/dimensions';
 import { useHydrated } from '@/stores/useHydration';
 import { QuestionCard } from '@/components/assessment/QuestionCard';
 import { LikertScore, BigFiveScores, DIMENSIONS } from '@/types';
-import { saveAssessmentResult } from '@/lib/assessment-record';
+import { saveAssessmentResult, checkStudentIdExists } from '@/lib/assessment-record';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 
 // 題目嚴格按 IPIP-50 文件「correct order」排列，不打亂。
@@ -18,6 +18,8 @@ export default function AssessmentPage() {
   const hydrated = useHydrated();
   const { studentId, setStudentId, answers, setAnswer, calculateScores, setManualScores, getProgress, bigFiveScores } = useAssessmentStore();
   const [studentIdInput, setStudentIdInput] = useState('');
+  const [checkingId, setCheckingId] = useState(false);
+  const [dupWarn, setDupWarn] = useState(false); // 学号重复：第一次提示，再按一次放行
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualScores, setManualInputScores] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
@@ -73,9 +75,23 @@ export default function AssessmentPage() {
             </p>
           </div>
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              if (trimmed) setStudentId(trimmed);
+              if (!trimmed || checkingId) return;
+              // 已提示过重复 → 用户坚持，直接放行
+              if (dupWarn) {
+                setStudentId(trimmed);
+                return;
+              }
+              // 首次：查重；重复则提示等待二次确认，不重复则直接进入
+              setCheckingId(true);
+              const exists = await checkStudentIdExists(trimmed);
+              setCheckingId(false);
+              if (exists) {
+                setDupWarn(true);
+              } else {
+                setStudentId(trimmed);
+              }
             }}
             className="space-y-4"
           >
@@ -84,17 +100,23 @@ export default function AssessmentPage() {
               inputMode="numeric"
               autoFocus
               value={studentIdInput}
-              onChange={(e) => setStudentIdInput(e.target.value)}
+              onChange={(e) => {
+                setStudentIdInput(e.target.value);
+                if (dupWarn) setDupWarn(false); // 改了学号 → 重新查重
+              }}
               placeholder={t.gatePlaceholder}
               className="w-full rounded-xl border px-4 py-3 text-center text-lg text-[var(--psy-ink)]"
-              style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(200,155,93,0.18)' }}
+              style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: dupWarn ? 'rgba(220,106,79,0.55)' : 'rgba(200,155,93,0.18)' }}
             />
+            {dupWarn && (
+              <p className="text-xs leading-5 text-[var(--psy-danger)]">{t.dupWarn}</p>
+            )}
             <button
               type="submit"
-              disabled={!trimmed}
+              disabled={!trimmed || checkingId}
               className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[#9b6430] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95 disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              {t.gateStart}
+              {checkingId ? t.gateChecking : dupWarn ? t.dupConfirm : t.gateStart}
             </button>
           </form>
         </motion.div>

@@ -5,6 +5,25 @@ import { BigFiveScores, LikertScore } from '@/types';
 
 const DEVICE_TOKEN_KEY = 'psycho-card-device-token';
 
+// 检查学号是否已完成过测评（重复检测）。走 RPC student_id_exists（SECURITY DEFINER，
+// 只回布尔，不暴露分数）。见 supabase/migrations/0005_student_id_exists_rpc.sql。
+// 优雅降级：RPC 未建/网络失败 → 返回 false（不弹重复提示，不拦截用户）。
+export async function checkStudentIdExists(studentId: string): Promise<boolean> {
+  try {
+    const sid = studentId?.trim();
+    if (!sid) return false;
+    const { data, error } = await supabase.rpc('student_id_exists', { p_student_id: sid });
+    if (error) {
+      console.warn('[assessment-record] student_id_exists rpc failed', error.message);
+      return false;
+    }
+    return data === true;
+  } catch (err) {
+    console.warn('[assessment-record] checkStudentIdExists exception', err);
+    return false;
+  }
+}
+
 // 本机随机 token：弱提示字段，区分换浏览器/设备（localStorage 按浏览器隔离，
 // 清缓存/换浏览器会重新生成 —— 这是预期，不拿它挡写入）。
 export function getOrCreateDeviceToken(): string {
