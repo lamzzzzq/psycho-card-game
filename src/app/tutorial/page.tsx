@@ -71,7 +71,7 @@ const SOLO_FLOW: FlowStep[] = [
 const STEPS: Step[] = [
   {
     title: '你的目標',
-    body: '5 個人格維度（開放性、盡責性、外向性、宜人性、神經質）全部完成「公開歸檔」，先達成的玩家獲勝。每個維度的目標張數等於你測評出來的分數四捨五入，所以每人的「胡牌路線」都不一樣。',
+    body: '5 個人格維度（開放性、盡責性、外向性、宜人性、情緒穩定性）全部完成「公開歸檔」，先達成的玩家獲勝。每個維度的目標張數等於你測評出來的分數四捨五入，所以每人的「胡牌路線」都不一樣。',
   },
   {
     title: '牌桌',
@@ -132,7 +132,7 @@ const PC = (id: number, dim: Dimension, text: string, facet = 'demo'): Personali
 });
 const DC = (id: number, text: string): DummyCard => ({ id, text, isDummy: true });
 
-// 歸檔 4 張神經質後，手裏留兩對（盡責性 104/108、宜人性 105/106）+ 兩張單張 +
+// 歸檔 4 張情緒穩定性後，手裏留兩對（盡責性 104/108、宜人性 105/106）+ 兩張單張 +
 // 知識牌 → 無論玩家棄哪一張，都至少剩一對可用於「截胡碰」演示。
 const SANDBOX_HAND: GameCard[] = [
   PC(101, 'N', '我經常感到焦慮或憂慮'),
@@ -232,7 +232,7 @@ function reducer(state: SandboxState, action: Action): SandboxState {
       return {
         ...state,
         revealedIds: [104, 110],
-        feedback: { tone: 'info', text: '本回合查看了 2 張牌：一張盡責性，一張神經質。真實牌局裏只會揭開你選的 2 張。' },
+        feedback: { tone: 'info', text: '本回合查看了 2 張牌：一張盡責性，一張情緒穩定性。真實牌局裏只會揭開你選的 2 張。' },
       };
     case 'finish-view':
       if (state.scene !== 'viewing') return state;
@@ -249,7 +249,7 @@ function reducer(state: SandboxState, action: Action): SandboxState {
         revealedAll: true, // 教學模式揭開維度，方便玩家看牌選維度
         selectedIds: [],
         chosenDim: null,
-        feedback: { tone: 'info', text: '自摸碰要先選定一個人格維度。提示：手牌裏有 4 張「神經質」，選它。' },
+        feedback: { tone: 'info', text: '自摸碰要先選定一個人格維度。提示：手牌裏有 4 張「情緒穩定性」，選它。' },
       };
     case 'choose-dim': {
       if (state.scene !== 'pong-dimension') return state;
@@ -278,7 +278,7 @@ function reducer(state: SandboxState, action: Action): SandboxState {
       const allMatch = !!dim && selected.every((c) => !c.isDummy && 'dimension' in c && c.dimension === dim);
       const correctCount = selected.length === 4;
       if (allMatch && correctCount) {
-        // 成功：4 張神經質從手牌移除，drawnCard 也消耗
+        // 成功：4 張情緒穩定性從手牌移除，drawnCard 也消耗
         const remaining = state.hand.filter((c) => !state.selectedIds.includes(c.id));
         const drawnUsed = state.drawnCard && state.selectedIds.includes(state.drawnCard.id);
         return {
@@ -408,7 +408,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
     start: '這是你的開局：手牌裏有多種人格描述和 1 張檔案註記。你需要先抽牌，再決定要查看、歸檔還是棄牌。',
     viewing: '每回合可以查看 2 張手牌的真實維度。點擊「查看 2 張」後，再繼續進入歸檔判斷。',
     'after-draw': '你現在擁有足夠完成一組的線索。下一步點高亮的「自摸碰」試試。',
-    'pong-dimension': '自摸碰要先選定一個人格維度。在下方五個維度裏選擇高亮的「神經質」（手牌裏正好有 4 張）。',
+    'pong-dimension': '自摸碰要先選定一個人格維度。在下方五個維度裏選擇高亮的「情緒穩定性」（手牌裏正好有 4 張）。',
     'pong-picking':
       state.selectedIds.length === 4
         ? `已選 4 張「${chosenName}」。點高亮的「自摸歸檔」完成歸檔。`

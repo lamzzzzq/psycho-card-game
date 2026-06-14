@@ -37,8 +37,8 @@ export async function saveAssessmentResult(
       student_id: sid,
       device_token: getOrCreateDeviceToken(),
       source,
-      answers,                              // jsonb：{ "1": 4, ..., "60": 5 }（手动填分为空 {}）
-      scores,                               // jsonb：{ O, C, E, A, N }
+      answers,                              // jsonb：{ "1": 4, ..., "50": 5 }（IPIP-50，50 题；手动填分为空 {}）
+      scores,                               // jsonb：{ O, C, E, A, N }（注意：N = 情緒穩定性，高分=冷靜）
       answered_count: Object.keys(answers).length,
     });
     if (error) {

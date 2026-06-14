@@ -9,46 +9,36 @@ import { DIMENSION_META } from '@/data/dimensions';
 import { useHydrated } from '@/stores/useHydration';
 import { QuestionCard } from '@/components/assessment/QuestionCard';
 import { ProgressBar } from '@/components/assessment/ProgressBar';
-import { LikertScore, Question, BigFiveScores, DIMENSIONS } from '@/types';
-import { shuffle } from '@/lib/utils';
+import { LikertScore, BigFiveScores, DIMENSIONS } from '@/types';
 import { saveAssessmentResult } from '@/lib/assessment-record';
+import { useLocaleStore, STRINGS } from '@/lib/i18n';
 
-type QuestionOrder = 'sequential' | 'shuffled';
-
-function getOrderedQuestions(mode: QuestionOrder): Question[] {
-  if (mode === 'shuffled') return shuffle(QUESTIONS);
-  return QUESTIONS;
-}
-
+// 題目嚴格按 IPIP-50 文件「correct order」排列，不打亂。
 export default function AssessmentPage() {
   const router = useRouter();
   const hydrated = useHydrated();
   const { studentId, setStudentId, answers, setAnswer, calculateScores, setManualScores, getProgress, bigFiveScores } = useAssessmentStore();
   const [studentIdInput, setStudentIdInput] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [orderMode, setOrderMode] = useState<QuestionOrder>('sequential');
-  const [orderedQuestions, setOrderedQuestions] = useState<Question[]>(QUESTIONS);
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualScores, setManualInputScores] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
   const [rawInputs, setRawInputs] = useState<Record<string, string>>({ O: '3', C: '3', E: '3', A: '3', N: '3' });
 
-  // 已完成测评则跳到结果页（放 effect 里，避免 render 期调 router.push）
+  // SSR/首屏用 zh 與服務端一致，hydrate 後切到 ?lang/持久化語言（同主頁做法）。
+  const localeRaw = useLocaleStore((s) => s.locale);
+  const locale = hydrated ? localeRaw : 'zh';
+  const t = STRINGS[locale].assessment;
+
+  // 已完成測評則跳到結果頁（放 effect 裡，避免 render 期調 router.push）
   useEffect(() => {
     if (bigFiveScores) router.push('/results');
   }, [bigFiveScores, router]);
-
-  const toggleOrder = () => {
-    const newMode = orderMode === 'sequential' ? 'shuffled' : 'sequential';
-    setOrderMode(newMode);
-    setOrderedQuestions(getOrderedQuestions(newMode));
-    setCurrentIndex(0);
-  };
 
   // Wait for hydration
   if (!hydrated) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="psy-serif text-[var(--psy-muted)]">加載中…</p>
+        <p className="psy-serif text-[var(--psy-muted)]">{STRINGS.zh.assessment.loading}</p>
       </div>
     );
   }
@@ -58,7 +48,7 @@ export default function AssessmentPage() {
     return null;
   }
 
-  // 学号 gate：先收集学号，raw 答案按学号存
+  // 學號 gate：先收集學號，raw 答案按學號存
   if (!studentId) {
     const trimmed = studentIdInput.trim();
     return (
@@ -70,11 +60,11 @@ export default function AssessmentPage() {
         >
           <div className="space-y-3">
             <p className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-ink-soft)]">
-              Persona Reading
+              {t.eyebrow}
             </p>
-            <h1 className="psy-serif text-2xl text-[var(--psy-ink)]">輸入學號</h1>
+            <h1 className="psy-serif text-2xl text-[var(--psy-ink)]">{t.gateTitle}</h1>
             <p className="mx-auto max-w-sm text-sm leading-7 text-[var(--psy-ink-soft)]">
-              學號用於記錄你的測評結果，方便課堂統計。請使用同一台設備、同一個瀏覽器，不要清除緩存。
+              {t.gateHint}
             </p>
           </div>
           <form
@@ -90,7 +80,7 @@ export default function AssessmentPage() {
               autoFocus
               value={studentIdInput}
               onChange={(e) => setStudentIdInput(e.target.value)}
-              placeholder="例如 20231234"
+              placeholder={t.gatePlaceholder}
               className="w-full rounded-xl border px-4 py-3 text-center text-lg text-[var(--psy-ink)]"
               style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(200,155,93,0.18)' }}
             />
@@ -99,7 +89,7 @@ export default function AssessmentPage() {
               disabled={!trimmed}
               className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[#9b6430] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95 disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              開始測評
+              {t.gateStart}
             </button>
           </form>
         </motion.div>
@@ -107,9 +97,9 @@ export default function AssessmentPage() {
     );
   }
 
-  const total = orderedQuestions.length;
+  const total = QUESTIONS.length;
   const safeIndex = Math.min(currentIndex, total - 1);
-  const question = orderedQuestions[safeIndex];
+  const question = QUESTIONS[safeIndex];
   const progress = getProgress();
   const isLast = safeIndex === total - 1;
 
@@ -120,7 +110,7 @@ export default function AssessmentPage() {
       const currentProgress = useAssessmentStore.getState().getProgress();
       if (isLast && currentProgress >= total) {
         const scores = calculateScores();
-        // 答完即把「答案 + 分数」写成一行（非阻塞，失败不影响流程）
+        // 答完即把「答案 + 分數」寫成一行（非阻塞，失敗不影響流程）
         const sid = useAssessmentStore.getState().studentId;
         const allAnswers = useAssessmentStore.getState().answers;
         if (sid) void saveAssessmentResult(sid, allAnswers, scores, 'assessment');
@@ -148,13 +138,13 @@ export default function AssessmentPage() {
       >
         <div className="space-y-4 text-center">
           <p className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-ink-soft)]">
-            Persona Reading
+            {t.eyebrow}
           </p>
           <h1 className="psy-serif text-3xl text-[var(--psy-ink)] md:text-4xl">
-            抽取你的人格原型
+            {t.title}
           </h1>
           <p className="mx-auto max-w-2xl text-sm leading-7 text-[var(--psy-ink-soft)]">
-            每一道陳述題都像翻開一張隱喻牌面。你給出的傾向，會在結尾匯聚成五維人格圖譜，並影響後續牌局目標。
+            {t.intro}
           </p>
         </div>
 
@@ -163,20 +153,21 @@ export default function AssessmentPage() {
             onClick={() => setShowManualInput(!showManualInput)}
             className="text-xs text-[var(--psy-muted)] transition underline decoration-[rgba(200,155,93,0.3)] underline-offset-4 hover:text-[var(--psy-ink-soft)]"
           >
-            {showManualInput ? '返回測評' : '跳過測評，手動輸入分數'}
+            {showManualInput ? t.backToAssess : t.skipToManual}
           </button>
         </div>
 
         {/* Manual input panel */}
         {showManualInput ? (
           <div className="psy-panel psy-etched space-y-5 rounded-[1.7rem] p-6">
-            <h3 className="psy-serif text-lg font-medium text-[var(--psy-ink)]">手動錄入人格刻度</h3>
+            <h3 className="psy-serif text-lg font-medium text-[var(--psy-ink)]">{t.manualTitle}</h3>
             <div className="space-y-3">
               {DIMENSIONS.map((d) => {
                 const meta = DIMENSION_META[d];
+                const metaName = locale === 'en' ? meta.nameEn : meta.name;
                 return (
                   <div key={d} className="flex items-center gap-3">
-                    <span className="psy-serif w-16 text-sm" style={{ color: meta.colorHex }}>{meta.name}</span>
+                    <span className="psy-serif w-28 text-sm" style={{ color: meta.colorHex }}>{metaName}</span>
                     <input
                       type="number"
                       min="1"
@@ -213,14 +204,14 @@ export default function AssessmentPage() {
             <button
               onClick={() => {
                 setManualScores(manualScores);
-                // 手动填分也存一行（答案为空，source=manual）
+                // 手動填分也存一行（答案為空，source=manual）
                 const sid = useAssessmentStore.getState().studentId;
                 if (sid) void saveAssessmentResult(sid, {}, manualScores, 'manual');
                 router.push('/results');
               }}
               className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[linear-gradient(135deg,#9b6430_0%,#d4a469_100%)] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95"
             >
-              確認分數，進入遊戲
+              {t.manualConfirm}
             </button>
           </div>
         ) : (
@@ -228,8 +219,9 @@ export default function AssessmentPage() {
 
         <ProgressBar
           current={progress}
-          total={QUESTIONS.length}
+          total={total}
           currentDimension={question.dimension}
+          locale={locale}
         />
 
         <QuestionCard
@@ -237,6 +229,7 @@ export default function AssessmentPage() {
           selectedScore={answers[question.id]}
           onSelect={handleSelect}
           questionNumber={currentIndex + 1}
+          locale={locale}
         />
 
         {/* Navigation buttons */}
@@ -246,35 +239,25 @@ export default function AssessmentPage() {
             disabled={currentIndex === 0}
             className="rounded-full border border-[rgba(200,155,93,0.18)] px-4 py-2 text-sm text-[var(--psy-ink-soft)] transition hover:bg-[rgba(200,155,93,0.08)] disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            上一題
-          </button>
-          <button
-            onClick={toggleOrder}
-            className={`rounded-full px-3 py-1.5 text-xs transition border ${
-              orderMode === 'shuffled'
-                ? 'border-[rgba(200,155,93,0.4)] bg-[rgba(200,155,93,0.14)] text-[var(--psy-accent)]'
-                : 'border-[rgba(200,155,93,0.18)] text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
-            }`}
-          >
-            {orderMode === 'sequential' ? '打亂順序' : '按維度排列'}
+            {t.prev}
           </button>
           <button
             onClick={handleNext}
             disabled={currentIndex === total - 1}
             className="rounded-full border border-[rgba(200,155,93,0.18)] px-4 py-2 text-sm text-[var(--psy-ink-soft)] transition hover:bg-[rgba(200,155,93,0.08)] disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            下一題
+            {t.next}
           </button>
         </div>
 
-        {/* Question map: 60 tiles showing answered/unanswered/current */}
+        {/* Question map: tiles showing answered/unanswered/current */}
         <div className="psy-panel psy-etched space-y-3 rounded-[1.5rem] p-4">
           <div className="flex items-center justify-between text-xs text-[var(--psy-muted)]">
-            <span>題目導航</span>
-            <span>{progress}/60 已作答</span>
+            <span>{t.navTitle}</span>
+            <span>{progress}/{total} {t.answeredSuffix}</span>
           </div>
           <div className="grid grid-cols-12 gap-1">
-            {orderedQuestions.map((q, i) => {
+            {QUESTIONS.map((q, i) => {
               const isAnswered = answers[q.id] !== undefined;
               const isCurrent = i === safeIndex;
               const dimMeta = DIMENSION_META[q.dimension];
@@ -292,7 +275,7 @@ export default function AssessmentPage() {
                       : 'opacity-30'
                   }`}
                   style={{ backgroundColor: dimMeta.colorHex + (isAnswered ? '60' : '25'), color: dimMeta.colorHex }}
-                  title={`#${i + 1} ${q.text}`}
+                  title={`#${i + 1} ${locale === 'en' ? q.textEn : q.text}`}
                 >
                   {i + 1}
                 </button>
@@ -300,9 +283,9 @@ export default function AssessmentPage() {
             })}
           </div>
           <div className="flex justify-center gap-3 text-[10px] text-[var(--psy-muted)]">
-            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(200,155,93,0.6)' }} /> 已答</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(200,155,93,0.25)' }} /> 未答</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded bg-white ring-1 ring-white" /> 當前</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(200,155,93,0.6)' }} /> {t.legendAnswered}</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(200,155,93,0.25)' }} /> {t.legendUnanswered}</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded bg-white ring-1 ring-white" /> {t.legendCurrent}</span>
           </div>
         </div>
         </>

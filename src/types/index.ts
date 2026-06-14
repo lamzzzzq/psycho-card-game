@@ -18,8 +18,11 @@ export interface Question {
   id: number;
   dimension: Dimension;
   text: string;
+  /** 英文題面（雙語：locale=en 時顯示） */
+  textEn: string;
   reversed: boolean;
-  facet: string;
+  /** IPIP-50 不提供逐題 facet，保留可選以兼容舊資料 */
+  facet?: string;
 }
 
 export type LikertScore = 1 | 2 | 3 | 4 | 5;
@@ -37,7 +40,7 @@ export interface PersonalityCard {
   id: number;
   dimension: Dimension;
   text: string;
-  facet: string;
+  facet?: string;
   isDummy?: false;
 }
 

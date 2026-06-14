@@ -1,79 +1,63 @@
 import { Question } from '@/types';
 
 /**
- * 60 道 Big Five 人格測評題目
- * 基於 IPIP (International Personality Item Pool) 方法論
- * 每個維度 12 題，6 正向 + 6 反向計分
- * 每個維度覆蓋 6 個子面向 (facet)
+ * IPIP-50 Big Five 人格測評（50 題）
+ * 來源：docs/Big Five Personality_20260612.xlsx（Goldberg, 1999 / IPIP）
+ * 順序：嚴格按文件「correct order」E/A/C/N/O 交錯排列，不打亂。
+ * reversed：嚴格照文件 (- keyed) 標記。計分 reversed 時用 6 - rawScore。
+ * ⚠️ N 維度文件按『情緒穩定』方向 keying（放鬆/不憂鬱為正向），
+ *    故 N 高分 = 情緒穩定冷靜，維度標籤已改為「情緒穩定性 / Emotional Stability」。
+ * 中英雙語：text 繁中、textEn 英文，語言由 locale 切換。
  */
 export const QUESTIONS: Question[] = [
-  // ===== Openness 開放性 (O1-O12) =====
-  { id: 1,  dimension: 'O', text: '我喜歡嘗試新的事物和體驗', reversed: false, facet: '冒險精神' },
-  { id: 2,  dimension: 'O', text: '我對抽象的哲學問題很感興趣', reversed: false, facet: '思辨能力' },
-  { id: 3,  dimension: 'O', text: '我覺得藝術和美學對我很重要', reversed: false, facet: '審美感受' },
-  { id: 4,  dimension: 'O', text: '我經常會有天馬行空的想象', reversed: false, facet: '想象力' },
-  { id: 5,  dimension: 'O', text: '我喜歡挑戰傳統觀念和固有想法', reversed: false, facet: '求新意識' },
-  { id: 6,  dimension: 'O', text: '我對不同文化和價值觀持開放態度', reversed: false, facet: '包容性' },
-  { id: 7,  dimension: 'O', text: '我不太喜歡接觸陌生的事物', reversed: true, facet: '冒險精神' },
-  { id: 8,  dimension: 'O', text: '我認爲實用比創意更重要', reversed: true, facet: '想象力' },
-  { id: 9,  dimension: 'O', text: '我更喜歡按照既定的方式做事', reversed: true, facet: '求新意識' },
-  { id: 10, dimension: 'O', text: '我很少關注藝術或文學作品', reversed: true, facet: '審美感受' },
-  { id: 11, dimension: 'O', text: '我對深奧的理論不感興趣', reversed: true, facet: '思辨能力' },
-  { id: 12, dimension: 'O', text: '我傾向於堅持自己熟悉的環境和習慣', reversed: true, facet: '包容性' },
-
-  // ===== Conscientiousness 盡責性 (C1-C12) =====
-  { id: 13, dimension: 'C', text: '我做事情之前總會制定詳細的計劃', reversed: false, facet: '計劃性' },
-  { id: 14, dimension: 'C', text: '我會認真完成我承諾過的每一件事', reversed: false, facet: '責任感' },
-  { id: 15, dimension: 'C', text: '我的生活和工作空間總是整整齊齊的', reversed: false, facet: '條理性' },
-  { id: 16, dimension: 'C', text: '我會爲實現長遠目標而堅持不懈地努力', reversed: false, facet: '成就動機' },
-  { id: 17, dimension: 'C', text: '我能夠抵制誘惑，專注於當前的任務', reversed: false, facet: '自律性' },
-  { id: 18, dimension: 'C', text: '我做決定前會仔細權衡各種選擇', reversed: false, facet: '審慎性' },
-  { id: 19, dimension: 'C', text: '我經常拖延重要的事情', reversed: true, facet: '自律性' },
-  { id: 20, dimension: 'C', text: '我有時候會忘記自己的承諾和義務', reversed: true, facet: '責任感' },
-  { id: 21, dimension: 'C', text: '我的物品經常找不到放在哪裏', reversed: true, facet: '條理性' },
-  { id: 22, dimension: 'C', text: '我做事經常是想到什麼就做什麼，不太有規劃', reversed: true, facet: '計劃性' },
-  { id: 23, dimension: 'C', text: '遇到困難時我容易半途而廢', reversed: true, facet: '成就動機' },
-  { id: 24, dimension: 'C', text: '我經常不假思索地做出決定', reversed: true, facet: '審慎性' },
-
-  // ===== Extraversion 外向性 (E1-E12) =====
-  { id: 25, dimension: 'E', text: '在社交場合中我感到精力充沛', reversed: false, facet: '社交活力' },
-  { id: 26, dimension: 'E', text: '我喜歡成爲衆人關注的焦點', reversed: false, facet: '自信表達' },
-  { id: 27, dimension: 'E', text: '我很容易和陌生人聊起來', reversed: false, facet: '社交能力' },
-  { id: 28, dimension: 'E', text: '我喜歡參加熱鬧的聚會和活動', reversed: false, facet: '活動需求' },
-  { id: 29, dimension: 'E', text: '我經常感到開心和充滿活力', reversed: false, facet: '積極情緒' },
-  { id: 30, dimension: 'E', text: '我喜歡帶領別人，主導局面', reversed: false, facet: '支配性' },
-  { id: 31, dimension: 'E', text: '在人多的環境中我會感到不自在', reversed: true, facet: '社交活力' },
-  { id: 32, dimension: 'E', text: '我更喜歡安靜地獨處而不是社交', reversed: true, facet: '活動需求' },
-  { id: 33, dimension: 'E', text: '我在羣體中通常比較沉默', reversed: true, facet: '社交能力' },
-  { id: 34, dimension: 'E', text: '我不太喜歡引起別人的注意', reversed: true, facet: '自信表達' },
-  { id: 35, dimension: 'E', text: '我很少主動發起對話或活動', reversed: true, facet: '支配性' },
-  { id: 36, dimension: 'E', text: '我的情緒通常比較平淡，不太容易興奮', reversed: true, facet: '積極情緒' },
-
-  // ===== Agreeableness 宜人性 (A1-A12) =====
-  { id: 37, dimension: 'A', text: '我很容易信任別人', reversed: false, facet: '信任' },
-  { id: 38, dimension: 'A', text: '我會主動幫助遇到困難的人', reversed: false, facet: '利他性' },
-  { id: 39, dimension: 'A', text: '我在與人交往時總是坦誠相待', reversed: false, facet: '坦率性' },
-  { id: 40, dimension: 'A', text: '看到別人受苦我會感到心疼', reversed: false, facet: '同理心' },
-  { id: 41, dimension: 'A', text: '在發生衝突時我願意妥協退讓', reversed: false, facet: '順從性' },
-  { id: 42, dimension: 'A', text: '我對人總是很謙虛，不喜歡炫耀', reversed: false, facet: '謙遜性' },
-  { id: 43, dimension: 'A', text: '我覺得大多數人都有自己的私心', reversed: true, facet: '信任' },
-  { id: 44, dimension: 'A', text: '別人的問題不關我的事', reversed: true, facet: '利他性' },
-  { id: 45, dimension: 'A', text: '我有時候會爲了達到目的而隱瞞真相', reversed: true, facet: '坦率性' },
-  { id: 46, dimension: 'A', text: '我認爲人應該自己解決自己的問題', reversed: true, facet: '同理心' },
-  { id: 47, dimension: 'A', text: '我在爭論中很難讓步', reversed: true, facet: '順從性' },
-  { id: 48, dimension: 'A', text: '我認爲自己在很多方面比別人優秀', reversed: true, facet: '謙遜性' },
-
-  // ===== Neuroticism 神經質 (N1-N12) =====
-  { id: 49, dimension: 'N', text: '我經常感到焦慮和擔憂', reversed: false, facet: '焦慮' },
-  { id: 50, dimension: 'N', text: '我容易因爲小事而生氣或煩躁', reversed: false, facet: '憤怒' },
-  { id: 51, dimension: 'N', text: '我時常感到悲傷或情緒低落', reversed: false, facet: '抑鬱' },
-  { id: 52, dimension: 'N', text: '我在社交場合中會感到不安和緊張', reversed: false, facet: '社交焦慮' },
-  { id: 53, dimension: 'N', text: '我在壓力下很難控制自己的衝動', reversed: false, facet: '衝動性' },
-  { id: 54, dimension: 'N', text: '我覺得自己在面對困難時很脆弱', reversed: false, facet: '脆弱性' },
-  { id: 55, dimension: 'N', text: '我很少感到緊張或不安', reversed: true, facet: '焦慮' },
-  { id: 56, dimension: 'N', text: '我能夠很好地控制自己的情緒', reversed: true, facet: '憤怒' },
-  { id: 57, dimension: 'N', text: '我大部分時間都感到心情愉快', reversed: true, facet: '抑鬱' },
-  { id: 58, dimension: 'N', text: '在陌生人面前我也能保持自在', reversed: true, facet: '社交焦慮' },
-  { id: 59, dimension: 'N', text: '我在壓力下依然能冷靜思考', reversed: true, facet: '衝動性' },
-  { id: 60, dimension: 'N', text: '我在逆境中總能保持堅強', reversed: true, facet: '脆弱性' },
+  { id: 1, dimension: 'E', reversed: false, text: '我是派對中的靈魂人物。', textEn: 'Am the life of the party.' },
+  { id: 2, dimension: 'A', reversed: true, text: '我覺得自己很少關心別人。', textEn: 'Feel little concern for others.' },
+  { id: 3, dimension: 'C', reversed: false, text: '我隨時做好準備。', textEn: 'Am always prepared.' },
+  { id: 4, dimension: 'N', reversed: true, text: '我容易感到壓力過大。', textEn: 'Get stressed out easily.' },
+  { id: 5, dimension: 'O', reversed: false, text: '我詞彙豐富。', textEn: 'Have a rich vocabulary.' },
+  { id: 6, dimension: 'E', reversed: true, text: '我話不多。', textEn: 'Don\'t talk a lot.' },
+  { id: 7, dimension: 'A', reversed: false, text: '我對人感興趣。', textEn: 'Am interested in people.' },
+  { id: 8, dimension: 'C', reversed: true, text: '我總是丟三落四。', textEn: 'Leave my belongings around.' },
+  { id: 9, dimension: 'N', reversed: false, text: '我大多時候是放鬆的。', textEn: 'Am relaxed most of the time.' },
+  { id: 10, dimension: 'O', reversed: true, text: '我對於理解抽象概念有困難。', textEn: 'Have difficulty understanding abstract ideas.' },
+  { id: 11, dimension: 'E', reversed: false, text: '我和其他人在一起時感覺自在。', textEn: 'Feel comfortable around people.' },
+  { id: 12, dimension: 'A', reversed: true, text: '我會侮辱別人。', textEn: 'Insult people.' },
+  { id: 13, dimension: 'C', reversed: false, text: '我經常注意細節。', textEn: 'Pay attention to details.' },
+  { id: 14, dimension: 'N', reversed: true, text: '我時常為事擔心。', textEn: 'Worry about things.' },
+  { id: 15, dimension: 'O', reversed: false, text: '我有生動的想像力。', textEn: 'Have a vivid imagination.' },
+  { id: 16, dimension: 'E', reversed: true, text: '我是個低調的人。', textEn: 'Keep in the background.' },
+  { id: 17, dimension: 'A', reversed: false, text: '我會同情他人的感受。', textEn: 'Sympathize with others\' feelings.' },
+  { id: 18, dimension: 'C', reversed: true, text: '我常把事物弄得一團糟。', textEn: 'Make a mess of things.' },
+  { id: 19, dimension: 'N', reversed: false, text: '我很少感到鬱悶。', textEn: 'Seldom feel blue.' },
+  { id: 20, dimension: 'O', reversed: true, text: '我對抽象概念不感興趣。', textEn: 'Am not interested in abstract ideas.' },
+  { id: 21, dimension: 'E', reversed: false, text: '我總是主動開始談話。', textEn: 'Start conversations.' },
+  { id: 22, dimension: 'A', reversed: true, text: '我對別人的問題不感興趣。', textEn: 'Am not interested in other people\'s problems.' },
+  { id: 23, dimension: 'C', reversed: false, text: '我會立即將日常家務做完。', textEn: 'Get chores done right away.' },
+  { id: 24, dimension: 'N', reversed: true, text: '我容易受擾亂。', textEn: 'Am easily disturbed.' },
+  { id: 25, dimension: 'O', reversed: false, text: '我常有絕佳的點子。', textEn: 'Have excellent ideas.' },
+  { id: 26, dimension: 'E', reversed: true, text: '我沒什麼話說。', textEn: 'Have little to say.' },
+  { id: 27, dimension: 'A', reversed: false, text: '我有顆柔軟的心。', textEn: 'Have a soft heart.' },
+  { id: 28, dimension: 'C', reversed: true, text: '我常忘記物歸原處。', textEn: 'Often forget to put things back in their proper place.' },
+  { id: 29, dimension: 'N', reversed: true, text: '我容易感到悶悶不樂。', textEn: 'Get upset easily.' },
+  { id: 30, dimension: 'O', reversed: true, text: '我想像力欠佳。', textEn: 'Do not have a good imagination.' },
+  { id: 31, dimension: 'E', reversed: false, text: '在聚會中我會跟許多不同的人說話。', textEn: 'Talk to a lot of different people at parties.' },
+  { id: 32, dimension: 'A', reversed: true, text: '我對別人沒什麼興趣。', textEn: 'Am not really interested in others.' },
+  { id: 33, dimension: 'C', reversed: false, text: '我喜歡井然有序。', textEn: 'Like order.' },
+  { id: 34, dimension: 'N', reversed: true, text: '我的心情變化很大。', textEn: 'Change my mood a lot.' },
+  { id: 35, dimension: 'O', reversed: false, text: '我可以很快理解事物。', textEn: 'Am quick to understand things.' },
+  { id: 36, dimension: 'E', reversed: true, text: '我不喜歡引起別人對自己的注意。', textEn: 'Don\'t like to draw attention to myself.' },
+  { id: 37, dimension: 'A', reversed: false, text: '我總會為別人抽出時間。', textEn: 'Take time out for others.' },
+  { id: 38, dimension: 'C', reversed: true, text: '我會推卸責任。', textEn: 'Shirk my duties.' },
+  { id: 39, dimension: 'N', reversed: true, text: '我的心情時常起伏不定。', textEn: 'Have frequent mood swings.' },
+  { id: 40, dimension: 'O', reversed: false, text: '我常使用艱澀的字彙。', textEn: 'Use difficult words.' },
+  { id: 41, dimension: 'E', reversed: false, text: '我不介意成為注目的焦點。', textEn: 'Don\'t mind being the center of attention.' },
+  { id: 42, dimension: 'A', reversed: false, text: '我能感受他人的情緒。', textEn: 'Feel others\' emotions.' },
+  { id: 43, dimension: 'C', reversed: false, text: '我總是按照預定計畫行事。', textEn: 'Follow a schedule.' },
+  { id: 44, dimension: 'N', reversed: true, text: '我容易感到煩躁。', textEn: 'Get irritated easily.' },
+  { id: 45, dimension: 'O', reversed: false, text: '我會花時間反思事物。', textEn: 'Spend time reflecting on things.' },
+  { id: 46, dimension: 'E', reversed: true, text: '我和陌生人相處時顯得安靜。', textEn: 'Am quiet around strangers.' },
+  { id: 47, dimension: 'A', reversed: false, text: '我能使人感到自在。', textEn: 'Make people feel at ease.' },
+  { id: 48, dimension: 'C', reversed: false, text: '我對我的工作要求嚴謹。', textEn: 'Am exacting in my work.' },
+  { id: 49, dimension: 'N', reversed: true, text: '我常感到鬱悶。', textEn: 'Often feel blue.' },
+  { id: 50, dimension: 'O', reversed: false, text: '我總是充滿想法。', textEn: 'Am full of ideas.' },
 ];

@@ -2,16 +2,20 @@
 
 import { DIMENSION_META } from '@/data/dimensions';
 import { Dimension } from '@/types';
+import { Locale, STRINGS } from '@/lib/i18n';
 
 interface ProgressBarProps {
   current: number;
   total: number;
   currentDimension: Dimension;
+  locale: Locale;
 }
 
-export function ProgressBar({ current, total, currentDimension }: ProgressBarProps) {
+export function ProgressBar({ current, total, currentDimension, locale }: ProgressBarProps) {
   const meta = DIMENSION_META[currentDimension];
   const percent = (current / total) * 100;
+  const t = STRINGS[locale].assessment;
+  const dimName = locale === 'en' ? meta.nameEn : meta.name;
 
   return (
     <div className="psy-panel psy-etched rounded-[1.35rem] p-4 space-y-3">
@@ -33,7 +37,7 @@ export function ProgressBar({ current, total, currentDimension }: ProgressBarPro
         />
       </div>
       <p className="text-xs leading-6 text-[var(--psy-ink-soft)]">
-        當前正在抽取 <span className="psy-serif" style={{ color: meta.colorHex }}>{meta.name}</span> 維度的人格線索。
+        {t.progressPrefix}<span className="psy-serif" style={{ color: meta.colorHex }}>{dimName}</span>{t.progressSuffix}
       </p>
     </div>
   );

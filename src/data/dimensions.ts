@@ -39,11 +39,13 @@ export const DIMENSION_META: Record<Dimension, DimensionMeta> = {
   },
   N: {
     key: 'N',
-    name: '神經質',
-    nameEn: 'Neuroticism',
+    // ⚠️ IPIP-50 文件按「情緒穩定」方向 keying（放鬆/不憂鬱為正向計分），
+    // 故此維度高分 = 情緒穩定冷靜，標籤改為「情緒穩定性 / Emotional Stability」。
+    name: '情緒穩定性',
+    nameEn: 'Emotional Stability',
     colorHex: '#f87171',
-    description: '情緒波動、焦慮和壓力敏感程度',
-    highLabel: '情感豐富、敏感細膩',
-    lowLabel: '情緒穩定、冷靜淡定',
+    description: '情緒平穩、抗壓和不易焦慮的程度',
+    highLabel: '情緒穩定、冷靜淡定',
+    lowLabel: '情感敏感、易受情緒波動',
   },
 };

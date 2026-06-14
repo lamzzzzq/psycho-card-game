@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
+import { QUESTIONS } from '@/data/questions';
 
 export default function Home() {
   const router = useRouter();
@@ -117,7 +118,7 @@ export default function Home() {
             onClick={() => router.push('/assessment')}
             className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
           >
-            {progress > 0 ? `${t.continueAssess} (${progress}/60)` : hasResults ? t.reassess : t.startAssess}
+            {progress > 0 ? `${t.continueAssess} (${progress}/${QUESTIONS.length})` : hasResults ? t.reassess : t.startAssess}
           </button>
           {hasResults && (
             <button

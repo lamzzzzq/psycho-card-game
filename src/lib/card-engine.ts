@@ -13,7 +13,7 @@ export function deckConfigFor(playerCount: number): { personality: number; dummy
 }
 
 // 生成 `count` 張人格牌，均勻分佈在 5 個維度（count/5 張/維度）。
-// 真實題庫有 12 題/維度（共 60）。當 count > 60（如 4 人的 80），按維度
+// 真實題庫有 10 題/維度（共 50，IPIP-50）。當 count > 50（如 4 人的 80），按維度
 // 循環複用該維度的題面補足，分配新的唯一 id。⚠️ 僅 `dimension` 影響玩法，
 // text 是佔位文案 —— 真實的 80 張牌面內容準備好後替換本函數即可。
 export function generatePersonalityCards(count: number = 60): PersonalityCard[] {
