@@ -2,29 +2,26 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Question, LikertScore } from '@/types';
-import { DIMENSION_META } from '@/data/dimensions';
 import { Locale, STRINGS } from '@/lib/i18n';
 
 interface QuestionCardProps {
   question: Question;
   selectedScore: LikertScore | undefined;
   onSelect: (score: LikertScore) => void;
-  questionNumber: number;
   locale: Locale;
 }
 
 const LIKERT_SCORES: LikertScore[] = [1, 2, 3, 4, 5];
+// 中性強調色（金）：測評過程不按維度上色，避免暗示題目所屬維度。
+const ACCENT = '#c89b5d';
 
 export function QuestionCard({
   question,
   selectedScore,
   onSelect,
-  questionNumber,
   locale,
 }: QuestionCardProps) {
-  const meta = DIMENSION_META[question.dimension];
   const t = STRINGS[locale].assessment;
-  const dimName = locale === 'en' ? meta.nameEn : meta.name;
   const text = locale === 'en' ? question.textEn : question.text;
 
   return (
@@ -37,23 +34,10 @@ export function QuestionCard({
         transition={{ duration: 0.3 }}
         className="psy-panel psy-etched space-y-8 rounded-[1.8rem] p-6 md:p-8"
       >
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span
-              className="psy-serif inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
-              style={{ backgroundColor: meta.colorHex + '12', color: meta.colorHex, borderColor: meta.colorHex + '30' }}
-            >
-              {dimName}
-            </span>
-            <span className="text-xs text-[var(--psy-muted)]">No. {questionNumber}</span>
-          </div>
-          <p className="psy-serif text-xs uppercase tracking-[0.35em] text-[var(--psy-muted)]">
-            {t.arcanaPrompt}
-          </p>
-          <h2 className="psy-serif text-2xl font-semibold leading-relaxed text-[var(--psy-ink)]">
-            {text}
-          </h2>
-        </div>
+        {/* 不顯示維度名 / 題號 / Arcana 標籤，只呈現陳述題面，避免暗示所屬維度 */}
+        <h2 className="psy-serif text-2xl font-semibold leading-relaxed text-[var(--psy-ink)]">
+          {text}
+        </h2>
 
         <div className="grid grid-cols-5 gap-2">
           {LIKERT_SCORES.map((score) => (
@@ -66,13 +50,13 @@ export function QuestionCard({
                   : 'hover:-translate-y-0.5'
               }`}
               style={{
-                borderColor: selectedScore === score ? meta.colorHex : 'rgba(200,155,93,0.16)',
-                color: selectedScore === score ? meta.colorHex : 'var(--psy-ink-soft)',
+                borderColor: selectedScore === score ? ACCENT : 'rgba(200,155,93,0.16)',
+                color: selectedScore === score ? ACCENT : 'var(--psy-ink-soft)',
                 background: selectedScore === score
-                  ? `linear-gradient(180deg, ${meta.colorHex}20, rgba(10,18,28,0.94))`
+                  ? `linear-gradient(180deg, ${ACCENT}20, rgba(10,18,28,0.94))`
                   : 'linear-gradient(180deg, rgba(22,34,49,0.9), rgba(14,22,33,0.92))',
                 boxShadow: selectedScore === score
-                  ? `0 0 0 1px ${meta.colorHex}22, 0 14px 28px rgba(0,0,0,0.28)`
+                  ? `0 0 0 1px ${ACCENT}22, 0 14px 28px rgba(0,0,0,0.28)`
                   : 'inset 0 0 0 1px rgba(255,255,255,0.03)',
               }}
             >

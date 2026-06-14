@@ -8,7 +8,6 @@ import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { DIMENSION_META } from '@/data/dimensions';
 import { useHydrated } from '@/stores/useHydration';
 import { QuestionCard } from '@/components/assessment/QuestionCard';
-import { ProgressBar } from '@/components/assessment/ProgressBar';
 import { LikertScore, BigFiveScores, DIMENSIONS } from '@/types';
 import { saveAssessmentResult } from '@/lib/assessment-record';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
@@ -217,18 +216,10 @@ export default function AssessmentPage() {
         ) : (
         <>
 
-        <ProgressBar
-          current={progress}
-          total={total}
-          currentDimension={question.dimension}
-          locale={locale}
-        />
-
         <QuestionCard
           question={question}
           selectedScore={answers[question.id]}
           onSelect={handleSelect}
-          questionNumber={currentIndex + 1}
           locale={locale}
         />
 
@@ -260,7 +251,7 @@ export default function AssessmentPage() {
             {QUESTIONS.map((q, i) => {
               const isAnswered = answers[q.id] !== undefined;
               const isCurrent = i === safeIndex;
-              const dimMeta = DIMENSION_META[q.dimension];
+              // 不按維度上色：統一中性金，避免從導航格暗示題目維度。
               return (
                 <button
                   key={q.id}
@@ -274,7 +265,10 @@ export default function AssessmentPage() {
                       ? 'opacity-90'
                       : 'opacity-30'
                   }`}
-                  style={{ backgroundColor: dimMeta.colorHex + (isAnswered ? '60' : '25'), color: dimMeta.colorHex }}
+                  style={{
+                    backgroundColor: `rgba(200,155,93,${isAnswered ? '0.6' : '0.22'})`,
+                    color: isAnswered ? '#fff7eb' : 'rgba(200,155,93,0.8)',
+                  }}
                   title={`#${i + 1} ${locale === 'en' ? q.textEn : q.text}`}
                 >
                   {i + 1}
