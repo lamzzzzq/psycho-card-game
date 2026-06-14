@@ -6,6 +6,7 @@ import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { QUESTIONS } from '@/data/questions';
+import { Footer } from '@/components/shared/Footer';
 
 export default function Home() {
   const router = useRouter();
@@ -130,6 +131,7 @@ export default function Home() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

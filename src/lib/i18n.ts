@@ -32,7 +32,14 @@ export const useLocaleStore = create<LocaleState>()(
 // ── 文案词典（按页面/区块分组，便于增量翻译）────────────────────────────────
 export const STRINGS = {
   zh: {
-    common: { tutorial: '玩法教學' },
+    common: {
+      tutorial: '玩法教學',
+      footer: {
+        prefix: '© 2026 香港理工大學 ',
+        link: '應用社會科學系（APSS）',
+        suffix: ' · 本網站僅供教學與研究用途',
+      },
+    },
     home: {
       eyebrow: 'Personalities Mahjong',
       title: '人格麻將',
@@ -88,7 +95,14 @@ export const STRINGS = {
     },
   },
   en: {
-    common: { tutorial: 'How to Play' },
+    common: {
+      tutorial: 'How to Play',
+      footer: {
+        prefix: '© 2026 ',
+        link: 'Department of Applied Social Sciences (APSS), The Hong Kong Polytechnic University',
+        suffix: ' · For educational and research use only',
+      },
+    },
     home: {
       eyebrow: 'Personalities Mahjong',
       title: 'Personalities Mahjong',
