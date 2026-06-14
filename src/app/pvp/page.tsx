@@ -13,15 +13,15 @@ import { supabase } from '@/lib/supabase';
 import { PlayerInfo, DeckId } from '@/types/pvp';
 import { BigFiveScores, DIMENSIONS } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
+import { QUESTIONS } from '@/data/questions';
+import { DEFAULT_AVATAR } from '@/data/avatars';
+import { AvatarPicker } from '@/components/pvp/AvatarPicker';
 
 const DECK_OPTIONS: { id: DeckId; name: string; subtitle: string; locked: boolean }[] = [
   { id: 'big-five', name: 'Big Five', subtitle: '五因素人格 · OCEAN', locked: false },
   { id: 'hexaco', name: 'HEXACO', subtitle: '六因素人格 · 含誠信維度', locked: true },
   { id: 'cpai', name: '中國人格 CPAI', subtitle: '本土化人格量表', locked: true },
 ];
-
-// 头像占位符：12 个 emoji，3×4 网格。后续可替换为真实 avatar 资源。
-const AVATARS = ['🦊', '🐱', '🐯', '🐼', '🐨', '🦁', '🐮', '🐸', '🐧', '🦉', '🐙', '🦄'];
 
 type Tab = 'create' | 'join';
 
@@ -34,7 +34,7 @@ export default function PvpLobbyPage() {
   const [tab, setTab] = useState<Tab>('create');
   const [studentId, setStudentId] = useState(player?.studentId ?? '');
   const [studentIdConfirm, setStudentIdConfirm] = useState('');
-  const [avatar, setAvatar] = useState(player?.avatar ?? AVATARS[0]);
+  const [avatar, setAvatar] = useState(player?.avatar ?? DEFAULT_AVATAR);
   const [joinCode, setJoinCode] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(3);
   const [totalRounds, setTotalRounds] = useState(5);
@@ -249,28 +249,7 @@ export default function PvpLobbyPage() {
             )}
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="psy-eyebrow text-[10px]">選擇頭像</p>
-              <span className="text-xl leading-none">{avatar}</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {AVATARS.map((emoji) => {
-                const active = avatar === emoji;
-                return (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => setAvatar(emoji)}
-                    aria-pressed={active}
-                    className={`psy-tile flex items-center justify-center py-2.5 text-2xl leading-none transition ${active ? 'is-active' : ''}`}
-                  >
-                    {emoji}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <AvatarPicker value={avatar} onChange={setAvatar} />
 
           {bigFiveScores ? (
             <div className="psy-chip">
@@ -284,7 +263,7 @@ export default function PvpLobbyPage() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <button onClick={() => router.push('/assessment')} className="psy-btn psy-btn-accent px-3 py-2 text-xs">
-                  完整測評（60 題）
+                  完整測評（{QUESTIONS.length} 題）
                 </button>
                 <button onClick={() => setShowManualInput(!showManualInput)} className="psy-btn psy-btn-ghost px-3 py-2 text-xs">
                   手動輸入分數

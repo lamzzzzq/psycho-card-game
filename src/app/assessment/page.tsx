@@ -159,7 +159,18 @@ export default function AssessmentPage() {
           </p>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between gap-3">
+          {/* 暴露當前學號，並提供更換入口（更換 = 清空學號回到輸入頁） */}
+          <span className="text-xs text-[var(--psy-muted)]">
+            {t.studentLabel}：
+            <span className="ml-1 font-medium text-[var(--psy-ink-soft)]">{studentId}</span>
+            <button
+              onClick={() => setStudentId('')}
+              className="ml-2 underline decoration-[rgba(200,155,93,0.3)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
+            >
+              {t.changeStudent}
+            </button>
+          </span>
           <button
             onClick={() => setShowManualInput(!showManualInput)}
             className="text-xs text-[var(--psy-muted)] transition underline decoration-[rgba(200,155,93,0.3)] underline-offset-4 hover:text-[var(--psy-ink-soft)]"
