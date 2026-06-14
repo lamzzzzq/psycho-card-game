@@ -52,6 +52,12 @@ export default function AssessmentPage() {
     const trimmed = studentIdInput.trim();
     return (
       <div className="flex flex-1 items-center justify-center px-6 py-8">
+        <button
+          onClick={() => router.push('/')}
+          className="psy-btn psy-btn-ghost psy-serif fixed left-4 top-4 z-40 px-3 py-1.5 text-xs sm:left-8 sm:top-8"
+        >
+          ← {t.backHome}
+        </button>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -130,6 +136,12 @@ export default function AssessmentPage() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
+      <button
+        onClick={() => router.push('/')}
+        className="psy-btn psy-btn-ghost psy-serif fixed left-4 top-4 z-40 px-3 py-1.5 text-xs sm:left-8 sm:top-8"
+      >
+        ← {t.backHome}
+      </button>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
