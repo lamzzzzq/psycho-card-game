@@ -164,9 +164,15 @@ export async function dissolveRoom(roomId: string) {
   await supabase.from('rooms').delete().eq('id', roomId);
 }
 
-// Update room status
+// Update room status. 观测错误并重试一次：开局时若 'playing' 没写进去，房间会停留
+// 在 'waiting'，joinRoom 的 status 过滤就挡不住迟到玩家 → 进入已开始的局。
 export async function updateRoomStatus(roomId: string, status: string) {
-  await supabase.from('rooms').update({ status }).eq('id', roomId);
+  const { error } = await supabase.from('rooms').update({ status }).eq('id', roomId);
+  if (error) {
+    console.warn('[room-api] updateRoomStatus failed, retrying once:', error.message);
+    const { error: retryErr } = await supabase.from('rooms').update({ status }).eq('id', roomId);
+    if (retryErr) console.warn('[room-api] updateRoomStatus retry failed:', retryErr.message);
+  }
 }
 
 // Get room players with player info

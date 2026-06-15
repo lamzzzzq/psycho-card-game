@@ -93,6 +93,9 @@ export function applyPvpAction(
     if (action.type === 'pong' && !inClaimWindow) return state;
     if (action.type === 'skip-pong' && !inClaimWindow) return state;
     if (action.type === 'self-pong' && !isCurrentPlayer) return state;
+    // 弃牌者不能「胡」自己刚打出的牌（claim-window 期间）——否则会被错误计入
+    // claimResponses，扰乱窗口结算。自摸胡走的是 draw 路径，不经此处。
+    if (action.type === 'hu' && inClaimWindow && playerIndex === state.discardedByIndex) return state;
   }
 
   // Lock out players who already responded in this claim window

@@ -17,6 +17,15 @@ import { initializePvpGame, applyPvpAction } from '@/lib/pvp-game-logic';
 const OFFLINE_GRACE_MS = 3 * 60 * 1000;
 const offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
+// Host-side claim-window auto-resolve. 抢牌窗口（碰/胡/过）要求所有有资格的
+// 玩家都响应才推进；若有人在线却发呆不点，窗口会永久卡死全桌。超时后 host 替
+// 未响应者补 skip-pong，让回合继续。一旦离开 claim-window 立即清除。
+const CLAIM_WINDOW_MS = 20 * 1000;
+let claimTimer: ReturnType<typeof setTimeout> | null = null;
+function clearClaimTimer() {
+  if (claimTimer) { clearTimeout(claimTimer); claimTimer = null; }
+}
+
 // Client-side host-grace timer (non-host clients only). If the host
 // vanishes, every non-host independently starts a 3-min countdown.
 // Host comes back inside the window → cancel. Otherwise the room is
@@ -173,6 +182,7 @@ export const usePvpStore = create<PvpStore>()(
             // to disconnect right at the end.
             for (const t of offlineTimers.values()) clearTimeout(t);
             offlineTimers.clear();
+            clearClaimTimer();
             set({ offlinePlayerIds: [] });
             break;
 
@@ -383,6 +393,7 @@ export const usePvpStore = create<PvpStore>()(
     // host-grace).
     for (const t of offlineTimers.values()) clearTimeout(t);
     offlineTimers.clear();
+    clearClaimTimer();
     if (hostGraceTimer) {
       clearTimeout(hostGraceTimer);
       hostGraceTimer = null;
@@ -473,6 +484,31 @@ export const usePvpStore = create<PvpStore>()(
     // Update host view
     const hostSerialized = serializeGameState(newState, get().myPlayerId);
     set({ gameState: hostSerialized });
+
+    // 抢牌窗口防卡死：刚进入 claim-window 时起一个超时；超时则替所有「有资格但
+    // 未响应」的玩家补 skip-pong（最后一个会触发 finalize 让回合推进）。窗口一解
+    // （phase 不再是 claim-window）立即清除计时器。
+    if (newState.phase === 'claim-window') {
+      if (rawState.phase !== 'claim-window') {
+        clearClaimTimer();
+        claimTimer = setTimeout(() => {
+          claimTimer = null;
+          const s = get().rawGameState;
+          if (!get().isHost || !s || s.phase !== 'claim-window') return;
+          const ordered = [...get().players].sort((a, b) => a.seat_index - b.seat_index);
+          const responded = new Set(s.claimResponses as unknown as string[]);
+          const pending = ordered.filter(
+            (op, idx) => idx !== s.discardedByIndex && !responded.has(op.player_id)
+          );
+          // 逐个补 skip-pong；engine 在全员响应后自动 finalize 推进回合。
+          for (const op of pending) {
+            get().handlePlayerAction(op.player_id, { type: 'skip-pong' });
+          }
+        }, CLAIM_WINDOW_MS);
+      }
+    } else {
+      clearClaimTimer();
+    }
 
     if (newState.winner && !wasAlreadyWinner) {
       const winnerId = newState.winner;
