@@ -266,14 +266,14 @@ export default function RoomWaitPage() {
                   }}
                 >
                   <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-lg leading-none"
                     style={{
                       borderColor: 'rgba(200,155,93,0.22)',
                       background: 'rgba(200,155,93,0.08)',
                       color: 'var(--psy-ink-soft)',
                     }}
                   >
-                    {p ? '🧑' : i + 1}
+                    {p ? (p.avatar ?? '🧑') : i + 1}
                   </div>
                   {p ? (
                     <>
