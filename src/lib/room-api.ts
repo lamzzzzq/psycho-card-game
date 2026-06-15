@@ -32,7 +32,7 @@ export async function upsertPlayer(player: PlayerInfo) {
 }
 
 // Create a new room
-export async function createRoom(hostId: string, settings: RoomSettings): Promise<Room> {
+export async function createRoom(hostId: string, settings: RoomSettings, avatar?: string): Promise<Room> {
   // Try up to 5 times to get a unique code
   for (let i = 0; i < 5; i++) {
     const code = generateRoomCode();
@@ -53,7 +53,7 @@ export async function createRoom(hostId: string, settings: RoomSettings): Promis
     // Add host as first player (seat 0)
     await supabase
       .from('room_players')
-      .insert({ room_id: data.id, player_id: hostId, seat_index: 0 });
+      .insert({ room_id: data.id, player_id: hostId, seat_index: 0, avatar: avatar ?? null });
 
     return data as Room;
   }
@@ -61,7 +61,7 @@ export async function createRoom(hostId: string, settings: RoomSettings): Promis
 }
 
 // Join a room
-export async function joinRoom(roomCode: string, playerId: string): Promise<{ room: Room; seatIndex: number }> {
+export async function joinRoom(roomCode: string, playerId: string, avatar?: string): Promise<{ room: Room; seatIndex: number }> {
   // Find room
   const { data: room, error: roomError } = await supabase
     .from('rooms')
@@ -94,7 +94,7 @@ export async function joinRoom(roomCode: string, playerId: string): Promise<{ ro
   const { error: joinError } = await supabase
     .from('room_players')
     .upsert(
-      { room_id: room.id, player_id: playerId, seat_index: seatIndex },
+      { room_id: room.id, player_id: playerId, seat_index: seatIndex, avatar: avatar ?? null },
       { onConflict: 'room_id,player_id', ignoreDuplicates: true }
     );
 
@@ -177,6 +177,7 @@ export async function getRoomPlayers(roomId: string): Promise<RoomPlayer[]> {
       room_id,
       player_id,
       seat_index,
+      avatar,
       players (student_id, big_five)
     `)
     .eq('room_id', roomId)
@@ -188,6 +189,7 @@ export async function getRoomPlayers(roomId: string): Promise<RoomPlayer[]> {
     room_id: rp.room_id,
     player_id: rp.player_id,
     seat_index: rp.seat_index,
+    avatar: rp.avatar ?? undefined,
     student_id: rp.players?.student_id,
     big_five: rp.players?.big_five,
   }));

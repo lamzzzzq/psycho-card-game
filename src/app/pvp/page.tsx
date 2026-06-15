@@ -149,7 +149,7 @@ export default function PvpLobbyPage() {
       const info = await ensurePlayer();
       await leaveAllRooms(info.id);
       usePvpStore.getState().reset();
-      const room = await createRoom(info.id, { maxPlayers, totalRounds, deck });
+      const room = await createRoom(info.id, { maxPlayers, totalRounds, deck }, info.avatar);
       router.push(`/pvp/room/${room.code}`);
     } catch (e: any) {
       setError(e.message ?? '創建失敗');
@@ -171,7 +171,7 @@ export default function PvpLobbyPage() {
       const info = await ensurePlayer();
       await leaveAllRooms(info.id);
       usePvpStore.getState().reset();
-      await joinRoom(joinCode, info.id);
+      await joinRoom(joinCode, info.id, info.avatar);
       router.push(`/pvp/room/${joinCode}`);
     } catch (e: any) {
       setError(e.message ?? '加入失敗');
