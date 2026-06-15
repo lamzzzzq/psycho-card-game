@@ -523,7 +523,10 @@ export const usePvpStore = create<PvpStore>()(
         const seatMeta = orderedPlayers.map((rp, i) => ({
           seatIndex: i,
           playerId: rp.player_id,
-          studentId: rp.student_id ?? null,
+          // player_id 在 PVP 流程里恒等于学号（info={id:sid,studentId:sid}）。
+          // 若某人的 player-joined 广播没收到，student_id 会是空 → 用 player_id 兜底，
+          // 避免 game_participants.student_id 存成 null 丢失归属。
+          studentId: rp.student_id ?? rp.player_id ?? null,
           isAi: false,
         }));
         // fire-and-forget but with internal 5s timeout + localStorage retry

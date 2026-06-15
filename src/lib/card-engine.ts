@@ -16,7 +16,7 @@ export function deckConfigFor(playerCount: number): { personality: number; dummy
 // 真實題庫有 10 題/維度（共 50，IPIP-50）。當 count > 50（如 4 人的 80），按維度
 // 循環複用該維度的題面補足，分配新的唯一 id。⚠️ 僅 `dimension` 影響玩法，
 // text 是佔位文案 —— 真實的 80 張牌面內容準備好後替換本函數即可。
-export function generatePersonalityCards(count: number = 60): PersonalityCard[] {
+export function generatePersonalityCards(count: number = 50): PersonalityCard[] {
   const base: PersonalityCard[] = QUESTIONS.map((q) => ({
     id: q.id,
     dimension: q.dimension,
@@ -30,7 +30,7 @@ export function generatePersonalityCards(count: number = 60): PersonalityCard[] 
   for (const c of base) byDim[c.dimension].push(c);
 
   const out: PersonalityCard[] = [];
-  let placeholderId = 5000; // 5000+ 佔位牌；真實題面 1-60，dummy 1000+
+  let placeholderId = 5000; // 5000+ 佔位牌；真實題面 1-50，dummy 1000+
   for (const d of DIMENSIONS) {
     const pool = byDim[d];
     for (let i = 0; i < perDim; i++) {

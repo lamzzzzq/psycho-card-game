@@ -28,6 +28,9 @@ export interface SaveGameSessionInput {
   startedAt: number;         // unix ms (use first action's timestamp or initGame time)
   finalState: GameState;
   seatMeta: SeatMeta[];      // one per seat, in seat order
+  // 客户端生成的稳定 session id：用于去重。慢速存档触发 5s 超时返回 null → 缓存重传，
+  // 但底层可能已写成功 → 重传时同 id 会 23505，saveInner 据此跳过，避免重复行。
+  sessionId?: string;
 }
 
 /** Insert one BigFive snapshot. Returns inserted row id. */
@@ -115,6 +118,13 @@ export async function retryPendingSaves(): Promise<void> {
  * Host crash window narrowed from minutes (fire-and-forget) to ~5s + retry.
  */
 export async function saveGameSession(input: SaveGameSessionInput): Promise<string | null> {
+  // 确保有稳定 session id（去重用）。在 saveOnce 之前赋值，缓存重传时复用同一 id。
+  if (!input.sessionId) {
+    input.sessionId =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${input.startedAt}-${input.roomCode ?? 'x'}`;
+  }
   const id = await saveOnce(input, SAVE_TIMEOUT_MS);
   if (!id) {
     console.warn('[game-record] save timed out or failed — buffered to localStorage for retry');
@@ -142,7 +152,33 @@ async function saveInner(input: SaveGameSessionInput): Promise<string | null> {
       ...getRankings(leftPlayers),
     ];
 
-    // 1) Snapshot BigFive for every non-AI seat (one snapshot per participant).
+    const sessionId = input.sessionId!;
+
+    // 1) 先建 session（去重闸门）：用客户端生成的稳定 id。若 23505（慢速成功后的
+    //    重传），说明本局已写过 → 直接返回，跳过快照/参与者，避免整套重复行。
+    const { error: sErr } = await supabase
+      .from('game_sessions')
+      .insert({
+        id: sessionId,
+        mode: input.mode,
+        room_id: input.roomId ?? null,
+        room_code: input.roomCode ?? null,
+        started_at: new Date(input.startedAt).toISOString(),
+        ended_at: new Date().toISOString(),
+        total_rounds: input.finalState.settings.totalRounds,
+        rounds_played: input.finalState.currentRound,
+        winner_player_id:
+          input.mode === 'pvp' && winnerId
+            ? (winnerId as unknown as string)
+            : null,  // single-player winner is 'human'|'ai-N', not a UUID
+      });
+    if (sErr) {
+      if (sErr.code === '23505') return sessionId; // 已存在 → 视为成功，不重复写
+      console.warn('[game-record] insert session failed', sErr);
+      return null;
+    }
+
+    // 2) Snapshot BigFive for every non-AI seat (one snapshot per participant).
     //    This nails down 學號 ↔ 這一局使用的人格分數 forever.
     const snapshotByPlayerId = new Map<string, string>();
     for (const meta of input.seatMeta) {
@@ -156,29 +192,6 @@ async function saveInner(input: SaveGameSessionInput): Promise<string | null> {
         source: 'game-start',
       });
       if (snapshotId) snapshotByPlayerId.set(meta.playerId, snapshotId);
-    }
-
-    // 2) Create the session row.
-    const { data: session, error: sErr } = await supabase
-      .from('game_sessions')
-      .insert({
-        mode: input.mode,
-        room_id: input.roomId ?? null,
-        room_code: input.roomCode ?? null,
-        started_at: new Date(input.startedAt).toISOString(),
-        ended_at: new Date().toISOString(),
-        total_rounds: input.finalState.settings.totalRounds,
-        rounds_played: input.finalState.currentRound,
-        winner_player_id:
-          input.mode === 'pvp' && winnerId
-            ? (winnerId as unknown as string)
-            : null,  // single-player winner is 'human'|'ai-N', not a UUID
-      })
-      .select('id')
-      .single();
-    if (sErr || !session) {
-      console.warn('[game-record] insert session failed', sErr);
-      return null;
     }
 
     // 3) Count actions per player from the actionLog.
@@ -198,7 +211,7 @@ async function saveInner(input: SaveGameSessionInput): Promise<string | null> {
       const rank = ranked.findIndex((r) => r.id === p.id) + 1;
       const c = counts[p.id as unknown as string] ?? { huS: 0, huF: 0, pS: 0, pF: 0 };
       return {
-        session_id: session.id,
+        session_id: sessionId,
         player_id: meta?.playerId ?? null,
         student_id: meta?.studentId ?? null,
         seat_index: idx,
@@ -224,7 +237,7 @@ async function saveInner(input: SaveGameSessionInput): Promise<string | null> {
       // session row already in — return it anyway so caller knows partial success.
     }
 
-    return session.id;
+    return sessionId;
   } catch (err) {
     console.warn('[game-record] saveGameSession exception', err);
     return null;

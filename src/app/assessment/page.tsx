@@ -187,7 +187,7 @@ export default function AssessmentPage() {
             {t.studentLabel}：
             <span className="ml-1 font-medium text-[var(--psy-ink-soft)]">{studentId}</span>
             <button
-              onClick={() => setStudentId('')}
+              onClick={() => { setStudentId(''); setStudentIdInput(''); setDupWarn(false); }}
               className="ml-2 underline decoration-[rgba(200,155,93,0.3)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
             >
               {t.changeStudent}

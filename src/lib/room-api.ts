@@ -72,50 +72,56 @@ export async function joinRoom(roomCode: string, playerId: string, avatar?: stri
 
   if (roomError || !room) throw new Error('房間不存在或已開始遊戲');
 
-  // Check current player count
-  const { data: players, error: countError } = await supabase
-    .from('room_players')
-    .select('seat_index')
-    .eq('room_id', room.id);
-
-  if (countError) throw countError;
-
-  const currentCount = players?.length ?? 0;
   const maxPlayers = (room.settings as RoomSettings)?.maxPlayers ?? 4;
 
-  if (currentCount >= maxPlayers) throw new Error('房間已滿');
+  // 并发抢座位竞态：先读占用、再插入是 TOCTOU。配合 UNIQUE(room_id, seat_index)
+  // (migration 0008)，座位被别人抢走会 23505 → 重算下一个空位重试。
+  for (let attempt = 0; attempt <= maxPlayers; attempt++) {
+    const { data: players, error: countError } = await supabase
+      .from('room_players')
+      .select('seat_index')
+      .eq('room_id', room.id);
+    if (countError) throw countError;
 
-  // Find next available seat
-  const takenSeats = new Set(players?.map((p) => p.seat_index) ?? []);
-  let seatIndex = 0;
-  while (takenSeats.has(seatIndex)) seatIndex++;
+    const currentCount = players?.length ?? 0;
+    if (currentCount >= maxPlayers) throw new Error('房間已滿');
 
-  // Add player to room (upsert: if already seated, keep existing seat)
-  const { error: joinError } = await supabase
-    .from('room_players')
-    .upsert(
-      { room_id: room.id, player_id: playerId, seat_index: seatIndex, avatar: avatar ?? null },
-      { onConflict: 'room_id,player_id', ignoreDuplicates: true }
-    );
+    // Find next available seat
+    const takenSeats = new Set(players?.map((p) => p.seat_index) ?? []);
+    let seatIndex = 0;
+    while (takenSeats.has(seatIndex)) seatIndex++;
 
-  if (joinError) throw joinError;
+    // Add player to room (upsert: if already seated, keep existing seat)
+    const { error: joinError } = await supabase
+      .from('room_players')
+      .upsert(
+        { room_id: room.id, player_id: playerId, seat_index: seatIndex, avatar: avatar ?? null },
+        { onConflict: 'room_id,player_id', ignoreDuplicates: true }
+      );
 
-  return { room: room as Room, seatIndex };
+    if (!joinError) return { room: room as Room, seatIndex };
+    if (joinError.code === '23505') continue; // 座位被并发抢走 → 重算重试
+    throw joinError;
+  }
+
+  throw new Error('房間已滿');
 }
 
 // Leave a room
 export async function leaveRoom(roomId: string, playerId: string) {
-  await supabase
+  const { error } = await supabase
     .from('room_players')
     .delete()
     .eq('room_id', roomId)
     .eq('player_id', playerId);
+  if (error) console.warn('[room-api] leaveRoom failed:', error.message);
 }
 
 // Leave every room this player is seated in. Used before create/join so
 // a player is always in exactly one room at a time.
 export async function leaveAllRooms(playerId: string) {
-  await supabase.from('room_players').delete().eq('player_id', playerId);
+  const { error } = await supabase.from('room_players').delete().eq('player_id', playerId);
+  if (error) console.warn('[room-api] leaveAllRooms failed:', error.message);
 }
 
 // 房間過期閾值：超過這個時間還停在 waiting/playing 的房間視爲廢棄
@@ -151,17 +157,21 @@ export async function getPlayerActiveRoom(
 
 // Kick a player (host only)
 export async function kickPlayer(roomId: string, playerId: string) {
-  await supabase
+  const { error } = await supabase
     .from('room_players')
     .delete()
     .eq('room_id', roomId)
     .eq('player_id', playerId);
+  if (error) console.warn('[room-api] kickPlayer failed:', error.message);
 }
 
-// Dissolve room (host only)
+// Dissolve room (host only). 非原子：两步 delete 各自观测错误，避免半解散的 orphan
+// 静默残留（room_players 删了但 rooms 没删，或反之）。
 export async function dissolveRoom(roomId: string) {
-  await supabase.from('room_players').delete().eq('room_id', roomId);
-  await supabase.from('rooms').delete().eq('id', roomId);
+  const { error: rpErr } = await supabase.from('room_players').delete().eq('room_id', roomId);
+  if (rpErr) console.warn('[room-api] dissolveRoom: room_players delete failed:', rpErr.message);
+  const { error: rErr } = await supabase.from('rooms').delete().eq('id', roomId);
+  if (rErr) console.warn('[room-api] dissolveRoom: rooms delete failed:', rErr.message);
 }
 
 // Update room status. 观测错误并重试一次：开局时若 'playing' 没写进去，房间会停留
