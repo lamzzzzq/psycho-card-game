@@ -5,9 +5,9 @@ import { Dimension } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 
 interface TarotCardProps {
-  /** 繁中主句（玩法信息，代码渲染） */
+  /** 繁中句（代码渲染） */
   text: string;
-  /** 英文副句（双语；不传则只显示中文） */
+  /** 英文句 */
   textEn?: string;
   dimension?: Dimension;
   /** 单卡插图地址（方案C：每卡一图）。缺失时显示渐变占位，放进图即替换。 */
@@ -16,8 +16,8 @@ interface TarotCardProps {
   /** 揭示维度角标（作弊/查看模式） */
   revealedDimension?: Dimension | null;
   isDummy?: boolean;
-  /** 显示英文副句 */
-  bilingual?: boolean;
+  /** 语言：跟随用户选择（zh→中文卡，en→英文卡）。单语，不同时显示。 */
+  locale?: 'zh' | 'en';
   /** 卡牌宽度(px)，高度按 2:3。默认 200。 */
   width?: number;
 }
@@ -36,12 +36,14 @@ export function TarotCard({
   selected = false,
   revealedDimension = null,
   isDummy = false,
-  bilingual = true,
+  locale = 'zh',
   width = 200,
 }: TarotCardProps) {
   const [imgError, setImgError] = useState(false);
   const showImg = !!imageSrc && !imgError;
   const height = width * 1.5;
+  // 单语：按 locale 选中文或英文句（英文缺失则回退中文）。
+  const label = locale === 'en' ? (textEn ?? text) : text;
 
   return (
     <div
@@ -108,21 +110,13 @@ export function TarotCard({
         </div>
 
         {/* ── 文字面板：占剩余 ~40% ── */}
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center" style={{ padding: `0 ${width * 0.04}px` }}>
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center" style={{ padding: `0 ${width * 0.045}px` }}>
           <p
             className="psy-serif font-semibold leading-snug"
-            style={{ color: isDummy ? 'var(--psy-muted)' : 'var(--psy-ink)', fontSize: width * 0.075 }}
+            style={{ color: isDummy ? 'var(--psy-muted)' : 'var(--psy-ink)', fontSize: width * (locale === 'en' ? 0.072 : 0.088) }}
           >
-            {text}
+            {label}
           </p>
-          {bilingual && textEn && (
-            <p
-              className="leading-tight"
-              style={{ color: 'var(--psy-muted)', fontSize: width * 0.052, marginTop: width * 0.02 }}
-            >
-              {textEn}
-            </p>
-          )}
         </div>
       </div>
 
