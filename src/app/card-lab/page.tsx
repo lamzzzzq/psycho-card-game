@@ -47,6 +47,18 @@ export default function CardLabPage() {
           <MockGameScene locale={locale} />
         </section>
 
+        {/* 长文本压力测试：最难塞的几张（英文最长） */}
+        <section className="space-y-3">
+          <h2 className="psy-serif text-lg text-[var(--psy-ink)]">长文本压力测试（最难的几张）</h2>
+          <p className="text-xs text-[var(--psy-muted)]">切到 English 看 #28（54字）/#22/#10/#31 会不会溢出。超出面板自动省略。</p>
+          <div className="flex flex-wrap gap-5">
+            {[28, 22, 10, 31, 20].map((id) => {
+              const q = QUESTIONS.find((x) => x.id === id)!;
+              return <TarotCard key={id} text={q.text} textEn={q.textEn} dimension={q.dimension as Dimension} locale={locale} width={width} />;
+            })}
+          </div>
+        </section>
+
         {/* 五维度样本 */}
         <section className="space-y-3">
           <h2 className="psy-serif text-lg text-[var(--psy-ink)]">五维度样本（占位图）</h2>

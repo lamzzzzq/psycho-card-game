@@ -128,7 +128,15 @@ export function TarotCard({
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center" style={{ padding: '0 4.5cqw' }}>
           <p
             className="psy-serif font-semibold leading-snug"
-            style={{ color: isDummy ? 'var(--psy-muted)' : 'var(--psy-ink)', fontSize: locale === 'en' ? '7.2cqw' : '8.8cqw' }}
+            style={{
+              color: isDummy ? 'var(--psy-muted)' : 'var(--psy-ink)',
+              fontSize: locale === 'en' ? '7.2cqw' : '8.8cqw',
+              // 长英文(如 #28 共54字)兜底：超出面板就裁切省略，不溢出卡片
+              display: '-webkit-box',
+              WebkitLineClamp: 5,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+            }}
           >
             {label}
           </p>
