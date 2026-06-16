@@ -38,6 +38,7 @@ export interface PersonalityCard {
   id: number;
   dimension: Dimension;
   text: string;
+  textEn?: string;
   facet?: string;
   isDummy?: false;
 }

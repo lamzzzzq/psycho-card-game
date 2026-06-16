@@ -284,15 +284,13 @@ export default function PvpLobbyPage() {
                         <div key={d} className="flex items-center gap-3">
                           <span className="psy-serif w-20 shrink-0 truncate text-xs" style={{ color: meta.colorHex }}>{locale === 'en' ? meta.nameEn : meta.name}</span>
                           <input
-                            type="number"
-                            min="1"
-                            max="5"
-                            step="0.1"
+                            type="text"
                             inputMode="decimal"
                             lang="en"
                             value={rawInputs[d]}
                             onChange={(e) => {
-                              const raw = e.target.value;
+                              // 只留数字 + 一个小数点（type=number 会吞掉「3.」中间态导致无法输入小数）
+                              const raw = e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
                               setRawInputs((prev) => ({ ...prev, [d]: raw }));
                               const val = parseFloat(raw);
                               if (!isNaN(val)) setManualScoresInput((prev) => ({ ...prev, [d]: val }));

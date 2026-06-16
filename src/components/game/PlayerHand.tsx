@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameCard, Dimension, isPersonalityCard } from '@/types';
-import { Card } from './Card';
+import { TarotCard } from './TarotCard';
 import { STRINGS, type Locale } from '@/lib/i18n';
 
 interface PlayerHandProps {
@@ -99,11 +99,6 @@ export function PlayerHand({
     return null;
   }
 
-  function isRevealedAsKnowledge(card: GameCard): boolean {
-    if (isPersonalityCard(card)) return false;
-    return cheatMode || viewedCardIds.includes(card.id);
-  }
-
   return (
     <div className="space-y-2">
       {isDiscarding && !viewMode && (
@@ -177,13 +172,17 @@ export function PlayerHand({
                 onMouseEnter={(e) => { if (isDiscarding) onCardHover(e.currentTarget as HTMLElement); }}
                 onMouseLeave={() => { if (isDiscarding) onCardHover(null); }}
               >
-                <Card
-                  card={card}
+                <TarotCard
+                  text={card.text}
+                  textEn={isPersonalityCard(card) ? card.textEn : undefined}
+                  dimension={isPersonalityCard(card) ? card.dimension : undefined}
+                  imageSrc={isPersonalityCard(card) ? `/cards/${card.id}.webp` : undefined}
+                  isDummy={!isPersonalityCard(card)}
                   selected={isSelected}
-                  compact={useCompactCards}
                   revealedDimension={revealed}
-                  revealedAsKnowledge={isRevealedAsKnowledge(card)}
+                  locale={locale}
                   onClick={() => handleCardClick(card.id)}
+                  fluid
                 />
                 {/* "NEW" badge on the just-drawn card. */}
                 {isNewCard && (

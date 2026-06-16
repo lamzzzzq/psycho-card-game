@@ -21,6 +21,7 @@ export function generatePersonalityCards(count: number = 50): PersonalityCard[] 
     id: q.id,
     dimension: q.dimension,
     text: q.text,
+    textEn: q.textEn,
     facet: q.facet,
   }));
   if (count <= base.length) return base.slice(0, count);
@@ -38,7 +39,7 @@ export function generatePersonalityCards(count: number = 50): PersonalityCard[] 
         out.push(pool[i]);
       } else {
         const src = pool[i % pool.length];
-        out.push({ id: placeholderId++, dimension: d, text: src.text, facet: src.facet });
+        out.push({ id: placeholderId++, dimension: d, text: src.text, textEn: src.textEn, facet: src.facet });
       }
     }
   }

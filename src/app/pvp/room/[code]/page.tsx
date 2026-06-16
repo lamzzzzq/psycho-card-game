@@ -286,7 +286,7 @@ export default function RoomWaitPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="psy-serif truncate text-sm text-[var(--psy-ink)]">
-                            {p.student_id ?? t.unknownPlayer}
+                            {p.student_id ?? p.player_id ?? t.unknownPlayer}
                           </span>
                           {isRoomHost && (
                             <span className="rounded-full border border-[rgba(200,155,93,0.32)] bg-[var(--psy-accent-soft)] px-2 py-0.5 text-[10px] text-[var(--psy-accent)]">
