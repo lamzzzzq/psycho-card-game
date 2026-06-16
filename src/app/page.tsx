@@ -16,6 +16,7 @@ export default function Home() {
   const hasResults = hydrated && bigFiveScores !== null;
   // SSR/首屏用 zh 与服务端一致，hydrate 后切到持久化/?lang 的语言，避免 mismatch。
   const locale = useLocaleStore((s) => s.locale);
+  const setLocale = useLocaleStore((s) => s.setLocale);
   const loc = hydrated ? locale : 'zh';
   const t = STRINGS[loc].home;
   const c = STRINGS[loc].common;
@@ -24,6 +25,18 @@ export default function Home() {
   return (
     // 移动端：内容从顶部流动 + 底部留白给 sticky CTA 栏；桌面：垂直居中。
     <div className="flex flex-1 flex-col items-center px-5 pt-10 pb-40 sm:px-6 lg:justify-center lg:pb-10">
+      {/* 语言切换：覆盖持久化缓存，随时切回中文/英文（不必手动改 ?lang=） */}
+      <div className="psy-serif fixed left-4 top-4 z-40 flex items-center gap-0.5 rounded-full border border-[rgba(200,155,93,0.28)] bg-[rgba(20,31,46,0.85)] p-0.5 text-xs sm:left-8 sm:top-8">
+        {(['zh', 'en'] as const).map((l) => (
+          <button
+            key={l}
+            onClick={() => setLocale(l)}
+            className={`rounded-full px-2.5 py-1 transition ${loc === l ? 'bg-[var(--psy-accent-soft)] text-[var(--psy-accent)]' : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'}`}
+          >
+            {l === 'zh' ? '中' : 'EN'}
+          </button>
+        ))}
+      </div>
       <button
         onClick={() => router.push('/tutorial')}
         className="psy-btn psy-btn-accent psy-serif fixed right-4 top-4 z-40 px-4 py-2 text-sm font-semibold shadow-[0_16px_38px_rgba(0,0,0,0.32)] sm:right-8 sm:top-8"

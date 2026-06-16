@@ -39,12 +39,12 @@ export function QuestionCard({
           {text}
         </h2>
 
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
           {LIKERT_SCORES.map((score) => (
             <button
               key={score}
               onClick={() => onSelect(score)}
-              className={`flex flex-col items-center gap-2 rounded-[1.15rem] border p-4 transition-all ${
+              className={`flex flex-col items-center gap-1 rounded-[1.15rem] border p-2 transition-all sm:gap-2 sm:p-4 ${
                 selectedScore === score
                   ? 'border-current scale-105'
                   : 'hover:-translate-y-0.5'
@@ -60,8 +60,8 @@ export function QuestionCard({
                   : 'inset 0 0 0 1px rgba(255,255,255,0.03)',
               }}
             >
-              <span className="psy-serif text-2xl font-bold">{score}</span>
-              <span className="text-xs text-center leading-tight">{t.likert[score - 1]}</span>
+              <span className="psy-serif text-xl font-bold sm:text-2xl">{score}</span>
+              <span className="text-[10px] text-center leading-tight sm:text-xs">{t.likert[score - 1]}</span>
             </button>
           ))}
         </div>

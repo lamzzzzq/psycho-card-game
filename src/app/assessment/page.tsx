@@ -211,7 +211,7 @@ export default function AssessmentPage() {
                 const metaName = locale === 'en' ? meta.nameEn : meta.name;
                 return (
                   <div key={d} className="flex items-center gap-3">
-                    <span className="psy-serif w-28 text-sm" style={{ color: meta.colorHex }}>{metaName}</span>
+                    <span className="psy-serif w-28 shrink-0 truncate text-sm" style={{ color: meta.colorHex }}>{metaName}</span>
                     <input
                       type="number"
                       min="1"
@@ -292,7 +292,7 @@ export default function AssessmentPage() {
             <span>{t.navTitle}</span>
             <span>{progress}/{total} {t.answeredSuffix}</span>
           </div>
-          <div className="grid grid-cols-12 gap-1">
+          <div className="grid grid-cols-10 gap-1 sm:grid-cols-12">
             {QUESTIONS.map((q, i) => {
               const isAnswered = answers[q.id] !== undefined;
               const isCurrent = i === safeIndex;
@@ -301,7 +301,7 @@ export default function AssessmentPage() {
                 <button
                   key={q.id}
                   onClick={() => setCurrentIndex(i)}
-                  className={`h-6 rounded text-[9px] font-medium transition-all ${
+                  className={`h-8 rounded text-[10px] font-medium transition-all sm:h-6 sm:text-[9px] ${
                     isCurrent
                       ? 'ring-2 ring-[var(--psy-ink)] scale-110'
                       : ''
