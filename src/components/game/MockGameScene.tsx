@@ -5,7 +5,7 @@
 import { TarotCard } from '@/components/game/TarotCard';
 import { QUESTIONS } from '@/data/questions';
 
-const HAND = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((id) => QUESTIONS.find((q) => q.id === id)!);
+const HAND = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 27, 41].map((id) => QUESTIONS.find((q) => q.id === id)!);
 const DISCARDS = [12, 24, 35].map((id) => QUESTIONS.find((q) => q.id === id)!);
 const DRAWN = QUESTIONS.find((q) => q.id === 15)!;
 
@@ -61,15 +61,12 @@ export function MockGameScene({ locale }: { locale: 'zh' | 'en' }) {
         </div>
       </div>
 
-      {/* 你的手牌：横向滚动 */}
+      {/* 你的手牌：4 列网格，卡片填满单元、间距收紧 */}
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <p className="psy-eyebrow text-[10px]">你的手牌 · {HAND.length} 張</p>
-          <span className="text-[10px] text-[var(--psy-muted)]">← 左右滑動 →</span>
-        </div>
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <p className="psy-eyebrow text-[10px]">你的手牌 · {HAND.length} 張</p>
+        <div className="grid grid-cols-4 gap-1.5">
           {HAND.map((q) => (
-            <TarotCard key={q.id} text={q.text} textEn={q.textEn} locale={locale} width={92} />
+            <TarotCard key={q.id} text={q.text} textEn={q.textEn} locale={locale} fluid />
           ))}
         </div>
       </div>
