@@ -145,10 +145,8 @@ export function PlayerHand({
         </motion.p>
       )}
 
-      <div className={useCompactCards
-        ? 'grid grid-cols-4 justify-items-center gap-x-1.5 gap-y-2 px-1 pb-2 pt-1'
-        : 'grid grid-cols-4 justify-items-center gap-x-2 gap-y-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8'
-      }>
+      {/* 固定 4 列 + 居中限宽（同 lab 观感）；卡片填满单元，不再封顶成小卡 */}
+      <div className="mx-auto grid w-full max-w-[28rem] grid-cols-4 gap-x-2 gap-y-3">
         <AnimatePresence>
           {rawCards.map((card) => {
             const isSelected =
@@ -168,7 +166,7 @@ export function PlayerHand({
                 animate={{ opacity: 1, y: isSelected ? -12 : 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.4 } }}
                 transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className={`relative group ${useCompactCards ? 'w-full max-w-[5rem] justify-self-center' : 'w-full max-w-[6rem] justify-self-center'}`}
+                className="group relative w-full"
                 onMouseEnter={(e) => { if (isDiscarding) onCardHover(e.currentTarget as HTMLElement); }}
                 onMouseLeave={() => { if (isDiscarding) onCardHover(null); }}
               >
