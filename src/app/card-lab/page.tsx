@@ -3,6 +3,7 @@
 // 卡面设计沙盒 —— 仅用于预览新塔罗风卡框，不影响正式游戏组件。定稿后再替换 Card.tsx。
 import { useState } from 'react';
 import { TarotCard } from '@/components/game/TarotCard';
+import { MockGameScene } from '@/components/game/MockGameScene';
 import { QUESTIONS } from '@/data/questions';
 import { DIMENSIONS, Dimension } from '@/types';
 
@@ -38,6 +39,13 @@ export default function CardLabPage() {
             </label>
           </div>
         </header>
+
+        {/* 真实打牌场景（手机优先） */}
+        <section className="space-y-3">
+          <h2 className="psy-serif text-lg text-[var(--psy-ink)]">真实打牌场景（手机优先）</h2>
+          <p className="text-xs text-[var(--psy-muted)]">静态 mock，仅展示新卡在牌桌里的观感。手牌可左右滑。</p>
+          <MockGameScene locale={locale} />
+        </section>
 
         {/* 五维度样本 */}
         <section className="space-y-3">

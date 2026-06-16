@@ -18,6 +18,8 @@ interface TarotCardProps {
   isDummy?: boolean;
   /** 语言：跟随用户选择（zh→中文卡，en→英文卡）。单语，不同时显示。 */
   locale?: 'zh' | 'en';
+  /** 背面（对手手牌/牌堆）：只画框 + ◈，不露内容。 */
+  faceDown?: boolean;
   /** 卡牌宽度(px)，高度按 2:3。默认 200。 */
   width?: number;
 }
@@ -37,6 +39,7 @@ export function TarotCard({
   revealedDimension = null,
   isDummy = false,
   locale = 'zh',
+  faceDown = false,
   width = 200,
 }: TarotCardProps) {
   const [imgError, setImgError] = useState(false);
@@ -45,9 +48,29 @@ export function TarotCard({
   // 单语：按 locale 选中文或英文句（英文缺失则回退中文）。
   const label = locale === 'en' ? (textEn ?? text) : text;
 
+  // 背面：金框 + 中央 ◈
+  if (faceDown) {
+    return (
+      <div
+        className="relative flex shrink-0 items-center justify-center"
+        style={{
+          width,
+          height,
+          borderRadius: width * 0.085,
+          background: 'linear-gradient(180deg, #19293c 0%, #0d1825 100%)',
+          border: `1.5px solid ${GOLD_LINE}`,
+          boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.03), 0 10px 22px rgba(0,0,0,0.34)',
+        }}
+      >
+        <div className="pointer-events-none absolute" style={{ inset: width * 0.04, borderRadius: width * 0.06, border: `1px solid ${GOLD_FAINT}` }} />
+        <span style={{ color: GOLD, fontSize: width * 0.22, opacity: 0.6 }}>◈</span>
+      </div>
+    );
+  }
+
   return (
     <div
-      className="relative select-none"
+      className="relative shrink-0 select-none"
       style={{
         width,
         height,
