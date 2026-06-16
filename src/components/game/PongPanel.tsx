@@ -6,6 +6,7 @@ import { GameCard, Dimension, Player, isPersonalityCard } from '@/types';
 import { getTargetCounts } from '@/lib/scoring';
 import { getDeclaredDimensions } from '@/lib/game-logic';
 import { Card } from './Card';
+import { STRINGS, type Locale } from '@/lib/i18n';
 
 interface PongPanelProps {
   pendingCard: GameCard;
@@ -15,6 +16,7 @@ interface PongPanelProps {
   onClaim: (dimension: Dimension, handCardIds: number[]) => void;
   onSkip: () => void;
   onResolveAI: () => void;
+  locale?: Locale;
 }
 
 export function PongPanel({
@@ -25,7 +27,9 @@ export function PongPanel({
   onClaim,
   onSkip,
   onResolveAI,
+  locale = 'zh',
 }: PongPanelProps) {
+  const t = STRINGS[locale].game;
   const [countdown, setCountdown] = useState(5);
   const targets = getTargetCounts(player.bigFiveScores);
   const declaredDims = getDeclaredDimensions(player);
@@ -61,11 +65,11 @@ export function PongPanel({
     >
       <div className="flex items-center justify-between">
         <h3 className="psy-serif text-sm font-semibold tracking-[0.04em] text-[var(--psy-accent)] sm:text-base">
-          心理判讀窗口
+          {t.pongPanelTitle}
         </h3>
         <div className="hidden text-right sm:block">
           <div className="text-xs text-[var(--psy-muted)]">
-            {discardedByName} 棄出了這張線索牌
+            {discardedByName} {t.pongClueDiscarded}
           </div>
           <div className="mt-1 max-w-[16rem] line-clamp-1 text-[11px] text-[var(--psy-ink-soft)]">
             {pendingCard.text}
@@ -79,7 +83,7 @@ export function PongPanel({
       {/* Show the pending discard card */}
       <div className="flex items-center gap-3 sm:gap-4">
         <div className="flex flex-col items-center gap-1">
-          <span className="psy-serif text-[10px] uppercase tracking-[0.18em] text-[var(--psy-muted)]">棄牌樣本</span>
+          <span className="psy-serif text-[10px] uppercase tracking-[0.18em] text-[var(--psy-muted)]">{t.pongSampleLabel}</span>
           <div className="rounded-xl p-1" style={{ backgroundColor: 'rgba(200, 155, 93, 0.08)', boxShadow: 'inset 0 0 0 1px rgba(200,155,93,0.18)' }}>
             <Card card={pendingCard} tiny />
           </div>
@@ -91,17 +95,17 @@ export function PongPanel({
           {canClaimThisDim ? (
             <div className="space-y-2">
               <p className="text-[var(--psy-ink)]">
-                你可以嘗試據此完成一組人格歸檔。
+                {t.pongCanClaim}
               </p>
               <ul className="list-disc pl-4 space-y-0.5 text-[var(--psy-ink-soft)] marker:text-[var(--psy-accent)] sm:space-y-1">
-                <li>只選你判斷爲同一人格描述的手牌</li>
-                <li>總張數要達到你的該維度要求</li>
-                <li>混入其他人格牌會受罰</li>
+                <li>{t.pongTip1}</li>
+                <li>{t.pongTip2}</li>
+                <li>{t.pongTip3}</li>
               </ul>
             </div>
           ) : (
             <p className="text-[var(--psy-muted)]">
-              你暫時無法用這張牌完成歸檔。
+              {t.pongCannotClaim}
             </p>
           )}
         </div>
@@ -111,7 +115,7 @@ export function PongPanel({
       <div className="flex items-center justify-between">
         <div className="text-xs text-[var(--psy-ink-soft)]">
           {canClaimThisDim && selectedCardIds.length > 0 && (
-            <>已選 <span className="text-white font-medium">{selectedCardIds.length}</span> 張候選牌</>
+            <>{t.selectedPrefix} <span className="text-white font-medium">{selectedCardIds.length}</span> {t.pongSelectedCandidates}</>
           )}
         </div>
         <div className="flex gap-2">
@@ -124,7 +128,7 @@ export function PongPanel({
               backgroundColor: 'rgba(255,255,255,0.02)',
             }}
           >
-            暫不歸檔
+            {t.pongSkip}
           </button>
           {canClaimThisDim && (
             <button
@@ -133,11 +137,11 @@ export function PongPanel({
               className="psy-btn psy-btn-accent px-3 py-1.5 text-[11px] font-bold disabled:cursor-not-allowed disabled:opacity-30 sm:px-4 sm:py-2 sm:text-xs"
               title={
                 selectedCardIds.length === 0
-                  ? '請先點擊手牌選擇同維度卡'
+                  ? t.pongSelectFirst
                   : undefined
               }
             >
-              歸檔判定{selectedCardIds.length > 0 ? `（已選 ${selectedCardIds.length} 張）` : '（請先選牌）'}
+              {t.archiveJudge}
             </button>
           )}
         </div>

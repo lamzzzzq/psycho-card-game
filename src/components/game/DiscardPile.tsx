@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameCard, GameAction } from '@/types';
 import { Card } from './Card';
+import { STRINGS, type Locale } from '@/lib/i18n';
 
 interface PlayerLite {
   id: string;
@@ -19,13 +20,14 @@ interface DiscardPileProps {
   /** Action log used to attach timestamps + players to each discard */
   actions?: GameAction[];
   players?: PlayerLite[];
+  locale?: Locale;
 }
 
-function formatRelative(ts: number, now: number): string {
+function formatRelative(ts: number, now: number, ago: string): string {
   const diff = Math.max(0, now - ts);
-  if (diff < 60_000) return `${Math.floor(diff / 1000)}s 前`;
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m 前`;
-  return `${Math.floor(diff / 3_600_000)}h 前`;
+  if (diff < 60_000) return `${Math.floor(diff / 1000)}s ${ago}`;
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ${ago}`;
+  return `${Math.floor(diff / 3_600_000)}h ${ago}`;
 }
 
 export function DiscardPile({
@@ -34,7 +36,9 @@ export function DiscardPile({
   discardPile,
   actions,
   players,
+  locale = 'zh',
 }: DiscardPileProps) {
+  const t = STRINGS[locale].game;
   const [open, setOpen] = useState(false);
 
   // Pair each card in discardPile with its matching 'discard' action.
@@ -62,7 +66,7 @@ export function DiscardPile({
         className={`flex flex-col items-center gap-2 ${
           canOpen ? 'cursor-pointer hover:scale-105 active:scale-95 transition-transform' : ''
         }`}
-        aria-label="查看棄牌堆"
+        aria-label={t.viewDiscardPile}
       >
         {topCard ? (
           <div className="relative">
@@ -81,16 +85,16 @@ export function DiscardPile({
                   color: 'var(--psy-ink-soft)',
                 }}
               >
-                查看
+                {t.viewWord}
               </div>
             )}
           </div>
         ) : (
           <div className="flex h-24 w-18 items-center justify-center rounded-[1.1rem] border border-dashed sm:h-36 sm:w-24 sm:rounded-[1.25rem]" style={{ borderColor: 'rgba(200,155,93,0.14)' }}>
-            <span className="psy-serif text-[11px] text-[var(--psy-muted)] sm:text-xs">棄牌堆</span>
+            <span className="psy-serif text-[11px] text-[var(--psy-muted)] sm:text-xs">{t.discardPileName}</span>
           </div>
         )}
-        <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">已棄 {count} 張</span>
+        <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">{t.discardedCount} {count} {t.cardsUnit}</span>
       </button>
 
       <AnimatePresence>
@@ -113,13 +117,13 @@ export function DiscardPile({
             >
               <div className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: 'rgba(200,155,93,0.12)' }}>
                 <h3 className="psy-serif text-sm font-bold text-[var(--psy-ink)]">
-                  棄牌堆 · 共 {pile.length} 張{' '}
-                  <span className="text-xs font-normal text-[var(--psy-muted)]">（最新在上）</span>
+                  {t.discardPileTitle}{pile.length} {t.cardsUnit}{' '}
+                  <span className="text-xs font-normal text-[var(--psy-muted)]">{t.newestOnTop}</span>
                 </h3>
                 <button
                   onClick={() => setOpen(false)}
                   className="px-2 py-1 text-sm text-[var(--psy-ink-soft)] hover:text-white"
-                  aria-label="關閉"
+                  aria-label={t.close}
                 >
                   ✕
                 </button>
@@ -127,7 +131,7 @@ export function DiscardPile({
 
               <div className="psy-scroll flex-1 overflow-y-auto px-5 py-4">
                 {historyDesc.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-[var(--psy-muted)]">暫無棄牌</p>
+                  <p className="py-8 text-center text-sm text-[var(--psy-muted)]">{t.noDiscards}</p>
                 ) : (
                   <ul className="space-y-2">
                     {historyDesc.map((entry, i) => {
@@ -152,13 +156,13 @@ export function DiscardPile({
                             <div className="flex items-center gap-2">
                               <span className="text-lg">{entry.player?.avatar ?? '🧑'}</span>
                               <span className="psy-serif truncate text-sm font-medium text-[var(--psy-ink)]">
-                                {entry.player?.name ?? '未知玩家'}
+                                {entry.player?.name ?? t.unknownPlayer}
                               </span>
                             </div>
                             {ts > 0 && (
                               <div className="text-[10px] text-[var(--psy-muted)]">
-                                {formatRelative(ts, Date.now())} ·{' '}
-                                {new Date(ts).toLocaleTimeString('zh-CN', {
+                                {formatRelative(ts, Date.now(), t.ago)} ·{' '}
+                                {new Date(ts).toLocaleTimeString(locale === 'en' ? 'en-US' : 'zh-CN', {
                                   hour12: false,
                                 })}
                               </div>

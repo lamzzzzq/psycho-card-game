@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameCard, Dimension, isPersonalityCard } from '@/types';
 import { Card } from './Card';
+import { STRINGS, type Locale } from '@/lib/i18n';
 
 interface PlayerHandProps {
   cards: GameCard[];
@@ -12,6 +13,7 @@ interface PlayerHandProps {
   isDeclaring?: boolean;
   isMyTurn?: boolean;
   mobileCompact?: boolean;
+  locale?: Locale;
   selectedCardIds?: number[];
   // Per-turn "view 2 cards" feature: caller passes which cards are revealed
   // for the current turn (max 2). Caller is responsible for clearing on
@@ -34,6 +36,7 @@ export function PlayerHand({
   isDeclaring = false,
   isMyTurn = false,
   mobileCompact = false,
+  locale = 'zh',
   selectedCardIds = [],
   viewedCardIds = [],
   viewMode = false,
@@ -43,6 +46,7 @@ export function PlayerHand({
   onToggleSelect,
   onCardHover,
 }: PlayerHandProps) {
+  const t = STRINGS[locale].game;
   const [isCompactViewport, setIsCompactViewport] = useState(false);
 
   useEffect(() => {
@@ -109,7 +113,7 @@ export function PlayerHand({
           className="flex flex-col items-center gap-2"
         >
           <p className="psy-serif text-sm text-[var(--psy-accent)]">
-            {discardPickId === null ? '先圈定一張要捨棄的線索牌' : '點「提交棄牌」確認（再次點擊該牌可取消選中）'}
+            {discardPickId === null ? t.pickDiscard : t.confirmDiscardHint}
           </p>
           {discardPickId !== null && (
             <div className="flex gap-2">
@@ -117,7 +121,7 @@ export function PlayerHand({
                 onClick={() => setDiscardPickId(null)}
                 className="psy-btn psy-btn-ghost px-3 py-1.5 text-xs"
               >
-                取消
+                {t.cancel}
               </button>
               <button
                 onClick={() => {
@@ -127,7 +131,7 @@ export function PlayerHand({
                 }}
                 className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold"
               >
-                提交棄牌
+                {t.submitDiscard}
               </button>
             </div>
           )}
@@ -136,13 +140,13 @@ export function PlayerHand({
       {isDeclaring && (
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-          選出你認爲屬於同一人格線索的牌
+          {t.selectSameDim}
         </motion.p>
       )}
       {viewMode && (
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-          選出 2 張你想要查看的手牌（{pickedViewIds.length}/2）
+          {t.pickViewHand}（{pickedViewIds.length}/2）
         </motion.p>
       )}
 
@@ -196,7 +200,7 @@ export function PlayerHand({
                         borderColor: 'rgba(200,155,93,0.34)',
                       }}
                     >
-                      新抽
+                      {t.newDraw}
                     </div>
                   </motion.div>
                 )}

@@ -6,14 +6,17 @@ import { motion, AnimatePresence, useAnimationControls } from 'framer-motion';
 import { Player } from '@/types';
 import { Card } from './Card';
 import { DeclaredArea } from './DeclaredArea';
+import { STRINGS, type Locale } from '@/lib/i18n';
 
 interface OpponentHandProps {
   player: Player;
   isCurrentTurn: boolean;
   isTentativeOffline?: boolean;
+  locale?: Locale;
 }
 
-export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false }: OpponentHandProps) {
+export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false, locale = 'zh' }: OpponentHandProps) {
+  const t = STRINGS[locale].game;
   const [openModal, setOpenModal] = useState(false);
   // Portal mount guard. The modal needs to escape OpponentHand's outer
   // motion.div, which gets `transform` from the bounce animation and
@@ -47,12 +50,12 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
     : hasRevealedSubset
     ? player.revealedSelectedCards!
     : [];
-  const modalTitle = showCards ? '公開檔案 · 全手牌' : '判定樣本 · 失敗的碰';
+  const modalTitle = showCards ? t.revealedFullTitle : t.revealedSubsetTitle;
   const modalAccent = showCards ? 'var(--psy-accent)' : 'var(--psy-danger)';
   const triggerLabel = showCards
-    ? `查看公開檔案（${player.hand.length}）`
+    ? `${t.viewPublicFile}（${player.hand.length}）`
     : hasRevealedSubset
-    ? `查看判定樣本（${player.revealedSelectedCards!.length}）`
+    ? `${t.viewSample}（${player.revealedSelectedCards!.length}）`
     : '';
 
   return (
@@ -70,15 +73,15 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
             <div className="psy-serif truncate text-[11px] font-medium text-[var(--psy-ink)] sm:text-xs">
               {player.name}
             </div>
-            <div className="text-[9px] text-[var(--psy-muted)] sm:text-[10px]">
-              {player.hand.length} 張
+            <div className="truncate text-[9px] text-[var(--psy-muted)] sm:text-[10px]">
+              {player.hand.length} {t.cardsUnit}
               {!isPenalized && !hasLeft && !isTentativeOffline && isCurrentTurn && (
-                <span className="ml-1 text-[var(--psy-accent)]">· 思考中</span>
+                <span className="ml-1 text-[var(--psy-accent)]">· {t.thinking}</span>
               )}
-              {player.revealedHand && <span className="ml-1 text-[var(--psy-accent)]">· 檔案公開</span>}
-              {hasLeft && <span className="ml-1 text-[var(--psy-danger)]">· 已退出</span>}
+              {player.revealedHand && <span className="ml-1 text-[var(--psy-accent)]">· {t.archivePublic}</span>}
+              {hasLeft && <span className="ml-1 text-[var(--psy-danger)]">· {t.leftGame}</span>}
               {!hasLeft && isTentativeOffline && (
-                <span className="ml-1 text-amber-300">· 離線中</span>
+                <span className="ml-1 text-amber-300">· {t.offline}</span>
               )}
             </div>
           </div>
@@ -115,7 +118,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
           }}
         >
           <span>⚠</span>
-          <span>離線中（3 分鐘內未回則離場）</span>
+          <span className="truncate">{t.offlineFull}</span>
         </div>
       )}
 
@@ -130,7 +133,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
           }}
         >
           <span>🚪</span>
-          <span>已退出對局</span>
+          <span className="truncate">{t.leftGameBadge}</span>
         </div>
       )}
 
@@ -145,12 +148,12 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
           }}
         >
           <span>⛔</span>
-          <span>罰停中</span>
+          <span className="truncate">{t.penaltyBadge}</span>
         </div>
       )}
 
       {/* Archive */}
-      <DeclaredArea declaredSets={player.declaredSets} compact title={`${player.name} 的歸檔`} />
+      <DeclaredArea declaredSets={player.declaredSets} compact title={`${player.name}${t.archiveOf}`} locale={locale} />
 
       {/* Reveal trigger — opens modal */}
       {(showCards || hasRevealedSubset) && (
@@ -196,13 +199,13 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
                   <h3 className="psy-serif text-sm font-bold text-[var(--psy-ink)]">
                     {modalTitle}
                     <span className="ml-2 text-xs font-normal text-[var(--psy-muted)]">
-                      {player.avatar} {player.name} · 共 {modalCards.length} 張
+                      {player.avatar} {player.name} · {t.totalCards} {modalCards.length} {t.cardsUnit}
                     </span>
                   </h3>
                   <button
                     onClick={() => setOpenModal(false)}
                     className="px-2 py-1 text-sm text-[var(--psy-ink-soft)] hover:text-white"
-                    aria-label="關閉"
+                    aria-label={t.close}
                   >
                     ✕
                   </button>
@@ -210,7 +213,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
 
                 <div className="psy-scroll flex-1 overflow-y-auto px-5 py-4">
                   {modalCards.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-[var(--psy-muted)]">暫無可顯示的牌</p>
+                    <p className="py-8 text-center text-sm text-[var(--psy-muted)]">{t.noCardsToShow}</p>
                   ) : (
                     <div className="grid grid-cols-3 justify-items-center gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
                       {modalCards.map((card) => (

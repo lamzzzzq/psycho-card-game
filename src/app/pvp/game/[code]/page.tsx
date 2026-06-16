@@ -16,6 +16,8 @@ import {
 import { FlyingCard } from '@/components/game/FlyingCard';
 import { supabase } from '@/lib/supabase';
 import { leaveRoom, updateRoomStatus } from '@/lib/room-api';
+import { useLocaleStore, STRINGS } from '@/lib/i18n';
+import { useHydrated } from '@/stores/useHydration';
 
 interface FlyingAnim { id: number; from: { x: number; y: number }; to: { x: number; y: number }; text: string; }
 import { DIMENSION_META } from '@/data/dimensions';
@@ -64,6 +66,12 @@ export default function PvpGamePage() {
   const params = useParams();
   const router = useRouter();
   const code = params.code as string;
+
+  const hydrated = useHydrated();
+  const localeRaw = useLocaleStore((s) => s.locale);
+  const locale = hydrated ? localeRaw : 'zh';
+  const t = STRINGS[locale].game;
+  const dimName = (d: Dimension) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name);
 
   const { player } = usePlayerStore();
   const { gameState, myPlayerId, isHost, sendMessage, subscribeRoom, offlinePlayerIds, room } = usePvpStore();
@@ -210,7 +218,8 @@ export default function PvpGamePage() {
 
   const { shakeControls, flashControls, pops } = useGameFeedback(
     (gameState?.actionLog ?? []) as GameAction[],
-    gameState?.players ?? []
+    gameState?.players ?? [],
+    locale
   );
 
   // Your-turn banner: fires when the turn becomes the viewer's turn.
@@ -286,12 +295,12 @@ export default function PvpGamePage() {
         <div className="text-center space-y-4 max-w-sm">
           {slowLoad ? (
             <>
-              <div className="text-amber-300 text-sm">房主似乎不在線，無法恢復遊戲</div>
+              <div className="text-amber-300 text-sm">{t.hostOfflineNoResume}</div>
               <button
                 onClick={handleAbandonRoom}
                 className="px-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-400 text-white text-sm font-bold transition-colors"
               >
-                離開此房間並返回大廳
+                {t.leaveRoomReturnLobby}
               </button>
               <div>
                 <button
@@ -301,13 +310,13 @@ export default function PvpGamePage() {
                   }}
                   className="text-xs text-[var(--psy-muted)] underline transition-colors hover:text-[var(--psy-ink-soft)]"
                 >
-                  僅返回大廳
+                  {t.justReturnLobby}
                 </button>
               </div>
             </>
           ) : (
             <>
-              <div className="psy-serif animate-pulse text-[var(--psy-ink-soft)]">等待遊戲開始…</div>
+              <div className="psy-serif animate-pulse text-[var(--psy-ink-soft)]">{t.waitingToStart}</div>
               <button
                 onClick={() => {
                   usePvpStore.getState().reset();
@@ -315,7 +324,7 @@ export default function PvpGamePage() {
                 }}
                 className="text-xs text-[var(--psy-muted)] underline transition-colors hover:text-[var(--psy-ink-soft)]"
               >
-                返回大廳
+                {t.returnLobby}
               </button>
             </>
           )}
@@ -480,7 +489,7 @@ export default function PvpGamePage() {
         <div className="text-center space-y-6">
           <div className="text-6xl">{gameState.winner === myId ? '🏆' : '😔'}</div>
           <h1 className="psy-serif text-3xl text-[var(--psy-ink)]">
-            {gameState.winner === myId ? '你贏了！' : `${winner?.name ?? '對手'} 贏了`}
+            {gameState.winner === myId ? t.youWin : `${winner?.name ?? t.opponent} ${t.winSuffix}`}
           </h1>
           <div className="space-y-2">
             {gameState.players.map((p, i) => (
@@ -489,7 +498,7 @@ export default function PvpGamePage() {
                 <span className={p.id === gameState.winner ? 'psy-serif font-medium text-[var(--psy-accent)]' : 'text-[var(--psy-ink-soft)]'}>
                   {p.name}
                 </span>
-                <span className="text-[var(--psy-muted)]">申報 {p.declaredSets.length} 組 · 剩餘 {p.handCount} 張</span>
+                <span className="text-[var(--psy-muted)]">{t.declaredPrefix} {p.declaredSets.length} {t.declaredSuffix} · {t.remainingPrefix} {p.handCount} {t.cardsUnit}</span>
               </div>
             ))}
           </div>
@@ -498,13 +507,13 @@ export default function PvpGamePage() {
               onClick={() => router.replace(`/pvp/room/${code}`)}
               className="psy-btn psy-btn-accent px-6 py-2.5 font-medium"
             >
-              再來一局
+              {t.playAgain}
             </button>
             <button
               onClick={() => router.replace('/')}
               className="psy-btn psy-btn-ghost px-6 py-2.5 text-sm"
             >
-              返回首頁
+              {t.backHome}
             </button>
           </div>
         </div>
@@ -577,7 +586,7 @@ export default function PvpGamePage() {
   return (
     <motion.div animate={shakeControls} className="mx-auto flex min-h-[100dvh] max-w-6xl w-full flex-col px-3 py-3 sm:px-4 sm:py-4">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
-      <YourTurnBanner bannerKey={yourTurnKey} />
+      <YourTurnBanner bannerKey={yourTurnKey} locale={locale} />
       <ArrowOverlay from={arrowFrom} to={arrowTo} color="#c89b5d" />
       {flyingCards.map((f) => (
         <FlyingCard key={f.id} from={f.from} to={f.to} text={f.text} onComplete={() => removeFlyingCard(f.id)} />
@@ -589,10 +598,10 @@ export default function PvpGamePage() {
           onClick={() => setExitConfirmOpen(true)}
           className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] px-3 py-1 text-[10px] text-[var(--psy-muted)] transition hover:border-[rgba(220,80,80,0.4)] hover:text-[var(--psy-danger)] sm:text-[11px]"
         >
-          ← 退出對局
+          {t.leaveGame}
         </button>
         <span className="psy-serif text-[10px] uppercase tracking-[0.32em] text-[var(--psy-muted)] sm:text-[11px]">
-          人格麻將 · 聯機房 {code}
+          {t.roomTitlePrefix} {code}
         </span>
       </div>
 
@@ -600,23 +609,23 @@ export default function PvpGamePage() {
       <PsyOverlayPanel
         open={exitConfirmOpen}
         onClose={() => setExitConfirmOpen(false)}
-        title="確認退出本局？"
+        title={t.exitConfirmTitle}
         variant="centered"
       >
         <div className="space-y-5 px-1 py-2">
           <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">
-            退出後本局進度將丟失，且無法恢復。
+            {t.exitConfirmBody1}
             <br />
-            桌上其他玩家會繼續對局，少一人繼續打到分出勝負。
+            {t.exitConfirmBody2}
             <br />
-            若只剩 1 人，對局立即結束、剩下的玩家獲勝。
+            {t.exitConfirmBody3}
           </p>
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setExitConfirmOpen(false)}
               className="psy-btn psy-btn-ghost px-5 py-2 text-sm"
             >
-              取消
+              {t.cancel}
             </button>
             <button
               onClick={() => {
@@ -629,7 +638,7 @@ export default function PvpGamePage() {
               }}
               className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
             >
-              確認退出
+              {t.confirmExit}
             </button>
           </div>
         </div>
@@ -654,9 +663,9 @@ export default function PvpGamePage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
-          className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] max-w-[92vw] rounded-xl border border-amber-400/60 bg-amber-500/95 px-5 py-2.5 text-xs font-bold text-white shadow-2xl sm:text-sm"
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-[70] max-w-[92vw] rounded-xl border border-amber-400/60 bg-amber-500/95 px-5 py-2.5 text-xs font-bold text-white shadow-2xl sm:text-sm"
         >
-          ⚠ 房主短暫離線 — 操作已暫停，3 分鐘內未回則房間解散
+          {t.hostOfflinePaused}
         </motion.div>
       )}
 
@@ -667,9 +676,9 @@ export default function PvpGamePage() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed top-16 left-1/2 -translate-x-1/2 z-[60] max-w-[90vw] rounded-xl border border-amber-400/60 bg-amber-500/90 px-5 py-2.5 text-xs font-bold text-white shadow-2xl sm:top-20 sm:px-6 sm:py-3 sm:text-sm"
+          className="fixed top-28 left-1/2 -translate-x-1/2 z-[60] max-w-[90vw] rounded-xl border border-amber-400/60 bg-amber-500/90 px-5 py-2.5 text-xs font-bold text-white shadow-2xl sm:top-32 sm:px-6 sm:py-3 sm:text-sm"
         >
-          ⏰ 請注意：現在是你的回合
+          {t.idleYourTurn}
         </motion.div>
       )}
 
@@ -679,9 +688,9 @@ export default function PvpGamePage() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed top-16 left-1/2 -translate-x-1/2 z-[65] max-w-[90vw] rounded-xl border border-[rgba(200,155,93,0.5)] bg-[rgba(40,30,18,0.95)] px-5 py-2.5 text-xs font-bold text-[var(--psy-ink)] shadow-2xl sm:top-20 sm:px-6 sm:py-3 sm:text-sm"
+          className="fixed top-40 left-1/2 -translate-x-1/2 z-[65] max-w-[90vw] rounded-xl border border-[rgba(200,155,93,0.5)] bg-[rgba(40,30,18,0.95)] px-5 py-2.5 text-xs font-bold text-[var(--psy-ink)] shadow-2xl sm:top-44 sm:px-6 sm:py-3 sm:text-sm"
         >
-          ⚡ 本輪已被搶 — 別人先碰到了
+          {t.stolenToast}
         </motion.div>
       )}
 
@@ -693,6 +702,7 @@ export default function PvpGamePage() {
             player={opp}
             isCurrentTurn={currentPlayer?.id === opp.id}
             isTentativeOffline={offlinePlayerIds.includes(opp.id)}
+            locale={locale}
           />
         ))}
       </div>
@@ -714,6 +724,7 @@ export default function PvpGamePage() {
               discardPile={gameState.discardPile}
               actions={gameState.actionLog as any}
               players={gameState.players}
+              locale={locale}
             />
           </div>
         </div>
@@ -729,15 +740,15 @@ export default function PvpGamePage() {
           {meFrozenLockout && (
             <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
               <span>⛔</span>
-              <span className="hidden sm:inline">你被罰停一回合 — 下次輪到你時自動跳過，期間無法參與碰/食胡</span>
-              <span className="sm:hidden">罰停一回合 · 輪到你時跳過 · 不可碰/胡</span>
+              <span className="hidden sm:inline">{t.penaltyLockoutFull}</span>
+              <span className="sm:hidden">{t.penaltyLockoutShort}</span>
             </div>
           )}
           {meAwaitingOwnDischarge && (
             <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-accent)] sm:text-sm">
               <span>⏳</span>
-              <span className="hidden sm:inline">解凍輪 — 正常出牌一次即可解除罰停（期間仍不可碰/胡）</span>
-              <span className="sm:hidden">解凍輪 · 出牌一次解除</span>
+              <span className="hidden sm:inline">{t.thawFull}</span>
+              <span className="sm:hidden">{t.thawShort}</span>
             </div>
           )}
           {/* Big Five scores */}
@@ -747,7 +758,7 @@ export default function PvpGamePage() {
               const score = mePlayer.bigFiveScores[d];
               return (
                 <div key={d} className="flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: meta.colorHex + '12', border: `1px solid ${meta.colorHex}22` }}>
-                  <span className="text-[9px]" style={{ color: meta.colorHex }}>{meta.name}</span>
+                  <span className="text-[9px]" style={{ color: meta.colorHex }}>{dimName(d)}</span>
                   <span className="text-[10px] font-bold" style={{ color: meta.colorHex }}>{score.toFixed(1)}</span>
                 </div>
               );
@@ -770,19 +781,19 @@ export default function PvpGamePage() {
                     }}
                   >
                     <span className="text-[9px]" style={{ color: isDone ? meta.colorHex : 'var(--psy-muted)' }}>
-                      {meta.name}
+                      {dimName(d)}
                     </span>
                     <span
                       className="text-[10px] font-medium"
                       style={{ color: isDone ? meta.colorHex : 'var(--psy-ink-soft)' }}
                     >
-                      {isDone ? '✓' : `${targets[d]}張`}
+                      {isDone ? '✓' : (locale === 'en' ? `${targets[d]} cards` : `${targets[d]}張`)}
                     </span>
                   </div>
                 );
               })}
               <div className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2 py-0.5">
-                <span className="text-[9px] text-[var(--psy-muted)]">完成 </span>
+                <span className="text-[9px] text-[var(--psy-muted)]">{t.done} </span>
                 <span className="text-[10px] font-medium text-[var(--psy-success)]">{mePlayer.declaredSets.length}/5</span>
               </div>
             </div>
@@ -790,14 +801,23 @@ export default function PvpGamePage() {
 
           <div className="flex shrink-0 flex-col gap-1.5 sm:hidden">
             <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
-              <span className="psy-serif text-[var(--psy-accent)]">第 {gameState.currentRound}{gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''} 輪</span>
-              <span className="truncate">{isMyTurn ? '輪到你' : `${currentPlayer?.name}中`}</span>
-              <span>歸檔 {mePlayer.declaredSets.length}/5</span>
+              <span className="psy-serif shrink-0 text-[var(--psy-accent)]">{locale === 'en' ? `${t.roundUnit} ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''}` : `第 ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''} 輪`}</span>
+              <span className="flex min-w-0 items-center gap-0.5">
+                {isMyTurn ? (
+                  <span className="truncate">{t.yourTurnShort}</span>
+                ) : (
+                  <>
+                    <span className="max-w-[6ch] truncate">{currentPlayer?.name}</span>
+                    {t.turnSuffix && <span className="shrink-0">{t.turnSuffix}</span>}
+                  </>
+                )}
+              </span>
+              <span className="shrink-0">{t.archiveCount} {mePlayer.declaredSets.length}/5</span>
             </div>
             <div className="flex items-center justify-end gap-1">
-              <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">人格</button>
-              <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">歸檔</button>
-              <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">記錄</button>
+              <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{t.persona}</button>
+              <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{t.archive}</button>
+              <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{t.log}</button>
             </div>
           </div>
 
@@ -806,15 +826,15 @@ export default function PvpGamePage() {
               first wins the race. */}
           {canClaim && gameState.pendingDiscard && (
             <div className="psy-panel space-y-3 rounded-[1.35rem] border p-4">
-              <div className="flex items-center justify-between">
-                <h3 className="psy-serif text-sm font-medium text-[var(--psy-accent)]">
-                  {gameState.players[gameState.discardedByIndex]?.name} 棄了一張牌 — 選擇行動
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="psy-serif min-w-0 text-sm font-medium text-[var(--psy-accent)]">
+                  <span className="max-w-[8ch] truncate align-bottom inline-block">{gameState.players[gameState.discardedByIndex]?.name}</span> {t.discardedACard}
                 </h3>
-                <span className="text-[10px] text-[var(--psy-muted)]">先點先得</span>
+                <span className="shrink-0 text-[10px] text-[var(--psy-muted)]">{t.firstComeFirst}</span>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-[10px] text-[var(--psy-muted)]">被棄的牌</span>
+                  <span className="text-[10px] text-[var(--psy-muted)]">{t.discardedCardLabel}</span>
                   <div className="rounded-xl ring-1 ring-[rgba(200,155,93,0.35)]">
                     <Card card={gameState.pendingDiscard} />
                   </div>
@@ -823,80 +843,89 @@ export default function PvpGamePage() {
                     判斷。碰了若重複歸檔/混維度，由引擎判失敗 + 罰停（提示「重複碰」）。 */}
                 <div className="text-xs text-[var(--psy-ink-soft)]">
                   <ul className="list-disc pl-4 space-y-1 marker:text-orange-400">
-                    <li>選出與棄牌同一人格的手牌後點「碰」</li>
-                    <li>總張數要達到該維度要求</li>
-                    <li>混入其他人格牌會受罰</li>
+                    <li>{t.claimHint1}</li>
+                    <li>{t.claimHint2}</li>
+                    <li>{t.claimHint3}</li>
                   </ul>
                 </div>
               </div>
               {claimSubmitted ? (
                 <div className="psy-serif animate-pulse py-1.5 text-center text-xs text-[var(--psy-muted)]">
-                  已提交，等待結算…
+                  {t.submittedWaiting}
                 </div>
               ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSkipPong}
-                  className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs font-medium"
-                >
-                  過
-                </button>
+              <>
                 {canPong && (
-                  <button
-                    onClick={handlePong}
-                    disabled={selectedCardIds.length === 0}
-                    className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35"
-                    title={
-                      selectedCardIds.length === 0
-                        ? '請先點擊手牌選擇同維度卡再碰'
-                        : undefined
-                    }
-                  >
-                    碰！{selectedCardIds.length > 0 ? `（已選 ${selectedCardIds.length} 張）` : '（請先選牌）'}
-                  </button>
+                  <p className="text-center text-[11px] text-[var(--psy-muted)]">
+                    {selectedCardIds.length > 0
+                      ? `${t.selectedPrefix} ${selectedCardIds.length} ${t.cardsUnit}`
+                      : t.selectFirst}
+                  </p>
                 )}
-                {!meFrozen && (
+                <div className="grid grid-cols-3 gap-2 flex-nowrap">
                   <button
-                    onClick={handleHu}
-                    className="psy-btn psy-btn-danger px-4 py-1.5 text-xs font-bold"
+                    onClick={handleSkipPong}
+                    className="psy-btn psy-btn-ghost px-2 py-1.5 text-xs font-medium"
                   >
-                    食胡
+                    {t.pass}
                   </button>
-                )}
-              </div>
+                  {canPong && (
+                    <button
+                      onClick={handlePong}
+                      disabled={selectedCardIds.length === 0}
+                      className="psy-btn psy-btn-accent px-2 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35"
+                      title={
+                        selectedCardIds.length === 0
+                          ? t.pongNeedSelect
+                          : undefined
+                      }
+                    >
+                      {t.pong}
+                    </button>
+                  )}
+                  {!meFrozen && (
+                    <button
+                      onClick={handleHu}
+                      className="psy-btn psy-btn-danger px-2 py-1.5 text-xs font-bold"
+                    >
+                      {t.win}
+                    </button>
+                  )}
+                </div>
+              </>
               )}
             </div>
           )}
 
           {/* Action buttons (my turn only) */}
           {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && !viewMode && !pongIntent && (
-            <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <div className="flex shrink-0 flex-nowrap items-center justify-center gap-2 sm:gap-3">
               {canDraw && (
-                <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">點擊牌堆抽一張牌</p>
+                <p className="psy-serif animate-pulse text-xs text-[var(--psy-accent)] sm:text-sm">{t.clickToDraw}</p>
               )}
               {isDiscarding && !gameState.drawnCard && (
-                <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">
-                  碰牌成功 — 請直接出一張手牌
+                <p className="psy-serif animate-pulse text-xs text-[var(--psy-accent)] sm:text-sm">
+                  {t.pongDoneDiscard}
                 </p>
               )}
               {canStartView && (
                 <button
                   onClick={handleStartView}
-                  className="psy-btn psy-btn-ghost px-4 py-2 text-sm font-medium"
-                  title="本回合可查看 2 張自己的手牌的人格"
+                  className="psy-btn psy-btn-ghost px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm"
+                  title={t.viewCardsTitle}
                 >
-                  🔍 查看 2 張牌（{viewUsedThisTurn ? '0' : '1'}/1）
+                  🔍 {t.viewTwoCards}（{viewUsedThisTurn ? '0' : '1'}/1）
                 </button>
               )}
               {viewUsedThisTurn && !viewMode && (
-                <span className="text-xs text-[var(--psy-muted)]">本回合查看已用</span>
+                <span className="text-xs text-[var(--psy-muted)]">{t.viewUsed}</span>
               )}
               {!meFrozen && (
                 <button
                   onClick={handleHu}
-                  className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
+                  className="psy-btn psy-btn-danger px-3 py-2 text-xs font-bold sm:px-5 sm:text-sm"
                 >
-                  食胡
+                  {t.win}
                 </button>
               )}
               {/* Self-pong button — visible only on own turn. Stays
@@ -919,16 +948,16 @@ export default function PvpGamePage() {
                   meAlreadySelfPonged ||
                   selfPongCandidates.length === 0
                 }
-                className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
+                className="psy-btn psy-btn-accent px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35 sm:px-5 sm:text-sm"
                 title={
                   meFrozen
-                    ? '罰停中，本輪無法自摸碰'
+                    ? t.selfPongFrozen
                     : meAlreadySelfPonged
-                    ? '本回合自摸碰已用，下回合再來'
-                    : '自摸碰 · 你自己判斷維度和張數'
+                    ? t.selfPongUsed
+                    : t.selfPongHint
                 }
               >
-                自摸碰
+                {t.selfPong}
               </button>
             </div>
           )}
@@ -936,15 +965,15 @@ export default function PvpGamePage() {
           {/* Pong-intent panel — card selection prompt */}
           {pongIntent && targets && (
             <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
-              <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-                {pongIntent.type === 'self' ? '🎯 自摸碰' : '🎯 碰對方棄牌'} ·{' '}
+              <p className="psy-serif text-center text-xs text-[var(--psy-accent)] sm:text-sm">
+                {pongIntent.type === 'self' ? t.pongIntentSelf : t.pongIntentOther} ·{' '}
                 <span style={{ color: DIMENSION_META[pongIntent.dimension].colorHex }}>
-                  {DIMENSION_META[pongIntent.dimension].name}
+                  {dimName(pongIntent.dimension)}
                 </span>{' '}
-                · 請精確選擇{' '}
-                <span className="text-white font-bold">{pongIntentRequiredSelectCount}</span> 張
-                {pongIntent.type === 'self' ? '同維度牌（含剛抽到的）' : '同維度手牌（連同棄牌共湊 ' + pongIntentTarget + ' 張）'}
-                （已選 <span className="text-white font-bold">{selectedCardIds.length}</span>）
+                · {t.pongSelectPrompt}{' '}
+                <span className="text-white font-bold">{pongIntentRequiredSelectCount}</span> {t.cardsUnit}
+                {pongIntent.type === 'self' ? t.pongSelectSelfSuffix : t.pongSelectOtherPrefixA + pongIntentTarget + t.pongSelectOtherPrefixB}
+                {locale === 'en' ? ' (' : '（'}{t.selectedPrefix} <span className="text-white font-bold">{selectedCardIds.length}</span>{locale === 'en' ? ')' : '）'}
               </p>
               {pongIntent.type === 'self' && selfPongCandidates.length > 1 && (
                 <div className="flex flex-wrap justify-center gap-1.5">
@@ -958,7 +987,7 @@ export default function PvpGamePage() {
                         setSelectedCardIds([]);
                       }}
                       className="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition"
-                      title={isDeclared ? '⚠️ 已歸檔維度 · 提交將判失敗 + 罰停' : undefined}
+                      title={isDeclared ? t.declaredWarn : undefined}
                       style={{
                         borderColor: pongIntent.dimension === d
                           ? DIMENSION_META[d].colorHex
@@ -979,7 +1008,7 @@ export default function PvpGamePage() {
                         opacity: isDeclared && pongIntent.dimension !== d ? 0.6 : 1,
                       }}
                     >
-                      {DIMENSION_META[d].name}{isDeclared ? ' ⚠️' : ''}
+                      {dimName(d)}{isDeclared ? ' ⚠️' : ''}
                     </button>
                     );
                   })}
@@ -990,14 +1019,14 @@ export default function PvpGamePage() {
                   onClick={() => { setPongIntent(null); setSelectedCardIds([]); }}
                   className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
                 >
-                  取消
+                  {t.cancel}
                 </button>
                 <button
                   onClick={handleCommitPongIntent}
                   disabled={selectedCardIds.length !== pongIntentRequiredSelectCount}
                   className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:opacity-40"
                 >
-                  {pongIntent.type === 'self' ? '自摸歸檔' : '歸檔判定'}
+                  {pongIntent.type === 'self' ? t.selfArchive : t.archiveJudge}
                 </button>
               </div>
             </div>
@@ -1006,22 +1035,22 @@ export default function PvpGamePage() {
           {/* View-cards mode: pick up to 2 cards from your own hand */}
           {viewMode && (
             <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
-              <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-                🔍 選 2 張你想要查看的手牌（{pickedViewIds.length}/2）
+              <p className="psy-serif text-center text-xs text-[var(--psy-accent)] sm:text-sm">
+                🔍 {t.viewPickPrompt}（{pickedViewIds.length}/2）
               </p>
               <div className="flex justify-center gap-2">
                 <button
                   onClick={handleCancelView}
                   className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
                 >
-                  取消
+                  {t.cancel}
                 </button>
                 <button
                   onClick={handleConfirmView}
                   disabled={pickedViewIds.length === 0}
                   className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:opacity-40"
                 >
-                  查看
+                  {t.view}
                 </button>
               </div>
             </div>
@@ -1030,7 +1059,7 @@ export default function PvpGamePage() {
           {/* Hand + Declared */}
           <div className="flex flex-1 items-start justify-center gap-3 sm:gap-4">
             <div className="hidden flex-shrink-0 sm:block">
-              <DeclaredArea declaredSets={mePlayer.declaredSets} />
+              <DeclaredArea declaredSets={mePlayer.declaredSets} locale={locale} />
             </div>
             <div ref={handAreaRef} className="flex-1 min-w-0 overflow-visible">
               <PlayerHand
@@ -1040,6 +1069,7 @@ export default function PvpGamePage() {
                 isDeclaring={canPong || pongIntent !== null}
                 isMyTurn={isMyTurn}
                 mobileCompact={true}
+                locale={locale}
                 selectedCardIds={selectedCardIds}
                 viewedCardIds={viewedCardIds}
                 viewMode={viewMode}
@@ -1054,12 +1084,14 @@ export default function PvpGamePage() {
 
           {/* Round info */}
           <div className="hidden text-center text-xs text-[var(--psy-muted)] sm:block">
-            第 {gameState.currentRound}{gameState.totalRounds > 0 ? ` / ${gameState.totalRounds}` : ''} 輪
+            {locale === 'en'
+              ? `${t.roundWord} ${gameState.currentRound}${gameState.totalRounds > 0 ? ` / ${gameState.totalRounds}` : ''}`
+              : `第 ${gameState.currentRound}${gameState.totalRounds > 0 ? ` / ${gameState.totalRounds}` : ''} 輪`}
             {!isMyTurn && (
-              <span className="ml-2 text-[var(--psy-muted)]">— {currentPlayer?.name} 的回合</span>
+              <span className="ml-2 text-[var(--psy-muted)]">— {currentPlayer?.name}{t.turnOf}</span>
             )}
             {isMyTurn && (
-              <span className="ml-2 font-medium text-[var(--psy-accent)] animate-pulse">— 輪到你了</span>
+              <span className="ml-2 font-medium text-[var(--psy-accent)] animate-pulse">— {t.yourTurnNow}</span>
             )}
           </div>
         </div>
@@ -1067,7 +1099,7 @@ export default function PvpGamePage() {
       {mePlayer && targets && (
         <>
           <MobileGameSheet
-            title="人格刻度"
+            title={t.sheetPersonaTitle}
             open={mobileSheet === 'persona'}
             onClose={() => setMobileSheet(null)}
           >
@@ -1079,8 +1111,8 @@ export default function PvpGamePage() {
                   const isDone = declaredDims.has(d);
                   return (
                     <div key={d} className="rounded-xl border px-3 py-2" style={{ borderColor: meta.colorHex + '33', backgroundColor: meta.colorHex + '12' }}>
-                      <div className="psy-serif text-sm" style={{ color: meta.colorHex }}>{meta.name}</div>
-                      <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">分數 {score.toFixed(1)} · {isDone ? '已完成' : `目標 ${targets[d]} 張`}</div>
+                      <div className="psy-serif text-sm" style={{ color: meta.colorHex }}>{dimName(d)}</div>
+                      <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{t.scoreLabel} {score.toFixed(1)} · {isDone ? t.doneLabel : (locale === 'en' ? `${t.targetPrefix} ${targets[d]} cards` : `目標 ${targets[d]} 張`)}</div>
                     </div>
                   );
                 })}
@@ -1088,14 +1120,14 @@ export default function PvpGamePage() {
             </div>
           </MobileGameSheet>
           <MobileGameSheet
-            title="已歸檔人格"
+            title={t.sheetDeclaredTitle}
             open={mobileSheet === 'declared'}
             onClose={() => setMobileSheet(null)}
           >
-            {mePlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={mePlayer.declaredSets} /> : <p className="text-sm text-[var(--psy-muted)]">暫時還沒有完成歸檔的維度。</p>}
+            {mePlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={mePlayer.declaredSets} locale={locale} /> : <p className="text-sm text-[var(--psy-muted)]">{t.noArchiveYet}</p>}
           </MobileGameSheet>
           <MobileGameSheet
-            title="行動記錄"
+            title={t.sheetLogTitle}
             open={mobileSheet === 'log'}
             onClose={() => setMobileSheet(null)}
           >

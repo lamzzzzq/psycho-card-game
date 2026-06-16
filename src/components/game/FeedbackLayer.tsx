@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useAnimationControls } from 'framer-motion';
 import { GameAction, PlayerId } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
+import { STRINGS, type Locale } from '@/lib/i18n';
 
 type AnimationControls = ReturnType<typeof useAnimationControls>;
 type MinimalPlayer = { id: string; name: string };
@@ -22,7 +23,8 @@ interface Pop {
  * Return the controls and pops so the caller can attach them to their own
  * top-level layout node (keeps us out of the layout system).
  */
-export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[]) {
+export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[], locale: Locale = 'zh') {
+  const t = STRINGS[locale].game;
   const shakeControls = useAnimationControls();
   const flashControls = useAnimationControls();
   const [pops, setPops] = useState<Pop[]>([]);
@@ -38,7 +40,9 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[])
     prevLenRef.current = actions.length;
     if (!latest) return;
 
-    const nameOf = (id: PlayerId) => players.find((p) => p.id === id)?.name ?? '玩家';
+    const nameOf = (id: PlayerId) => players.find((p) => p.id === id)?.name ?? t.playerWord;
+    const dimNameOf = (meta: typeof DIMENSION_META[keyof typeof DIMENSION_META] | null) =>
+      meta ? (locale === 'en' ? meta.nameEn : meta.name) : '';
 
     if (latest.type === 'pong-success') {
       shakeControls.start({
@@ -50,7 +54,7 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[])
         ...p,
         {
           id: ++popIdRef.current,
-          text: `碰！+${meta?.name ?? ''}`,
+          text: `${t.popPong}${dimNameOf(meta)}`,
           playerName: nameOf(latest.playerId),
           kind: 'pong',
           colorHex: meta?.colorHex,
@@ -69,7 +73,7 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[])
         ...p,
         {
           id: ++popIdRef.current,
-          text: '🏆 食胡！',
+          text: t.popHu,
           playerName: nameOf(latest.playerId),
           kind: 'hu',
         },
@@ -79,7 +83,7 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[])
         ...p,
         {
           id: ++popIdRef.current,
-          text: '💥 食胡失敗',
+          text: t.popHuFail,
           playerName: nameOf(latest.playerId),
           kind: 'hu-fail',
         },
@@ -90,13 +94,14 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[])
         {
           id: ++popIdRef.current,
           // 重複碰已歸檔維度 → 明確提示「重複碰」，其餘失敗統一「碰失敗」。
-          text: latest.failReason === 'already-declared' ? '💥 重複碰' : '💥 碰失敗',
+          text: latest.failReason === 'already-declared' ? t.popPongDupe : t.popPongFail,
           playerName: nameOf(latest.playerId),
           kind: 'pong-fail',
         },
       ]);
     }
-  }, [actions.length, actions, players, shakeControls, flashControls]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actions.length, actions, players, shakeControls, flashControls, locale]);
 
   useEffect(() => {
     if (pops.length === 0) return;
@@ -143,7 +148,8 @@ export function useYourTurnNotifier(
   return banner;
 }
 
-export function YourTurnBanner({ bannerKey }: { bannerKey: number | null }) {
+export function YourTurnBanner({ bannerKey, locale = 'zh' }: { bannerKey: number | null; locale?: Locale }) {
+  const t = STRINGS[locale].game;
   return (
     <AnimatePresence>
       {bannerKey != null && (
@@ -167,7 +173,7 @@ export function YourTurnBanner({ bannerKey }: { bannerKey: number | null }) {
               Your Turn
             </div>
             <div className="mt-1 psy-serif text-3xl font-black text-[var(--psy-ink)]">
-              輪到你了！
+              {t.yourTurnBanner}
             </div>
           </div>
         </motion.div>

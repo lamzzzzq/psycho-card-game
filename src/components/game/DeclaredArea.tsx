@@ -5,22 +5,27 @@ import { DeclaredSet, PersonalityCard } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 import { Card } from './Card';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
+import { STRINGS, type Locale } from '@/lib/i18n';
 
 interface DeclaredAreaProps {
   declaredSets: DeclaredSet[];
   compact?: boolean;
   title?: string;
+  locale?: Locale;
 }
 
-export function DeclaredArea({ declaredSets, compact = false, title = '歸檔記錄' }: DeclaredAreaProps) {
+export function DeclaredArea({ declaredSets, compact = false, title, locale = 'zh' }: DeclaredAreaProps) {
+  const t = STRINGS[locale].game;
+  const dimName = (d: PersonalityCard['dimension']) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name);
+  const resolvedTitle = title ?? t.archiveRecord;
   const [open, setOpen] = useState(false);
   const [detailCard, setDetailCard] = useState<PersonalityCard | null>(null);
 
   const modalNode = (
-    <PsyOverlayPanel open={open} onClose={() => setOpen(false)} title={title} variant="centered">
+    <PsyOverlayPanel open={open} onClose={() => setOpen(false)} title={resolvedTitle} variant="centered">
       {declaredSets.length === 0 ? (
         <div className="rounded-xl border border-[rgba(200,155,93,0.12)] bg-[rgba(255,255,255,0.02)] px-4 py-8 text-center text-sm text-[var(--psy-muted)]">
-          暫無完成的歸檔
+          {t.noArchiveDone}
         </div>
       ) : (
         <div className="space-y-4">
@@ -35,7 +40,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '歸檔記
                 <div className="mb-3 flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: meta.colorHex }} />
                   <span className="text-sm font-medium" style={{ color: meta.colorHex }}>
-                    {meta.name} · {set.cards.length} 張
+                    {dimName(set.dimension)} · {set.cards.length} {t.cardsUnit}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -45,7 +50,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '歸檔記
                       type="button"
                       onClick={() => setDetailCard(card)}
                       className="rounded-[1rem] transition hover:-translate-y-1 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--psy-accent)]"
-                      aria-label={`查看歸檔卡牌：${card.text}`}
+                      aria-label={`${t.viewWord}: ${card.text}`}
                     >
                       <Card card={card} tiny />
                     </button>
@@ -63,7 +68,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '歸檔記
     <PsyOverlayPanel
       open={detailCard !== null}
       onClose={() => setDetailCard(null)}
-      title="卡牌詳情"
+      title={t.cardDetail}
       variant="centered"
       panelClassName="max-w-xl"
       zIndex={92}
@@ -75,7 +80,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '歸檔記
           </div>
           <div className="space-y-4">
             <div>
-              <p className="psy-eyebrow text-[10px]">人格描述</p>
+              <p className="psy-eyebrow text-[10px]">{t.personaDesc}</p>
               <p className="mt-2 psy-serif text-xl leading-9 text-[var(--psy-ink)]">{detailCard.text}</p>
             </div>
             <div
@@ -90,7 +95,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '歸檔記
                 className="h-2 w-2 rounded-full"
                 style={{ backgroundColor: DIMENSION_META[detailCard.dimension].colorHex }}
               />
-              {DIMENSION_META[detailCard.dimension].name}
+              {dimName(detailCard.dimension)}
             </div>
           </div>
         </div>
@@ -107,10 +112,10 @@ export function DeclaredArea({ declaredSets, compact = false, title = '歸檔記
           className="w-full rounded-[0.9rem] border border-[rgba(200,155,93,0.12)] bg-[rgba(255,255,255,0.02)] px-2.5 py-1.5 text-left transition hover:border-[rgba(200,155,93,0.22)]"
         >
           <div className="flex items-center gap-2">
-            <div className="psy-serif shrink-0 text-[10px] text-[var(--psy-muted)]">歸檔</div>
+            <div className="psy-serif shrink-0 text-[10px] text-[var(--psy-muted)]">{t.archiveWord}</div>
             <div className="min-w-0 flex-1">
               {declaredSets.length === 0 ? (
-                <div className="truncate text-[10px] text-[var(--psy-muted)]">暫無公開歸檔</div>
+                <div className="truncate text-[10px] text-[var(--psy-muted)]">{t.noPublicArchive}</div>
               ) : (
                 <div className="flex flex-wrap items-center gap-1.5">
                   {declaredSets.map((set) => {
@@ -126,7 +131,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '歸檔記
                       >
                         <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.colorHex }} />
                         <span className="text-[9px]" style={{ color: meta.colorHex }}>
-                          {meta.name} {set.cards.length}張
+                          {dimName(set.dimension)} {set.cards.length}{locale === 'en' ? '' : '張'}
                         </span>
                       </div>
                     );
@@ -150,12 +155,12 @@ export function DeclaredArea({ declaredSets, compact = false, title = '歸檔記
         className="psy-panel psy-etched w-[10.5rem] rounded-[1.2rem] p-2.5 text-left transition hover:border-[rgba(200,155,93,0.22)]"
       >
         <div className="flex items-center justify-between gap-2">
-          <div className="psy-serif text-[11px] text-[var(--psy-accent)]">{title}</div>
-          {declaredSets.length > 0 && <div className="text-[9px] text-[var(--psy-accent)]">查看</div>}
+          <div className="psy-serif text-[11px] text-[var(--psy-accent)]">{resolvedTitle}</div>
+          {declaredSets.length > 0 && <div className="text-[9px] text-[var(--psy-accent)]">{t.viewWord}</div>}
         </div>
         {declaredSets.length === 0 ? (
           <div className="mt-2 rounded-xl border border-[rgba(200,155,93,0.12)] bg-[rgba(255,255,255,0.02)] px-2 py-4 text-center text-[11px] text-[var(--psy-muted)]">
-            暫無完成的歸檔
+            {t.noArchiveDone}
           </div>
         ) : (
           <div className="mt-2 flex flex-col gap-2">
@@ -165,7 +170,7 @@ export function DeclaredArea({ declaredSets, compact = false, title = '歸檔記
                 <div key={set.dimension} className="flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.colorHex }} />
                   <span className="text-[9px] font-medium" style={{ color: meta.colorHex }}>
-                    {meta.name} {set.cards.length} 張
+                    {dimName(set.dimension)} {set.cards.length} {t.cardsUnit}
                   </span>
                 </div>
               );

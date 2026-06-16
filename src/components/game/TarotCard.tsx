@@ -156,7 +156,7 @@ export function TarotCard({
               border: `1px solid ${DIMENSION_META[revealedDimension].colorHex}55`,
             }}
           >
-            {DIMENSION_META[revealedDimension].name}
+            {locale === 'en' ? DIMENSION_META[revealedDimension].nameEn : DIMENSION_META[revealedDimension].name}
           </span>
         </div>
       )}

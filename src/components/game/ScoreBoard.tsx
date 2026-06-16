@@ -2,23 +2,26 @@
 
 import { Player } from '@/types';
 import { getRankings } from '@/lib/game-logic';
+import { STRINGS, type Locale } from '@/lib/i18n';
 
 interface ScoreBoardProps {
   players: Player[];
   currentRound: number;
   totalRounds: number;
+  locale?: Locale;
 }
 
-export function ScoreBoard({ players, currentRound, totalRounds }: ScoreBoardProps) {
+export function ScoreBoard({ players, currentRound, totalRounds, locale = 'zh' }: ScoreBoardProps) {
+  const t = STRINGS[locale].game;
   // 排名口徑統一：先比歸檔維度數（多者前），同數比剩餘手牌（少者前）。
   const sorted = getRankings(players);
 
   return (
     <div className="psy-panel space-y-3 rounded-[1.2rem] p-4">
       <div className="flex items-center justify-between text-sm">
-        <span className="psy-serif text-[var(--psy-ink)]">計分板</span>
+        <span className="psy-serif text-[var(--psy-ink)]">{t.scoreBoard}</span>
         <span className="text-[var(--psy-muted)]">
-          第 {currentRound} / {totalRounds} 輪
+          {locale === 'en' ? `${t.roundOf} ${currentRound} / ${totalRounds}` : `第 ${currentRound} / ${totalRounds} 輪`}
         </span>
       </div>
       <div className="space-y-2">
@@ -32,7 +35,7 @@ export function ScoreBoard({ players, currentRound, totalRounds }: ScoreBoardPro
               </span>
             </div>
             <span className="font-mono text-[var(--psy-ink)] tabular-nums">
-              歸檔 {player.declaredSets.length}/5
+              {t.archiveCount} {player.declaredSets.length}/5
             </span>
           </div>
         ))}
