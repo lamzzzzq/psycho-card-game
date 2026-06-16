@@ -123,15 +123,18 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
                     return (
                       <div
                         key={set.dimension}
-                        className="flex items-center gap-1 rounded-full px-2 py-0.5"
+                        className="flex min-w-0 max-w-full items-center gap-1 rounded-full px-2 py-0.5"
                         style={{
                           border: `1px solid ${meta.colorHex}2d`,
                           backgroundColor: meta.colorHex + '10',
                         }}
                       >
-                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.colorHex }} />
-                        <span className="text-[9px]" style={{ color: meta.colorHex }}>
-                          {dimName(set.dimension)} {set.cards.length}{locale === 'en' ? '' : '張'}
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: meta.colorHex }} />
+                        <span className="truncate text-[9px]" style={{ color: meta.colorHex }}>
+                          {dimName(set.dimension)}
+                        </span>
+                        <span className="shrink-0 text-[9px]" style={{ color: meta.colorHex }}>
+                          {set.cards.length}{locale === 'en' ? '' : '張'}
                         </span>
                       </div>
                     );

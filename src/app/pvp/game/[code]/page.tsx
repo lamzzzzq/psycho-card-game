@@ -815,9 +815,9 @@ export default function PvpGamePage() {
               <span className="shrink-0">{t.archiveCount} {mePlayer.declaredSets.length}/5</span>
             </div>
             <div className="flex items-center justify-end gap-1">
-              <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{t.persona}</button>
-              <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{t.archive}</button>
-              <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{t.log}</button>
+              <button onClick={() => setMobileSheet('persona')} style={{ borderRadius: '0.7rem' }} className="psy-btn psy-btn-ghost px-3 py-1 text-[11px]">{t.persona}</button>
+              <button onClick={() => setMobileSheet('declared')} style={{ borderRadius: '0.7rem' }} className="psy-btn psy-btn-ghost px-3 py-1 text-[11px]">{t.archive}</button>
+              <button onClick={() => setMobileSheet('log')} style={{ borderRadius: '0.7rem' }} className="psy-btn psy-btn-ghost px-3 py-1 text-[11px]">{t.log}</button>
             </div>
           </div>
 

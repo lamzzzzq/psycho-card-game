@@ -44,7 +44,8 @@ export function TarotCard({
 }: TarotCardProps) {
   const [imgError, setImgError] = useState(false);
   const showImg = !!imageSrc && !imgError;
-  const label = locale === 'en' ? (textEn ?? text) : text;
+  // 卡面去掉句尾标点（。/.）——句号会影响排版换行。
+  const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
 
   // 外层容器：建立 cqw 基准 = 卡片宽度。
   const wrapperStyle: React.CSSProperties = {
@@ -142,17 +143,17 @@ export function TarotCard({
           </div>
         </div>
 
-        {/* 揭示维度角标 */}
+        {/* 揭示维度角标：贴右上角、放大 */}
         {revealedDimension && (
-          <div className="absolute" style={{ right: '6cqw', top: '6cqw' }}>
+          <div className="absolute z-20" style={{ right: '3cqw', top: '3cqw' }}>
             <span
               className="psy-serif inline-flex items-center rounded-full font-semibold leading-none"
               style={{
-                padding: '1.5cqw 3cqw',
-                fontSize: '5cqw',
+                padding: '2cqw 4cqw',
+                fontSize: '6.5cqw',
                 backgroundColor: DIMENSION_META[revealedDimension].colorHex + '33',
                 color: DIMENSION_META[revealedDimension].colorHex,
-                border: `1px solid ${DIMENSION_META[revealedDimension].colorHex}55`,
+                border: `1px solid ${DIMENSION_META[revealedDimension].colorHex}66`,
               }}
             >
               {locale === 'en' ? DIMENSION_META[revealedDimension].nameEn : DIMENSION_META[revealedDimension].name}

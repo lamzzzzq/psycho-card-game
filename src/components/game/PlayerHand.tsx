@@ -35,7 +35,6 @@ export function PlayerHand({
   isDiscarding,
   isDeclaring = false,
   isMyTurn = false,
-  mobileCompact = false,
   locale = 'zh',
   selectedCardIds = [],
   viewedCardIds = [],
@@ -47,17 +46,6 @@ export function PlayerHand({
   onCardHover,
 }: PlayerHandProps) {
   const t = STRINGS[locale].game;
-  const [isCompactViewport, setIsCompactViewport] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia('(max-width: 767px)');
-    const sync = () => setIsCompactViewport(media.matches);
-    sync();
-    media.addEventListener('change', sync);
-    return () => media.removeEventListener('change', sync);
-  }, []);
-
-  const useCompactCards = mobileCompact && isCompactViewport;
 
   // Newly drawn card goes to the FIRST slot so it's easy to spot.
   const rawCards = drawnCard ? [drawnCard, ...cards] : cards;
@@ -188,13 +176,13 @@ export function PlayerHand({
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 18, delay: 0.1 }}
-                    className={`absolute z-30 pointer-events-none select-none ${useCompactCards ? '-left-1 top-1' : '-left-1 top-2'}`}
+                    className="absolute left-[5%] top-[3%] z-30 pointer-events-none select-none"
                   >
                     <div
-                      className={`${useCompactCards ? 'px-1.5 py-0.5 text-[7px]' : 'px-2 py-0.5 text-[9px]'} rounded-full border font-semibold tracking-[0.16em] text-[var(--psy-accent)] shadow-[0_8px_18px_rgba(0,0,0,0.22)]`}
+                      className="rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none tracking-[0.12em] text-[var(--psy-accent)] shadow-[0_8px_18px_rgba(0,0,0,0.22)]"
                       style={{
                         background: 'linear-gradient(180deg, rgba(20,31,46,0.96), rgba(12,21,31,0.98))',
-                        borderColor: 'rgba(200,155,93,0.34)',
+                        borderColor: 'rgba(200,155,93,0.45)',
                       }}
                     >
                       {t.newDraw}
