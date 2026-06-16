@@ -94,6 +94,11 @@ body::before {
   border: 1px solid var(--psy-border);
   background: #16222f;
   color: var(--psy-ink);
+  /* 移动端触控目标下限：保证所有按钮 ≥40px 高、内容居中（小字按钮原来仅靠 padding 会偏矮） */
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 14px 30px rgba(0, 0, 0, 0.22);
   transition:
     transform 140ms ease,
@@ -116,8 +121,8 @@ body::before {
 }
 
 .psy-btn-ghost {
-  background: rgba(255, 255, 255, 0.025);
-  color: var(--psy-ink-soft);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--psy-ink);
 }
 
 .psy-btn-accent {
