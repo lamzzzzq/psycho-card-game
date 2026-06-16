@@ -9,8 +9,6 @@ export interface DimensionMeta {
   nameEn: string;
   colorHex: string;
   description: string;
-  highLabel: string;
-  lowLabel: string;
 }
 
 // ===== Assessment =====

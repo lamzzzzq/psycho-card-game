@@ -9,11 +9,17 @@ import { usePvpStore } from '@/stores/usePvpStore';
 import { supabase } from '@/lib/supabase';
 import { getRoomPlayers, kickPlayer, dissolveRoom, leaveRoom } from '@/lib/room-api';
 import { Room, RoomSettings } from '@/types/pvp';
+import { useLocaleStore, STRINGS } from '@/lib/i18n';
+import { useHydrated } from '@/stores/useHydration';
 
 export default function RoomWaitPage() {
   const params = useParams();
   const router = useRouter();
   const code = params.code as string;
+  const hydrated = useHydrated();
+  const localeRaw = useLocaleStore((s) => s.locale);
+  const locale = hydrated ? localeRaw : 'zh';
+  const t = STRINGS[locale].pvpRoom;
 
   const { player } = usePlayerStore();
   const { bigFiveScores } = useAssessmentStore();
@@ -44,7 +50,7 @@ export default function RoomWaitPage() {
           .eq('code', code)
           .single();
 
-        if (roomErr || !roomData) { setError('房間不存在'); setLoading(false); return; }
+        if (roomErr || !roomData) { setError(t.roomNotExist); setLoading(false); return; }
 
         if (roomData.status === 'playing') {
           // 遊戲進行中：保留 gameState（持久化的舊快照），讓 game page
@@ -99,7 +105,7 @@ export default function RoomWaitPage() {
           }, 300);
         }
       } catch (e: any) {
-        setError(e.message ?? '加載失敗');
+        setError(e.message ?? t.loadFailed);
       } finally {
         setLoading(false);
       }
@@ -191,7 +197,7 @@ export default function RoomWaitPage() {
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">加載房間…</p>
+        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">{t.loadingRoom}</p>
       </div>
     );
   }
@@ -201,7 +207,7 @@ export default function RoomWaitPage() {
       <div className="flex flex-1 flex-col items-center justify-center gap-4">
         <p className="text-[var(--psy-danger)]">{error}</p>
         <button onClick={() => router.replace('/pvp')} className="psy-btn psy-btn-ghost px-6 py-2 text-sm">
-          返回大廳
+          {t.backLobby}
         </button>
       </div>
     );
@@ -222,19 +228,19 @@ export default function RoomWaitPage() {
           <div className="psy-serif text-7xl font-medium tracking-[0.32em] text-[var(--psy-accent)] tabular-nums sm:text-8xl">
             {code}
           </div>
-          <p className="text-sm text-[var(--psy-muted)]">分享給朋友，一起加入這局心理博弈。</p>
+          <p className="text-sm text-[var(--psy-muted)]">{t.shareHint}</p>
           <div className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(200,155,93,0.18),transparent_68%)]" />
         </div>
 
         <section className="psy-panel psy-etched space-y-4 rounded-[1.6rem] p-6">
           <div className="flex items-center justify-between">
-            <p className="psy-eyebrow text-[10px]">玩家 · {players.length} / {maxPlayers}</p>
+            <p className="psy-eyebrow text-[10px]">{t.playersLabel} · {players.length} / {maxPlayers}</p>
             {!isHost && (
               <button
                 onClick={handleLeave}
                 className="text-xs text-[var(--psy-danger)] underline decoration-[rgba(220,106,79,0.32)] underline-offset-4 transition hover:opacity-80"
               >
-                離開房間
+                {t.leaveRoom}
               </button>
             )}
           </div>
@@ -280,21 +286,21 @@ export default function RoomWaitPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="psy-serif truncate text-sm text-[var(--psy-ink)]">
-                            {p.student_id ?? '未知玩家'}
+                            {p.student_id ?? t.unknownPlayer}
                           </span>
                           {isRoomHost && (
                             <span className="rounded-full border border-[rgba(200,155,93,0.32)] bg-[var(--psy-accent-soft)] px-2 py-0.5 text-[10px] text-[var(--psy-accent)]">
-                              房主
+                              {t.host}
                             </span>
                           )}
                           {isMe && (
                             <span className="rounded-full border border-[rgba(200,155,93,0.32)] bg-[var(--psy-accent-soft)] px-2 py-0.5 text-[10px] text-[var(--psy-accent)]">
-                              我
+                              {t.me}
                             </span>
                           )}
                         </div>
                         <div className="text-xs text-[var(--psy-muted)]">
-                          {p.big_five ? '已完成測評 ✓' : '未完成測評'}
+                          {p.big_five ? t.assessedTrue : t.assessedFalse}
                         </div>
                       </div>
                       {isHost && !isMe && (
@@ -302,12 +308,12 @@ export default function RoomWaitPage() {
                           onClick={() => handleKick(p.player_id)}
                           className="text-xs text-[var(--psy-danger)] underline decoration-[rgba(220,106,79,0.32)] underline-offset-4 transition hover:opacity-80"
                         >
-                          踢出
+                          {t.kick}
                         </button>
                       )}
                     </>
                   ) : (
-                    <span className="text-sm text-[var(--psy-muted)]">等待加入…</span>
+                    <span className="text-sm text-[var(--psy-muted)]">{t.waitingJoin}</span>
                   )}
                 </motion.div>
               );
@@ -317,10 +323,10 @@ export default function RoomWaitPage() {
 
         {isHost && (
           <section className="psy-panel psy-etched space-y-5 rounded-[1.6rem] p-6">
-            <p className="psy-eyebrow text-[10px]">房間設置</p>
+            <p className="psy-eyebrow text-[10px]">{t.roomSettings}</p>
 
             <div className="space-y-2">
-              <p className="text-xs text-[var(--psy-muted)]">最多玩家數</p>
+              <p className="text-xs text-[var(--psy-muted)]">{t.maxPlayers}</p>
               <div className="grid grid-cols-2 gap-2">
                 {[3, 4].map((n) => (
                   <button
@@ -328,14 +334,14 @@ export default function RoomWaitPage() {
                     onClick={() => handleSettingsChange({ ...settings, maxPlayers: n })}
                     className={`psy-tile psy-serif text-sm ${settings.maxPlayers === n ? 'is-active' : ''}`}
                   >
-                    {n} 人
+                    {n}{t.playerUnit}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs text-[var(--psy-muted)]">遊戲輪數（0 = 無限）</p>
+              <p className="text-xs text-[var(--psy-muted)]">{t.rounds}</p>
               <div className="grid grid-cols-4 gap-2">
                 {[0, 3, 5, 10].map((n) => (
                   <button
@@ -358,11 +364,11 @@ export default function RoomWaitPage() {
               disabled={!canStart || starting}
               className="psy-btn psy-btn-accent psy-serif w-full py-4 text-lg font-semibold"
             >
-              {starting ? '啓動中…' : canStart ? '開始遊戲' : `等待玩家（${players.length}/2）`}
+              {starting ? t.starting : canStart ? t.startGame : `${t.waitingPlayersPrefix}${players.length}${t.waitingPlayersSuffix}`}
             </button>
           ) : (
             <div className="psy-serif animate-pulse rounded-[1.4rem] border border-dashed border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] py-4 text-center text-sm text-[var(--psy-muted)]">
-              等待房主開始遊戲…
+              {t.waitingHost}
             </div>
           )}
 
@@ -371,7 +377,7 @@ export default function RoomWaitPage() {
               onClick={handleDissolve}
               className="psy-btn psy-btn-danger w-full py-2.5 text-sm"
             >
-              解散房間
+              {t.dissolveRoom}
             </button>
           )}
         </div>

@@ -2,6 +2,8 @@
 
 import { BigFiveScores, Dimension, DIMENSIONS } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
+import { useLocaleStore } from '@/lib/i18n';
+import { useHydrated } from '@/stores/useHydration';
 
 interface RadarChartProps {
   scores: BigFiveScores;
@@ -9,6 +11,9 @@ interface RadarChartProps {
 }
 
 export function RadarChart({ scores, size = 280 }: RadarChartProps) {
+  const hydrated = useHydrated();
+  const localeRaw = useLocaleStore((s) => s.locale);
+  const locale = hydrated ? localeRaw : 'zh';
   const center = size / 2;
   const radius = size * 0.38;
   const levels = [1, 2, 3, 4, 5];
@@ -74,7 +79,7 @@ export function RadarChart({ scores, size = 280 }: RadarChartProps) {
               className="psy-serif text-xs font-medium"
               fill={meta.colorHex}
             >
-              {meta.name}
+              {locale === 'en' ? meta.nameEn : meta.name}
             </text>
           );
         })}
