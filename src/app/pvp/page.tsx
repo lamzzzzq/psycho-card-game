@@ -243,22 +243,33 @@ export default function PvpLobbyPage() {
         <section className="psy-panel psy-etched space-y-4 rounded-[1.6rem] p-6">
           <p className="psy-eyebrow text-[10px]">{t.playerInfo}</p>
           <div className="space-y-3">
-            <input
-              className="psy-input"
-              placeholder={t.studentIdPlaceholder}
-              value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
-              maxLength={20}
-            />
-            <input
-              className={`psy-input ${idMismatch ? 'is-error' : ''}`}
-              placeholder={t.studentIdConfirmPlaceholder}
-              value={studentIdConfirm}
-              onChange={(e) => setStudentIdConfirm(e.target.value)}
-              maxLength={20}
-            />
-            {idMismatch && (
-              <p className="text-xs text-[var(--psy-danger)]">{t.idMismatch}</p>
+            {assessedStudentId ? (
+              // 做过测评 → 学号已固定且测评页已校验，锁定只读，不重输/不会输错。
+              <div className="psy-input flex items-center gap-2" style={{ cursor: 'default' }}>
+                <span className="psy-eyebrow shrink-0 text-[10px]">{t.studentLabel}</span>
+                <span className="psy-serif text-[var(--psy-ink)]">{assessedStudentId}</span>
+                <span className="ml-auto text-[11px] text-[var(--psy-muted)]">🔒</span>
+              </div>
+            ) : (
+              <>
+                <input
+                  className="psy-input"
+                  placeholder={t.studentIdPlaceholder}
+                  value={studentId}
+                  onChange={(e) => setStudentId(e.target.value)}
+                  maxLength={20}
+                />
+                <input
+                  className={`psy-input ${idMismatch ? 'is-error' : ''}`}
+                  placeholder={t.studentIdConfirmPlaceholder}
+                  value={studentIdConfirm}
+                  onChange={(e) => setStudentIdConfirm(e.target.value)}
+                  maxLength={20}
+                />
+                {idMismatch && (
+                  <p className="text-xs text-[var(--psy-danger)]">{t.idMismatch}</p>
+                )}
+              </>
             )}
           </div>
 
@@ -267,7 +278,7 @@ export default function PvpLobbyPage() {
           {bigFiveScores ? (
             <div className="psy-chip">
               <span className="text-[var(--psy-success)]">✓</span>
-              <span>{t.assessDone}{assessedStudentId ? ` · ${t.studentLabel} ${assessedStudentId}` : ''}</span>
+              <span>{t.assessDone}</span>
             </div>
           ) : (
             <div className="space-y-3">
