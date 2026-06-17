@@ -34,11 +34,19 @@ export default function PvpLobbyPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = STRINGS[locale].pvpLobby;
   const { player, setPlayer } = usePlayerStore();
-  const { bigFiveScores, setManualScores } = useAssessmentStore();
+  const { bigFiveScores, setManualScores, studentId: assessedStudentId } = useAssessmentStore();
 
   const [tab, setTab] = useState<Tab>('create');
   const [studentId, setStudentId] = useState(player?.studentId ?? '');
   const [studentIdConfirm, setStudentIdConfirm] = useState('');
+
+  // 做过测评 → 学号已固定，自动预填(含确认)，免得重输。
+  useEffect(() => {
+    if (assessedStudentId && !studentId) {
+      setStudentId(assessedStudentId);
+      setStudentIdConfirm(assessedStudentId);
+    }
+  }, [assessedStudentId]); // eslint-disable-line react-hooks/exhaustive-deps
   const [avatar, setAvatar] = useState(player?.avatar ?? DEFAULT_AVATAR);
   const [joinCode, setJoinCode] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(3);
@@ -259,7 +267,7 @@ export default function PvpLobbyPage() {
           {bigFiveScores ? (
             <div className="psy-chip">
               <span className="text-[var(--psy-success)]">✓</span>
-              <span>{t.assessDone}</span>
+              <span>{t.assessDone}{assessedStudentId ? ` · ${t.studentLabel} ${assessedStudentId}` : ''}</span>
             </div>
           ) : (
             <div className="space-y-3">
