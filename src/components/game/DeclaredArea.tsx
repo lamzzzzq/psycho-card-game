@@ -75,7 +75,7 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
       {detailCard && (
         <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-center">
           <div className="flex justify-center">
-            <Card card={detailCard} revealedDimension={detailCard.dimension} />
+            <Card card={detailCard} revealedDimension={detailCard.dimension} locale={locale} />
           </div>
           <div className="space-y-4">
             <div>

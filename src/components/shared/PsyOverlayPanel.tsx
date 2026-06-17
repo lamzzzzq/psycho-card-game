@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { STRINGS, type Locale } from '@/lib/i18n';
 
 type Variant = 'centered' | 'bottom-sheet';
 
@@ -18,6 +19,8 @@ interface PsyOverlayPanelProps {
   hideAbove?: 'sm' | 'md';
   /** z-index of the backdrop layer */
   zIndex?: number;
+  /** Locale used for the default close label when closeLabel is omitted */
+  locale?: Locale;
   closeLabel?: string;
 }
 
@@ -58,8 +61,10 @@ export function PsyOverlayPanel({
   panelClassName = '',
   hideAbove,
   zIndex,
-  closeLabel = '關閉',
+  locale = 'zh',
+  closeLabel,
 }: PsyOverlayPanelProps) {
+  const resolvedCloseLabel = closeLabel ?? STRINGS[locale].game.close;
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -98,7 +103,7 @@ export function PsyOverlayPanel({
                 onClick={onClose}
                 className="psy-btn psy-btn-ghost px-3 py-1 text-xs"
               >
-                {closeLabel}
+                {resolvedCloseLabel}
               </button>
             </div>
             <div className={`psy-scroll ${VARIANT_BODY[variant]}`}>{children}</div>

@@ -613,7 +613,7 @@ function InteractiveSandbox({
             className="grid gap-3 rounded-xl border border-[rgba(200,155,93,0.28)] bg-[rgba(200,155,93,0.06)] p-3 text-xs text-[var(--psy-ink-soft)] sm:grid-cols-[auto_1fr_auto]"
           >
             <div className="flex justify-center">
-              <Card card={locCard(CLAIM_CARDS[state.claimDim], loc)} compact revealedDimension={state.claimDim} />
+              <Card card={locCard(CLAIM_CARDS[state.claimDim], loc)} compact revealedDimension={state.claimDim} locale={loc} />
             </div>
             <div className="flex flex-col justify-center">
               <div className="psy-serif text-sm text-[var(--psy-ink)]">{s.claimWho}</div>

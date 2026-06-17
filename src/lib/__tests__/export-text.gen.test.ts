@@ -23,7 +23,12 @@ const MIGRATED_MODULES: { section: string; mod: { zh: unknown; en: unknown } }[]
   { section: 'lobby', mod: LOBBY_T },
   { section: 'tutorial', mod: TUTORIAL_T },
 ];
-const MIGRATED_FILES = new Set(['rules', 'stats', 'lobby', 'tutorial']);
+// 已迁移：第一波整页 + 第二波单机牌桌/共享组件（其文案现走中心 STRINGS.game，
+// 已在上面的 i18n 行体现，故从「未i18n硬编码」清单剔除，避免重复/误报。）
+const MIGRATED_FILES = new Set([
+  'rules', 'stats', 'lobby', 'tutorial',
+  'game(single)', 'GameLog.tsx', 'MockGameScene.tsx', 'Card.tsx', 'DrawPile.tsx', 'PsyOverlayPanel.tsx',
+]);
 
 type Flat = Record<string, string>;
 interface Row { source: string; section: string; key: string; zh: string; en: string; note: string }

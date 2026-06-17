@@ -4,10 +4,12 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GameAction, Player, isDummyCard, isPersonalityCard } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
+import { STRINGS, type Locale } from '@/lib/i18n';
 
 interface GameLogProps {
   actions: GameAction[];
   players: Player[];
+  locale?: Locale;
 }
 
 interface ActionLabel {
@@ -18,58 +20,60 @@ interface ActionLabel {
   badge?: string; // 額外綠色標記，如「解除罰停」
 }
 
-function getActionLabel(action: GameAction): ActionLabel {
+function getActionLabel(action: GameAction, locale: Locale): ActionLabel {
+  const tg = STRINGS[locale].game;
   // Draw never exposes card contents — that's private information until
-  // the holder chooses to discard / declare it. Only show "摸了一張牌".
+  // the holder chooses to discard / declare it. Only show "drew a card".
   if (action.type === 'draw') {
-    return { tone: 'neutral', prefix: '摸了一張牌' };
+    return { tone: 'neutral', prefix: tg.logDrew };
   }
 
   if (action.type === 'discard') {
     // 兜底：正常流程已在第 2 跳解凍，此處一般不觸發（保留防殘留邊角）。
-    const badge = action.clearedPenalty ? '✅ 罰停解除' : undefined;
+    const badge = action.clearedPenalty ? tg.logPenaltyCleared : undefined;
     if (action.card && isDummyCard(action.card)) {
-      return { tone: 'neutral', prefix: '棄掉了檔案註記', detail: action.card.text, badge };
+      return { tone: 'neutral', prefix: tg.logDiscardedNote, detail: action.card.text, badge };
     }
     if (action.card && isPersonalityCard(action.card)) {
-      return { tone: 'neutral', prefix: '棄掉了一張線索牌', detail: action.card.text, badge };
+      return { tone: 'neutral', prefix: tg.logDiscardedClue, detail: action.card.text, badge };
     }
-    return { tone: 'neutral', prefix: '棄了一張牌', badge };
+    return { tone: 'neutral', prefix: tg.logDiscardedCard, badge };
   }
   if (action.type === 'hu-success') {
-    return { tone: 'success', prefix: '食胡！遊戲結束' };
+    return { tone: 'success', prefix: tg.logHuSuccess };
   }
   if (action.type === 'hu-fail') {
-    return { tone: 'danger', prefix: '食胡失敗！手牌公開', detail: '罰停一回合' };
+    return { tone: 'danger', prefix: tg.logHuFailPrefix, detail: tg.logHuFailDetail };
   }
   if (action.type === 'pong-success' && action.dimension) {
     return {
       tone: 'dimension',
-      prefix: `碰牌成功${action.cardCount ? ` (${action.cardCount}張)` : ''}`,
+      prefix: `${tg.logPongSuccessPrefix}${action.cardCount ? ` (${action.cardCount}${tg.logCardsUnit})` : ''}`,
       colorHex: DIMENSION_META[action.dimension].colorHex,
     };
   }
   if (action.type === 'pong-fail') {
     const why =
       action.failReason === 'already-declared'
-        ? '該維度已歸檔（重複碰）'
-        : '牌不對 / 張數不夠';
+        ? tg.logPongFailDupe
+        : tg.logPongFailWrong;
     return {
       tone: 'danger',
-      prefix: '碰牌失敗！手牌公開',
-      detail: `${why} · 罰停一回合`,
+      prefix: tg.logPongFailPrefix,
+      detail: `${why} · ${tg.logPongFailPenalty}`,
     };
   }
   // type === 'skip'：只由罰停自動跳過產生（主動「過」不記錄）。最後一跳會帶
   // clearedPenalty → 標「✅ 罰停解除」，讓玩家直觀看到第 2 跳後即恢復。
   return {
     tone: 'muted',
-    prefix: '⛔ 因罰停 · 本回合被自動跳過',
-    badge: action.clearedPenalty ? '✅ 罰停解除' : undefined,
+    prefix: tg.logSkip,
+    badge: action.clearedPenalty ? tg.logPenaltyCleared : undefined,
   };
 }
 
-export function GameLog({ actions, players }: GameLogProps) {
+export function GameLog({ actions, players, locale = 'zh' }: GameLogProps) {
+  const tg = STRINGS[locale].game;
   const [open, setOpen] = useState(false);
   const recentActions = actions.slice(-3).reverse();
   const allActions = [...actions].reverse();
@@ -81,20 +85,20 @@ export function GameLog({ actions, players }: GameLogProps) {
         type="button"
         onClick={() => setOpen(true)}
         className="psy-panel psy-etched w-full space-y-2 overflow-hidden rounded-[1.35rem] p-3 text-left transition hover:border-[rgba(200,155,93,0.34)]"
-        aria-label="查看完整行動記錄"
+        aria-label={tg.sheetLogTitle}
       >
         <div className="flex items-center justify-between gap-3">
-          <span className="psy-serif text-sm font-medium text-[var(--psy-ink)]">行動記錄</span>
-          <span className="text-[10px] text-[var(--psy-accent)]">查看全部</span>
+          <span className="psy-serif text-sm font-medium text-[var(--psy-ink)]">{tg.sheetLogTitle}</span>
+          <span className="text-[10px] text-[var(--psy-accent)]">{tg.logViewAll}</span>
         </div>
         <div className="psy-scroll max-h-32 space-y-1.5 overflow-y-auto pr-1">
           {recentActions.length === 0 ? (
-            <p className="text-xs text-[var(--psy-muted)]">暫無線索流動</p>
+            <p className="text-xs text-[var(--psy-muted)]">{tg.logNoActions}</p>
           ) : (
             recentActions.map((action, i) => {
               const player = getPlayer(action.playerId);
               if (!player) return null;
-              const label = getActionLabel(action);
+              const label = getActionLabel(action, locale);
               return (
                 <div
                   key={`${action.timestamp}-${action.type}-${i}`}
@@ -109,7 +113,7 @@ export function GameLog({ actions, players }: GameLogProps) {
                   <div className="min-w-0">
                     <div className="psy-serif text-[11px] font-semibold text-[var(--psy-ink)] truncate">
                       {player.name}
-                      <span className="ml-1 text-[9px] font-normal text-[var(--psy-muted)]">第{action.round}輪</span>
+                      <span className="ml-1 text-[9px] font-normal text-[var(--psy-muted)]">{tg.logRoundPrefix}{action.round}{tg.logRoundSuffix}</span>
                     </div>
                     <div
                       className={`mt-0.5 ${
@@ -161,25 +165,25 @@ export function GameLog({ actions, players }: GameLogProps) {
             >
               <div className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: 'rgba(200,155,93,0.12)' }}>
                 <h3 className="psy-serif text-sm font-bold text-[var(--psy-ink)]">
-                  行動記錄 · 共 {actions.length} 條
+                  {tg.logFullTitlePrefix}{actions.length}{tg.logFullTitleSuffix}
                 </h3>
                 <button
                   onClick={() => setOpen(false)}
                   className="psy-btn psy-btn-ghost px-3 py-1 text-xs"
                 >
-                  關閉
+                  {tg.close}
                 </button>
               </div>
 
               <div className="psy-scroll flex-1 overflow-y-auto px-5 py-4">
                 {allActions.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-[var(--psy-muted)]">暫無線索流動</p>
+                  <p className="py-8 text-center text-sm text-[var(--psy-muted)]">{tg.logNoActions}</p>
                 ) : (
                   <div className="space-y-2">
                     {allActions.map((action, i) => {
                       const player = getPlayer(action.playerId);
                       if (!player) return null;
-                      const label = getActionLabel(action);
+                      const label = getActionLabel(action, locale);
                       return (
                         <div
                           key={`${action.timestamp}-${action.type}-full-${i}`}
@@ -193,7 +197,7 @@ export function GameLog({ actions, players }: GameLogProps) {
                           <span className="text-base">{player.avatar}</span>
                           <div className="min-w-0 flex-1">
                             <div className="psy-serif text-sm text-[var(--psy-ink)]">{player.name}</div>
-                            <div className="mt-1 text-xs text-[var(--psy-muted)]">第 {action.round} 輪</div>
+                            <div className="mt-1 text-xs text-[var(--psy-muted)]">{tg.roundWord} {action.round}</div>
                           </div>
                           <div className="min-w-0 flex-[1.4] text-sm">
                             <div

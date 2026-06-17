@@ -1,14 +1,17 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { STRINGS, type Locale } from '@/lib/i18n';
 
 interface DrawPileProps {
   count: number;
   canDraw: boolean;
   onDraw: () => void;
+  locale?: Locale;
 }
 
-export function DrawPile({ count, canDraw, onDraw }: DrawPileProps) {
+export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProps) {
+  const tg = STRINGS[locale].game;
   return (
     <div className="flex flex-col items-center gap-2">
       <motion.button
@@ -48,7 +51,7 @@ export function DrawPile({ count, canDraw, onDraw }: DrawPileProps) {
           />
         )}
       </motion.button>
-      <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">剩餘 {count} 張</span>
+      <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">{tg.remainingPrefix} {count} {tg.cardsUnit}</span>
     </div>
   );
 }

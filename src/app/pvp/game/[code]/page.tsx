@@ -716,7 +716,7 @@ export default function PvpGamePage() {
             onMouseEnter={() => handleDrawPileHover(true)}
             onMouseLeave={() => handleDrawPileHover(false)}
           >
-            <DrawPile count={gameState.drawPileCount} canDraw={canDraw} onDraw={handleDraw} />
+            <DrawPile count={gameState.drawPileCount} canDraw={canDraw} onDraw={handleDraw} locale={locale} />
           </div>
           <div ref={discardPileRef}>
             <DiscardPile
@@ -730,7 +730,7 @@ export default function PvpGamePage() {
           </div>
         </div>
         <div className="hidden md:block md:col-start-3 md:justify-self-end w-52">
-          <GameLog actions={gameState.actionLog as any} players={allPlayers} />
+          <GameLog actions={gameState.actionLog as any} players={allPlayers} locale={locale} />
         </div>
       </div>
 
@@ -1138,7 +1138,7 @@ export default function PvpGamePage() {
             open={mobileSheet === 'log'}
             onClose={() => setMobileSheet(null)}
           >
-            <GameLog actions={gameState.actionLog as any} players={allPlayers} />
+            <GameLog actions={gameState.actionLog as any} players={allPlayers} locale={locale} />
           </MobileGameSheet>
         </>
       )}

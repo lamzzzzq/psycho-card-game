@@ -217,7 +217,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
                   ) : (
                     <div className="grid grid-cols-3 justify-items-center gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
                       {modalCards.map((card) => (
-                        <Card key={card.id} card={card} />
+                        <Card key={card.id} card={card} locale={locale} />
                       ))}
                     </div>
                   )}

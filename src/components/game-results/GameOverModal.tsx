@@ -1,18 +1,20 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Player, DIMENSIONS, isPersonalityCard } from '@/types';
+import { Player } from '@/types';
 import { getRankings } from '@/lib/game-logic';
-import { DIMENSION_META } from '@/data/dimensions';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
+import { STRINGS, type Locale } from '@/lib/i18n';
 
 interface GameOverModalProps {
   players: Player[];
   onPlayAgain: () => void;
   onBackToLobby: () => void;
+  locale?: Locale;
 }
 
-export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverModalProps) {
+export function GameOverModal({ players, onPlayAgain, onBackToLobby, locale = 'zh' }: GameOverModalProps) {
+  const tg = STRINGS[locale].game;
   const ranked = getRankings(players);
   const winner = ranked[0];
   const isHumanWinner = winner.isHuman;
@@ -33,12 +35,12 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverM
         <div className="space-y-2 text-center">
           <div className="text-4xl">{isHumanWinner ? '🏆' : '😤'}</div>
           <h2 className="psy-serif text-2xl text-[var(--psy-ink)]">
-            {isHumanWinner ? '你贏了！' : `${winner.name} 獲勝`}
+            {isHumanWinner ? tg.youWin : `${winner.name} ${tg.winShort}`}
           </h2>
           <p className="text-sm text-[var(--psy-muted)]">
             {hasFullWinner
-              ? `${isHumanWinner ? '你' : winner.name}成功 DECLARE 了所有人格維度！`
-              : '回合結束！按 DECLARE 進度和剩餘手牌排名'}
+              ? `${isHumanWinner ? (locale === 'en' ? 'You' : '你') : winner.name} ${tg.wonAllDims}`
+              : tg.roundEndRank}
           </p>
         </div>
 
@@ -66,16 +68,16 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverM
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-medium text-[var(--psy-ink)]">
-                      {declaredCount}/5 DECLARE
+                      {declaredCount}/5 {tg.archiveCount}
                     </div>
                     {player.hand.length > 0 && (
                       <div className="text-[10px] text-[var(--psy-danger)]">
-                        剩餘 {player.hand.length} 張
+                        {tg.remainingPrefix} {player.hand.length} {tg.cardsUnit}
                       </div>
                     )}
                   </div>
                 </div>
-                <DeclaredArea declaredSets={player.declaredSets} />
+                <DeclaredArea declaredSets={player.declaredSets} locale={locale} />
               </div>
             );
           })}
@@ -83,10 +85,10 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby }: GameOverM
 
         <div className="flex gap-3">
           <button onClick={onPlayAgain} className="psy-btn psy-btn-accent flex-1 py-3 font-medium">
-            再來一局
+            {tg.playAgain}
           </button>
           <button onClick={onBackToLobby} className="psy-btn psy-btn-ghost px-6 py-3 text-sm">
-            返回大廳
+            {tg.returnLobby}
           </button>
         </div>
       </motion.div>

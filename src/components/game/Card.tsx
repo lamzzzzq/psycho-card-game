@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { GameCard, isDummyCard, isPersonalityCard } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
+import { STRINGS, type Locale } from '@/lib/i18n';
 
 interface CardProps {
   card: GameCard;
@@ -20,9 +21,11 @@ interface CardProps {
   // the same slot as revealedDimension. Mutually exclusive — dimension
   // cards take precedence.
   revealedAsKnowledge?: boolean;
+  locale?: Locale;
 }
 
-export function Card({ card, faceUp = true, selected = false, onClick, compact = false, tiny = false, revealedDimension = null, revealedAsKnowledge = false }: CardProps) {
+export function Card({ card, faceUp = true, selected = false, onClick, compact = false, tiny = false, revealedDimension = null, revealedAsKnowledge = false, locale = 'zh' }: CardProps) {
+  const tg = STRINGS[locale].game;
   // Hooks must run unconditionally — keep them above any early return so
   // the hook count stays stable when faceUp flips (e.g. revealing an
   // opponent's hand after hu-fail).
@@ -116,7 +119,7 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
       )}
       {dummy && !compact && !tiny && (
         <div className="flex items-center gap-1">
-          <span className="psy-serif text-[8px] text-[var(--psy-muted)]">檔案註記</span>
+          <span className="psy-serif text-[8px] text-[var(--psy-muted)]">{tg.archiveNote}</span>
         </div>
       )}
       {!dummy && !compact && !tiny && <div />}
@@ -139,7 +142,7 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
               className="h-1.5 w-1.5 rounded-full"
               style={{ backgroundColor: '#c89b5d' }}
             />
-            <span>{DIMENSION_META[revealedDimension].name}</span>
+            <span>{locale === 'en' ? DIMENSION_META[revealedDimension].nameEn : DIMENSION_META[revealedDimension].name}</span>
           </span>
         </div>
       )}
@@ -163,7 +166,7 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
               className="h-1.5 w-1.5 rounded-full"
               style={{ backgroundColor: '#cdb78d' }}
             />
-            <span>知識牌</span>
+            <span>{tg.knowledgeCard}</span>
           </span>
         </div>
       )}

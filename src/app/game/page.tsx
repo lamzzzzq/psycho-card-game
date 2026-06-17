@@ -11,6 +11,8 @@ import {
   YourTurnBanner,
 } from '@/components/game/FeedbackLayer';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
+import { useHydrated } from '@/stores/useHydration';
+import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { DIMENSION_META } from '@/data/dimensions';
 import { DIMENSIONS, Dimension, isPersonalityCard } from '@/types';
 import { getTargetCounts } from '@/lib/scoring';
@@ -51,6 +53,11 @@ export default function GamePage() {
     resetGame,
   } = useGameStore();
   const { bigFiveScores } = useAssessmentStore();
+  const hydrated = useHydrated();
+  const localeRaw = useLocaleStore((s) => s.locale);
+  const locale = hydrated ? localeRaw : 'zh';
+  const tg = STRINGS[locale].game;
+  const dimName = (d: Dimension) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name);
   const [aiRunning, setAiRunning] = useState(false);
   const [timer, setTimer] = useState(30);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -289,12 +296,12 @@ export default function GamePage() {
     if (beforeGame && afterGame) {
       const lastAction = afterGame.actionLog[afterGame.actionLog.length - 1];
       if (lastAction?.type === 'hu-success') {
-        showBanner(true, '食胡！你贏了！');
+        showBanner(true, tg.toastHuWin);
       } else if (lastAction?.type === 'hu-fail') {
-        showBanner(false, '食胡失敗！手牌公開，罰停一回合');
+        showBanner(false, tg.toastHuFail);
       }
     }
-  }, [playerHu]);
+  }, [playerHu, tg]);
 
   // Self-pong (自摸碰) commit handler
   const handleSelfPongCommit = useCallback(() => {
@@ -307,12 +314,12 @@ export default function GamePage() {
     if (beforeGame && afterGame) {
       const lastAction = afterGame.actionLog[afterGame.actionLog.length - 1];
       if (lastAction?.type === 'pong-success') {
-        showBanner(true, `自摸碰！${DIMENSION_META[pongIntent.dimension].name} 完成！`);
+        showBanner(true, `${tg.toastSelfPongPrefix}${dimName(pongIntent.dimension)}${tg.toastDoneSuffix}`);
       } else if (lastAction?.type === 'pong-fail') {
-        showBanner(false, '自摸碰失敗！手牌公開，跳過下輪');
+        showBanner(false, tg.toastSelfPongFail);
       }
     }
-  }, [playerSelfPong, pongIntent, selectedCardIds]);
+  }, [playerSelfPong, pongIntent, selectedCardIds, tg, locale]);
 
   // Pong (碰) handler
   const handlePong = useCallback((dimension: Dimension, handCardIds: number[]) => {
@@ -323,14 +330,14 @@ export default function GamePage() {
     if (beforeGame && afterGame) {
       const lastAction = afterGame.actionLog[afterGame.actionLog.length - 1];
       if (lastAction?.type === 'pong-success') {
-        showBanner(true, `碰！${DIMENSION_META[dimension].name} 完成！`);
+        showBanner(true, `${tg.toastPongPrefix}${dimName(dimension)}${tg.toastDoneSuffix}`);
       } else if (lastAction?.type === 'pong-fail') {
         showBanner(false, lastAction.failReason === 'already-declared'
-          ? '重複碰！該維度已歸檔，手牌公開，跳過下輪'
-          : '碰失敗！手牌公開，跳過下輪');
+          ? tg.toastPongDupe
+          : tg.toastPongFail);
       }
     }
-  }, [playerPong]);
+  }, [playerPong, tg, locale]);
 
   const handleSkipPong = useCallback(async () => {
     setSelectedCardIds([]);
@@ -364,7 +371,7 @@ export default function GamePage() {
   if (!game) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="psy-serif text-[var(--psy-muted)]">加載中…</p>
+        <p className="psy-serif text-[var(--psy-muted)]">{tg.loadingShort}</p>
       </div>
     );
   }
@@ -468,10 +475,10 @@ export default function GamePage() {
           onClick={() => setExitConfirmOpen(true)}
           className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] px-3 py-1 text-[10px] text-[var(--psy-muted)] transition hover:border-[rgba(220,80,80,0.4)] hover:text-[var(--psy-danger)] sm:text-[11px]"
         >
-          ← 退出對局
+          {tg.leaveGame}
         </button>
         <span className="psy-serif text-[10px] uppercase tracking-[0.32em] text-[var(--psy-muted)] sm:text-[11px]">
-          人格麻將
+          {STRINGS[locale].home.title}
         </span>
       </div>
 
@@ -479,21 +486,22 @@ export default function GamePage() {
       <PsyOverlayPanel
         open={exitConfirmOpen}
         onClose={() => setExitConfirmOpen(false)}
-        title="確認退出本局？"
+        title={tg.exitConfirmTitle}
         variant="centered"
+        closeLabel={tg.close}
       >
         <div className="space-y-5 px-1 py-2">
           <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">
-            退出後本局進度將丟失，且無法恢復。
+            {tg.exitConfirmBody1}
             <br />
-            確認後將直接結束本局並回到大廳。
+            {tg.exitConfirmBodySingle}
           </p>
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setExitConfirmOpen(false)}
               className="psy-btn psy-btn-ghost px-5 py-2 text-sm"
             >
-              取消
+              {tg.cancel}
             </button>
             <button
               onClick={() => {
@@ -503,7 +511,7 @@ export default function GamePage() {
               }}
               className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
             >
-              確認退出
+              {tg.confirmExit}
             </button>
           </div>
         </div>
@@ -516,6 +524,7 @@ export default function GamePage() {
             key={opp.id}
             player={opp}
             isCurrentTurn={game.players[game.currentPlayerIndex].id === opp.id}
+            locale={locale}
           />
         ))}
       </div>
@@ -528,7 +537,7 @@ export default function GamePage() {
             onMouseEnter={() => handleDrawPileHover(true)}
             onMouseLeave={() => handleDrawPileHover(false)}
           >
-            <DrawPile count={game.drawPile.length} canDraw={canDraw} onDraw={playerDraw} />
+            <DrawPile count={game.drawPile.length} canDraw={canDraw} onDraw={playerDraw} locale={locale} />
           </div>
           <div ref={discardPileRef}>
             <DiscardPile
@@ -537,11 +546,12 @@ export default function GamePage() {
               discardPile={game.discardPile}
               actions={game.actionLog}
               players={game.players}
+              locale={locale}
             />
           </div>
         </div>
         <div className="hidden md:block md:col-start-3 md:justify-self-end w-52">
-          <GameLog actions={game.actionLog} players={game.players} />
+          <GameLog actions={game.actionLog} players={game.players} locale={locale} />
         </div>
       </div>
 
@@ -551,25 +561,24 @@ export default function GamePage() {
         {humanFrozenLockout && (
           <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
             <span>⛔</span>
-            <span className="hidden sm:inline">你被罰停一回合 — 下次輪到你時自動跳過，期間無法參與碰/食胡</span>
-            <span className="sm:hidden">罰停一回合 · 輪到你時跳過 · 不可碰/胡</span>
+            <span className="hidden sm:inline">{tg.penaltyLockoutFull}</span>
+            <span className="sm:hidden">{tg.penaltyLockoutShort}</span>
           </div>
         )}
         {humanAwaitingOwnDischarge && (
           <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-accent)] sm:text-sm">
             <span>⏳</span>
-            <span className="hidden sm:inline">解凍輪 — 正常出牌一次即可解除罰停（期間仍不可碰/胡）</span>
-            <span className="sm:hidden">解凍輪 · 出牌一次解除</span>
+            <span className="hidden sm:inline">{tg.thawFull}</span>
+            <span className="sm:hidden">{tg.thawShort}</span>
           </div>
         )}
         {/* Row 1: My personality scores */}
         <div className="hidden shrink-0 items-center justify-center gap-1.5 flex-wrap sm:flex">
           {DIMENSIONS.map((d) => {
-            const meta = DIMENSION_META[d];
             const score = humanPlayer.bigFiveScores[d];
             return (
               <div key={d} className="flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: 'rgba(200,155,93,0.10)', border: '1px solid rgba(200,155,93,0.2)' }}>
-                <span className="text-[9px] text-[var(--psy-ink-soft)]">{meta.name}</span>
+                <span className="text-[9px] text-[var(--psy-ink-soft)]">{dimName(d)}</span>
                 <span className="text-[10px] font-bold text-[var(--psy-accent)]">{score.toFixed(1)}</span>
               </div>
             );
@@ -579,7 +588,6 @@ export default function GamePage() {
         {/* Row 2: Targets */}
         <div className="hidden shrink-0 items-center justify-center gap-1.5 flex-wrap sm:flex">
           {DIMENSIONS.map((d) => {
-            const meta = DIMENSION_META[d];
             const target = targets[d];
             const isDone = declaredDims.has(d);
             return (
@@ -592,33 +600,33 @@ export default function GamePage() {
                 }}
               >
                 <span className="text-[9px]" style={{ color: isDone ? 'var(--psy-accent)' : 'var(--psy-muted)' }}>
-                  {meta.name}
+                  {dimName(d)}
                 </span>
                 <span
                   className="text-[10px] font-medium"
                   style={{ color: isDone ? 'var(--psy-accent)' : 'var(--psy-ink-soft)' }}
                 >
-                  {isDone ? '✓' : `${target}張`}
+                  {isDone ? '✓' : (locale === 'en' ? `${target} ${tg.cardsUnit}` : `${target}張`)}
                 </span>
               </div>
             );
           })}
           <div className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2 py-0.5">
-            <span className="text-[9px] text-[var(--psy-muted)]">完成 </span>
+            <span className="text-[9px] text-[var(--psy-muted)]">{tg.done} </span>
             <span className="text-[10px] font-medium text-[var(--psy-success)]">{humanPlayer.declaredSets.length}/5</span>
           </div>
         </div>
 
         <div className="flex shrink-0 flex-col gap-1.5 sm:hidden">
           <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
-            <span className="psy-serif text-[var(--psy-accent)]">第 {game.currentRound}{game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪</span>
-            <span className="truncate">已完成 {humanPlayer.declaredSets.length}/5</span>
+            <span className="psy-serif text-[var(--psy-accent)]">{locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}</span>
+            <span className="truncate">{tg.doneLabel} {humanPlayer.declaredSets.length}/5</span>
             <span className={`font-mono tabular-nums ${timer <= 5 ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-accent)]'}`}>{timer}s</span>
           </div>
           <div className="flex items-center justify-end gap-1">
-            <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">人格</button>
-            <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">歸檔</button>
-            <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">記錄</button>
+            <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{tg.persona}</button>
+            <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{tg.archive}</button>
+            <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{tg.log}</button>
           </div>
         </div>
 
@@ -636,6 +644,7 @@ export default function GamePage() {
               onClaim={handlePong}
               onSkip={handleSkipPong}
               onResolveAI={handleResolvePongAI}
+              locale={locale}
             />
           )}
 
@@ -650,7 +659,7 @@ export default function GamePage() {
                 onClick={handleHu}
                 className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
               >
-                食胡
+                {tg.win}
               </button>
             )}
 
@@ -679,13 +688,13 @@ export default function GamePage() {
                 className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
                 title={
                   humanFrozen
-                    ? '罰停中，本輪無法自摸碰'
+                    ? tg.selfPongFrozen
                     : humanPlayer.selfPongUsedThisTurn
-                    ? '本回合自摸碰已用，下回合再來'
-                    : '自摸碰 · 你自己判斷維度和張數'
+                    ? tg.selfPongUsed
+                    : tg.selfPongHint
                 }
               >
-                自摸碰
+                {tg.selfPong}
               </button>
             )}
 
@@ -693,13 +702,13 @@ export default function GamePage() {
               <button
                 onClick={() => { setViewMode(true); setPickedViewIds([]); }}
                 className="psy-btn psy-btn-ghost px-4 py-2 text-sm font-medium"
-                title="本回合可查看 2 張自己的手牌的人格"
+                title={tg.viewCardsTitle}
               >
-                🔍 查看 2 張牌（1/1）
+                🔍 {tg.viewTwoCards}（1/1）
               </button>
             )}
             {isHumanTurn && isDiscarding && viewUsedThisTurn && (
-              <span className="text-xs text-[var(--psy-muted)]">本回合查看已用</span>
+              <span className="text-xs text-[var(--psy-muted)]">{tg.viewUsed}</span>
             )}
 
             {/* AI turn button */}
@@ -710,7 +719,7 @@ export default function GamePage() {
                 className="psy-btn psy-btn-accent px-6 py-2 text-sm font-medium"
               >
                 {game.players[game.currentPlayerIndex].avatar}{' '}
-                {game.players[game.currentPlayerIndex].name} 的回合 — 點擊執行
+                {game.players[game.currentPlayerIndex].name}{tg.turnOf} — {tg.clickToRun}
               </button>
             )}
           </div>
@@ -719,14 +728,14 @@ export default function GamePage() {
         {viewMode && (
           <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
             <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-              🔍 選 2 張你想要查看的手牌（{pickedViewIds.length}/2）
+              🔍 {tg.viewPickPrompt}（{pickedViewIds.length}/2）
             </p>
             <div className="flex justify-center gap-2">
               <button
                 onClick={() => { setViewMode(false); setPickedViewIds([]); }}
                 className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
               >
-                取消
+                {tg.cancel}
               </button>
               <button
                 onClick={() => {
@@ -739,7 +748,7 @@ export default function GamePage() {
                 disabled={pickedViewIds.length === 0}
                 className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:opacity-40"
               >
-                查看
+                {tg.view}
               </button>
             </div>
           </div>
@@ -749,14 +758,14 @@ export default function GamePage() {
         {pongIntent && (
           <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
             <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-              {pongIntent.type === 'self' ? '🎯 自摸碰' : '🎯 碰對方棄牌'} ·{' '}
+              {pongIntent.type === 'self' ? tg.pongIntentSelf : tg.pongIntentOther} ·{' '}
               <span className="text-[var(--psy-accent)]">
-                {DIMENSION_META[pongIntent.dimension].name}
+                {dimName(pongIntent.dimension)}
               </span>{' '}
-              · 請精確選擇{' '}
-              <span className="text-white font-bold">{pongIntentRequiredSelectCount}</span> 張
-              {pongIntent.type === 'self' ? '同維度牌（含剛抽到的）' : '同維度手牌（連同棄牌共湊 ' + pongIntentTarget + ' 張）'}
-              （已選 <span className="text-white font-bold">{selectedCardIds.length}</span>）
+              · {tg.pongSelectPrompt}{' '}
+              <span className="text-white font-bold">{pongIntentRequiredSelectCount}</span> {tg.cardsUnit}
+              {pongIntent.type === 'self' ? tg.pongSelectSelfSuffix : tg.pongSelectOtherPrefixA + pongIntentTarget + tg.pongSelectOtherPrefixB}
+              {locale === 'en' ? ' (' : '（'}{tg.selectedPrefix} <span className="text-white font-bold">{selectedCardIds.length}</span>{locale === 'en' ? ')' : '）'}
             </p>
             {/* Self-pong dimension switcher (only when there are multiple candidates) */}
             {pongIntent.type === 'self' && selfPongCandidates.length > 1 && (
@@ -771,7 +780,7 @@ export default function GamePage() {
                       setSelectedCardIds([]);
                     }}
                     className="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition"
-                    title={isDeclared ? '⚠️ 已歸檔維度 · 提交將判失敗 + 罰停' : undefined}
+                    title={isDeclared ? tg.declaredWarn : undefined}
                     style={{
                       borderColor: pongIntent.dimension === d
                         ? '#bb8e49'
@@ -792,7 +801,7 @@ export default function GamePage() {
                       opacity: isDeclared && pongIntent.dimension !== d ? 0.6 : 1,
                     }}
                   >
-                    {DIMENSION_META[d].name}{isDeclared ? ' ⚠️' : ''}
+                    {dimName(d)}{isDeclared ? ' ⚠️' : ''}
                   </button>
                   );
                 })}
@@ -803,7 +812,7 @@ export default function GamePage() {
                 onClick={() => { setPongIntent(null); setSelectedCardIds([]); }}
                 className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
               >
-                取消
+                {tg.cancel}
               </button>
               <button
                 onClick={() => {
@@ -817,7 +826,7 @@ export default function GamePage() {
                 disabled={selectedCardIds.length !== pongIntentRequiredSelectCount}
                 className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:opacity-40"
               >
-                {pongIntent.type === 'self' ? '自摸歸檔' : '歸檔判定'}
+                {pongIntent.type === 'self' ? tg.selfArchive : tg.archiveJudge}
               </button>
             </div>
           </div>
@@ -826,7 +835,7 @@ export default function GamePage() {
         {/* Hand + Declared cards */}
         <div className="flex flex-1 items-start justify-center gap-3 sm:gap-4">
           <div className="hidden flex-shrink-0 sm:block">
-            <DeclaredArea declaredSets={humanPlayer.declaredSets} />
+            <DeclaredArea declaredSets={humanPlayer.declaredSets} locale={locale} />
           </div>
           <div ref={handAreaRef} className="flex-1 min-w-0 overflow-visible">
             <PlayerHand
@@ -850,6 +859,7 @@ export default function GamePage() {
               onDiscardCard={handleDiscardCard}
               onToggleSelect={handleToggleSelect}
               onCardHover={handleCardHover}
+              locale={locale}
             />
           </div>
         </div>
@@ -857,11 +867,11 @@ export default function GamePage() {
         {isHumanActive && (
           <div className="hidden items-center justify-center gap-2 sm:flex">
             {canDraw && (
-              <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">點擊牌堆抽一張牌</p>
+              <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">{tg.clickToDraw}</p>
             )}
             {isDiscarding && !game.drawnCard && (
               <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">
-                碰牌成功 — 請直接出一張手牌
+                {tg.pongDoneDiscard}
               </p>
             )}
             <span className={`text-sm font-mono font-bold ${timer <= 5 ? 'text-red-300 animate-pulse' : timer <= 10 ? 'text-[var(--psy-accent)]' : 'text-[var(--psy-muted)]'}`}>
@@ -872,25 +882,27 @@ export default function GamePage() {
 
         {/* Round info */}
         <div className="hidden text-center text-xs text-[var(--psy-muted)] sm:block">
-          第 {game.currentRound}{game.settings.totalRounds > 0 ? ` / ${game.settings.totalRounds}` : ''} 輪
+          {locale === 'en'
+            ? `${tg.roundWord} ${game.currentRound}${game.settings.totalRounds > 0 ? ` / ${game.settings.totalRounds}` : ''}`
+            : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? ` / ${game.settings.totalRounds}` : ''} 輪`}
         </div>
       </div>
 
       <MobileGameSheet
-        title="人格刻度"
+        title={tg.sheetPersonaTitle}
         open={mobileSheet === 'persona'}
         onClose={() => setMobileSheet(null)}
+        locale={locale}
       >
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {DIMENSIONS.map((d) => {
-              const meta = DIMENSION_META[d];
               const score = humanPlayer.bigFiveScores[d];
               const isDone = declaredDims.has(d);
               return (
                 <div key={d} className="rounded-xl border px-3 py-2" style={{ borderColor: isDone ? 'rgba(200,155,93,0.45)' : 'rgba(200,155,93,0.2)', backgroundColor: isDone ? 'rgba(200,155,93,0.12)' : 'rgba(255,255,255,0.03)' }}>
-                  <div className="psy-serif text-sm text-[var(--psy-accent)]">{meta.name}</div>
-                  <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">分數 {score.toFixed(1)} · {isDone ? '已完成' : `目標 ${targets[d]} 張`}</div>
+                  <div className="psy-serif text-sm text-[var(--psy-accent)]">{dimName(d)}</div>
+                  <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{tg.scoreLabel} {score.toFixed(1)} · {isDone ? tg.doneLabel : (locale === 'en' ? `${tg.targetPrefix} ${targets[d]} ${tg.cardsUnit}` : `目標 ${targets[d]} 張`)}</div>
                 </div>
               );
             })}
@@ -898,18 +910,20 @@ export default function GamePage() {
         </div>
       </MobileGameSheet>
       <MobileGameSheet
-        title="已歸檔人格"
+        title={tg.sheetDeclaredTitle}
         open={mobileSheet === 'declared'}
         onClose={() => setMobileSheet(null)}
+        locale={locale}
       >
-        {humanPlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={humanPlayer.declaredSets} /> : <p className="text-sm text-[var(--psy-muted)]">暫時還沒有完成歸檔的維度。</p>}
+        {humanPlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={humanPlayer.declaredSets} locale={locale} /> : <p className="text-sm text-[var(--psy-muted)]">{tg.noArchiveYet}</p>}
       </MobileGameSheet>
       <MobileGameSheet
-        title="行動記錄"
+        title={tg.sheetLogTitle}
         open={mobileSheet === 'log'}
         onClose={() => setMobileSheet(null)}
+        locale={locale}
       >
-        <GameLog actions={game.actionLog} players={game.players} />
+        <GameLog actions={game.actionLog} players={game.players} locale={locale} />
       </MobileGameSheet>
 
       {/* Game Over */}
@@ -923,6 +937,7 @@ export default function GamePage() {
             resetGame();
             router.push('/lobby');
           }}
+          locale={locale}
         />
       )}
     </motion.div>
