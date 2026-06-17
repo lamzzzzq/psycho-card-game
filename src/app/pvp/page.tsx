@@ -34,7 +34,7 @@ export default function PvpLobbyPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = STRINGS[locale].pvpLobby;
   const { player, setPlayer } = usePlayerStore();
-  const { bigFiveScores, setManualScores, studentId: assessedStudentId } = useAssessmentStore();
+  const { bigFiveScores, setManualScores, studentId: assessedStudentId, setStudentId: persistStudentId } = useAssessmentStore();
 
   const [tab, setTab] = useState<Tab>('create');
   const [studentId, setStudentId] = useState(player?.studentId ?? '');
@@ -132,6 +132,8 @@ export default function PvpLobbyPage() {
 
   async function ensurePlayer() {
     const sid = effectiveStudentId;
+    // 把学号定为 assessment store 的真相源 → 下次进大厅就锁定显示，避免"有分数无学号"的不一致。
+    if (sid && sid !== assessedStudentId) persistStudentId(sid);
     const info: PlayerInfo = { id: sid, studentId: sid, bigFive: bigFiveScores, avatar };
     await upsertPlayer(info);
     setPlayer(info);
@@ -338,6 +340,8 @@ export default function PvpLobbyPage() {
                   <button
                     onClick={() => {
                       setManualScores(manualScoresInput);
+                      // 手动设分时一并把学号定为真相源，保证"有分数→有学号"，下次锁定。
+                      if (effectiveStudentId) persistStudentId(effectiveStudentId);
                       setShowManualInput(false);
                     }}
                     className="psy-btn psy-btn-accent w-full py-2 text-xs font-medium"
