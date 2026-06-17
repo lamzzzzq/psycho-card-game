@@ -330,6 +330,7 @@ export const STRINGS = {
     },
     results: {
       loading: '加載中…',
+      backHome: '回到主頁',
       notAssessed: '尚未完成測評',
       startAssess: '開始測評',
       title: '你的人格畫像',
@@ -640,6 +641,7 @@ export const STRINGS = {
     },
     results: {
       loading: 'Loading…',
+      backHome: 'Back to Home',
       notAssessed: 'Assessment not completed yet',
       startAssess: 'Start Assessment',
       title: 'Your Personality Portrait',

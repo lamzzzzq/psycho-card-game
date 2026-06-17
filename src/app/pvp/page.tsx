@@ -127,8 +127,11 @@ export default function PvpLobbyPage() {
     );
   }
 
+  // 测评学号优先（锁定态的真相源）；否则用手输的。保证从已测评态点 Play Online 必带学号。
+  const effectiveStudentId = (assessedStudentId || studentId).trim();
+
   async function ensurePlayer() {
-    const sid = studentId.trim();
+    const sid = effectiveStudentId;
     const info: PlayerInfo = { id: sid, studentId: sid, bigFive: bigFiveScores, avatar };
     await upsertPlayer(info);
     setPlayer(info);
@@ -151,12 +154,12 @@ export default function PvpLobbyPage() {
   }
 
   async function handleCreate() {
-    if (!studentId.trim()) { setError(t.enterStudentId); return; }
-    if (studentId.trim() !== studentIdConfirm.trim()) { setError(t.idMismatch); return; }
+    if (!effectiveStudentId) { setError(t.enterStudentId); return; }
+    if (!assessedStudentId && studentId.trim() !== studentIdConfirm.trim()) { setError(t.idMismatch); return; }
     setLoading(true);
     setError('');
     try {
-      const sid = studentId.trim();
+      const sid = effectiveStudentId;
       const conflict = await collisionCheck(sid);
       if (conflict) { setError(conflict); setLoading(false); return; }
       const info = await ensurePlayer();
@@ -172,13 +175,13 @@ export default function PvpLobbyPage() {
   }
 
   async function handleJoin() {
-    if (!studentId.trim()) { setError(t.enterStudentId); return; }
-    if (studentId.trim() !== studentIdConfirm.trim()) { setError(t.idMismatch); return; }
+    if (!effectiveStudentId) { setError(t.enterStudentId); return; }
+    if (!assessedStudentId && studentId.trim() !== studentIdConfirm.trim()) { setError(t.idMismatch); return; }
     if (joinCode.length !== 4) { setError(t.enter4Code); return; }
     setLoading(true);
     setError('');
     try {
-      const sid = studentId.trim();
+      const sid = effectiveStudentId;
       const conflict = await collisionCheck(sid);
       if (conflict) { setError(conflict); setLoading(false); return; }
       const info = await ensurePlayer();
