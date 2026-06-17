@@ -38,7 +38,7 @@ export function initializePvpGame(
 
   const players: Player[] = orderedPlayers.map((p, i) => ({
     id: p.player_id as PlayerId,   // UUID cast — safe at runtime
-    name: p.student_id ?? `玩家${i + 1}`,
+    name: p.student_id ?? p.player_id ?? `玩家${i + 1}`,
     avatar: p.avatar ?? '🧑',
     hand: hands[i],
     isHuman: true,                 // All PVP players are human (no AI logic runs)

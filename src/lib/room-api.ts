@@ -79,9 +79,13 @@ export async function joinRoom(roomCode: string, playerId: string, avatar?: stri
   for (let attempt = 0; attempt <= maxPlayers; attempt++) {
     const { data: players, error: countError } = await supabase
       .from('room_players')
-      .select('seat_index')
+      .select('seat_index, player_id')
       .eq('room_id', room.id);
     if (countError) throw countError;
+
+    // 已在房里(刷新/重连/再次加入) → 保留原座位，不重复插入。
+    const mine = players?.find((p) => p.player_id === playerId);
+    if (mine) return { room: room as Room, seatIndex: mine.seat_index };
 
     const currentCount = players?.length ?? 0;
     if (currentCount >= maxPlayers) throw new Error('房間已滿');
@@ -91,16 +95,14 @@ export async function joinRoom(roomCode: string, playerId: string, avatar?: stri
     let seatIndex = 0;
     while (takenSeats.has(seatIndex)) seatIndex++;
 
-    // Add player to room (upsert: if already seated, keep existing seat)
+    // 普通 insert（非 upsert/DO NOTHING）：这样座位被并发抢走会真正抛 23505，
+    // 由循环重算下一个空位重试（DO NOTHING 会吞掉冲突→静默拿到没插入的座位）。
     const { error: joinError } = await supabase
       .from('room_players')
-      .upsert(
-        { room_id: room.id, player_id: playerId, seat_index: seatIndex, avatar: avatar ?? null },
-        { onConflict: 'room_id,player_id', ignoreDuplicates: true }
-      );
+      .insert({ room_id: room.id, player_id: playerId, seat_index: seatIndex, avatar: avatar ?? null });
 
     if (!joinError) return { room: room as Room, seatIndex };
-    if (joinError.code === '23505') continue; // 座位被并发抢走 → 重算重试
+    if (joinError.code === '23505') continue; // 座位/玩家冲突 → 重读(命中 mine 或换座)重试
     throw joinError;
   }
 

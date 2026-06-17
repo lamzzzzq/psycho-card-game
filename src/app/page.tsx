@@ -130,13 +130,18 @@ export default function Home() {
           </button>
           <button
             onClick={() => {
-              // 重测(有成绩且进度为0)→ 非破坏式 startRetake，保留旧报告直到新测完成。
-              if (hasResults && progress === 0) startRetake();
+              // 已完成测评(progress=50) → 非破坏式重测；重测进行中(progress<50)则不重置、继续答。
+              // 注: calculateScores 不清 answers，故完成后 progress 仍=50。
+              if (hasResults && progress >= QUESTIONS.length) startRetake();
               router.push('/assessment');
             }}
             className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
           >
-            {progress > 0 ? `${t.continueAssess} (${progress}/${QUESTIONS.length})` : hasResults ? t.reassess : t.startAssess}
+            {progress > 0 && progress < QUESTIONS.length
+              ? `${t.continueAssess} (${progress}/${QUESTIONS.length})`
+              : hasResults
+              ? t.reassess
+              : t.startAssess}
           </button>
           {hasResults && (
             <button

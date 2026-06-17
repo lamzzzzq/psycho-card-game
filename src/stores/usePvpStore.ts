@@ -101,7 +101,23 @@ export const usePvpStore = create<PvpStore>()(
         switch (payload.type) {
           case 'player-joined': {
             set(s => {
-              if (s.players.some(p => p.player_id === payload.player.id)) return s;
+              const idx = s.players.findIndex(p => p.player_id === payload.player.id);
+              if (idx >= 0) {
+                // 已存在 → 合并补齐缺失字段(用既有值优先，incoming 只填 null)。
+                // 这样后到的「重广播」能把先前建成 null 的 big_five/学号/头像补上，
+                // 修复各客户端「測評狀態/学号」分歧；且不会用 null 覆盖已有的好值。
+                const ex = s.players[idx];
+                const merged = {
+                  ...ex,
+                  student_id: ex.student_id ?? payload.player.studentId,
+                  big_five: ex.big_five ?? payload.player.bigFive,
+                  avatar: ex.avatar ?? payload.player.avatar,
+                };
+                if (merged.student_id === ex.student_id && merged.big_five === ex.big_five && merged.avatar === ex.avatar) return s;
+                const next = [...s.players];
+                next[idx] = merged;
+                return { players: next };
+              }
               return {
                 players: [...s.players, {
                   room_id: room.id,
