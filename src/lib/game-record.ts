@@ -173,9 +173,20 @@ async function saveInner(input: SaveGameSessionInput): Promise<string | null> {
             : null,  // single-player winner is 'human'|'ai-N', not a UUID
       });
     if (sErr) {
-      if (sErr.code === '23505') return sessionId; // 已存在 → 视为成功，不重复写
-      console.warn('[game-record] insert session failed', sErr);
-      return null;
+      if (sErr.code === '23505') {
+        // session 已存在：可能是(a)上次完整写过 或(b)上次写完 session 就挂了、participants 没写(孤儿)。
+        // participants 是单条多行 insert(全有或全无)，故查它就能区分：有→真已存档,跳过;无→半写,继续补。
+        const { data: existing } = await supabase
+          .from('game_participants')
+          .select('id')
+          .eq('session_id', sessionId)
+          .limit(1);
+        if (existing && existing.length > 0) return sessionId; // 已完整存档 → 不重复写
+        // 否则落空(孤儿 session) → 不 return，往下补写 snapshots + participants
+      } else {
+        console.warn('[game-record] insert session failed', sErr);
+        return null;
+      }
     }
 
     // 2) Snapshot BigFive for every non-AI seat (one snapshot per participant).
