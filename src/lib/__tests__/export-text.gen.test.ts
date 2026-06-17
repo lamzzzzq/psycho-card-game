@@ -11,6 +11,19 @@ import { test } from 'vitest';
 import { STRINGS } from '@/lib/i18n';
 import { QUESTIONS } from '@/data/questions';
 import { DIMENSION_META } from '@/data/dimensions';
+import { RULES_T } from '@/lib/i18n/rules';
+import { STATS_T } from '@/lib/i18n/stats';
+import { LOBBY_T } from '@/lib/i18n/lobby';
+import { TUTORIAL_T } from '@/lib/i18n/tutorial';
+
+// 已迁出中心 STRINGS、改用独立页面模块的页面。这些不再算「未i18n硬编码」。
+const MIGRATED_MODULES: { section: string; mod: { zh: unknown; en: unknown } }[] = [
+  { section: 'rules', mod: RULES_T },
+  { section: 'stats', mod: STATS_T },
+  { section: 'lobby', mod: LOBBY_T },
+  { section: 'tutorial', mod: TUTORIAL_T },
+];
+const MIGRATED_FILES = new Set(['rules', 'stats', 'lobby', 'tutorial']);
 
 type Flat = Record<string, string>;
 interface Row { source: string; section: string; key: string; zh: string; en: string; note: string }
@@ -19,6 +32,10 @@ function flatten(obj: unknown, prefix: string, out: Flat) {
   if (obj === null || obj === undefined) return;
   if (Array.isArray(obj)) {
     obj.forEach((v, i) => flatten(v, `${prefix}[${i}]`, out));
+    return;
+  }
+  if (typeof obj === 'function') {
+    out[prefix] = '⟨动态句·见代码⟩';
     return;
   }
   if (typeof obj === 'object') {
@@ -99,12 +116,25 @@ test('export bilingual text to docs/i18n-review.csv', () => {
     rows.push({ source: 'i18n', section: 'dimension', key: `dimension.${d.key}.description`, zh: d.description, en: '', note: 'EN 暂缺，待补' });
   }
 
-  // 硬编码（未走 i18n）字符串：逐页 agent 扫描结果。
+  // 已迁移页面：从独立模块按相同 key 路径 1:1 对齐（已含英文）。
+  for (const { section, mod } of MIGRATED_MODULES) {
+    const z: Flat = {};
+    const e: Flat = {};
+    flatten(mod.zh, '', z);
+    flatten(mod.en, '', e);
+    const mkeys = Array.from(new Set([...Object.keys(z), ...Object.keys(e)]));
+    for (const key of mkeys) {
+      rows.push({ source: 'i18n(页面模块)', section, key: `${section}.${key}`, zh: z[key] ?? '', en: e[key] ?? '', note: '' });
+    }
+  }
+
+  // 硬编码（未走 i18n）字符串：逐页 agent 扫描结果。已迁移页面跳过。
   const litPath = resolve(process.cwd(), 'docs/_hardcoded-literals.json');
   const lits = JSON.parse(readFileSync(litPath, 'utf8')) as { file: string; zh: string; en: string }[];
   const seen = new Set<string>();
   let n = 0;
   for (const lit of lits) {
+    if (MIGRATED_FILES.has(lit.file)) continue;
     if (!isMeaningful(lit.zh, lit.en)) continue;
     const dedupKey = `${lit.file}|${lit.zh}|${lit.en}`;
     if (seen.has(dedupKey)) continue;

@@ -46,6 +46,7 @@ export interface PersonalityCard {
 export interface DummyCard {
   id: number;
   text: string;
+  textEn?: string;
   isDummy: true;
 }
 

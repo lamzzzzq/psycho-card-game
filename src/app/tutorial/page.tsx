@@ -1,123 +1,19 @@
 'use client';
 
-import { useReducer, useState } from 'react';
+import { useMemo, useReducer, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/game/Card';
 import { DIMENSION_META } from '@/data/dimensions';
 import { DIMENSIONS } from '@/types';
+import { useHydrated } from '@/stores/useHydration';
+import { useLocaleStore, type Locale } from '@/lib/i18n';
+import { TUTORIAL_T } from '@/lib/i18n/tutorial';
 import type { GameCard, PersonalityCard, DummyCard, Dimension } from '@/types';
 
-// ─── Static doc: 概念分組 ────────────────────────────────────────────────
-type Step = {
-  title: string;
-  body: string;
-  hint?: string;
-};
-
-type FlowStep = {
-  title: string;
-  body: string;
-  note?: string;
-};
-
-const PVP_FLOW: FlowStep[] = [
-  {
-    title: '進入聯機對戰',
-    body: '從首頁點「聯機對戰」。這裏不是直接進牌桌，而是先進入聯機大廳。',
-  },
-  {
-    title: '填寫身份信息',
-    body: '只輸入學號，並再次輸入學號確認。學號用於防止同一個人同時佔兩個活動房間的座位。',
-  },
-  {
-    title: '檢查是否完成測評',
-    body: '已測評：系統會用你的五維分數生成本局目標張數。未測評：會先引導去測評，否則你的目標張數沒有依據。',
-    note: '測評結果會影響每個維度需要歸檔幾張，所以不同玩家的胡牌路線不同。',
-  },
-  {
-    title: '創建房間 / 加入房間',
-    body: '房主創建房間後拿到房間碼並等待其他玩家；非房主輸入房間碼加入。4 個真實玩家坐齊後才適合開始。',
-  },
-  {
-    title: '開始遊戲',
-    body: '房主負責點開始。進入牌桌後，所有人的手牌維度默認不公開，只能靠描述、記憶和每回合查看能力判斷。',
-  },
-];
-
-const SOLO_FLOW: FlowStep[] = [
-  {
-    title: '進入單機對戰',
-    body: '從首頁點「單機對戰」。如果沒有測評結果，會先去測評；如果已經測評，直接進入單機設置大廳。',
-  },
-  {
-    title: '選擇 AI 難度',
-    body: '簡單偏隨機，中等會做基礎歸檔判斷，困難會更積極推測你的牌。',
-  },
-  {
-    title: '選擇輪數',
-    body: '5 / 10 / 15 / 無限都可以。無限會一直打到有人食胡或牌局自然結束。',
-  },
-  {
-    title: '確認對手陣容',
-    body: '單機固定是你 + 3 個 AI。AI 會按自己的策略抽牌、棄牌、碰牌和食胡。',
-  },
-  {
-    title: '開始遊戲',
-    body: '進入牌桌後流程和聯機一致：抽牌、查看、歸檔、棄牌、響應別人棄牌。',
-  },
-];
-
-const STEPS: Step[] = [
-  {
-    title: '你的目標',
-    body: '5 個人格維度（開放性、盡責性、外向性、宜人性、情緒穩定性）全部完成「公開歸檔」，先達成的玩家獲勝。每個維度的目標張數等於你測評出來的分數四捨五入，所以每人的「胡牌路線」都不一樣。',
-  },
-  {
-    title: '牌桌',
-    body: '單機固定 4 人（你 + 3 個 AI）；聯機 2–4 名真實玩家。牌堆會依人數縮放。牌分兩類：帶顏色標記的「人格描述牌」（屬於某一維度），以及無維度歸屬的「檔案註記 / 知識牌」（中立，可棄可觀察對手風格）。',
-    hint: '初始手牌張數 = 5 個維度目標張數之和 − 1。少的那張要靠「碰」或「食胡」補齊。',
-  },
-  {
-    title: '抽牌',
-    body: '輪到你時，先點擊牌堆抽 1 張。如果你願意，可以一次性開啓「查看 2 張牌」的特權 —— 每回合最多 1 次，把任意 2 張未知的手牌真實人格揭開。用完即重置到下次回合。',
-  },
-  {
-    title: '出牌',
-    body: '抽完後選 1 張你不需要的丟到中間的棄牌堆。被棄出的牌進入「心理判讀窗口」，其他 3 名玩家有幾秒鐘決定是否要「碰」（同維度歸檔）或「食胡」（直接勝利）。',
-  },
-  {
-    title: '碰（公開歸檔）',
-    body: '把同維度的牌湊齊目標張數即可歸檔。兩種觸發方式：\n• 自摸碰（你自己回合內，每回合最多 1 次）→ 從你的「手牌 + 剛抽到的牌」裏挑選恰好「該維度目標張數」張同維度牌；\n• 截胡碰（claim 窗口內先點先得）→ 從手牌挑選「該維度目標張數 − 1」張同維度牌，加上那張棄牌正好湊齊；\n選錯維度、混入其他人格牌、張數不對 → 視爲「碰失敗」，會被罰停（見下「罰停」一節）。',
-    hint: '系統不會告訴你「這個維度你夠了」，5 個未歸檔維度全部讓你選，需要自己判斷。',
-  },
-  {
-    title: '食胡（宣佈勝利）',
-    body: '當你的牌（已歸檔 + 手中 + 這張待判定牌）正好完成全部 5 個維度時，按下「食胡」。\n觸發時機：\n• 你的回合中（自摸食胡）；\n• 任意人棄牌進入判讀窗口時（截胡食胡）。\n判定不成立 → 食胡失敗，整副手牌公開並罰停。',
-  },
-  {
-    title: '罰停（失敗的懲罰）',
-    body: '「碰失敗 / 自摸碰失敗 / 食胡失敗」三者懲罰相同：下次輪到你時罰停一回合，自動跳過（不抽牌、不出牌）後立即解除。\n罰停期間：\n• 你押錯的那幾張牌（碰 / 自摸碰）或整副手牌（食胡）立即公開；\n• 任何人棄牌進入判讀窗口時，你都不能參與（不能碰、不能食胡）。\n所有玩家都會在你頭像下看到「⛔ 罰停中」標識。',
-    hint: '一次誤判 ≈ 損失下一個出牌回合，務必想清楚再下手。罰停期間也不能宣告食胡。',
-  },
-  {
-    title: '查看 2 張牌（每回合 1 次）',
-    body: '手牌人格默認不顯示維度，必須靠記憶和推理。但你可以在自己回合開始抽完後，啓用「🔍 查看 2 張牌」一次性把 2 張手牌的真實維度揭開。本回合內有效，下回合自動重置。\n用得好的玩家會優先看自己最不確定的牌，避免歸檔時混入錯誤。',
-  },
-  {
-    title: '知識牌（檔案註記）',
-    body: '牌堆裏有一類無人格歸屬的「檔案註記 / 知識牌」 —— 內容是心理學常識。它們不能用於歸檔，但也不會"穿幫"成錯誤維度。\n用途：\n• 抽到就丟，騰出手牌空間；\n• 也是觀察對手心理風格的趣味設計（看對手怎麼挑這些中性牌可以暴露偏好）。',
-  },
-  {
-    title: '聯機 · 退出與輪轉',
-    body: '聯機房 2–4 人，任何人點「退出對局」即從該桌退出 —— 不接管，剩下的玩家繼續打到分勝負。\n• 退出者的座位永久跳過（看到「🚪 已退出對局」徽章）；\n• 僅剩 1 人即自動宣告該玩家勝利；\n• 你的回合超過 30 秒未操作會彈「請注意：現在是你的回合」提醒，每 30 秒重複一次直到你出牌。',
-    hint: '同學號同時進入兩個活動房間會被拒絕 —— 防止兩個客戶端共享同一座位。',
-  },
-  {
-    title: '勝負與結算',
-    body: '第一個完成全部 5 維度歸檔的玩家直接獲勝。若打滿約定輪數仍無人胡，則按排名結算：先比已歸檔維度數（多者勝），同數再比剩餘手牌（少者勝）。',
-  },
-];
+type TutStrings = (typeof TUTORIAL_T)['zh'];
+// 維度名按 locale 取（沙盒裏所有 ${維度名} 都用它解析）。
+type DimName = (dim: Dimension) => string;
 
 // ─── Interactive Sandbox ─────────────────────────────────────────────────
 // 真正可點擊的教學場景。固定 12 張牌的劇本，玩家按順序：
@@ -127,32 +23,36 @@ const STEPS: Step[] = [
 //   4. 選對 → 歸檔成功
 //   5. 出 1 張牌結束回合
 
-const PC = (id: number, dim: Dimension, text: string, facet = 'demo'): PersonalityCard => ({
-  id, dimension: dim, text, facet,
+const PC = (id: number, dim: Dimension, text: string, textEn: string, facet = 'demo'): PersonalityCard => ({
+  id, dimension: dim, text, textEn, facet,
 });
-const DC = (id: number, text: string): DummyCard => ({ id, text, isDummy: true });
+const DC = (id: number, text: string, textEn: string): DummyCard => ({ id, text, textEn, isDummy: true });
+
+// Card 組件只渲染 card.text，故按 locale 把 text 換成對應語言（不改 Card 邏輯）。
+const locCard = <T extends GameCard>(c: T, loc: Locale): T =>
+  loc === 'en' && c.textEn ? ({ ...c, text: c.textEn } as T) : c;
 
 // 歸檔 4 張情緒穩定性後，手裏留兩對（盡責性 104/108、宜人性 105/106）+ 兩張單張 +
 // 知識牌 → 無論玩家棄哪一張，都至少剩一對可用於「截胡碰」演示。
 const SANDBOX_HAND: GameCard[] = [
-  PC(101, 'N', '我經常感到焦慮或憂慮'),
-  PC(102, 'N', '我容易情緒波動'),
-  PC(103, 'N', '我容易感到壓力'),
-  PC(104, 'C', '我會認真完成我承諾過的事'),
-  PC(105, 'A', '我願意體諒別人的感受'),
-  PC(106, 'A', '我會主動幫助遇到困難的人'),
-  PC(107, 'O', '我對抽象的哲學問題很感興趣'),
-  PC(108, 'C', '我做事情之前總會制定計劃'),
-  DC(109, '顏色會影響食慾，藍色會抑制飢餓感'),
+  PC(101, 'N', '我經常感到焦慮或憂慮', 'I often feel anxious or worried'),
+  PC(102, 'N', '我容易情緒波動', 'My mood swings easily'),
+  PC(103, 'N', '我容易感到壓力', 'I get stressed out easily'),
+  PC(104, 'C', '我會認真完成我承諾過的事', 'I follow through on what I promise'),
+  PC(105, 'A', '我願意體諒別人的感受', 'I am willing to consider others’ feelings'),
+  PC(106, 'A', '我會主動幫助遇到困難的人', 'I take the initiative to help people in trouble'),
+  PC(107, 'O', '我對抽象的哲學問題很感興趣', 'I am interested in abstract, philosophical questions'),
+  PC(108, 'C', '我做事情之前總會制定計劃', 'I always make a plan before doing things'),
+  DC(109, '顏色會影響食慾，藍色會抑制飢餓感', 'Color affects appetite — blue suppresses hunger'),
 ];
-const SANDBOX_DRAWN: PersonalityCard = PC(110, 'N', '我對批評比較敏感');
+const SANDBOX_DRAWN: PersonalityCard = PC(110, 'N', '我對批評比較敏感', 'I am rather sensitive to criticism');
 // 對手棄牌（截胡碰用）：維度在 open-claim 時按手裏現存的對子動態選定。
 const CLAIM_CARDS: Record<Dimension, PersonalityCard> = {
-  O: PC(111, 'O', '我喜歡探索新奇的點子'),
-  C: PC(111, 'C', '我做事一向井井有條'),
-  E: PC(111, 'E', '我在人群裏很有活力'),
-  A: PC(111, 'A', '我會站在別人的角度想'),
-  N: PC(111, 'N', '我對批評比較敏感'),
+  O: PC(111, 'O', '我喜歡探索新奇的點子', 'I enjoy exploring novel ideas'),
+  C: PC(111, 'C', '我做事一向井井有條', 'I keep things well-organized'),
+  E: PC(111, 'E', '我在人群裏很有活力', 'I feel energetic among people'),
+  A: PC(111, 'A', '我會站在別人的角度想', 'I see things from others’ perspective'),
+  N: PC(111, 'N', '我對批評比較敏感', 'I am rather sensitive to criticism'),
 };
 
 type Scene =
@@ -217,7 +117,8 @@ type Action =
   | { type: 'show-hu' }
   | { type: 'reset' };
 
-function reducer(state: SandboxState, action: Action): SandboxState {
+function createReducer(s: TutStrings, dimName: DimName) {
+  return function reducer(state: SandboxState, action: Action): SandboxState {
   switch (action.type) {
     case 'draw':
       if (state.scene !== 'start') return state;
@@ -225,21 +126,21 @@ function reducer(state: SandboxState, action: Action): SandboxState {
         ...state,
         scene: 'viewing',
         drawnCard: SANDBOX_DRAWN,
-        feedback: { tone: 'success', text: '抽到一張線索牌。現在選擇很多，先演示「查看 2 張牌」。' },
+        feedback: { tone: 'success', text: s.fbDraw },
       };
     case 'view-two':
       if (state.scene !== 'viewing') return state;
       return {
         ...state,
         revealedIds: [104, 110],
-        feedback: { tone: 'info', text: '本回合查看了 2 張牌：一張盡責性，一張情緒穩定性。真實牌局裏只會揭開你選的 2 張。' },
+        feedback: { tone: 'info', text: s.fbViewTwo },
       };
     case 'finish-view':
       if (state.scene !== 'viewing') return state;
       return {
         ...state,
         scene: 'after-draw',
-        feedback: { tone: 'success', text: '現在你知道剛抽到的牌能補齊一組。下一步演示自摸碰。' },
+        feedback: { tone: 'success', text: s.fbFinishView },
       };
     case 'open-pong':
       if (state.scene !== 'after-draw') return state;
@@ -249,17 +150,17 @@ function reducer(state: SandboxState, action: Action): SandboxState {
         revealedAll: true, // 教學模式揭開維度，方便玩家看牌選維度
         selectedIds: [],
         chosenDim: null,
-        feedback: { tone: 'info', text: '自摸碰要先選定一個人格維度。提示：手牌裏有 4 張「情緒穩定性」，選它。' },
+        feedback: { tone: 'info', text: s.fbOpenPong },
       };
     case 'choose-dim': {
       if (state.scene !== 'pong-dimension') return state;
-      const name = DIMENSION_META[action.dim].name;
+      const name = dimName(action.dim);
       return {
         ...state,
         scene: 'pong-picking',
         chosenDim: action.dim,
         selectedIds: [],
-        feedback: { tone: 'info', text: `已選擇「${name}」。現在從手牌精確選擇 4 張「${name}」的牌。` },
+        feedback: { tone: 'info', text: s.fbChooseDim(name, 4) },
       };
     }
     case 'toggle-select':
@@ -288,20 +189,20 @@ function reducer(state: SandboxState, action: Action): SandboxState {
           drawnCard: drawnUsed ? null : state.drawnCard,
           selectedIds: [],
           declared: true,
-          feedback: { tone: 'success', text: '歸檔成功。4 張進入公開歸檔區，歸檔後必須立即棄 1 張牌。' },
+          feedback: { tone: 'success', text: s.fbPongSuccess },
         };
       }
       // 失敗
-      const dimName = dim ? DIMENSION_META[dim].name : '該維度';
+      const dName = dim ? dimName(dim) : s.fallbackDimName;
       const reason = !correctCount
-        ? `選了 ${selected.length} 張，必須正好 4 張`
-        : `選中的牌裏有非「${dimName}」（檔案註記不算任何維度）`;
+        ? s.fbPongFailWrongCount(selected.length, 4)
+        : s.fbPongFailWrongDim(dName);
       return {
         ...state,
         scene: 'pong-failed',
         feedback: {
           tone: 'fail',
-          text: `自摸碰失敗：${reason}。真實遊戲會罰停一回合（下次輪到你時自動跳過），並公開你剛剛押錯的牌。`,
+          text: s.fbPongFail(reason),
         },
         failCount: state.failCount + 1,
         penaltyShown: true,
@@ -309,12 +210,12 @@ function reducer(state: SandboxState, action: Action): SandboxState {
     }
     case 'continue-after-fail': {
       if (state.scene !== 'pong-failed') return state;
-      const name = state.chosenDim ? DIMENSION_META[state.chosenDim].name : '同維度';
+      const name = state.chosenDim ? dimName(state.chosenDim) : s.fallbackDimName;
       return {
         ...state,
         scene: 'pong-picking',
         selectedIds: [],
-        feedback: { tone: 'info', text: `試試這次只選 4 張「${name}」（高亮的牌）。` },
+        feedback: { tone: 'info', text: s.fbContinueAfterFail(name, 4) },
       };
     }
     case 'cancel-pong':
@@ -337,7 +238,7 @@ function reducer(state: SandboxState, action: Action): SandboxState {
         hand: state.hand.filter((c) => c.id !== action.id),
         feedback: {
           tone: 'success',
-          text: '出牌完成。現在切到別人棄牌時，你如何響應「碰 / 食胡」。',
+          text: s.fbPickDiscard,
         },
       };
     }
@@ -349,13 +250,13 @@ function reducer(state: SandboxState, action: Action): SandboxState {
         if (!c.isDummy && 'dimension' in c) counts[c.dimension] = (counts[c.dimension] ?? 0) + 1;
       }
       const claimDim = (DIMENSIONS.find((d) => (counts[d] ?? 0) >= 2) ?? 'C') as Dimension;
-      const name = DIMENSION_META[claimDim].name;
+      const name = dimName(claimDim);
       return {
         ...state,
         scene: 'claim-window',
         selectedIds: [],
         claimDim,
-        feedback: { tone: 'info', text: `對手棄出一張「${name}」線索牌。從手牌選 2 張「${name}」，加這張棄牌湊成一組。` },
+        feedback: { tone: 'info', text: s.fbOpenClaim(name) },
       };
     }
     case 'commit-claim': {
@@ -364,12 +265,12 @@ function reducer(state: SandboxState, action: Action): SandboxState {
       const picked = state.hand.filter((c) => state.selectedIds.includes(c.id));
       const ok = picked.length === 2 && picked.every((c) => !c.isDummy && 'dimension' in c && c.dimension === dim);
       if (!ok) {
-        const name = DIMENSION_META[dim].name;
+        const name = dimName(dim);
         return {
           ...state,
           feedback: {
             tone: 'fail',
-            text: `截胡碰需要正好 2 張「${name}」手牌（已選 ${picked.length}）。真實遊戲選錯會判失敗並罰停一回合。`,
+            text: s.fbClaimFail(name, picked.length),
           },
         };
       }
@@ -380,7 +281,7 @@ function reducer(state: SandboxState, action: Action): SandboxState {
         hand: state.hand.filter((c) => !state.selectedIds.includes(c.id)),
         selectedIds: [],
         claimDeclared: true,
-        feedback: { tone: 'success', text: '截胡碰成功。你用手裏 2 張同類牌 + 對手棄牌完成了一組公開歸檔。' },
+        feedback: { tone: 'success', text: s.fbClaimSuccess },
       };
     }
     case 'show-hu':
@@ -388,46 +289,58 @@ function reducer(state: SandboxState, action: Action): SandboxState {
       return {
         ...state,
         scene: 'hu-demo',
-        feedback: { tone: 'success', text: '食胡用於宣佈勝利：當 5 個維度全部完成時按下。誤按會公開整副手牌並罰停。' },
+        feedback: { tone: 'success', text: s.fbShowHu },
       };
     case 'reset':
       return initialState;
     default:
       return state;
   }
+  };
 }
 
-function InteractiveSandbox({ onClose }: { onClose: () => void }) {
+function InteractiveSandbox({
+  onClose,
+  s,
+  dimName,
+  loc,
+}: {
+  onClose: () => void;
+  s: TutStrings;
+  dimName: DimName;
+  loc: Locale;
+}) {
+  const reducer = useMemo(() => createReducer(s, dimName), [s, dimName]);
   const [state, dispatch] = useReducer(reducer, initialState);
   const N = DIMENSION_META.N;
   const archived = state.chosenDim ? DIMENSION_META[state.chosenDim] : N;
   const claimed = state.claimDim ? DIMENSION_META[state.claimDim] : DIMENSION_META.A;
 
-  const chosenName = state.chosenDim ? DIMENSION_META[state.chosenDim].name : '';
+  const chosenName = state.chosenDim ? dimName(state.chosenDim) : '';
   const captionByScene: Record<Scene, string> = {
-    start: '這是你的開局：手牌裏有多種人格描述和 1 張檔案註記。你需要先抽牌，再決定要查看、歸檔還是棄牌。',
-    viewing: '每回合可以查看 2 張手牌的真實維度。點擊「查看 2 張」後，再繼續進入歸檔判斷。',
-    'after-draw': '你現在擁有足夠完成一組的線索。下一步點高亮的「自摸碰」試試。',
-    'pong-dimension': '自摸碰要先選定一個人格維度。在下方五個維度裏選擇高亮的「情緒穩定性」（手牌裏正好有 4 張）。',
+    start: s.captionStart,
+    viewing: s.captionViewing,
+    'after-draw': s.captionAfterDraw,
+    'pong-dimension': s.captionPongDimension(dimName('N')),
     'pong-picking':
       state.selectedIds.length === 4
-        ? `已選 4 張「${chosenName}」。點高亮的「自摸歸檔」完成歸檔。`
-        : `從手牌精確選擇 4 張「${chosenName}」的牌（高亮的牌就是，已選 ${state.selectedIds.length}/4）。`,
-    'pong-failed': '失敗會公開你押錯的牌並罰停一回合（下次輪到你時自動跳過）。點「繼續」回到選牌模式。',
-    'pong-success': '歸檔成功！現在必須棄 1 張牌結束回合。點下方高亮的手牌中任意一張棄掉。',
+        ? s.captionPongPickingDone(chosenName, 4)
+        : s.captionPongPicking(chosenName, 4, state.selectedIds.length),
+    'pong-failed': s.captionPongFailed,
+    'pong-success': s.captionPongSuccess,
     'claim-window': state.claimDim
-      ? `別人棄牌後的判讀窗口：從手牌選 2 張高亮的「${DIMENSION_META[state.claimDim].name}」，加那張棄牌湊一組，再點「碰」（已選 ${state.selectedIds.length}/2）。`
-      : '現在是別人棄牌後的判讀窗口。你可以截胡碰，也可以在已經滿足全部目標時食胡。',
-    'claim-success': '截胡碰也會形成公開歸檔。這個記錄會出現在玩家頭像下和歸檔記錄裏。',
-    'hu-demo': '食胡是勝利按鈕，只在所有目標完成時使用。失敗成本很高，所以不要拿它試錯。',
-    'discard-picking': '點擊要棄的牌。',
-    done: '你的回合結束。下一步模擬別人棄牌後的「碰 / 食胡」窗口。',
+      ? s.captionClaimWindow(dimName(state.claimDim), state.selectedIds.length)
+      : s.captionClaimWindowFallback,
+    'claim-success': s.captionClaimSuccess,
+    'hu-demo': s.captionHuDemo,
+    'discard-picking': s.captionDiscardPicking,
+    done: s.captionDone,
   };
 
   const renderHand = () => {
     const all: GameCard[] = [...state.hand, ...(state.drawnCard ? [state.drawnCard] : [])];
     if (all.length === 0) {
-      return <div className="py-4 text-center text-xs text-[var(--psy-muted)]">（手牌已清空）</div>;
+      return <div className="py-4 text-center text-xs text-[var(--psy-muted)]">{s.handEmpty}</div>;
     }
     return (
       <AnimatePresence>
@@ -463,7 +376,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
                 }}
               >
                 <Card
-                  card={c}
+                  card={locCard(c, loc)}
                   compact
                   revealedDimension={(state.revealedAll || state.revealedIds.includes(c.id)) && dimension ? dimension : null}
                   revealedAsKnowledge={(state.revealedAll || state.revealedIds.includes(c.id)) && isDummy}
@@ -471,7 +384,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
                 />
                 {isDrawn && (
                   <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-[var(--psy-accent)] px-2 py-0.5 text-[8px] font-bold text-black">
-                    剛抽到
+                    {s.justDrawn}
                   </div>
                 )}
               </motion.div>
@@ -501,20 +414,20 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
     >
       <div className="mb-4 flex items-center justify-between">
         <span className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-muted)]">
-          交互式沙盒
+          {s.sandboxLabel}
         </span>
         <div className="flex gap-3">
           <button
             onClick={() => dispatch({ type: 'reset' })}
             className="text-xs text-[var(--psy-muted)] underline underline-offset-4 hover:text-[var(--psy-ink-soft)]"
           >
-            重置
+            {s.sandboxReset}
           </button>
           <button
             onClick={onClose}
             className="text-xs text-[var(--psy-muted)] underline underline-offset-4 hover:text-[var(--psy-ink-soft)]"
           >
-            退出沙盒
+            {s.sandboxExit}
           </button>
         </div>
       </div>
@@ -523,7 +436,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
       <div className="space-y-4 rounded-[1.4rem] border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] p-4">
         {/* 歸檔區 */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-[var(--psy-muted)]">公開歸檔：</span>
+          <span className="text-[var(--psy-muted)]">{s.publicArchiveLabel}</span>
           {state.declared ? (
             <span
               className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
@@ -534,10 +447,10 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
               }}
             >
               <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: archived.colorHex }} />
-              {archived.name} 4 張
+              {s.archiveSetSuffix(dimName(archived.key), 4)}
             </span>
           ) : (
-            <span className="text-[var(--psy-muted)]">（暫無）</span>
+            <span className="text-[var(--psy-muted)]">{s.archiveNone}</span>
           )}
           {state.claimDeclared && (
             <span
@@ -549,7 +462,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
               }}
             >
               <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: claimed.colorHex }} />
-              {claimed.name} 3 張
+              {s.archiveSetSuffix(dimName(claimed.key), 3)}
             </span>
           )}
         </div>
@@ -566,10 +479,10 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             }`}
           >
             <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">
-              {state.scene === 'start' ? '點擊抽牌 ↓' : '牌堆'}
+              {state.scene === 'start' ? s.drawPileClick : s.drawPile}
             </span>
             <div className={state.scene === 'start' ? 'tut-spotlight' : ''}>
-              <Card card={PC(999, 'N', '')} faceUp={false} compact />
+              <Card card={PC(999, 'N', '', '')} faceUp={false} compact />
             </div>
           </button>
         </div>
@@ -583,7 +496,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
               state.scene === 'claim-window' || state.scene === 'claim-success' ? 'animate-pulse' : 'opacity-40 cursor-not-allowed'
             }`}
           >
-            食胡
+            {s.btnHu}
           </button>
           <button
             disabled={state.scene !== 'viewing' || state.revealedIds.length > 0}
@@ -592,7 +505,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
               state.scene === 'viewing' && state.revealedIds.length === 0 ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
             }`}
           >
-            查看 2 張
+            {s.btnViewTwo}
           </button>
           <button
             disabled={state.scene !== 'viewing' || state.revealedIds.length === 0}
@@ -601,7 +514,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
               state.scene === 'viewing' && state.revealedIds.length > 0 ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
             }`}
           >
-            繼續判斷
+            {s.btnContinueJudge}
           </button>
           <button
             disabled={state.scene !== 'after-draw'}
@@ -612,7 +525,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
                 : 'opacity-40 cursor-not-allowed'
             }`}
           >
-            自摸碰
+            {s.btnSelfPong}
           </button>
         </div>
 
@@ -623,7 +536,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-3 rounded-xl border border-[rgba(200,155,93,0.28)] bg-[rgba(200,155,93,0.08)] px-3 py-3 text-xs text-[var(--psy-accent)]"
           >
-            <span>🎯 第一步 · 選擇要歸檔的人格維度</span>
+            <span>{s.pongStep1}</span>
             <div className="flex flex-wrap justify-center gap-2">
               {DIMENSIONS.map((d) => {
                 const meta = DIMENSION_META[d];
@@ -634,7 +547,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
                     className={`psy-btn px-3 py-1.5 text-[11px] font-bold ${d === 'N' ? 'tut-spotlight' : ''}`}
                     style={{ color: meta.colorHex, borderColor: meta.colorHex + '66' }}
                   >
-                    {meta.name}
+                    {dimName(d)}
                   </button>
                 );
               })}
@@ -643,7 +556,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
               onClick={() => dispatch({ type: 'cancel-pong' })}
               className="psy-btn psy-btn-ghost px-3 py-1 text-[10px]"
             >
-              取消
+              {s.btnCancel}
             </button>
           </motion.div>
         )}
@@ -655,25 +568,21 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-2 rounded-xl border border-[rgba(200,155,93,0.28)] bg-[rgba(200,155,93,0.08)] px-3 py-2 text-xs text-[var(--psy-accent)]"
           >
-            <span>
-              🎯 第二步 · 自摸碰 ·{' '}
-              <span style={{ color: state.chosenDim ? DIMENSION_META[state.chosenDim].colorHex : N.colorHex }}>
-                {chosenName}
-              </span>{' '}
-              · 請精確選擇 4 張（已選 {state.selectedIds.length}/4）
+            <span style={{ color: state.chosenDim ? DIMENSION_META[state.chosenDim].colorHex : N.colorHex }}>
+              {s.pongStep2(chosenName, 4, state.selectedIds.length)}
             </span>
             <div className="flex gap-2">
               <button
                 onClick={() => dispatch({ type: 'cancel-pong' })}
                 className="psy-btn psy-btn-ghost px-3 py-1 text-[10px]"
               >
-                取消
+                {s.btnCancel}
               </button>
               <button
                 onClick={() => dispatch({ type: 'commit-pong' })}
                 className={`psy-btn psy-btn-accent px-3 py-1 text-[10px] font-bold ${state.selectedIds.length === 4 ? 'tut-spotlight' : ''}`}
               >
-                自摸歸檔
+                {s.btnSelfArchive}
               </button>
             </div>
           </motion.div>
@@ -686,14 +595,14 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
               onClick={() => dispatch({ type: 'continue-after-fail' })}
               className="psy-btn psy-btn-accent animate-pulse px-4 py-1.5 text-xs font-bold"
             >
-              繼續 →
+              {s.btnContinue}
             </button>
           </div>
         )}
 
         {state.penaltyShown && state.scene === 'pong-failed' && (
           <div className="rounded-xl border border-red-400/35 bg-red-500/10 px-3 py-2 text-center text-xs font-semibold text-red-300">
-            罰停一回合演示：本輪不能參與別人棄牌的判讀窗口，下次輪到你時自動跳過。
+            {s.penaltyDemo}
           </div>
         )}
 
@@ -704,19 +613,21 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
             className="grid gap-3 rounded-xl border border-[rgba(200,155,93,0.28)] bg-[rgba(200,155,93,0.06)] p-3 text-xs text-[var(--psy-ink-soft)] sm:grid-cols-[auto_1fr_auto]"
           >
             <div className="flex justify-center">
-              <Card card={CLAIM_CARDS[state.claimDim]} compact revealedDimension={state.claimDim} />
+              <Card card={locCard(CLAIM_CARDS[state.claimDim], loc)} compact revealedDimension={state.claimDim} />
             </div>
             <div className="flex flex-col justify-center">
-              <div className="psy-serif text-sm text-[var(--psy-ink)]">小明棄出了一張線索牌</div>
+              <div className="psy-serif text-sm text-[var(--psy-ink)]">{s.claimWho}</div>
               <div className="mt-1 leading-6">
-                從下方手牌選 <b style={{ color: DIMENSION_META[state.claimDim].colorHex }}>2 張「{DIMENSION_META[state.claimDim].name}」</b>（高亮的牌），加這張棄牌湊成一組。已選 {state.selectedIds.length}/2。
+                {s.claimCardBodyA}
+                <b style={{ color: DIMENSION_META[state.claimDim].colorHex }}>{s.claimCardBodyMid(dimName(state.claimDim))}</b>
+                {s.claimCardBodyB(state.selectedIds.length)}
               </div>
             </div>
             <button
               onClick={() => dispatch({ type: 'commit-claim' })}
               className={`psy-btn psy-btn-accent self-center px-4 py-2 text-xs font-bold ${state.selectedIds.length === 2 ? 'tut-spotlight' : ''}`}
             >
-              碰
+              {s.btnPong}
             </button>
           </motion.div>
         )}
@@ -727,14 +638,14 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
               onClick={() => dispatch({ type: 'show-hu' })}
               className="psy-btn psy-btn-danger px-4 py-1.5 text-xs font-bold"
             >
-              繼續看食胡
+              {s.btnContinueHu}
             </button>
           </div>
         )}
 
         {state.scene === 'hu-demo' && (
           <div className="rounded-xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm leading-7 text-red-200">
-            食胡只在 5 個維度都完成時按。判定不成立會公開整副手牌並罰停，所以它是確認勝利，不是試探按鈕。
+            {s.huDemoBox}
           </div>
         )}
 
@@ -742,10 +653,10 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
         <div>
           <div className="mb-1.5 flex items-baseline justify-between">
             <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">
-              {state.scene === 'pong-success' ? '出 1 張牌結束回合 ↓' : '你的手牌'}
+              {state.scene === 'pong-success' ? s.discardToEnd : s.yourHand}
             </span>
             <span className="text-[10px] text-[var(--psy-muted)]">
-              {state.hand.length + (state.drawnCard ? 1 : 0)} 張
+              {s.cardsCountSuffix(state.hand.length + (state.drawnCard ? 1 : 0))}
             </span>
           </div>
           {renderHand()}
@@ -757,7 +668,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
               onClick={() => dispatch({ type: 'open-claim' })}
               className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold"
             >
-              模擬別人棄牌
+              {s.btnSimDiscard}
             </button>
           </div>
         )}
@@ -768,7 +679,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
               onClick={() => dispatch({ type: 'reset' })}
               className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
             >
-              再來一遍
+              {s.btnPlayAgain}
             </button>
           </div>
         )}
@@ -781,7 +692,7 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[rgba(200,155,93,0.3)] bg-[rgba(11,18,28,0.97)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] backdrop-blur-md">
       <div className="mx-auto max-w-4xl space-y-2">
         <div className="flex items-start gap-2">
-          <span className="psy-eyebrow mt-0.5 shrink-0 text-[10px] text-[var(--psy-accent)]">指引</span>
+          <span className="psy-eyebrow mt-0.5 shrink-0 text-[10px] text-[var(--psy-accent)]">{s.guideLabel}</span>
           <motion.p
             key={state.scene + '-' + state.selectedIds.length}
             initial={{ opacity: 0, y: 3 }}
@@ -812,18 +723,18 @@ function InteractiveSandbox({ onClose }: { onClose: () => void }) {
   );
 }
 
-function FlowScreenshot({ mode, index }: { mode: 'pvp' | 'solo'; index: number }) {
-  const frameTitle = mode === 'pvp' ? '聯機流程截圖示意' : '單機流程截圖示意';
+function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: number; s: TutStrings }) {
+  const frameTitle = mode === 'pvp' ? s.shotPvpTitle : s.shotSoloTitle;
 
   const homeChoice = (
     <div className="space-y-3">
-      <div className="psy-serif text-sm text-[var(--psy-ink)]">人格麻將</div>
+      <div className="psy-serif text-sm text-[var(--psy-ink)]">{s.shotProductName}</div>
       <div className="grid gap-2">
         <div className={`${mode === 'pvp' ? 'bg-[rgba(200,155,93,0.28)] text-[var(--psy-ink)]' : 'bg-[rgba(255,255,255,0.04)] text-[var(--psy-muted)]'} rounded-full border border-[rgba(200,155,93,0.24)] px-4 py-2 text-center text-sm`}>
-          聯機對戰
+          {s.shotPvp}
         </div>
         <div className={`${mode === 'solo' ? 'bg-[rgba(200,155,93,0.28)] text-[var(--psy-ink)]' : 'bg-[rgba(255,255,255,0.04)] text-[var(--psy-muted)]'} rounded-full border border-[rgba(200,155,93,0.24)] px-4 py-2 text-center text-sm`}>
-          單機對戰
+          {s.shotSolo}
         </div>
       </div>
     </div>
@@ -831,14 +742,14 @@ function FlowScreenshot({ mode, index }: { mode: 'pvp' | 'solo'; index: number }
 
   const identityForm = (
     <div className="space-y-3">
-      <div className="psy-serif text-sm text-[var(--psy-ink)]">玩家信息</div>
+      <div className="psy-serif text-sm text-[var(--psy-ink)]">{s.shotPlayerInfo}</div>
       <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] px-3 py-2">
-        <div className="text-[9px] text-[var(--psy-muted)]">學號</div>
-        <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">請輸入學號</div>
+        <div className="text-[9px] text-[var(--psy-muted)]">{s.shotStudentId}</div>
+        <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{s.shotEnterStudentId}</div>
       </div>
       <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] px-3 py-2">
-        <div className="text-[9px] text-[var(--psy-muted)]">確認學號</div>
-        <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">再次輸入學號確認</div>
+        <div className="text-[9px] text-[var(--psy-muted)]">{s.shotConfirmStudentId}</div>
+        <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{s.shotReenterStudentId}</div>
       </div>
     </div>
   );
@@ -846,12 +757,12 @@ function FlowScreenshot({ mode, index }: { mode: 'pvp' | 'solo'; index: number }
   const assessmentCheck = (
     <div className="grid gap-2">
       <div className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-3 py-2">
-        <div className="text-xs font-semibold text-emerald-300">已完成測評</div>
-        <div className="mt-1 text-[10px] leading-5 text-[var(--psy-ink-soft)]">直接生成本局目標張數。</div>
+        <div className="text-xs font-semibold text-emerald-300">{s.shotAssessedTrue}</div>
+        <div className="mt-1 text-[10px] leading-5 text-[var(--psy-ink-soft)]">{s.shotAssessedTrueBody}</div>
       </div>
       <div className="rounded-xl border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.08)] px-3 py-2">
-        <div className="text-xs font-semibold text-[var(--psy-accent)]">未完成測評</div>
-        <div className="mt-1 text-[10px] leading-5 text-[var(--psy-ink-soft)]">先去答題，再回到大廳。</div>
+        <div className="text-xs font-semibold text-[var(--psy-accent)]">{s.shotAssessedFalse}</div>
+        <div className="mt-1 text-[10px] leading-5 text-[var(--psy-ink-soft)]">{s.shotAssessedFalseBody}</div>
       </div>
     </div>
   );
@@ -859,12 +770,12 @@ function FlowScreenshot({ mode, index }: { mode: 'pvp' | 'solo'; index: number }
   const roomPanel = (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] p-3">
-        <div className="psy-serif text-xs text-[var(--psy-ink)]">創建房間</div>
-        <div className="mt-2 rounded-lg bg-[rgba(200,155,93,0.12)] px-3 py-2 text-center text-sm text-[var(--psy-accent)]">房間碼 4821</div>
+        <div className="psy-serif text-xs text-[var(--psy-ink)]">{s.shotCreateRoom}</div>
+        <div className="mt-2 rounded-lg bg-[rgba(200,155,93,0.12)] px-3 py-2 text-center text-sm text-[var(--psy-accent)]">{s.shotRoomCode('4821')}</div>
       </div>
       <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] p-3">
-        <div className="psy-serif text-xs text-[var(--psy-ink)]">加入房間</div>
-        <div className="mt-2 rounded-lg border border-[rgba(200,155,93,0.2)] px-3 py-2 text-center text-xs text-[var(--psy-muted)]">輸入 4 位房間碼</div>
+        <div className="psy-serif text-xs text-[var(--psy-ink)]">{s.shotJoinRoom}</div>
+        <div className="mt-2 rounded-lg border border-[rgba(200,155,93,0.2)] px-3 py-2 text-center text-xs text-[var(--psy-muted)]">{s.shotEnter4Code}</div>
       </div>
     </div>
   );
@@ -872,28 +783,28 @@ function FlowScreenshot({ mode, index }: { mode: 'pvp' | 'solo'; index: number }
   const startGame = (
     <div className="space-y-3">
       <div className="grid grid-cols-4 gap-2">
-        {['你', '11', '12', '13'].map((name, i) => (
+        {[s.shotYou, '11', '12', '13'].map((name, i) => (
           <div key={name} className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2 py-3 text-center">
             <div className="text-xs text-[var(--psy-ink)]">{name}</div>
-            <div className="mt-1 text-[9px] text-[var(--psy-muted)]">{i === 0 ? '房主' : '已就緒'}</div>
+            <div className="mt-1 text-[9px] text-[var(--psy-muted)]">{i === 0 ? s.shotHost : s.shotReady}</div>
           </div>
         ))}
       </div>
-      <div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">開始遊戲</div>
+      <div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">{s.shotStartGame}</div>
     </div>
   );
 
   const soloSetup = (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
-        {['簡單', '中等', '困難'].map((label, i) => (
+        {s.shotDifficulties.map((label, i) => (
           <div key={label} className={`${i === Math.min(index, 2) ? 'bg-[rgba(200,155,93,0.22)] text-[var(--psy-ink)]' : 'bg-[rgba(255,255,255,0.03)] text-[var(--psy-muted)]'} rounded-xl border border-[rgba(200,155,93,0.18)] px-2 py-3 text-center text-xs`}>
             {label}
           </div>
         ))}
       </div>
       <div className="grid grid-cols-4 gap-2">
-        {['5輪', '10輪', '15輪', '無限'].map((label, i) => (
+        {s.shotRounds.map((label, i) => (
           <div key={label} className={`${i === 1 ? 'bg-[rgba(200,155,93,0.18)] text-[var(--psy-ink)]' : 'bg-[rgba(255,255,255,0.03)] text-[var(--psy-muted)]'} rounded-xl border border-[rgba(200,155,93,0.16)] px-2 py-2 text-center text-[10px]`}>
             {label}
           </div>
@@ -904,10 +815,10 @@ function FlowScreenshot({ mode, index }: { mode: 'pvp' | 'solo'; index: number }
 
   const soloOpponents = (
     <div className="grid grid-cols-3 gap-2">
-      {['小明', '林教授', '老陳'].map((name) => (
+      {s.shotAiOpponents.map((name) => (
         <div key={name} className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] px-2 py-4 text-center">
           <div className="text-sm text-[var(--psy-ink)]">{name}</div>
-          <div className="mt-2 text-[9px] leading-4 text-[var(--psy-muted)]">AI 對手</div>
+          <div className="mt-2 text-[9px] leading-4 text-[var(--psy-muted)]">{s.shotAiOpponentLabel}</div>
         </div>
       ))}
     </div>
@@ -916,7 +827,7 @@ function FlowScreenshot({ mode, index }: { mode: 'pvp' | 'solo'; index: number }
   const soloStart = (
     <div className="space-y-3">
       {soloSetup}
-      <div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">開始對戰</div>
+      <div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">{s.shotStartMatch}</div>
     </div>
   );
 
@@ -928,7 +839,7 @@ function FlowScreenshot({ mode, index }: { mode: 'pvp' | 'solo'; index: number }
     <div className="rounded-[1.2rem] border border-[rgba(200,155,93,0.16)] bg-[radial-gradient(circle_at_top,rgba(200,155,93,0.10),transparent_42%),rgba(9,15,23,0.68)] p-3">
       <div className="mb-3 flex items-center justify-between">
         <span className="psy-serif text-[10px] text-[var(--psy-accent)]">{frameTitle}</span>
-        <span className="rounded-full border border-[rgba(200,155,93,0.18)] px-2 py-0.5 text-[9px] text-[var(--psy-muted)]">靜態示意</span>
+        <span className="rounded-full border border-[rgba(200,155,93,0.18)] px-2 py-0.5 text-[9px] text-[var(--psy-muted)]">{s.shotStaticBadge}</span>
       </div>
       <div className="min-h-[12rem] rounded-[1rem] border border-[rgba(200,155,93,0.12)] bg-[linear-gradient(180deg,rgba(18,31,45,0.76),rgba(9,15,23,0.86))] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
         {frame}
@@ -937,10 +848,10 @@ function FlowScreenshot({ mode, index }: { mode: 'pvp' | 'solo'; index: number }
   );
 }
 
-function StartFlowGuide() {
+function StartFlowGuide({ s }: { s: TutStrings }) {
   const [mode, setMode] = useState<'pvp' | 'solo'>('pvp');
   const [index, setIndex] = useState(0);
-  const steps = mode === 'pvp' ? PVP_FLOW : SOLO_FLOW;
+  const steps = mode === 'pvp' ? s.pvpFlow : s.soloFlow;
   const current = steps[index];
 
   const switchMode = (next: 'pvp' | 'solo') => {
@@ -952,8 +863,8 @@ function StartFlowGuide() {
     <div className="psy-panel psy-etched rounded-[1.6rem] p-5 sm:p-6">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="psy-eyebrow text-[10px]">開始遊戲流程</p>
-          <h2 className="psy-serif mt-2 text-2xl text-[var(--psy-ink)]">從首頁到開局</h2>
+          <p className="psy-eyebrow text-[10px]">{s.flowEyebrow}</p>
+          <h2 className="psy-serif mt-2 text-2xl text-[var(--psy-ink)]">{s.flowTitle}</h2>
         </div>
         <div className="grid grid-cols-2 gap-2 rounded-full border border-[rgba(200,155,93,0.16)] bg-[rgba(255,255,255,0.02)] p-1">
           <button
@@ -964,7 +875,7 @@ function StartFlowGuide() {
                 : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
             }`}
           >
-            聯機對戰
+            {s.tabPvp}
           </button>
           <button
             onClick={() => switchMode('solo')}
@@ -974,7 +885,7 @@ function StartFlowGuide() {
                 : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
             }`}
           >
-            單機對戰
+            {s.tabSolo}
           </button>
         </div>
       </div>
@@ -1019,7 +930,7 @@ function StartFlowGuide() {
                 </p>
               )}
             </div>
-            <FlowScreenshot mode={mode} index={index} />
+            <FlowScreenshot mode={mode} index={index} s={s} />
           </div>
           <div className="mt-5 flex justify-end gap-2">
             <button
@@ -1027,14 +938,14 @@ function StartFlowGuide() {
               disabled={index === 0}
               className="psy-btn psy-btn-ghost px-4 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-40"
             >
-              上一步
+              {s.prevStep}
             </button>
             <button
               onClick={() => setIndex(Math.min(steps.length - 1, index + 1))}
               disabled={index === steps.length - 1}
               className="psy-btn psy-btn-accent px-4 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
             >
-              下一步
+              {s.nextStep}
             </button>
           </div>
         </motion.div>
@@ -1047,6 +958,12 @@ function StartFlowGuide() {
 export default function TutorialPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'list' | 'sandbox'>('list');
+  const hydrated = useHydrated();
+  const locale = useLocaleStore((st) => st.locale);
+  const loc: Locale = hydrated ? locale : 'zh';
+  // zh / en 結構一致；用 zh 形狀作為各子組件的 props 類型，運行時按 loc 取。
+  const s: TutStrings = TUTORIAL_T[loc] as unknown as TutStrings;
+  const dimName: DimName = (dim) => (loc === 'en' ? DIMENSION_META[dim].nameEn : DIMENSION_META[dim].name);
 
   return (
     <div className="flex flex-1 flex-col items-center px-4 py-8 sm:px-6 sm:py-10">
@@ -1054,10 +971,10 @@ export default function TutorialPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="psy-serif text-[11px] uppercase tracking-[0.42em] text-[var(--psy-ink-soft)] sm:text-xs">
-              Tutorial
+              {s.eyebrow}
             </p>
             <h1 className="psy-serif text-3xl text-[var(--psy-ink)] sm:text-5xl">
-              人格麻將 · 教學
+              {s.title}
             </h1>
           </div>
           <div className="flex items-center gap-2">
@@ -1065,13 +982,13 @@ export default function TutorialPage() {
               onClick={() => router.push('/rules')}
               className="psy-btn flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
             >
-              規則 Hardcopy
+              {s.rulesHardcopy}
             </button>
             <button
               onClick={() => router.push('/')}
               className="psy-btn psy-btn-ghost flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
             >
-              返回首頁
+              {s.backHome}
             </button>
           </div>
         </div>
@@ -1081,39 +998,39 @@ export default function TutorialPage() {
             {/* 主 CTA */}
             <div className="psy-panel psy-etched rounded-[1.6rem] p-6 text-center sm:p-7">
               <h2 className="psy-serif text-2xl text-[var(--psy-ink)] sm:text-3xl">
-                先看流程，再進沙盒打一回合
+                {s.ctaTitle}
               </h2>
               <p className="mt-2 text-sm leading-6 text-[var(--psy-ink-soft)]">
-                教學覆蓋：聯機 / 單機開局、答題檢查、房間流程、查看手牌、碰、食胡、失敗懲罰。
+                {s.ctaBody}
               </p>
               <button
                 onClick={() => setMode('sandbox')}
                 className="psy-btn psy-btn-accent psy-serif mt-4 px-7 py-3 text-base font-semibold"
               >
-                ▶ 進入交互沙盒
+                {s.ctaButton}
               </button>
             </div>
 
-            <StartFlowGuide />
+            <StartFlowGuide s={s} />
 
             {/* 概念卡片 */}
             <div>
-              <p className="psy-eyebrow mb-3 text-[10px]">規則要點</p>
+              <p className="psy-eyebrow mb-3 text-[10px]">{s.rulesPointsLabel}</p>
               <div className="grid gap-4 sm:grid-cols-2">
-                {STEPS.map((s, i) => (
-                  <div key={s.title} className="psy-panel psy-etched rounded-[1.4rem] p-5">
+                {s.steps.map((step, i) => (
+                  <div key={step.title} className="psy-panel psy-etched rounded-[1.4rem] p-5">
                     <div className="mb-2 flex items-center gap-2">
                       <span className="psy-serif text-xs text-[var(--psy-accent)]">
                         {String(i + 1).padStart(2, '0')}
                       </span>
                     </div>
-                    <h3 className="psy-serif text-lg text-[var(--psy-ink)]">{s.title}</h3>
+                    <h3 className="psy-serif text-lg text-[var(--psy-ink)]">{step.title}</h3>
                     <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[var(--psy-ink-soft)]">
-                      {s.body}
+                      {step.body}
                     </p>
-                    {s.hint && (
+                    {step.hint && (
                       <p className="mt-3 rounded-lg border border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.06)] px-3 py-2 text-xs text-[var(--psy-accent)]">
-                        💡 {s.hint}
+                        💡 {step.hint}
                       </p>
                     )}
                   </div>
@@ -1126,20 +1043,20 @@ export default function TutorialPage() {
                 onClick={() => router.push('/assessment')}
                 className="psy-btn psy-btn-accent px-6 py-3 text-sm font-medium"
               >
-                直接開始測評
+                {s.directStartAssess}
               </button>
               <button
                 onClick={() => router.push('/')}
                 className="psy-btn psy-btn-ghost px-6 py-3 text-sm"
               >
-                返回首頁
+                {s.backHome}
               </button>
             </div>
           </>
         )}
 
         <AnimatePresence mode="wait">
-          {mode === 'sandbox' && <InteractiveSandbox onClose={() => setMode('list')} />}
+          {mode === 'sandbox' && <InteractiveSandbox onClose={() => setMode('list')} s={s} dimName={dimName} loc={loc} />}
         </AnimatePresence>
       </div>
     </div>

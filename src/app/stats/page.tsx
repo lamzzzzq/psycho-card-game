@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
+import { useHydrated } from '@/stores/useHydration';
+import { useLocaleStore } from '@/lib/i18n';
+import { STATS_T } from '@/lib/i18n/stats';
 
 // 一行 = 一人一局（game_participants 關聯 game_sessions）。
 // 真相源 schema：supabase/migrations/0001_game_records.sql。
@@ -43,37 +46,20 @@ interface StudentAgg {
 
 // 注意：分数列（O/C/E/A/N）已移出公开 CSV（隐私）。分数在 big_five_snapshots（已锁表），
 // 老师从 Supabase 后台经 game_participants.big_five_snapshot_id join 获取。
-const CSV_HEADERS = [
-  '學號', '房間', '結束時間', '模式', '輪數',
-  '申報組數', '剩餘手牌', '最終得分', '名次', '是否獲勝', '是否中斷局',
-  '胡成功', '胡失敗', '碰成功', '碰失敗',
-];
-
 function csvEscape(v: unknown): string {
   const s = v == null ? '' : String(v);
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-function rowToCsv(r: ParticipantRow): string {
-  const s = r.game_sessions;
-  const interrupted = s ? s.winner_player_id == null : false;
-  return [
-    r.student_id ?? (r.is_ai ? 'AI' : ''),
-    s?.room_code ?? '',
-    s?.ended_at ? new Date(s.ended_at).toLocaleString('zh-CN') : '',
-    s?.mode ?? '',
-    s?.rounds_played ?? '',
-    r.declared_count, r.remaining_cards, r.final_score, r.rank,
-    r.is_winner ? '是' : '', interrupted ? '是' : '',
-    r.hu_success_count, r.hu_fail_count, r.pong_success_count, r.pong_fail_count,
-  ].map(csvEscape).join(',');
-}
-
 export default function StatsPage() {
   const router = useRouter();
+  // SSR/首屏用 zh 与服务端一致，hydrate 后切到持久化/?lang 的语言，避免 mismatch。
+  const hydrated = useHydrated();
+  const locale = useLocaleStore((st) => st.locale);
+  const s = STATS_T[hydrated ? locale : 'zh'];
   const [rows, setRows] = useState<ParticipantRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
   const [view, setView] = useState<'summary' | 'detail'>('summary');
 
   useEffect(() => {
@@ -90,9 +76,7 @@ export default function StatsPage() {
         setRows((data ?? []) as unknown as ParticipantRow[]);
       } catch (e) {
         console.error('Failed to fetch stats:', e);
-        setErrMsg(
-          '讀取數據失敗。請確認 Supabase 已執行 supabase/migrations/0001_game_records.sql 建好 3 張表。'
-        );
+        setHasError(true);
       } finally {
         setLoading(false);
       }
@@ -144,8 +128,23 @@ export default function StatsPage() {
     );
   }, [rows]);
 
+  function rowToCsv(r: ParticipantRow): string {
+    const meta = r.game_sessions;
+    const interrupted = meta ? meta.winner_player_id == null : false;
+    return [
+      r.student_id ?? (r.is_ai ? 'AI' : ''),
+      meta?.room_code ?? '',
+      meta?.ended_at ? new Date(meta.ended_at).toLocaleString('zh-CN') : '',
+      meta?.mode ?? '',
+      meta?.rounds_played ?? '',
+      r.declared_count, r.remaining_cards, r.final_score, r.rank,
+      r.is_winner ? s.csvYes : '', interrupted ? s.csvYes : '',
+      r.hu_success_count, r.hu_fail_count, r.pong_success_count, r.pong_fail_count,
+    ].map(csvEscape).join(',');
+  }
+
   function downloadCsv() {
-    const lines = [CSV_HEADERS.join(','), ...humanRows.map(rowToCsv)];
+    const lines = [s.csvHeaders.join(','), ...humanRows.map(rowToCsv)];
     // ﻿ BOM 讓 Excel 正確識別 UTF-8 中文
     const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -161,7 +160,7 @@ export default function StatsPage() {
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">加載統計數據…</p>
+        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">{s.loading}</p>
       </div>
     );
   }
@@ -174,27 +173,27 @@ export default function StatsPage() {
             onClick={() => router.push('/')}
             className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
           >
-            ← 返回首頁
+            {s.back}
           </button>
           <p className="psy-eyebrow">DECK ARCHIVES</p>
-          <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">數據統計</h1>
-          <p className="text-base leading-7 text-[var(--psy-ink-soft)]">參與者出勤與對戰記錄的歸檔卷宗。</p>
+          <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">{s.title}</h1>
+          <p className="text-base leading-7 text-[var(--psy-ink-soft)]">{s.subtitle}</p>
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="psy-chip">{summary.length} 名參與者</span>
-            <span className="psy-chip">{sessionCount} 場對局</span>
+            <span className="psy-chip">{s.participantsChip(summary.length)}</span>
+            <span className="psy-chip">{s.sessionsChip(sessionCount)}</span>
             <button
               onClick={downloadCsv}
               disabled={humanRows.length === 0}
               className="psy-serif ml-auto rounded-full border border-[var(--psy-border-strong)] bg-[var(--psy-accent-soft)] px-4 py-1.5 text-sm text-[var(--psy-accent)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              ⬇ 導出 CSV（{humanRows.length} 行）
+              {s.exportCsv(humanRows.length)}
             </button>
           </div>
         </div>
 
-        {errMsg && (
+        {hasError && (
           <div className="rounded-[1.4rem] border border-[var(--psy-danger,#b4543a)] bg-[rgba(180,84,58,0.08)] px-6 py-4 text-sm text-[var(--psy-ink-soft)]">
-            ⚠️ {errMsg}
+            ⚠️ {s.fetchError}
           </div>
         )}
 
@@ -212,7 +211,7 @@ export default function StatsPage() {
                       : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
                   }`}
                 >
-                  {v === 'summary' ? '彙總統計' : '對局明細'}
+                  {v === 'summary' ? s.tabSummary : s.tabDetail}
                 </button>
               );
             })}
@@ -221,30 +220,30 @@ export default function StatsPage() {
           {view === 'summary' ? (
             summary.length === 0 ? (
               <div className="rounded-[1.4rem] border border-[rgba(200,155,93,0.14)] bg-[rgba(255,255,255,0.02)] px-6 py-12 text-center text-sm text-[var(--psy-muted)]">
-                暫無對局數據
+                {s.emptySummary}
               </div>
             ) : (
               <div className="overflow-hidden rounded-[1.4rem] border border-[rgba(200,155,93,0.18)]">
                 <div className="psy-eyebrow grid grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr_0.8fr] gap-px border-b border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.05)] px-3 py-3 text-[10px] sm:px-5">
-                  <div>學號</div>
-                  <div className="text-center">場次</div>
-                  <div className="text-center">勝場</div>
-                  <div className="text-center">均申報</div>
-                  <div className="text-center">最佳名次</div>
+                  <div>{s.colStudentId}</div>
+                  <div className="text-center">{s.colGames}</div>
+                  <div className="text-center">{s.colWins}</div>
+                  <div className="text-center">{s.colAvgDeclared}</div>
+                  <div className="text-center">{s.colBestRank}</div>
                 </div>
-                {summary.map((s, i) => (
+                {summary.map((agg, i) => (
                   <div
-                    key={s.studentId}
+                    key={agg.studentId}
                     className="grid grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr_0.8fr] items-center gap-px border-t border-[rgba(200,155,93,0.08)] px-3 py-3 text-sm transition hover:bg-[rgba(200,155,93,0.04)] sm:px-5"
                     style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}
                   >
-                    <div className="font-mono text-[var(--psy-ink)] tabular-nums">{s.studentId}</div>
-                    <div className="text-center font-mono text-[var(--psy-ink-soft)] tabular-nums">{s.games}</div>
+                    <div className="font-mono text-[var(--psy-ink)] tabular-nums">{agg.studentId}</div>
+                    <div className="text-center font-mono text-[var(--psy-ink-soft)] tabular-nums">{agg.games}</div>
                     <div className="text-center font-mono tabular-nums">
-                      <span className={s.wins > 0 ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-muted)]'}>{s.wins}</span>
+                      <span className={agg.wins > 0 ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-muted)]'}>{agg.wins}</span>
                     </div>
-                    <div className="text-center font-mono text-[var(--psy-ink-soft)] tabular-nums">{s.avgDeclared}</div>
-                    <div className="text-center font-mono text-[var(--psy-ink-soft)] tabular-nums">#{s.bestRank}</div>
+                    <div className="text-center font-mono text-[var(--psy-ink-soft)] tabular-nums">{agg.avgDeclared}</div>
+                    <div className="text-center font-mono text-[var(--psy-ink-soft)] tabular-nums">#{agg.bestRank}</div>
                   </div>
                 ))}
               </div>
@@ -253,22 +252,22 @@ export default function StatsPage() {
             <div className="space-y-3">
               {bySession.length === 0 ? (
                 <div className="rounded-[1.4rem] border border-[rgba(200,155,93,0.14)] bg-[rgba(255,255,255,0.02)] px-6 py-12 text-center text-sm text-[var(--psy-muted)]">
-                  暫無對局記錄
+                  {s.emptyDetail}
                 </div>
               ) : (
                 bySession.map((parts) => {
-                  const s = parts[0].game_sessions;
-                  const interrupted = s ? s.winner_player_id == null : false;
+                  const meta = parts[0].game_sessions;
+                  const interrupted = meta ? meta.winner_player_id == null : false;
                   const ranked = [...parts].sort((a, b) => a.rank - b.rank);
                   return (
                     <div key={parts[0].session_id} className="space-y-3 rounded-[1.4rem] border border-[rgba(200,155,93,0.16)] bg-[rgba(255,255,255,0.02)] p-4">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-[var(--psy-muted)]">
-                          {s?.ended_at ? new Date(s.ended_at).toLocaleString('zh-CN') : '—'}
-                          {s?.room_code ? ` · 房間 ${s.room_code}` : ''}
+                          {meta?.ended_at ? new Date(meta.ended_at).toLocaleString('zh-CN') : '—'}
+                          {meta?.room_code ? s.roomPrefix(meta.room_code) : ''}
                         </span>
                         <span className="psy-eyebrow text-[10px] text-[var(--psy-muted)]">
-                          {s?.rounds_played ?? '?'} 輪{interrupted ? ' · 中斷局' : ''}
+                          {s.roundsSuffix(meta?.rounds_played ?? '?')}{interrupted ? s.interruptedTag : ''}
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -285,7 +284,7 @@ export default function StatsPage() {
                             {p.is_winner && <span>🏆</span>}
                             <span className="font-mono tabular-nums">{p.is_ai ? 'AI' : p.student_id}</span>
                             <span className="text-xs text-[var(--psy-muted)]">
-                              #{p.rank} · 申報{p.declared_count}組 · 剩{p.remaining_cards}張
+                              {s.playerDetail(p.rank, p.declared_count, p.remaining_cards)}
                             </span>
                           </div>
                         ))}

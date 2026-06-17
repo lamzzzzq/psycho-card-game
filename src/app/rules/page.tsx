@@ -2,6 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
+import { useLocaleStore } from '@/lib/i18n';
+import { useHydrated } from '@/stores/useHydration';
+import { RULES_T } from '@/lib/i18n/rules';
 
 const GAME_URL = 'https://psycho-card-game.vercel.app';
 
@@ -9,6 +12,10 @@ const GAME_URL = 'https://psycho-card-game.vercel.app';
 // ⚠️ 規則文案為佔位準確版，最終牌面/文案準備好後可替換。
 export default function RulesPage() {
   const router = useRouter();
+  const hydrated = useHydrated();
+  const localeRaw = useLocaleStore((s) => s.locale);
+  const locale = hydrated ? localeRaw : 'zh';
+  const s = RULES_T[locale];
 
   return (
     <div className="rules-screen">
@@ -92,94 +99,97 @@ export default function RulesPage() {
       `}</style>
 
       <div className="rules-toolbar no-print">
-        <button className="rules-btn" onClick={() => router.push('/tutorial')}>← 返回教學</button>
-        <button className="rules-btn rules-btn-primary" onClick={() => window.print()}>🖨 列印 / 存 PDF</button>
+        <button className="rules-btn" onClick={() => router.push('/tutorial')}>{s.backToTutorial}</button>
+        <button className="rules-btn rules-btn-primary" onClick={() => window.print()}>{s.printOrPdf}</button>
       </div>
 
       <div className="a4">
         <div className="head">
           <div>
             <p className="serif" style={{ fontSize: 12, letterSpacing: 6, color: '#7a4d12', margin: 0 }}>PSYCHO CARD</p>
-            <h1 className="serif">人格麻將 · 遊戲規則</h1>
-            <p className="sub" style={{ marginTop: 6 }}>用卡牌拼出你的人格 — Big Five 五大人格 × 麻將玩法</p>
+            <h1 className="serif">{s.title}</h1>
+            <p className="sub" style={{ marginTop: 6 }}>{s.subtitle}</p>
           </div>
           <div className="qrbox">
             <QRCodeSVG value={GAME_URL} size={96} level="M" fgColor="#2a241b" bgColor="#fbf8f1" />
-            <div className="cap">掃碼進入遊戲<br />{GAME_URL.replace('https://', '')}</div>
+            <div className="cap">{s.scanToEnter}<br />{GAME_URL.replace('https://', '')}</div>
           </div>
         </div>
 
-        <h2>一、遊戲目標</h2>
+        <h2>{s.sec1Title}</h2>
         <p>
-          每位玩家先完成 <span className="accent">Big Five 人格測評</span>，得到五個維度的分數：
-          開放性 <b>O</b>、盡責性 <b>C</b>、外向性 <b>E</b>、宜人性 <b>A</b>、情緒穩定性 <b>N</b>。
+          {s.goalIntroBefore}<span className="accent">{s.goalAssessment}</span>{s.goalIntroAfter}
+          {s.goalDims}
         </p>
         <p>
-          遊戲目標是<span className="accent">集齊全部五個維度</span>。每個維度需要的牌數 = 你在該維度的分數
-          （例如外向性 4 分，就要湊 4 張外向牌）。最先湊齊全部五維者「<span className="accent">食胡</span>」獲勝。
+          {s.goalCollectBefore}<span className="accent">{s.goalCollectAll}</span>{s.goalCollectMid}
+          {s.goalExample(s.dimE, 4)}{s.goalWinBefore}<span className="accent">{s.goalWinHu}</span>{s.goalWinAfter}
         </p>
         <div className="dims">
-          <div className="dim"><b>O</b> 開放性</div>
-          <div className="dim"><b>C</b> 盡責性</div>
-          <div className="dim"><b>E</b> 外向性</div>
-          <div className="dim"><b>A</b> 宜人性</div>
-          <div className="dim"><b>N</b> 情緒穩定性</div>
+          <div className="dim"><b>O</b> {s.dimO}</div>
+          <div className="dim"><b>C</b> {s.dimC}</div>
+          <div className="dim"><b>E</b> {s.dimE}</div>
+          <div className="dim"><b>A</b> {s.dimA}</div>
+          <div className="dim"><b>N</b> {s.dimN}</div>
         </div>
 
-        <h2>二、開局</h2>
+        <h2>{s.sec2Title}</h2>
         <ul>
-          <li>每人依自己的人格分數發一手牌（分數越高，起手牌越多）。</li>
-          <li>桌面中央為<b>抽牌堆</b>；打出的牌進入<b>棄牌堆</b>（抽牌堆摸完會把棄牌堆洗回，牌不會用盡）。</li>
-          <li>牌庫含少量「<b>知識牌</b>」，見第六節。</li>
+          {s.openItems.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
         </ul>
 
-        <h2>三、每回合流程</h2>
+        <h2>{s.sec3Title}</h2>
         <div className="flow">
-          <span className="chip">① 從抽牌堆摸 1 張</span>
+          <span className="chip">{s.flowDraw}</span>
           <span>→</span>
-          <span className="chip">② 從手牌打出 1 張</span>
+          <span className="chip">{s.flowDiscard}</span>
           <span>→</span>
-          <span className="sub">輪到下一位（順時針）</span>
+          <span className="sub">{s.flowNext}</span>
         </div>
 
         <div className="cols">
           <div>
-            <h2>四、碰（搶牌）</h2>
-            <p>當有人打出一張人格牌，若你手上有<b>同維度</b>的牌、加上這張剛好<b>湊滿該維度所需張數</b>，可宣告「碰」：</p>
+            <h2>{s.sec4Title}</h2>
+            <p>{s.pongIntro}</p>
             <ul>
-              <li>把這組牌<b>歸檔</b>，並立刻搶到出牌權（不用摸牌，直接打一張）。</li>
-              <li>自己回合也能用手牌湊齊宣告（<b>自摸碰</b>），每回合限一次。</li>
-              <li className="warn">⚠ 張數必須剛好、且全為同維度。張數錯／維度錯／碰已歸檔的維度 → 失敗受罰。</li>
+              {s.pongItems.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+              <li className="warn">{s.pongWarn}</li>
             </ul>
           </div>
           <div>
-            <h2>五、食胡與失敗懲罰</h2>
-            <p><b>食胡：</b>當手牌能<b>一次湊齊所有尚未歸檔的維度</b> → 宣告胡牌，立即獲勝。</p>
-            <p><b>失敗懲罰（罰停）：</b>碰或胡宣告失敗時——</p>
+            <h2>{s.sec5Title}</h2>
+            <p><b>{s.huLineBeforeHu}</b>{s.huLineRest}</p>
+            <p><b>{s.penaltyIntroBold}</b>{s.penaltyIntroRest}</p>
             <ul>
-              <li><b>罰停：</b>下次輪到你時罰停一回合（自動跳過、不抽不出），期間不能碰／胡／搶牌。</li>
-              <li><b>亮牌：</b>碰失敗只亮出你押錯的牌；胡失敗亮出整手牌。</li>
+              {s.penaltyItems.map((item, i) => (
+                <li key={i}><b>{item.b}</b>{item.rest}</li>
+              ))}
             </ul>
-            <p className="warn">→ 想清楚再宣告，賭錯代價很大。</p>
+            <p className="warn">{s.penaltyWarn}</p>
           </div>
         </div>
 
         <div className="cols">
           <div>
-            <h2>六、知識牌</h2>
-            <p>牌庫中有少量知識牌（上面是心理學小知識）。它<b>不屬於任何維度</b>、不能用來湊牌。打出知識牌<b>不會觸發別人搶牌</b>（安全棄牌）。數量很少，偶爾摸到、打掉即可。</p>
+            <h2>{s.sec6Title}</h2>
+            <p>{s.knowledgeBody}</p>
           </div>
           <div>
-            <h2>七、勝負與計分</h2>
+            <h2>{s.sec7Title}</h2>
             <ul>
-              <li>有人食胡 → 該玩家直接獲勝。</li>
-              <li>打滿約定輪數仍無人胡 → 按<b>已歸檔維度數</b>排名，多者勝；同數則比<b>剩餘手牌少</b>者勝。</li>
+              {s.scoreItems.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
             </ul>
           </div>
         </div>
 
         <p className="sub" style={{ marginTop: 18, textAlign: 'center', borderTop: '1px solid #d8c39a', paddingTop: 8 }}>
-          掃描頁首 QR code 即可開始 · {GAME_URL.replace('https://', '')}
+          {s.footer}{GAME_URL.replace('https://', '')}
         </p>
       </div>
     </div>
