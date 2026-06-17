@@ -121,7 +121,7 @@ export function GameLog({ actions, players }: GameLogProps) {
                           ? 'text-[var(--psy-muted)]'
                           : ''
                       }`}
-                      style={label.tone === 'dimension' ? { color: label.colorHex } : undefined}
+                      style={label.tone === 'dimension' ? { color: 'var(--psy-accent)' } : undefined}
                     >
                       {label.prefix}
                       {label.badge && (
@@ -206,7 +206,7 @@ export function GameLog({ actions, players }: GameLogProps) {
                                   ? 'text-[var(--psy-muted)]'
                                   : ''
                               }`}
-                              style={label.tone === 'dimension' ? { color: label.colorHex } : undefined}
+                              style={label.tone === 'dimension' ? { color: 'var(--psy-accent)' } : undefined}
                             >
                               {label.prefix}
                               {label.badge && (

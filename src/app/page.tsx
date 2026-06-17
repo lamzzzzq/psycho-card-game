@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
@@ -21,6 +22,18 @@ export default function Home() {
   const t = STRINGS[loc].home;
   const c = STRINGS[loc].common;
   const features = t.features;
+
+  // 自愈：已完成报告却残留半截答案 = 放弃的重测（unmount 清理可能没触发）。
+  // 清掉它，避免主页显示「繼續測評(n/50)」而大厅显示「已完成」的不一致。
+  // 仅在已有完成报告时清；无报告的半截答案是首次测评进行中，要保留可续答。
+  useEffect(() => {
+    if (!hydrated) return;
+    const s = useAssessmentStore.getState();
+    const answered = Object.keys(s.answers).length;
+    if (s.bigFiveScores && answered > 0 && answered < QUESTIONS.length) {
+      s.cancelRetake();
+    }
+  }, [hydrated]);
 
   return (
     // 移动端：内容从顶部流动 + 底部留白给 sticky CTA 栏；桌面：垂直居中。

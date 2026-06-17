@@ -30,16 +30,15 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
       ) : (
         <div className="space-y-4">
           {declaredSets.map((set) => {
-            const meta = DIMENSION_META[set.dimension];
             return (
               <div
                 key={set.dimension}
                 className="rounded-[1.2rem] border px-4 py-3"
-                style={{ borderColor: meta.colorHex + '26', backgroundColor: meta.colorHex + '0d' }}
+                style={{ borderColor: 'rgba(200,155,93,0.24)', backgroundColor: 'rgba(200,155,93,0.06)' }}
               >
                 <div className="mb-3 flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: meta.colorHex }} />
-                  <span className="text-sm font-medium" style={{ color: meta.colorHex }}>
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: '#c89b5d' }} />
+                  <span className="text-sm font-medium text-[var(--psy-accent)]">
                     {dimName(set.dimension)} · {set.cards.length} {t.cardsUnit}
                   </span>
                 </div>
@@ -86,14 +85,14 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
             <div
               className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold"
               style={{
-                borderColor: DIMENSION_META[detailCard.dimension].colorHex + '45',
-                backgroundColor: DIMENSION_META[detailCard.dimension].colorHex + '12',
-                color: DIMENSION_META[detailCard.dimension].colorHex,
+                borderColor: 'rgba(200,155,93,0.4)',
+                backgroundColor: 'rgba(200,155,93,0.1)',
+                color: 'var(--psy-accent)',
               }}
             >
               <span
                 className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: DIMENSION_META[detailCard.dimension].colorHex }}
+                style={{ backgroundColor: '#c89b5d' }}
               />
               {dimName(detailCard.dimension)}
             </div>
@@ -168,11 +167,10 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
         ) : (
           <div className="mt-2 flex flex-col gap-2">
             {declaredSets.map((set) => {
-              const meta = DIMENSION_META[set.dimension];
               return (
                 <div key={set.dimension} className="flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.colorHex }} />
-                  <span className="text-[9px] font-medium" style={{ color: meta.colorHex }}>
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#c89b5d' }} />
+                  <span className="text-[9px] font-medium text-[var(--psy-accent)]">
                     {dimName(set.dimension)} {set.cards.length} {t.cardsUnit}
                   </span>
                 </div>

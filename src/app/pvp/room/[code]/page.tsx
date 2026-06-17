@@ -327,8 +327,8 @@ export default function RoomWaitPage() {
 
             <div className="space-y-2">
               <p className="text-xs text-[var(--psy-muted)]">{t.maxPlayers}</p>
-              <div className="grid grid-cols-2 gap-2">
-                {[3, 4].map((n) => (
+              <div className="grid grid-cols-3 gap-2">
+                {[2, 3, 4].map((n) => (
                   <button
                     key={n}
                     onClick={() => handleSettingsChange({ ...settings, maxPlayers: n })}

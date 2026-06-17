@@ -10,6 +10,7 @@ import { useHydrated } from '@/stores/useHydration';
 import { QuestionCard } from '@/components/assessment/QuestionCard';
 import { LikertScore, BigFiveScores, DIMENSIONS } from '@/types';
 import { saveAssessmentResult, checkStudentIdExists } from '@/lib/assessment-record';
+import { normalizeStudentId, isValidStudentId, STUDENT_ID_LENGTH } from '@/lib/utils';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 
 // 題目嚴格按 IPIP-50 文件「correct order」排列，不打亂。
@@ -36,6 +37,15 @@ export default function AssessmentPage() {
     if (bigFiveScores && !retaking) router.push('/results');
   }, [bigFiveScores, retaking, router]);
 
+  // 离开测评页时若仍在「重测中」（= 没答完）→ 作废本次重测，保留旧报告。
+  // 完成时 calculateScores 已把 retaking 置 false，故正常完成不会触发。
+  useEffect(() => {
+    return () => {
+      const s = useAssessmentStore.getState();
+      if (s.retaking) s.cancelRetake();
+    };
+  }, []);
+
   // Wait for hydration
   if (!hydrated) {
     return (
@@ -52,7 +62,8 @@ export default function AssessmentPage() {
 
   // 學號 gate：先收集學號，raw 答案按學號存
   if (!studentId) {
-    const trimmed = studentIdInput.trim();
+    const normalized = normalizeStudentId(studentIdInput);
+    const idValid = isValidStudentId(studentIdInput);
     return (
       <div className="flex flex-1 items-center justify-center px-6 py-8">
         <button
@@ -78,43 +89,46 @@ export default function AssessmentPage() {
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              if (!trimmed || checkingId) return;
+              if (!idValid || checkingId) return;
               // 已提示过重复 → 用户坚持，直接放行
               if (dupWarn) {
-                setStudentId(trimmed);
+                setStudentId(normalized);
                 return;
               }
               // 首次：查重；重复则提示等待二次确认，不重复则直接进入
               setCheckingId(true);
-              const exists = await checkStudentIdExists(trimmed);
+              const exists = await checkStudentIdExists(normalized);
               setCheckingId(false);
               if (exists) {
                 setDupWarn(true);
               } else {
-                setStudentId(trimmed);
+                setStudentId(normalized);
               }
             }}
             className="space-y-4"
           >
             <input
               type="text"
-              inputMode="numeric"
               autoFocus
+              maxLength={STUDENT_ID_LENGTH}
               value={studentIdInput}
               onChange={(e) => {
-                setStudentIdInput(e.target.value);
+                // 大小写归一 + 去空白 + 截到 9 位（17094905g → 17094905G）
+                setStudentIdInput(normalizeStudentId(e.target.value).slice(0, STUDENT_ID_LENGTH));
                 if (dupWarn) setDupWarn(false); // 改了学号 → 重新查重
               }}
               placeholder={t.gatePlaceholder}
-              className="w-full rounded-xl border px-4 py-3 text-center text-lg text-[var(--psy-ink)]"
+              className="w-full rounded-xl border px-4 py-3 text-center text-lg tracking-[0.15em] text-[var(--psy-ink)]"
               style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: dupWarn ? 'rgba(220,106,79,0.55)' : 'rgba(200,155,93,0.18)' }}
             />
-            {dupWarn && (
+            {dupWarn ? (
               <p className="text-xs leading-5 text-[var(--psy-danger)]">{t.dupWarn}</p>
-            )}
+            ) : studentIdInput.length > 0 && !idValid ? (
+              <p className="text-xs leading-5 text-[var(--psy-muted)]">{t.idLenHint}</p>
+            ) : null}
             <button
               type="submit"
-              disabled={!trimmed || checkingId}
+              disabled={!idValid || checkingId}
               className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[#9b6430] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               {checkingId ? t.gateChecking : dupWarn ? t.dupConfirm : t.gateStart}

@@ -2,9 +2,22 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GameCard, GameAction } from '@/types';
-import { Card } from './Card';
+import { GameCard, GameAction, isPersonalityCard } from '@/types';
+import { TarotCard } from './TarotCard';
 import { STRINGS, type Locale } from '@/lib/i18n';
+
+// 弃牌也用塔罗卡面（有图+文字），与手牌一致。
+function tarotProps(card: GameCard, locale: Locale) {
+  const persona = isPersonalityCard(card);
+  return {
+    text: card.text,
+    textEn: persona ? card.textEn : undefined,
+    dimension: persona ? card.dimension : undefined,
+    imageSrc: persona ? `/cards/${card.id}.webp` : undefined,
+    isDummy: !persona,
+    locale,
+  };
+}
 
 interface PlayerLite {
   id: string;
@@ -71,10 +84,10 @@ export function DiscardPile({
         {topCard ? (
           <div className="relative">
             <div className="sm:hidden">
-              <Card card={topCard} compact />
+              <TarotCard {...tarotProps(topCard, locale)} width={72} />
             </div>
             <div className="hidden sm:block">
-              <Card card={topCard} />
+              <TarotCard {...tarotProps(topCard, locale)} width={96} />
             </div>
             {canOpen && (
               <div
@@ -149,8 +162,8 @@ export function DiscardPile({
                           <span className="w-6 text-right font-mono text-[11px] text-[var(--psy-muted)]">
                             #{originalIndex + 1}
                           </span>
-                          <div className="flex-shrink-0 scale-75 origin-left">
-                            <Card card={entry.card} />
+                          <div className="flex-shrink-0">
+                            <TarotCard {...tarotProps(entry.card, locale)} width={84} />
                           </div>
                           <div className="flex-1 min-w-0 ml-2 space-y-1">
                             <div className="flex items-center gap-2">

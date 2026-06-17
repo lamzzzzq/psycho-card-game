@@ -5,6 +5,7 @@ import { persist } from 'zustand/middleware';
 import { BigFiveScores, Dimension, LikertScore } from '@/types';
 import { QUESTIONS } from '@/data/questions';
 import { calculateBigFiveScores } from '@/lib/scoring';
+import { normalizeStudentId } from '@/lib/utils';
 
 interface AssessmentState {
   studentId: string | null;
@@ -19,6 +20,7 @@ interface AssessmentState {
   calculateScores: () => BigFiveScores;
   setManualScores: (scores: BigFiveScores) => void;
   startRetake: () => void;
+  cancelRetake: () => void;
   reset: () => void;
   getProgress: () => number;
   isComplete: () => boolean;
@@ -34,7 +36,7 @@ export const useAssessmentStore = create<AssessmentState>()(
       completedAt: null,
       retaking: false,
 
-      setStudentId: (id) => set({ studentId: id.trim() }),
+      setStudentId: (id) => set({ studentId: normalizeStudentId(id) }),
 
       setAnswer: (questionId, score) => {
         set((state) => ({
@@ -56,6 +58,12 @@ export const useAssessmentStore = create<AssessmentState>()(
       // 新测评答完(calculateScores/setManualScores)才覆盖；中途放弃则旧分数仍在。
       startRetake: () => {
         set({ answers: {}, completedAt: null, retaking: true });
+      },
+
+      // 未答完就离开 → 作废本次重测：清掉重测标志和半截答案，保留旧 bigFiveScores。
+      // 「一定要测完才覆盖」：只有 calculateScores/setManualScores 会覆盖分数。
+      cancelRetake: () => {
+        set({ retaking: false, answers: {} });
       },
 
       reset: () => {

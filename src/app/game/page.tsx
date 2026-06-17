@@ -568,9 +568,9 @@ export default function GamePage() {
             const meta = DIMENSION_META[d];
             const score = humanPlayer.bigFiveScores[d];
             return (
-              <div key={d} className="flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: meta.colorHex + '12', border: `1px solid ${meta.colorHex}22` }}>
-                <span className="text-[9px]" style={{ color: meta.colorHex }}>{meta.name}</span>
-                <span className="text-[10px] font-bold" style={{ color: meta.colorHex }}>{score.toFixed(1)}</span>
+              <div key={d} className="flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: 'rgba(200,155,93,0.10)', border: '1px solid rgba(200,155,93,0.2)' }}>
+                <span className="text-[9px] text-[var(--psy-ink-soft)]">{meta.name}</span>
+                <span className="text-[10px] font-bold text-[var(--psy-accent)]">{score.toFixed(1)}</span>
               </div>
             );
           })}
@@ -587,16 +587,16 @@ export default function GamePage() {
                 key={d}
                 className="flex items-center gap-1 rounded-full px-2 py-0.5"
                 style={{
-                  backgroundColor: isDone ? meta.colorHex + '25' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${isDone ? meta.colorHex + '40' : 'rgba(200,155,93,0.14)'}`,
+                  backgroundColor: isDone ? 'rgba(200,155,93,0.2)' : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${isDone ? 'rgba(200,155,93,0.45)' : 'rgba(200,155,93,0.14)'}`,
                 }}
               >
-                <span className="text-[9px]" style={{ color: isDone ? meta.colorHex : 'var(--psy-muted)' }}>
+                <span className="text-[9px]" style={{ color: isDone ? 'var(--psy-accent)' : 'var(--psy-muted)' }}>
                   {meta.name}
                 </span>
                 <span
                   className="text-[10px] font-medium"
-                  style={{ color: isDone ? meta.colorHex : 'var(--psy-ink-soft)' }}
+                  style={{ color: isDone ? 'var(--psy-accent)' : 'var(--psy-ink-soft)' }}
                 >
                   {isDone ? '✓' : `${target}張`}
                 </span>
@@ -750,7 +750,7 @@ export default function GamePage() {
           <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
             <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
               {pongIntent.type === 'self' ? '🎯 自摸碰' : '🎯 碰對方棄牌'} ·{' '}
-              <span style={{ color: DIMENSION_META[pongIntent.dimension].colorHex }}>
+              <span className="text-[var(--psy-accent)]">
                 {DIMENSION_META[pongIntent.dimension].name}
               </span>{' '}
               · 請精確選擇{' '}
@@ -774,17 +774,17 @@ export default function GamePage() {
                     title={isDeclared ? '⚠️ 已歸檔維度 · 提交將判失敗 + 罰停' : undefined}
                     style={{
                       borderColor: pongIntent.dimension === d
-                        ? DIMENSION_META[d].colorHex
+                        ? '#bb8e49'
                         : isDeclared
                         ? 'rgba(220,106,79,0.35)'
                         : 'rgba(200,155,93,0.18)',
                       backgroundColor: pongIntent.dimension === d
-                        ? DIMENSION_META[d].colorHex + '20'
+                        ? '#bb8e49'
                         : isDeclared
                         ? 'rgba(220,106,79,0.06)'
                         : 'rgba(255,255,255,0.02)',
                       color: pongIntent.dimension === d
-                        ? DIMENSION_META[d].colorHex
+                        ? '#fff7ea'
                         : isDeclared
                         ? 'rgba(220,106,79,0.65)'
                         : 'var(--psy-ink-soft)',
@@ -888,8 +888,8 @@ export default function GamePage() {
               const score = humanPlayer.bigFiveScores[d];
               const isDone = declaredDims.has(d);
               return (
-                <div key={d} className="rounded-xl border px-3 py-2" style={{ borderColor: meta.colorHex + '33', backgroundColor: meta.colorHex + '12' }}>
-                  <div className="psy-serif text-sm" style={{ color: meta.colorHex }}>{meta.name}</div>
+                <div key={d} className="rounded-xl border px-3 py-2" style={{ borderColor: isDone ? 'rgba(200,155,93,0.45)' : 'rgba(200,155,93,0.2)', backgroundColor: isDone ? 'rgba(200,155,93,0.12)' : 'rgba(255,255,255,0.03)' }}>
+                  <div className="psy-serif text-sm text-[var(--psy-accent)]">{meta.name}</div>
                   <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">分數 {score.toFixed(1)} · {isDone ? '已完成' : `目標 ${targets[d]} 張`}</div>
                 </div>
               );

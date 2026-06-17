@@ -131,7 +131,7 @@ export function TarotCard({
               className="psy-serif font-semibold leading-snug"
               style={{
                 color: isDummy ? 'var(--psy-muted)' : 'var(--psy-ink)',
-                fontSize: locale === 'en' ? '8.5cqw' : '10.5cqw',
+                fontSize: locale === 'en' ? '9.5cqw' : '10.5cqw',
                 display: '-webkit-box',
                 WebkitLineClamp: 4,
                 WebkitBoxOrient: 'vertical',

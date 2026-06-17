@@ -9,6 +9,7 @@ import { useHydrated } from '@/stores/useHydration';
 import { usePvpStore } from '@/stores/usePvpStore';
 import { upsertPlayer, createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerActiveRoom, STALE_ROOM_MS } from '@/lib/room-api';
 import { retryPendingSaves } from '@/lib/game-record';
+import { normalizeStudentId, isValidStudentId } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { PlayerInfo, DeckId } from '@/types/pvp';
 import { BigFiveScores, DIMENSIONS } from '@/types';
@@ -128,7 +129,7 @@ export default function PvpLobbyPage() {
   }
 
   // 测评学号优先（锁定态的真相源）；否则用手输的。保证从已测评态点 Play Online 必带学号。
-  const effectiveStudentId = (assessedStudentId || studentId).trim();
+  const effectiveStudentId = normalizeStudentId(assessedStudentId || studentId);
 
   async function ensurePlayer() {
     const sid = effectiveStudentId;
@@ -157,7 +158,8 @@ export default function PvpLobbyPage() {
 
   async function handleCreate() {
     if (!effectiveStudentId) { setError(t.enterStudentId); return; }
-    if (!assessedStudentId && studentId.trim() !== studentIdConfirm.trim()) { setError(t.idMismatch); return; }
+    if (!assessedStudentId && !isValidStudentId(studentId)) { setError(t.idLen); return; }
+    if (!assessedStudentId && normalizeStudentId(studentId) !== normalizeStudentId(studentIdConfirm)) { setError(t.idMismatch); return; }
     setLoading(true);
     setError('');
     try {
@@ -178,7 +180,8 @@ export default function PvpLobbyPage() {
 
   async function handleJoin() {
     if (!effectiveStudentId) { setError(t.enterStudentId); return; }
-    if (!assessedStudentId && studentId.trim() !== studentIdConfirm.trim()) { setError(t.idMismatch); return; }
+    if (!assessedStudentId && !isValidStudentId(studentId)) { setError(t.idLen); return; }
+    if (!assessedStudentId && normalizeStudentId(studentId) !== normalizeStudentId(studentIdConfirm)) { setError(t.idMismatch); return; }
     if (joinCode.length !== 4) { setError(t.enter4Code); return; }
     setLoading(true);
     setError('');
@@ -261,15 +264,15 @@ export default function PvpLobbyPage() {
                   className="psy-input"
                   placeholder={t.studentIdPlaceholder}
                   value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
-                  maxLength={20}
+                  onChange={(e) => setStudentId(normalizeStudentId(e.target.value).slice(0, 9))}
+                  maxLength={9}
                 />
                 <input
                   className={`psy-input ${idMismatch ? 'is-error' : ''}`}
                   placeholder={t.studentIdConfirmPlaceholder}
                   value={studentIdConfirm}
-                  onChange={(e) => setStudentIdConfirm(e.target.value)}
-                  maxLength={20}
+                  onChange={(e) => setStudentIdConfirm(normalizeStudentId(e.target.value).slice(0, 9))}
+                  maxLength={9}
                 />
                 {idMismatch && (
                   <p className="text-xs text-[var(--psy-danger)]">{t.idMismatch}</p>
@@ -403,8 +406,8 @@ export default function PvpLobbyPage() {
 
             <div className="space-y-2">
               <p className="psy-eyebrow text-[10px]">{t.maxPlayers}</p>
-              <div className="grid grid-cols-2 gap-2">
-                {[3, 4].map((n) => (
+              <div className="grid grid-cols-3 gap-2">
+                {[2, 3, 4].map((n) => (
                   <button
                     key={n}
                     onClick={() => setMaxPlayers(n)}

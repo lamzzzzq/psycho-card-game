@@ -130,14 +130,14 @@ export function Card({ card, faceUp = true, selected = false, onClick, compact =
               compact ? 'px-1.5 py-0.5 text-[7px]' : 'px-1.5 py-0.5 text-[8px]'
             }`}
             style={{
-              backgroundColor: DIMENSION_META[revealedDimension].colorHex + '33',
-              color: DIMENSION_META[revealedDimension].colorHex,
-              border: `1px solid ${DIMENSION_META[revealedDimension].colorHex}55`,
+              backgroundColor: 'rgba(200,155,93,0.22)',
+              color: '#e7cfa3',
+              border: '1px solid rgba(200,155,93,0.5)',
             }}
           >
             <span
               className="h-1.5 w-1.5 rounded-full"
-              style={{ backgroundColor: DIMENSION_META[revealedDimension].colorHex }}
+              style={{ backgroundColor: '#c89b5d' }}
             />
             <span>{DIMENSION_META[revealedDimension].name}</span>
           </span>
