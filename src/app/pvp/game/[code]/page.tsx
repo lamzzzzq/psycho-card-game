@@ -755,12 +755,11 @@ export default function PvpGamePage() {
           {/* Big Five scores */}
           <div className="hidden items-center justify-center gap-1.5 flex-wrap sm:flex">
             {DIMENSIONS.map(d => {
-              const meta = DIMENSION_META[d];
               const score = mePlayer.bigFiveScores[d];
               return (
-                <div key={d} className="flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: meta.colorHex + '12', border: `1px solid ${meta.colorHex}22` }}>
-                  <span className="text-[9px]" style={{ color: meta.colorHex }}>{dimName(d)}</span>
-                  <span className="text-[10px] font-bold" style={{ color: meta.colorHex }}>{score.toFixed(1)}</span>
+                <div key={d} className="flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: 'rgba(200,155,93,0.10)', border: '1px solid rgba(200,155,93,0.2)' }}>
+                  <span className="text-[9px] text-[var(--psy-ink-soft)]">{dimName(d)}</span>
+                  <span className="text-[10px] font-bold text-[var(--psy-accent)]">{score.toFixed(1)}</span>
                 </div>
               );
             })}
@@ -770,23 +769,22 @@ export default function PvpGamePage() {
           {targets && (
             <div className="hidden items-center justify-center gap-1.5 flex-wrap sm:flex">
               {DIMENSIONS.map(d => {
-                const meta = DIMENSION_META[d];
                 const isDone = declaredDims.has(d);
                 return (
                   <div
                     key={d}
                     className="flex items-center gap-1 rounded-full px-2 py-0.5"
                     style={{
-                      backgroundColor: isDone ? meta.colorHex + '25' : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${isDone ? meta.colorHex + '40' : 'rgba(200,155,93,0.14)'}`,
+                      backgroundColor: isDone ? 'rgba(200,155,93,0.2)' : 'rgba(255,255,255,0.04)',
+                      border: `1px solid ${isDone ? 'rgba(200,155,93,0.45)' : 'rgba(200,155,93,0.14)'}`,
                     }}
                   >
-                    <span className="text-[9px]" style={{ color: isDone ? meta.colorHex : 'var(--psy-muted)' }}>
+                    <span className="text-[9px]" style={{ color: isDone ? 'var(--psy-accent)' : 'var(--psy-muted)' }}>
                       {dimName(d)}
                     </span>
                     <span
                       className="text-[10px] font-medium"
-                      style={{ color: isDone ? meta.colorHex : 'var(--psy-ink-soft)' }}
+                      style={{ color: isDone ? 'var(--psy-accent)' : 'var(--psy-ink-soft)' }}
                     >
                       {isDone ? '✓' : (locale === 'en' ? `${targets[d]} cards` : `${targets[d]}張`)}
                     </span>
@@ -976,7 +974,7 @@ export default function PvpGamePage() {
             <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
               <p className="psy-serif text-center text-xs text-[var(--psy-accent)] sm:text-sm">
                 {pongIntent.type === 'self' ? t.pongIntentSelf : t.pongIntentOther} ·{' '}
-                <span style={{ color: DIMENSION_META[pongIntent.dimension].colorHex }}>
+                <span className="font-semibold text-[var(--psy-accent)]">
                   {dimName(pongIntent.dimension)}
                 </span>{' '}
                 · {t.pongSelectPrompt}{' '}
@@ -995,21 +993,22 @@ export default function PvpGamePage() {
                         setPongIntent({ type: 'self', dimension: d });
                         setSelectedCardIds([]);
                       }}
-                      className="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition"
+                      className="rounded-full border px-3 py-1 text-[11px] font-semibold transition"
                       title={isDeclared ? t.declaredWarn : undefined}
                       style={{
+                        // 维度不带专属色：选中 = 实心 primary(金)，未选 = 中性。
                         borderColor: pongIntent.dimension === d
-                          ? DIMENSION_META[d].colorHex
+                          ? 'rgba(200,155,93,0.7)'
                           : isDeclared
                           ? 'rgba(220,106,79,0.35)'
                           : 'rgba(200,155,93,0.18)',
                         backgroundColor: pongIntent.dimension === d
-                          ? DIMENSION_META[d].colorHex + '20'
+                          ? '#bb8e49'
                           : isDeclared
                           ? 'rgba(220,106,79,0.06)'
                           : 'rgba(255,255,255,0.02)',
                         color: pongIntent.dimension === d
-                          ? DIMENSION_META[d].colorHex
+                          ? '#fff7ea'
                           : isDeclared
                           ? 'rgba(220,106,79,0.65)'
                           : 'var(--psy-ink-soft)',
@@ -1115,12 +1114,11 @@ export default function PvpGamePage() {
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
                 {DIMENSIONS.map((d) => {
-                  const meta = DIMENSION_META[d];
                   const score = mePlayer.bigFiveScores[d];
                   const isDone = declaredDims.has(d);
                   return (
-                    <div key={d} className="rounded-xl border px-3 py-2" style={{ borderColor: meta.colorHex + '33', backgroundColor: meta.colorHex + '12' }}>
-                      <div className="psy-serif text-sm" style={{ color: meta.colorHex }}>{dimName(d)}</div>
+                    <div key={d} className="rounded-xl border px-3 py-2" style={{ borderColor: 'rgba(200,155,93,0.2)', backgroundColor: 'rgba(200,155,93,0.08)' }}>
+                      <div className="psy-serif text-sm text-[var(--psy-ink)]">{dimName(d)}</div>
                       <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{t.scoreLabel} {score.toFixed(1)} · {isDone ? t.doneLabel : (locale === 'en' ? `${t.targetPrefix} ${targets[d]} cards` : `目標 ${targets[d]} 張`)}</div>
                     </div>
                   );

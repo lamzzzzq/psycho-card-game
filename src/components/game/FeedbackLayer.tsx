@@ -9,12 +9,11 @@ import { STRINGS, type Locale } from '@/lib/i18n';
 type AnimationControls = ReturnType<typeof useAnimationControls>;
 type MinimalPlayer = { id: string; name: string };
 
-// 语义反馈色：固定、且刻意避开 5 个人格维度色（紫O/蓝C/黄E/绿A/红N），
-// 否则「碰成功(N)=红」和「失败=红」会混淆。
-const FB_SUCCESS = '#2dd4bf'; // teal — 碰成功
-const FB_HU = '#d4a056';      // 金 — 胡牌(庆祝，区别于纯黄E)
-const FB_FAIL = '#9f1239';    // 深玫红 — 失败(区别于 N 的浅珊瑚红)
-const FB_NOTICE = '#c89b5d';  // 金褐 — 轮到你等中性提示(区别于紫O)
+// 语义反馈色：游玩界面里维度已不带色，故颜色专用于语义 —— 成功绿/失败红/提示黄。
+const FB_SUCCESS = '#22c55e'; // 绿 — 碰成功 / 胡牌
+const FB_HU = '#22c55e';      // 胡牌也归为成功(绿)
+const FB_FAIL = '#ef4444';    // 红 — 失败
+const FB_NOTICE = '#facc15';  // 黄 — 提示/警告(轮到你、被抢等)
 
 interface Pop {
   id: number;

@@ -119,21 +119,21 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
               ) : (
                 <div className="flex flex-wrap items-center gap-1.5">
                   {declaredSets.map((set) => {
-                    const meta = DIMENSION_META[set.dimension];
+                    // 维度不带专属色：归档标签用中性金。
                     return (
                       <div
                         key={set.dimension}
                         className="flex min-w-0 max-w-full items-center gap-1 rounded-full px-2 py-0.5"
                         style={{
-                          border: `1px solid ${meta.colorHex}2d`,
-                          backgroundColor: meta.colorHex + '10',
+                          border: '1px solid rgba(200,155,93,0.28)',
+                          backgroundColor: 'rgba(200,155,93,0.1)',
                         }}
                       >
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: meta.colorHex }} />
-                        <span className="truncate text-[9px]" style={{ color: meta.colorHex }}>
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: '#c89b5d' }} />
+                        <span className="truncate text-[9px] text-[var(--psy-ink-soft)]">
                           {dimName(set.dimension)}
                         </span>
-                        <span className="shrink-0 text-[9px]" style={{ color: meta.colorHex }}>
+                        <span className="shrink-0 text-[9px] text-[var(--psy-accent)]">
                           {set.cards.length}{locale === 'en' ? '' : '張'}
                         </span>
                       </div>

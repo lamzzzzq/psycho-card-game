@@ -151,9 +151,9 @@ export function TarotCard({
               style={{
                 padding: '2cqw 4cqw',
                 fontSize: '6.5cqw',
-                backgroundColor: DIMENSION_META[revealedDimension].colorHex + '33',
-                color: DIMENSION_META[revealedDimension].colorHex,
-                border: `1px solid ${DIMENSION_META[revealedDimension].colorHex}66`,
+                backgroundColor: 'rgba(200,155,93,0.22)',
+                color: '#e7cfa3',
+                border: '1px solid rgba(200,155,93,0.5)',
               }}
             >
               {locale === 'en' ? DIMENSION_META[revealedDimension].nameEn : DIMENSION_META[revealedDimension].name}
