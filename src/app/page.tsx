@@ -11,7 +11,7 @@ import { Footer } from '@/components/shared/Footer';
 export default function Home() {
   const router = useRouter();
   const hydrated = useHydrated();
-  const { bigFiveScores, getProgress } = useAssessmentStore();
+  const { bigFiveScores, getProgress, startRetake } = useAssessmentStore();
   const progress = getProgress();
   const hasResults = hydrated && bigFiveScores !== null;
   // SSR/首屏用 zh 与服务端一致，hydrate 后切到持久化/?lang 的语言，避免 mismatch。
@@ -129,7 +129,11 @@ export default function Home() {
             {t.single}{!hasResults && <span className="ml-1.5 text-xs text-[var(--psy-accent)]">{t.needAssess}</span>}
           </button>
           <button
-            onClick={() => router.push('/assessment')}
+            onClick={() => {
+              // 重测(有成绩且进度为0)→ 非破坏式 startRetake，保留旧报告直到新测完成。
+              if (hasResults && progress === 0) startRetake();
+              router.push('/assessment');
+            }}
             className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
           >
             {progress > 0 ? `${t.continueAssess} (${progress}/${QUESTIONS.length})` : hasResults ? t.reassess : t.startAssess}

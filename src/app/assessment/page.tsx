@@ -16,7 +16,7 @@ import { useLocaleStore, STRINGS } from '@/lib/i18n';
 export default function AssessmentPage() {
   const router = useRouter();
   const hydrated = useHydrated();
-  const { studentId, setStudentId, answers, setAnswer, calculateScores, setManualScores, getProgress, bigFiveScores } = useAssessmentStore();
+  const { studentId, setStudentId, answers, setAnswer, calculateScores, setManualScores, getProgress, bigFiveScores, retaking } = useAssessmentStore();
   const [studentIdInput, setStudentIdInput] = useState('');
   const [checkingId, setCheckingId] = useState(false);
   const [dupWarn, setDupWarn] = useState(false); // 学号重复：第一次提示，再按一次放行
@@ -30,10 +30,11 @@ export default function AssessmentPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = STRINGS[locale].assessment;
 
-  // 已完成測評則跳到結果頁（放 effect 裡，避免 render 期調 router.push）
+  // 已完成測評則跳到結果頁（放 effect 裡，避免 render 期調 router.push）。
+  // 重测中(retaking)即使有旧 bigFiveScores 也留在本页答题，不弹回结果。
   useEffect(() => {
-    if (bigFiveScores) router.push('/results');
-  }, [bigFiveScores, router]);
+    if (bigFiveScores && !retaking) router.push('/results');
+  }, [bigFiveScores, retaking, router]);
 
   // Wait for hydration
   if (!hydrated) {
@@ -44,8 +45,8 @@ export default function AssessmentPage() {
     );
   }
 
-  // If already completed, the effect above redirects to results
-  if (bigFiveScores) {
+  // If already completed (and not retaking), the effect above redirects to results
+  if (bigFiveScores && !retaking) {
     return null;
   }
 

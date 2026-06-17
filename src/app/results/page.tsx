@@ -15,7 +15,7 @@ export default function ResultsPage() {
   const localeRaw = useLocaleStore((s) => s.locale);
   const locale = hydrated ? localeRaw : 'zh';
   const t = STRINGS[locale].results;
-  const { bigFiveScores, reset } = useAssessmentStore();
+  const { bigFiveScores, startRetake } = useAssessmentStore();
 
   if (!hydrated) {
     return (
@@ -93,7 +93,7 @@ export default function ResultsPage() {
           </button>
           <button
             onClick={() => {
-              reset();
+              startRetake();
               router.push('/assessment');
             }}
             className="rounded-full border border-[rgba(200,155,93,0.24)] px-6 py-3 text-sm font-medium text-[var(--psy-ink-soft)] transition hover:bg-[rgba(200,155,93,0.08)]"
