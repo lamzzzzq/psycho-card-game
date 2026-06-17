@@ -99,7 +99,7 @@ export const usePvpStore = create<PvpStore>()(
         if (!room) return;
 
         switch (payload.type) {
-          case 'player-joined':
+          case 'player-joined': {
             set(s => {
               if (s.players.some(p => p.player_id === payload.player.id)) return s;
               return {
@@ -113,7 +113,20 @@ export const usePvpStore = create<PvpStore>()(
                 }],
               };
             });
+            // 花名册收敛：host 把「既有」玩家的 join 重广播一遍，让新加入者补齐
+            // 学号/测评状态/头像（后加入者会漏掉先前的广播）。dedup 守卫(上面)防重复/循环。
+            if (isHost) {
+              const existing = get().players.filter((p) => p.player_id !== payload.player.id);
+              for (const p of existing) {
+                get().sendMessage({
+                  type: 'player-joined',
+                  player: { id: p.player_id, studentId: p.student_id ?? p.player_id, bigFive: p.big_five ?? null, avatar: p.avatar },
+                  seatIndex: p.seat_index,
+                });
+              }
+            }
             break;
+          }
 
           case 'player-left':
             set(s => ({

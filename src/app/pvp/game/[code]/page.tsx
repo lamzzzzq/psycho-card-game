@@ -30,6 +30,7 @@ import { DiscardPile } from '@/components/game/DiscardPile';
 import { GameLog } from '@/components/game/GameLog';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
 import { Card } from '@/components/game/Card';
+import { TarotCard } from '@/components/game/TarotCard';
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
 import { ArrowOverlay } from '@/components/game/ArrowOverlay';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
@@ -835,8 +836,16 @@ export default function PvpGamePage() {
               <div className="flex items-center gap-4">
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-[10px] text-[var(--psy-muted)]">{t.discardedCardLabel}</span>
-                  <div className="rounded-xl ring-1 ring-[rgba(200,155,93,0.35)]">
-                    <Card card={gameState.pendingDiscard} />
+                  <div className="w-24 rounded-xl ring-1 ring-[rgba(200,155,93,0.35)]">
+                    <TarotCard
+                      text={gameState.pendingDiscard.text}
+                      textEn={isPersonalityCard(gameState.pendingDiscard) ? gameState.pendingDiscard.textEn : undefined}
+                      dimension={isPersonalityCard(gameState.pendingDiscard) ? gameState.pendingDiscard.dimension : undefined}
+                      isDummy={!isPersonalityCard(gameState.pendingDiscard)}
+                      imageSrc={isPersonalityCard(gameState.pendingDiscard) ? `/cards/${gameState.pendingDiscard.id}.webp` : undefined}
+                      locale={locale}
+                      fluid
+                    />
                   </div>
                 </div>
                 {/* 不洩露「已歸檔」資訊（強 trap）：所有維度顯示相同引導，玩家自行
