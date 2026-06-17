@@ -9,6 +9,13 @@ import { STRINGS, type Locale } from '@/lib/i18n';
 type AnimationControls = ReturnType<typeof useAnimationControls>;
 type MinimalPlayer = { id: string; name: string };
 
+// 语义反馈色：固定、且刻意避开 5 个人格维度色（紫O/蓝C/黄E/绿A/红N），
+// 否则「碰成功(N)=红」和「失败=红」会混淆。
+const FB_SUCCESS = '#2dd4bf'; // teal — 碰成功
+const FB_HU = '#d4a056';      // 金 — 胡牌(庆祝，区别于纯黄E)
+const FB_FAIL = '#9f1239';    // 深玫红 — 失败(区别于 N 的浅珊瑚红)
+const FB_NOTICE = '#c89b5d';  // 金褐 — 轮到你等中性提示(区别于紫O)
+
 interface Pop {
   id: number;
   text: string;
@@ -207,18 +214,19 @@ export function FeedbackOverlays({
               transition={{ type: 'spring', stiffness: 400, damping: 24 }}
               className="rounded-full px-5 py-2 text-sm font-bold shadow-2xl backdrop-blur"
               style={{
+                // 固定语义色，不再用维度色（避免红色既=情绪稳定维度又=成功/失败）
                 backgroundColor:
                   pop.kind === 'hu'
-                    ? 'rgba(251, 191, 36, 0.95)'
+                    ? FB_HU
                     : pop.kind === 'pong'
-                    ? (pop.colorHex ?? '#f97316') + 'ee'
+                    ? FB_SUCCESS
                     : pop.kind === 'your-turn'
-                    ? 'rgba(168, 85, 247, 0.95)'
-                    : 'rgba(239, 68, 68, 0.9)',
+                    ? FB_NOTICE
+                    : FB_FAIL,
                 color:
-                  pop.kind === 'hu-fail' || pop.kind === 'pong-fail' || pop.kind === 'your-turn'
+                  pop.kind === 'hu-fail' || pop.kind === 'pong-fail'
                     ? '#fff'
-                    : '#111',
+                    : '#0c1622',
               }}
             >
               <span className="mr-1 opacity-70">{pop.playerName}</span>
