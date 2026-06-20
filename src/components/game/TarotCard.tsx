@@ -65,8 +65,9 @@ export function TarotCard({
 }: TarotCardProps) {
   const [imgError, setImgError] = useState(false);
   const showImg = !!imageSrc && !imgError;
-  // 展示档(默认) 1:2 竖长，图窗吃满 + 文字固定；紧凑档(手牌) 2:3，图窗 60% + 文字占余。
-  const cardAspect = compact ? '2 / 3' : '1 / 2';
+  // 展示档(默认) 1:2 竖长，图窗吃满 + 文字固定；紧凑档(手牌) 4:7 中卡，图窗 60% + 文字占余。
+  // 4:7(高/宽≈1.75) = 现在 2:3(1.5) 与大图 1:2(2.0) 的中点：手牌更像卡、图更大，又不至于太高溢出。
+  const cardAspect = compact ? '4 / 7' : '1 / 2';
   // 卡面去掉句尾标点（。/.）——句号会影响排版换行。
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
 
