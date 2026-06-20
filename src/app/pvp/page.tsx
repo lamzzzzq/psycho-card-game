@@ -9,6 +9,7 @@ import { useHydrated } from '@/stores/useHydration';
 import { usePvpStore } from '@/stores/usePvpStore';
 import { upsertPlayer, createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerActiveRoom, STALE_ROOM_MS } from '@/lib/room-api';
 import { retryPendingSaves } from '@/lib/game-record';
+import { saveAssessmentResult, checkStudentIdExists } from '@/lib/assessment-record';
 import { normalizeStudentId, isValidStudentId } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { PlayerInfo, DeckId } from '@/types/pvp';
@@ -41,13 +42,22 @@ export default function PvpLobbyPage() {
   const [studentId, setStudentId] = useState(player?.studentId ?? '');
   const [studentIdConfirm, setStudentIdConfirm] = useState('');
 
-  // 做过测评 → 学号已固定，自动预填(含确认)，免得重输。
+  // 只信任「合法 9 位」的已测评学号。旧版本可能存了 <9 位的非法学号（规则上线前），
+  // 这种不能锁定、也不能跳过校验，必须强制重输。
+  const validAssessedId = isValidStudentId(assessedStudentId ?? '');
+
+  // 自愈：名下挂着非法旧学号 → 清掉（解绑），逼用户重输合法 9 位。分数(bigFiveScores)保留。
   useEffect(() => {
-    if (assessedStudentId && !studentId) {
+    if (assessedStudentId && !validAssessedId) persistStudentId('');
+  }, [assessedStudentId, validAssessedId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 做过且合法测评 → 学号已固定，自动预填(含确认)，免得重输。
+  useEffect(() => {
+    if (validAssessedId && assessedStudentId && !studentId) {
       setStudentId(assessedStudentId);
       setStudentIdConfirm(assessedStudentId);
     }
-  }, [assessedStudentId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [assessedStudentId, validAssessedId]); // eslint-disable-line react-hooks/exhaustive-deps
   const [avatar, setAvatar] = useState(player?.avatar ?? DEFAULT_AVATAR);
   const [joinCode, setJoinCode] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(3);
@@ -56,6 +66,7 @@ export default function PvpLobbyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
+  const [manualDupWarn, setManualDupWarn] = useState(false); // 大厅手动填分查重：已有记录→二次确认
   const [manualScoresInput, setManualScoresInput] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
   const [rawInputs, setRawInputs] = useState<Record<string, string>>({ O: '3', C: '3', E: '3', A: '3', N: '3' });
   const [activeRoom, setActiveRoom] = useState<{ code: string; status: string; roomId: string } | null>(null);
@@ -128,11 +139,18 @@ export default function PvpLobbyPage() {
     );
   }
 
-  // 测评学号优先（锁定态的真相源）；否则用手输的。保证从已测评态点 Play Online 必带学号。
-  const effectiveStudentId = normalizeStudentId(assessedStudentId || studentId);
+  // 合法已测评学号优先（锁定态真相源）；否则用手输的。旧非法值不参与。
+  const effectiveStudentId = normalizeStudentId((validAssessedId ? assessedStudentId : studentId) || '');
 
   async function ensurePlayer() {
     const sid = effectiveStudentId;
+    // ② 身份变了（换/重输学号）→ 先解绑旧身份名下的所有房间，避免旧座位变僵尸把人卡在
+    //    「房主似乎不在线」死局屏。必须在创建/加入新房之前清掉。
+    const prevId = usePlayerStore.getState().player?.id;
+    if (prevId && prevId !== sid) {
+      try { await leaveAllRooms(prevId); } catch {}
+      usePvpStore.getState().reset();
+    }
     // 把学号定为 assessment store 的真相源 → 下次进大厅就锁定显示，避免"有分数无学号"的不一致。
     if (sid && sid !== assessedStudentId) persistStudentId(sid);
     const info: PlayerInfo = { id: sid, studentId: sid, bigFive: bigFiveScores, avatar };
@@ -158,8 +176,8 @@ export default function PvpLobbyPage() {
 
   async function handleCreate() {
     if (!effectiveStudentId) { setError(t.enterStudentId); return; }
-    if (!assessedStudentId && !isValidStudentId(studentId)) { setError(t.idLen); return; }
-    if (!assessedStudentId && normalizeStudentId(studentId) !== normalizeStudentId(studentIdConfirm)) { setError(t.idMismatch); return; }
+    if (!validAssessedId && !isValidStudentId(studentId)) { setError(t.idLen); return; }
+    if (!validAssessedId && normalizeStudentId(studentId) !== normalizeStudentId(studentIdConfirm)) { setError(t.idMismatch); return; }
     setLoading(true);
     setError('');
     try {
@@ -180,8 +198,8 @@ export default function PvpLobbyPage() {
 
   async function handleJoin() {
     if (!effectiveStudentId) { setError(t.enterStudentId); return; }
-    if (!assessedStudentId && !isValidStudentId(studentId)) { setError(t.idLen); return; }
-    if (!assessedStudentId && normalizeStudentId(studentId) !== normalizeStudentId(studentIdConfirm)) { setError(t.idMismatch); return; }
+    if (!validAssessedId && !isValidStudentId(studentId)) { setError(t.idLen); return; }
+    if (!validAssessedId && normalizeStudentId(studentId) !== normalizeStudentId(studentIdConfirm)) { setError(t.idMismatch); return; }
     if (joinCode.length !== 4) { setError(t.enter4Code); return; }
     setLoading(true);
     setError('');
@@ -251,8 +269,8 @@ export default function PvpLobbyPage() {
         <section className="psy-panel psy-etched space-y-4 rounded-[1.6rem] p-6">
           <p className="psy-eyebrow text-[10px]">{t.playerInfo}</p>
           <div className="space-y-3">
-            {assessedStudentId ? (
-              // 做过测评 → 学号已固定且测评页已校验，锁定只读，不重输/不会输错。
+            {validAssessedId ? (
+              // 做过测评 + 学号合法 → 已校验，锁定只读，不重输/不会输错。（旧非法值不锁，强制重输）
               <div className="psy-input flex items-center gap-2" style={{ cursor: 'default' }}>
                 <span className="psy-eyebrow shrink-0 text-[10px]">{t.studentLabel}</span>
                 <span className="psy-serif text-[var(--psy-ink)]">{assessedStudentId}</span>
@@ -340,16 +358,31 @@ export default function PvpLobbyPage() {
                       );
                     })}
                   </div>
+                  {manualDupWarn && (
+                    <p className="text-xs leading-5 text-[var(--psy-danger)]">{t.manualRecordWarn}</p>
+                  )}
                   <button
-                    onClick={() => {
+                    onClick={async () => {
+                      const sid = effectiveStudentId;
+                      // 手动填分也算一条「记录」→ 必须有合法 9 位学号才能记。
+                      if (!isValidStudentId(sid)) { setError(t.idLen); return; }
+                      // ③ 查重：已有记录 → 先弹提示（完成即覆盖/不继续不覆盖），二次点击才写。
+                      if (!manualDupWarn) {
+                        const exists = await checkStudentIdExists(sid);
+                        if (exists) { setManualDupWarn(true); return; }
+                      }
                       setManualScores(manualScoresInput);
                       // 手动设分时一并把学号定为真相源，保证"有分数→有学号"，下次锁定。
-                      if (effectiveStudentId) persistStudentId(effectiveStudentId);
+                      persistStudentId(sid);
+                      // ③ 写库：手动填分 = 提交过一条记录（source='manual'），查重/研究数据都认。
+                      void saveAssessmentResult(sid, {}, manualScoresInput, 'manual');
+                      setManualDupWarn(false);
+                      setError('');
                       setShowManualInput(false);
                     }}
                     className="psy-btn psy-btn-accent w-full py-2 text-xs font-medium"
                   >
-                    {t.confirmScores}
+                    {manualDupWarn ? t.dupConfirm : t.confirmScores}
                   </button>
                 </div>
               )}

@@ -15,7 +15,7 @@ import {
 } from '@/components/game/FeedbackLayer';
 import { FlyingCard } from '@/components/game/FlyingCard';
 import { supabase } from '@/lib/supabase';
-import { leaveRoom, updateRoomStatus } from '@/lib/room-api';
+import { leaveRoom, leaveAllRooms, updateRoomStatus } from '@/lib/room-api';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 
@@ -305,7 +305,9 @@ export default function PvpGamePage() {
               </button>
               <div>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
+                    // 彻底解绑：清掉本人名下所有房间座位，避免回大厅又被「僵尸房」横幅弹回来卡死。
+                    if (player) { try { await leaveAllRooms(player.id); } catch {} }
                     usePvpStore.getState().reset();
                     router.replace('/pvp');
                   }}
