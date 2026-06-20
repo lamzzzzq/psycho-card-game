@@ -55,6 +55,20 @@ export default function CardLabPage() {
           </div>
         </section>
 
+        {/* 已生成卡牌画廊：全 50 题，imageSrc=/cards/{id}.webp，缺图自动回退 ◈。随生随看。 */}
+        <section className="space-y-3">
+          <h2 className="psy-serif text-lg text-[var(--psy-ink)]">已生成画廊（全 50 题 · 缺图显 ◈）</h2>
+          <p className="text-xs text-[var(--psy-muted)]">从 <code>card-art-src/{'{id}'}.png</code> 转出的 <code>/cards/{'{id}'}.webp</code>。已转的显示真图，没转的占位。跑 <code>node scripts/convert-card-art.mjs</code> 刷新。</p>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6">
+            {QUESTIONS.map((q) => (
+              <div key={q.id} className="space-y-1 text-center">
+                <TarotCard text={q.text} textEn={q.textEn} dimension={q.dimension as Dimension} imageSrc={`/cards/${q.id}.webp`} locale={locale} fluid />
+                <p className="text-[10px] text-[var(--psy-muted)]">#{q.id}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* 装饰边框试做（SVG）：拱顶 + 四角星 + 顶纹章 + 底框。仅 card-lab。 */}
         <section className="space-y-3">
           <h2 className="psy-serif text-lg text-[var(--psy-ink)]">装饰边框试做（SVG · 拱顶/四角星/顶纹章/底框）</h2>
