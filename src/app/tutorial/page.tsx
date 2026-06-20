@@ -3,7 +3,8 @@
 import { useMemo, useReducer, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card } from '@/components/game/Card';
+import { TarotCard } from '@/components/game/TarotCard';
+import { cardToTarotProps } from '@/components/game/cardToTarotProps';
 import { DIMENSION_META } from '@/data/dimensions';
 import { DIMENSIONS } from '@/types';
 import { useHydrated } from '@/stores/useHydration';
@@ -26,7 +27,8 @@ type DimName = (dim: Dimension) => string;
 const PC = (id: number, dim: Dimension, text: string, textEn: string, facet = 'demo'): PersonalityCard => ({
   id, dimension: dim, text, textEn, facet,
 });
-const DC = (id: number, text: string, textEn: string): DummyCard => ({ id, text, textEn, isDummy: true });
+// 知识牌：term 存进 text、定义存进 definition（与正式 KNOWLEDGE_CARDS 一致，英文）。
+const DC = (id: number, term: string, definition: string): DummyCard => ({ id, text: term, definition, isDummy: true });
 
 // Card 組件只渲染 card.text，故按 locale 把 text 換成對應語言（不改 Card 邏輯）。
 const locCard = <T extends GameCard>(c: T, loc: Locale): T =>
@@ -43,7 +45,7 @@ const SANDBOX_HAND: GameCard[] = [
   PC(106, 'A', '我會主動幫助遇到困難的人', 'I take the initiative to help people in trouble'),
   PC(107, 'O', '我對抽象的哲學問題很感興趣', 'I am interested in abstract, philosophical questions'),
   PC(108, 'C', '我做事情之前總會制定計劃', 'I always make a plan before doing things'),
-  DC(109, '顏色會影響食慾，藍色會抑制飢餓感', 'Color affects appetite — blue suppresses hunger'),
+  DC(109, 'Trait Theory', 'Views personality as a configuration of stable, measurable traits.'),
 ];
 const SANDBOX_DRAWN: PersonalityCard = PC(110, 'N', '我對批評比較敏感', 'I am rather sensitive to criticism');
 // 對手棄牌（截胡碰用）：維度在 open-claim 時按手裏現存的對子動態選定。
@@ -375,11 +377,10 @@ function InteractiveSandbox({
                   else if (canClickToDiscard) dispatch({ type: 'pick-discard', id: c.id });
                 }}
               >
-                <Card
-                  card={locCard(c, loc)}
-                  compact
+                <TarotCard
+                  {...cardToTarotProps(locCard(c, loc), loc)}
+                  width={73}
                   revealedDimension={(state.revealedAll || state.revealedIds.includes(c.id)) && dimension ? dimension : null}
-                  revealedAsKnowledge={(state.revealedAll || state.revealedIds.includes(c.id)) && isDummy}
                   selected={isSelected}
                 />
                 {isDrawn && (
@@ -482,7 +483,7 @@ function InteractiveSandbox({
               {state.scene === 'start' ? s.drawPileClick : s.drawPile}
             </span>
             <div className={state.scene === 'start' ? 'tut-spotlight' : ''}>
-              <Card card={PC(999, 'N', '', '')} faceUp={false} compact />
+              <TarotCard faceDown text="" width={73} />
             </div>
           </button>
         </div>
@@ -613,7 +614,7 @@ function InteractiveSandbox({
             className="grid gap-3 rounded-xl border border-[rgba(200,155,93,0.28)] bg-[rgba(200,155,93,0.06)] p-3 text-xs text-[var(--psy-ink-soft)] sm:grid-cols-[auto_1fr_auto]"
           >
             <div className="flex justify-center">
-              <Card card={locCard(CLAIM_CARDS[state.claimDim], loc)} compact revealedDimension={state.claimDim} locale={loc} />
+              <TarotCard {...cardToTarotProps(locCard(CLAIM_CARDS[state.claimDim], loc), loc)} revealedDimension={state.claimDim} width={73} />
             </div>
             <div className="flex flex-col justify-center">
               <div className="psy-serif text-sm text-[var(--psy-ink)]">{s.claimWho}</div>

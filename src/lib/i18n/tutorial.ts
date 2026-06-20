@@ -115,7 +115,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '知識牌（檔案註記）',
-        body: '牌堆裏有一類無人格歸屬的「檔案註記 / 知識牌」 —— 內容是心理學常識。它們不能用於歸檔，但也不會"穿幫"成錯誤維度。\n用途：\n• 抽到就丟，騰出手牌空間；\n• 也是觀察對手心理風格的趣味設計（看對手怎麼挑這些中性牌可以暴露偏好）。',
+        body: '牌堆裏有一類無人格歸屬的「檔案註記 / 知識牌」 —— 內容是心理學課程概念（術語 + 定義）。它們不能用於歸檔，但也不會"穿幫"成錯誤維度。\n用途：\n• 抽到就丟，騰出手牌空間；\n• 也是觀察對手心理風格的趣味設計（看對手怎麼挑這些中性牌可以暴露偏好）。',
       },
       {
         title: '聯機 · 退出與輪轉',
@@ -365,7 +365,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Knowledge Cards',
-        body: 'The draw pile contains a class of dimensionless "Knowledge cards" — their content is psychology trivia. They cannot be used to declare, but they also never "out" you as the wrong dimension.\nUses:\n• Discard them when drawn to free up hand space;\n• They are also a playful way to read opponents’ psychological styles (how an opponent picks these neutral cards can reveal preferences).',
+        body: 'The draw pile contains a class of dimensionless "Knowledge cards" — their content is psychology course concepts (term + definition). They cannot be used to declare, but they also never "out" you as the wrong dimension.\nUses:\n• Discard them when drawn to free up hand space;\n• They are also a playful way to read opponents’ psychological styles (how an opponent picks these neutral cards can reveal preferences).',
       },
       {
         title: 'Online · Leaving & Rotation',

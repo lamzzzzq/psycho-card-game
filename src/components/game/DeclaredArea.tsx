@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { DeclaredSet, PersonalityCard } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
-import { Card } from './Card';
+import { TarotCard } from './TarotCard';
+import { cardToTarotProps } from './cardToTarotProps';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
 import { STRINGS, type Locale } from '@/lib/i18n';
 
@@ -51,7 +52,7 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
                       className="rounded-[1rem] transition hover:-translate-y-1 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--psy-accent)]"
                       aria-label={`${t.viewWord}: ${card.text}`}
                     >
-                      <Card card={card} tiny />
+                      <TarotCard {...cardToTarotProps(card, locale)} width={56} />
                     </button>
                   ))}
                 </div>
@@ -75,7 +76,7 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
       {detailCard && (
         <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-center">
           <div className="flex justify-center">
-            <Card card={detailCard} revealedDimension={detailCard.dimension} locale={locale} />
+            <TarotCard {...cardToTarotProps(detailCard, locale)} revealedDimension={detailCard.dimension} width={200} />
           </div>
           <div className="space-y-4">
             <div>

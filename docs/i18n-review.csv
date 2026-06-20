@@ -38,7 +38,7 @@
 "i18n","assessment","assessment.idLenHint","學號需為 9 位（如 17094905G，大小寫不限）","Student ID must be 9 characters (e.g. 17094905G, case-insensitive)",""
 "i18n","assessment","assessment.gateStart","開始測評","Start Assessment",""
 "i18n","assessment","assessment.gateChecking","檢查中…","Checking…",""
-"i18n","assessment","assessment.dupWarn","此學號已完成過測評，請確認是否填錯。若確定是你本人、要繼續使用，請再按一次。","This student ID has already completed the assessment. Please double-check. If it is really you and you want to continue, press once more.",""
+"i18n","assessment","assessment.dupWarn","此學號已有記錄（曾完成測評或手動填分）。若繼續並完成本次測評，將以這次結果為準（覆蓋舊記錄）；中途離開不算覆蓋。確定是你本人、要重做請再按一次。","This student ID already has a record (a completed assessment or manual scores). If you continue and finish this assessment, this attempt becomes the record (overwriting the old one); leaving midway does not overwrite. If it is really you and want to redo it, press once more.",""
 "i18n","assessment","assessment.dupConfirm","確認重複，仍然開始","Use it anyway",""
 "i18n","assessment","assessment.backHome","回到主頁","Back to Home",""
 "i18n","assessment","assessment.studentLabel","學號","Student ID",""
@@ -262,6 +262,8 @@
 "i18n","pvpLobby","pvpLobby.manualInput","手動輸入分數","Enter scores manually",""
 "i18n","pvpLobby","pvpLobby.bigFiveRange","Big Five 分數 · 1.0 – 5.0","Big Five · 1.0 – 5.0",""
 "i18n","pvpLobby","pvpLobby.confirmScores","確認分數","Confirm Scores",""
+"i18n","pvpLobby","pvpLobby.dupConfirm","確認重複，仍然提交","Submit anyway",""
+"i18n","pvpLobby","pvpLobby.manualRecordWarn","此學號已有記錄。若繼續提交，將以這次手動分數為準（覆蓋舊記錄）；不提交則不覆蓋。確定要覆蓋請再按一次。","This student ID already has a record. Submitting will make these manual scores the record (overwriting the old one); not submitting does not overwrite. Press once more to overwrite.",""
 "i18n","pvpLobby","pvpLobby.deckHeader","人格牌堆","Personality Deck",""
 "i18n","pvpLobby","pvpLobby.comingSoon","即將上線","Coming soon",""
 "i18n","pvpLobby","pvpLobby.maxPlayers","最多玩家數","Max Players",""
@@ -575,10 +577,10 @@ All players see a ""⛔ Frozen"" badge under your avatar.",""
 用得好的玩家會優先看自己最不確定的牌，避免歸檔時混入錯誤。","Hand cards hide their dimension by default — you rely on memory and reasoning. But after drawing at the start of your turn, you can activate ""🔍 view 2 cards"" once to reveal the true dimensions of 2 hand cards. It applies this turn only and resets automatically next turn.
 Good players prioritize their least-certain cards to avoid mixing errors when they declare.",""
 "i18n(页面模块)","tutorial","tutorial.steps[8].title","知識牌（檔案註記）","Knowledge Cards",""
-"i18n(页面模块)","tutorial","tutorial.steps[8].body","牌堆裏有一類無人格歸屬的「檔案註記 / 知識牌」 —— 內容是心理學常識。它們不能用於歸檔，但也不會""穿幫""成錯誤維度。
+"i18n(页面模块)","tutorial","tutorial.steps[8].body","牌堆裏有一類無人格歸屬的「檔案註記 / 知識牌」 —— 內容是心理學課程概念（術語 + 定義）。它們不能用於歸檔，但也不會""穿幫""成錯誤維度。
 用途：
 • 抽到就丟，騰出手牌空間；
-• 也是觀察對手心理風格的趣味設計（看對手怎麼挑這些中性牌可以暴露偏好）。","The draw pile contains a class of dimensionless ""Knowledge cards"" — their content is psychology trivia. They cannot be used to declare, but they also never ""out"" you as the wrong dimension.
+• 也是觀察對手心理風格的趣味設計（看對手怎麼挑這些中性牌可以暴露偏好）。","The draw pile contains a class of dimensionless ""Knowledge cards"" — their content is psychology course concepts (term + definition). They cannot be used to declare, but they also never ""out"" you as the wrong dimension.
 Uses:
 • Discard them when drawn to free up hand space;
 • They are also a playful way to read opponents’ psychological styles (how an opponent picks these neutral cards can reveal preferences).",""

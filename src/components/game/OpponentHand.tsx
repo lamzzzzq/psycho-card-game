@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useAnimationControls } from 'framer-motion';
 import { Player } from '@/types';
-import { Card } from './Card';
+import { TarotCard } from './TarotCard';
+import { cardToTarotProps } from './cardToTarotProps';
 import { DeclaredArea } from './DeclaredArea';
 import { STRINGS, type Locale } from '@/lib/i18n';
 
@@ -217,7 +218,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
                   ) : (
                     <div className="grid grid-cols-3 justify-items-center gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
                       {modalCards.map((card) => (
-                        <Card key={card.id} card={card} locale={locale} />
+                        <TarotCard key={card.id} {...cardToTarotProps(card, locale)} fluid />
                       ))}
                     </div>
                   )}

@@ -29,7 +29,6 @@ import { DrawPile } from '@/components/game/DrawPile';
 import { DiscardPile } from '@/components/game/DiscardPile';
 import { GameLog } from '@/components/game/GameLog';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
-import { Card } from '@/components/game/Card';
 import { TarotCard } from '@/components/game/TarotCard';
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
 import { ArrowOverlay } from '@/components/game/ArrowOverlay';

@@ -5,7 +5,8 @@ import { motion } from 'framer-motion';
 import { GameCard, Dimension, Player, isPersonalityCard } from '@/types';
 import { getTargetCounts } from '@/lib/scoring';
 import { getDeclaredDimensions } from '@/lib/game-logic';
-import { Card } from './Card';
+import { TarotCard } from './TarotCard';
+import { cardToTarotProps } from './cardToTarotProps';
 import { STRINGS, type Locale } from '@/lib/i18n';
 
 interface PongPanelProps {
@@ -85,7 +86,7 @@ export function PongPanel({
         <div className="flex flex-col items-center gap-1">
           <span className="psy-serif text-[10px] uppercase tracking-[0.18em] text-[var(--psy-muted)]">{t.pongSampleLabel}</span>
           <div className="rounded-xl p-1" style={{ backgroundColor: 'rgba(200, 155, 93, 0.08)', boxShadow: 'inset 0 0 0 1px rgba(200,155,93,0.18)' }}>
-            <Card card={pendingCard} tiny />
+            <TarotCard {...cardToTarotProps(pendingCard, locale)} width={56} />
           </div>
         </div>
 
