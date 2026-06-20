@@ -2,6 +2,8 @@
 
 真相源：`supabase/migrations/0001_game_records.sql`（表结构）、`src/lib/game-record.ts`（写入）、`src/app/stats/page.tsx`（查看 + 下载）。
 
+> 本文管「**对局**数据」。学号身份、测评结果（`assessment_results`）、去重/覆盖/导出口径见 [STUDENT_ID_IDENTITY.md](STUDENT_ID_IDENTITY.md)。
+
 ---
 
 ## ⚠️ 上线前必做（否则一条数据都收不到）
