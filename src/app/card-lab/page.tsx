@@ -40,6 +40,20 @@ export default function CardLabPage() {
           </div>
         </header>
 
+        {/* 真实插画测试（仅 card-lab，用 _lab-sample.webp，不影响游戏） */}
+        <section className="space-y-3">
+          <h2 className="psy-serif text-lg text-[var(--psy-ink)]">真实插画测试（AI 生成图进框效果）</h2>
+          <p className="text-xs text-[var(--psy-muted)]">测试图 <code>public/cards/_lab-sample.webp</code> 放进塔罗框（图窗 object-cover）。仅此页，不碰真实 /cards/{'{id}'}.webp。</p>
+          <div className="flex flex-wrap items-end gap-5">
+            {[96, 140, width].map((w, i) => (
+              <div key={i} className="space-y-2 text-center">
+                <TarotCard text="我和其他人在一起時感覺自在" textEn="Feel comfortable around people." dimension={'E' as Dimension} imageSrc="/cards/_lab-sample.webp" locale={locale} width={w} />
+                <p className="text-xs text-[var(--psy-muted)]">{w}px</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* 真实打牌场景（手机优先） */}
         <section className="space-y-3">
           <h2 className="psy-serif text-lg text-[var(--psy-ink)]">真实打牌场景（手机优先）</h2>
