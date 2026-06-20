@@ -1,7 +1,9 @@
 # 卡牌美术规格 · 交给 AI 生图用
 
-> 2026-06-21 定稿。真相源：`src/components/game/TarotCard.tsx`（卡面渲染）、`src/data/questions.ts`（50 题↔卡）、`src/data/dimensions.ts`（维度配色）。
+> 2026-06-21 定稿。真相源：`src/components/game/TarotCard.tsx`（卡面渲染）、`src/data/questions.ts`（50 题↔人格牌）、`src/data/dimensions.ts`（维度配色）、`src/data/dummy-cards.ts`（知识牌）。
 > 改了卡面比例/图窗占比，记得同步更新本文与生图比例。
+>
+> 牌分两类：**人格牌**（50 张，需插画，§1–§5）、**知识牌/dummy**（20 张，纯文字、无需插画，§6）。**生图只针对 50 张人格牌。**
 
 ---
 
@@ -76,3 +78,16 @@
 4. 刷新 `/card-lab` 或牌桌即生效（缺图自动回退 ◈ 占位）。
 
 > 需要 50 张逐题的生图 prompt 清单（题面 + 维度 + 建议画面，CSV/MD），可让 AI 按本规格一次生成。
+
+---
+
+## 6. 知识牌（dummy）· 纯文字，无需插画
+
+知识牌是手牌里的「噪音牌/中立牌」，不计入人格归档，同时承载 APSS 课程知识点。**不画插画**，走专属纯文字版式。
+
+- **数量/内容**：20 张课程心理学概念，**术语(term) + 一句话定义(definition)**，统一英文。真相源 `src/data/dummy-cards.ts`（`KNOWLEDGE_CARDS`，来自课程 sheet A 列术语 + C 列 Bryant 定义）。
+- **版式**（同 4:7 外框，但内部无图窗）：眉标 `Psyche` + **术语标题** + 分隔 ◆ + **定义正文**（小字）。渲染走 `TarotCard` 的 `description` 入参触发。
+- **与人格牌区分**：人格牌有图窗 + 一句陈述；知识牌纯文字 + 术语标题，一眼可辨。
+- **发牌**：每局抽 8（2–3 人）/ 12（4 人）张，从 20 条按序循环取。
+
+> 现状统一英文（中文模式下也显示英文术语，课程通用）。若日后要中文对照，在 `KNOWLEDGE_CARDS` 加字段 + `TarotCard` 知识牌分支按 locale 取即可。
