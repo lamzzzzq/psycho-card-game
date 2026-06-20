@@ -13,7 +13,12 @@
 --   sources_history       按时间排列的来源序列，如 {manual,assessment,assessment}
 --   overwritten_count     被覆盖（作废）的旧行数 = submission_count - 1
 
-CREATE OR REPLACE VIEW assessment_results_official AS
+-- ⚠️ security_invoker=true：视图按「调用者」身份读底表，而非视图属主。
+--   否则视图会绕过 assessment_results 的 RLS，加上 Supabase 默认给 anon 的读权 →
+--   anon 能直接读到全部学号明细（泄露）。设为 invoker 后：anon 受 RLS 拦截看 0 行；
+--   老师 service_role / postgres 绕过 RLS 仍看全部。
+CREATE OR REPLACE VIEW assessment_results_official
+WITH (security_invoker = true) AS
 SELECT DISTINCT ON (ar.student_id)
   ar.student_id,
   ar.source              AS latest_source,
@@ -37,6 +42,9 @@ JOIN (
   GROUP BY student_id
 ) agg ON agg.student_id = ar.student_id
 ORDER BY ar.student_id, ar.submitted_at DESC;  -- DISTINCT ON 每个学号取最新一行 = 官方结果
+
+-- 防御性显式回收：anon / authenticated 不得读此视图（双保险，配合上面的 security_invoker）。
+REVOKE ALL ON public.assessment_results_official FROM anon, authenticated;
 
 -- 仅后台（service role / 表 owner）可读：不授予 anon，避免泄露明细。
 -- 全量审计（含被覆盖的旧行）仍直接查 assessment_results。
