@@ -3,11 +3,15 @@
 // 装饰版塔罗卡（SVG 边框）—— 拱形图窗 + 双线金框 + 四角星 + 顶纹章 + 底部文字框。
 // ⚠️ 目前只在 card-lab 沙盒试用，不接入正式 TarotCard / 游戏。满意后再决定是否合并。
 // 全部用一个 viewBox=400×700(=4:7) 的内联 SVG 绘制：矢量、任意尺寸清晰、可换色、零素材。
+// padding 对齐现版 TarotCard：内容(图窗/文字框)内缩 ~18/400≈4.5%，尽量贴近边框、留白小。
 import { useState } from 'react';
 
 const GOLD = '#c9a45c';        // 主线
 const GOLD_SOFT = '#9c7c44';   // 次线/内线
 const GOLD_DIM = 'rgba(201,164,92,0.45)';
+
+const M = 18;                  // 内容内缩（≈4.5%，对齐现版 4cqw padding）
+const R = 400 - M;            // 右/对称用 = 382
 
 // 4 角星(sparkle)路径，中心 (cx,cy)、尺寸 s。
 function spark(cx: number, cy: number, s: number) {
@@ -15,8 +19,8 @@ function spark(cx: number, cy: number, s: number) {
   return `M${cx},${cy - s} C${cx},${cy - k} ${cx + k},${cy} ${cx + s},${cy} C${cx + k},${cy} ${cx},${cy + k} ${cx},${cy + s} C${cx},${cy + k} ${cx - k},${cy} ${cx - s},${cy} C${cx - k},${cy} ${cx},${cy - k} ${cx},${cy - s} Z`;
 }
 
-// 拱形图窗路径（x 38..362, 顶峰 y40, 肩 ~150, 底 452）。
-const ARCH = 'M38,452 L38,150 C38,78 122,52 200,40 C278,52 362,78 362,150 L362,452 Z';
+// 拱形图窗：x 18..382, 顶峰 y20, 肩 ~110, 底 418。占卡高约 60%，与现版图窗一致。
+const ARCH = `M${M},418 L${M},110 C${M},52 105,30 200,22 C295,30 ${R},52 ${R},110 L${R},418 Z`;
 
 interface OrnateCardProps {
   text: string;
@@ -49,68 +53,64 @@ export function OrnateCard({ text, textEn, imageSrc, locale = 'zh', width = 200 
           </defs>
 
           {/* 卡底 */}
-          <rect x="4" y="4" width="392" height="692" rx="42" fill="url(#cardBg)" />
+          <rect x="3" y="3" width="394" height="694" rx="42" fill="url(#cardBg)" />
 
-          {/* 图窗（拱形裁切）：图片或占位 */}
+          {/* 图窗（拱形裁切）：图片或占位。覆盖整个拱形 bbox。 */}
           <g clipPath="url(#archClip)">
-            <rect x="38" y="40" width="324" height="412" fill="url(#imgPlaceholder)" />
+            <rect x={M} y="20" width={R - M} height="400" fill="url(#imgPlaceholder)" />
             {showImg && (
               // eslint-disable-next-line @next/next/no-img-element
-              <image href={imageSrc} x="38" y="40" width="324" height="412" preserveAspectRatio="xMidYMid slice" onError={() => setImgError(true)} />
+              <image href={imageSrc} x={M} y="20" width={R - M} height="400" preserveAspectRatio="xMidYMid slice" onError={() => setImgError(true)} />
             )}
           </g>
-          {!showImg && <text x="200" y="252" textAnchor="middle" fontSize="56" fill={GOLD_DIM} opacity="0.5">◈</text>}
+          {!showImg && <text x="200" y="235" textAnchor="middle" fontSize="56" fill={GOLD_DIM} opacity="0.5">◈</text>}
 
           {/* 拱形描边（双线） */}
           <path d={ARCH} fill="none" stroke={GOLD} strokeWidth="2" />
-          <path d="M46,448 L46,152 C46,86 124,62 200,50 C276,62 354,86 354,152 L354,448" fill="none" stroke={GOLD_SOFT} strokeWidth="1" opacity="0.85" />
+          <path d={`M${M + 7},414 L${M + 7},112 C${M + 7},58 108,36 200,28 C292,36 ${R - 7},58 ${R - 7},112 L${R - 7},414`} fill="none" stroke={GOLD_SOFT} strokeWidth="1" opacity="0.85" />
 
           {/* 外双线框 */}
-          <rect x="10" y="10" width="380" height="680" rx="38" fill="none" stroke={GOLD} strokeWidth="2" />
-          <rect x="17" y="17" width="366" height="666" rx="32" fill="none" stroke={GOLD_SOFT} strokeWidth="1" opacity="0.8" />
+          <rect x="7" y="7" width="386" height="686" rx="38" fill="none" stroke={GOLD} strokeWidth="2" />
+          <rect x="13" y="13" width="374" height="674" rx="32" fill="none" stroke={GOLD_SOFT} strokeWidth="1" opacity="0.8" />
 
           {/* 顶部中央纹章（菱形 + 两侧短线 + 上方小星） */}
-          <path d={spark(200, 26, 7)} fill={GOLD} />
-          <path d="M200,33 l9,9 l-9,9 l-9,-9 Z" fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <line x1="150" y1="42" x2="182" y2="42" stroke={GOLD_SOFT} strokeWidth="1" />
-          <line x1="218" y1="42" x2="250" y2="42" stroke={GOLD_SOFT} strokeWidth="1" />
+          <path d={spark(200, 11, 6)} fill={GOLD} />
+          <path d="M200,16 l8,8 l-8,8 l-8,-8 Z" fill="none" stroke={GOLD} strokeWidth="1.5" />
+          <line x1="158" y1="24" x2="184" y2="24" stroke={GOLD_SOFT} strokeWidth="1" />
+          <line x1="216" y1="24" x2="242" y2="24" stroke={GOLD_SOFT} strokeWidth="1" />
 
-          {/* 四角星 */}
-          <path d={spark(48, 60, 6)} fill={GOLD} />
-          <path d={spark(352, 60, 6)} fill={GOLD} />
-          <path d={spark(48, 640, 6)} fill={GOLD} />
-          <path d={spark(352, 640, 6)} fill={GOLD} />
+          {/* 四角星（顶角在拱肩两侧的空隙；底角在文字框外角） */}
+          <path d={spark(40, 52, 6)} fill={GOLD} />
+          <path d={spark(360, 52, 6)} fill={GOLD} />
+          <path d={spark(40, 648, 5)} fill={GOLD} />
+          <path d={spark(360, 648, 5)} fill={GOLD} />
 
           {/* 拱底分隔 ◆ */}
-          <line x1="70" y1="468" x2="185" y2="468" stroke={GOLD_DIM} strokeWidth="1" />
-          <path d="M200,461 l7,7 l-7,7 l-7,-7 Z" fill={GOLD} />
-          <line x1="215" y1="468" x2="330" y2="468" stroke={GOLD_DIM} strokeWidth="1" />
+          <line x1="60" y1="432" x2="186" y2="432" stroke={GOLD_DIM} strokeWidth="1" />
+          <path d="M200,425 l7,7 l-7,7 l-7,-7 Z" fill={GOLD} />
+          <line x1="214" y1="432" x2="340" y2="432" stroke={GOLD_DIM} strokeWidth="1" />
 
-          {/* 底部文字框 + 角部括号 + 顶部小菱 */}
-          <rect x="40" y="486" width="320" height="184" rx="12" fill="none" stroke={GOLD_SOFT} strokeWidth="1.5" />
-          {/* 四角括号 */}
-          <path d="M52,500 v-8 a4,4 0 0 1 4,-4 h8" fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <path d="M348,500 v-8 a4,4 0 0 0 -4,-4 h-8" fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <path d="M52,656 v8 a4,4 0 0 0 4,4 h8" fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <path d="M348,656 v8 a4,4 0 0 1 -4,4 h-8" fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <path d="M194,486 l6,-6 l6,6 l-6,6 Z" fill={GOLD} />
-
-          {/* 底部中央小星 */}
-          <path d={spark(200, 680, 5)} fill={GOLD} />
+          {/* 底部文字框 + 角部括号 + 顶部小菱（贴近边框、放大） */}
+          <rect x={M} y="448" width={R - M} height="226" rx="12" fill="none" stroke={GOLD_SOFT} strokeWidth="1.5" />
+          <path d={`M${M + 14},462 v-8 a4,4 0 0 1 4,-4 h8`} fill="none" stroke={GOLD} strokeWidth="1.5" />
+          <path d={`M${R - 14},462 v-8 a4,4 0 0 0 -4,-4 h-8`} fill="none" stroke={GOLD} strokeWidth="1.5" />
+          <path d={`M${M + 14},660 v8 a4,4 0 0 0 4,4 h8`} fill="none" stroke={GOLD} strokeWidth="1.5" />
+          <path d={`M${R - 14},660 v8 a4,4 0 0 1 -4,4 h-8`} fill="none" stroke={GOLD} strokeWidth="1.5" />
+          <path d="M194,448 l6,-6 l6,6 l-6,6 Z" fill={GOLD} />
         </svg>
 
-        {/* 文字层（HTML 叠加，便于字体/换行/省略）：盖在底部文字框上 */}
+        {/* 文字层（HTML 叠加，便于字体/换行/省略）：盖在底部文字框上，字号对齐现版 */}
         <div
           className="psy-serif absolute flex items-center justify-center text-center"
-          style={{ left: '10%', right: '10%', top: '70.5%', height: '25%' }}
+          style={{ left: `${M / 4}%`, right: `${M / 4}%`, top: '65%', height: '30%' }}
         >
           <p
             className="font-semibold leading-snug"
             style={{
               color: 'var(--psy-ink)',
-              fontSize: locale === 'en' ? '8cqw' : '9cqw',
+              fontSize: locale === 'en' ? '9.5cqw' : '10.5cqw',
               display: '-webkit-box',
-              WebkitLineClamp: 3,
+              WebkitLineClamp: 4,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
             }}
