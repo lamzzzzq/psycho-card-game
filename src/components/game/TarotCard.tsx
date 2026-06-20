@@ -19,11 +19,31 @@ interface TarotCardProps {
   width?: number;
   /** 流式：填满父容器宽度（4 列网格等）。 */
   fluid?: boolean;
+  /**
+   * 紧凑档（手牌用）：卡用 2:3、图窗占 60%、文字占剩余——保持手牌密集好点选。
+   * 默认 false = 展示档：卡用 1:2 竖长、图窗吃满、文字固定底部——给插画最大高度。
+   */
+  compact?: boolean;
 }
 
 const GOLD = '#c89b5d';
 const GOLD_LINE = 'rgba(207,167,112,0.62)';
 const GOLD_FAINT = 'rgba(200,155,93,0.40)';
+
+// 中文默认按「字符」换行，会把「概念」拆成上下两行。用 Intl.Segmenter 分词后，
+// 把每个词包进 white-space:nowrap → 换行只发生在词与词之间，词内不再断开。
+// 英文本就按空格断词，无需处理；无 Segmenter 的环境回退为原字符串。
+function renderLabel(text: string, locale: 'zh' | 'en'): React.ReactNode {
+  if (locale === 'en' || typeof Intl === 'undefined' || !('Segmenter' in Intl)) return text;
+  const seg = new Intl.Segmenter('zh', { granularity: 'word' });
+  return Array.from(seg.segment(text)).map((p, i) =>
+    p.isWordLike ? (
+      <span key={i} style={{ whiteSpace: 'nowrap' }}>{p.segment}</span>
+    ) : (
+      <span key={i}>{p.segment}</span>
+    ),
+  );
+}
 
 // 塔罗风卡面：圆角矩形金框 + 图片窗(上) + 文字(下)。
 // ⚠️ 外层 wrapper 设 container-type，卡片本体用 cqw → 全部按「卡片宽度」解析
@@ -41,9 +61,12 @@ export function TarotCard({
   onClick,
   width = 200,
   fluid = false,
+  compact = false,
 }: TarotCardProps) {
   const [imgError, setImgError] = useState(false);
   const showImg = !!imageSrc && !imgError;
+  // 展示档(默认) 1:2 竖长，图窗吃满 + 文字固定；紧凑档(手牌) 2:3，图窗 60% + 文字占余。
+  const cardAspect = compact ? '2 / 3' : '1 / 2';
   // 卡面去掉句尾标点（。/.）——句号会影响排版换行。
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
 
@@ -59,7 +82,7 @@ export function TarotCard({
         <div
           className="relative flex w-full items-center justify-center"
           style={{
-            aspectRatio: '2 / 3',
+            aspectRatio: cardAspect,
             borderRadius: '7cqw',
             background: 'linear-gradient(180deg, #19293c 0%, #0d1825 100%)',
             border: `1.5px solid ${GOLD_LINE}`,
@@ -79,7 +102,7 @@ export function TarotCard({
         onClick={onClick}
         className={`relative w-full select-none ${onClick ? 'cursor-pointer transition-transform hover:-translate-y-1' : ''}`}
         style={{
-          aspectRatio: '2 / 3',
+          aspectRatio: cardAspect,
           borderRadius: '7cqw',
           padding: '4cqw',
           background: 'linear-gradient(180deg, #16243a 0%, #0e1a28 60%, #0a131e 100%)',
@@ -98,11 +121,12 @@ export function TarotCard({
         <span className="pointer-events-none absolute" style={{ right: '7cqw', top: '5.5cqw', color: GOLD, opacity: 0.7, fontSize: '5cqw' }}>✦</span>
 
         <div className="relative flex h-full w-full flex-col" style={{ gap: '2.5cqw' }}>
-          {/* 图片窗：占 60%，圆角矩形 */}
+          {/* 图片窗：展示档吃满剩余高度（卡拉长后增高只进这里）；紧凑档固定 60% */}
           <div
             className="relative w-full overflow-hidden"
             style={{
-              flex: '0 0 60%',
+              flex: compact ? '0 0 60%' : '1 1 auto',
+              minHeight: 0,
               borderRadius: '5cqw',
               boxShadow: `inset 0 0 0 1px ${GOLD_FAINT}`,
               background: showImg ? undefined : 'linear-gradient(160deg, #1c2c44 0%, #0f1c2b 100%)',
@@ -125,8 +149,11 @@ export function TarotCard({
             <span style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${GOLD_FAINT}, transparent)` }} />
           </div>
 
-          {/* 文字面板：单语，占剩余 */}
-          <div className="flex min-h-0 flex-1 items-center justify-center text-center" style={{ padding: '0 3cqw' }}>
+          {/* 文字面板：展示档固定高度（卡拉长不改文本区，只喂图窗）；紧凑档占剩余 */}
+          <div
+            className={`flex items-center justify-center text-center ${compact ? 'min-h-0 flex-1' : 'shrink-0'}`}
+            style={{ padding: '0 3cqw', ...(compact ? null : { height: '46cqw' }) }}
+          >
             <p
               className="psy-serif font-semibold leading-snug"
               style={{
@@ -138,7 +165,7 @@ export function TarotCard({
                 overflow: 'hidden',
               }}
             >
-              {label}
+              {renderLabel(label, locale)}
             </p>
           </div>
         </div>
