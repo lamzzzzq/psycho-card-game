@@ -19,11 +19,6 @@ interface TarotCardProps {
   width?: number;
   /** 流式：填满父容器宽度（4 列网格等）。 */
   fluid?: boolean;
-  /**
-   * 紧凑档（手牌用）：卡用 2:3、图窗占 60%、文字占剩余——保持手牌密集好点选。
-   * 默认 false = 展示档：卡用 1:2 竖长、图窗吃满、文字固定底部——给插画最大高度。
-   */
-  compact?: boolean;
 }
 
 const GOLD = '#c89b5d';
@@ -61,13 +56,12 @@ export function TarotCard({
   onClick,
   width = 200,
   fluid = false,
-  compact = false,
 }: TarotCardProps) {
   const [imgError, setImgError] = useState(false);
   const showImg = !!imageSrc && !imgError;
-  // 展示档(默认) 1:2 竖长，图窗吃满 + 文字固定；紧凑档(手牌) 4:7 中卡，图窗 60% + 文字占余。
-  // 4:7(高/宽≈1.75) = 现在 2:3(1.5) 与大图 1:2(2.0) 的中点：手牌更像卡、图更大，又不至于太高溢出。
-  const cardAspect = compact ? '4 / 7' : '1 / 2';
+  // 全卡统一 4:7（高/宽≈1.75）：图窗占 60% + 文字占剩余。手牌和看大图场景同一比例，
+  // 不再用细长 1:2（太瘦不好看）。
+  const cardAspect = '4 / 7';
   // 卡面去掉句尾标点（。/.）——句号会影响排版换行。
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
 
@@ -122,11 +116,11 @@ export function TarotCard({
         <span className="pointer-events-none absolute" style={{ right: '7cqw', top: '5.5cqw', color: GOLD, opacity: 0.7, fontSize: '5cqw' }}>✦</span>
 
         <div className="relative flex h-full w-full flex-col" style={{ gap: '2.5cqw' }}>
-          {/* 图片窗：展示档吃满剩余高度（卡拉长后增高只进这里）；紧凑档固定 60% */}
+          {/* 图片窗：占卡片高度 60%，圆角矩形 */}
           <div
             className="relative w-full overflow-hidden"
             style={{
-              flex: compact ? '0 0 60%' : '1 1 auto',
+              flex: '0 0 60%',
               minHeight: 0,
               borderRadius: '5cqw',
               boxShadow: `inset 0 0 0 1px ${GOLD_FAINT}`,
@@ -150,10 +144,10 @@ export function TarotCard({
             <span style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${GOLD_FAINT}, transparent)` }} />
           </div>
 
-          {/* 文字面板：展示档固定高度（卡拉长不改文本区，只喂图窗）；紧凑档占剩余 */}
+          {/* 文字面板：占图窗以外的剩余高度 */}
           <div
-            className={`flex items-center justify-center text-center ${compact ? 'min-h-0 flex-1' : 'shrink-0'}`}
-            style={{ padding: '0 3cqw', ...(compact ? null : { height: '46cqw' }) }}
+            className="flex min-h-0 flex-1 items-center justify-center text-center"
+            style={{ padding: '0 3cqw' }}
           >
             <p
               className="psy-serif font-semibold leading-snug"

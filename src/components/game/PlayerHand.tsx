@@ -169,7 +169,6 @@ export function PlayerHand({
                   locale={locale}
                   onClick={() => handleCardClick(card.id)}
                   fluid
-                  compact
                 />
                 {/* "NEW" badge on the just-drawn card. */}
                 {isNewCard && (
