@@ -3,6 +3,7 @@
 // 卡面设计沙盒 —— 仅用于预览新塔罗风卡框，不影响正式游戏组件。定稿后再替换 Card.tsx。
 import { useState } from 'react';
 import { TarotCard } from '@/components/game/TarotCard';
+import { OrnateCard } from '@/components/game/OrnateCard';
 import { MockGameScene } from '@/components/game/MockGameScene';
 import { QUESTIONS } from '@/data/questions';
 import { DIMENSIONS, Dimension } from '@/types';
@@ -51,6 +52,26 @@ export default function CardLabPage() {
                 <p className="text-xs text-[var(--psy-muted)]">{w}px</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* 装饰边框试做（SVG）：拱顶 + 四角星 + 顶纹章 + 底框。仅 card-lab。 */}
+        <section className="space-y-3">
+          <h2 className="psy-serif text-lg text-[var(--psy-ink)]">装饰边框试做（SVG · 拱顶/四角星/顶纹章/底框）</h2>
+          <p className="text-xs text-[var(--psy-muted)]">左=现版（圆角矩形图窗），右=新装饰版（SVG 拱形+纹章+底框）。同一张 _lab-sample 图对比。</p>
+          <div className="flex flex-wrap items-end gap-8">
+            <div className="space-y-2 text-center">
+              <TarotCard text="我和其他人在一起時感覺自在" textEn="Feel comfortable around people." dimension={'E' as Dimension} imageSrc="/cards/_lab-sample.webp" locale={locale} width={width} />
+              <p className="text-xs text-[var(--psy-muted)]">现版</p>
+            </div>
+            <div className="space-y-2 text-center">
+              <OrnateCard text="我和其他人在一起時感覺自在" textEn="Feel comfortable around people." imageSrc="/cards/_lab-sample.webp" locale={locale} width={width} />
+              <p className="text-xs text-[var(--psy-accent)]">装饰版(SVG)</p>
+            </div>
+            <div className="space-y-2 text-center">
+              <OrnateCard text="我和其他人在一起時感覺自在" textEn="Feel comfortable around people." imageSrc="/cards/_lab-sample.webp" locale={locale} width={96} />
+              <p className="text-xs text-[var(--psy-muted)]">装饰版 96px</p>
+            </div>
           </div>
         </section>
 
