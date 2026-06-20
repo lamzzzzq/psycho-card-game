@@ -1,6 +1,6 @@
 import { GameCard, PersonalityCard, DummyCard, BigFiveScores, Dimension, DIMENSIONS } from '@/types';
 import { QUESTIONS } from '@/data/questions';
-import { DUMMY_CARD_TEXTS } from '@/data/dummy-cards';
+import { KNOWLEDGE_CARDS } from '@/data/dummy-cards';
 import { shuffle } from './utils';
 import { getInitialHandSize } from './scoring';
 
@@ -47,11 +47,10 @@ export function generatePersonalityCards(count: number = 50): PersonalityCard[] 
 }
 
 export function generateDummyCards(count: number = 8): DummyCard[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: 1000 + i,
-    text: DUMMY_CARD_TEXTS[i % DUMMY_CARD_TEXTS.length],
-    isDummy: true as const,
-  }));
+  return Array.from({ length: count }, (_, i) => {
+    const k = KNOWLEDGE_CARDS[i % KNOWLEDGE_CARDS.length];
+    return { id: 1000 + i, text: k.term, definition: k.definition, isDummy: true as const };
+  });
 }
 
 export function generateDeck(playerCount: number = 4): GameCard[] {

@@ -19,6 +19,8 @@ interface TarotCardProps {
   width?: number;
   /** 流式：填满父容器宽度（4 列网格等）。 */
   fluid?: boolean;
+  /** 知识牌(dummy)的一句话定义；提供时走「术语标题 + 定义正文」纯文字版式，无图窗。 */
+  description?: string;
 }
 
 const GOLD = '#c89b5d';
@@ -56,9 +58,12 @@ export function TarotCard({
   onClick,
   width = 200,
   fluid = false,
+  description,
 }: TarotCardProps) {
   const [imgError, setImgError] = useState(false);
   const showImg = !!imageSrc && !imgError;
+  // 知识牌(dummy)：有定义则走纯文字版式（术语标题 + 定义正文，无图窗）。
+  const isKnowledge = isDummy && !!description;
   // 全卡统一 4:7（高/宽≈1.75）：图窗占 60% + 文字占剩余。手牌和看大图场景同一比例，
   // 不再用细长 1:2（太瘦不好看）。
   const cardAspect = '4 / 7';
@@ -115,6 +120,34 @@ export function TarotCard({
         <span className="pointer-events-none absolute" style={{ left: '7cqw', top: '5.5cqw', color: GOLD, opacity: 0.7, fontSize: '5cqw' }}>✦</span>
         <span className="pointer-events-none absolute" style={{ right: '7cqw', top: '5.5cqw', color: GOLD, opacity: 0.7, fontSize: '5cqw' }}>✦</span>
 
+        {isKnowledge ? (
+          /* 知识牌：纯文字版式 —— 眉标 + 术语标题 + 分隔 + 定义正文，无图窗 */
+          <div className="relative flex h-full w-full flex-col items-center justify-center text-center" style={{ gap: '3cqw', padding: '2cqw 1cqw' }}>
+            <span className="psy-serif uppercase" style={{ fontSize: '4.2cqw', letterSpacing: '0.28em', color: GOLD_FAINT }}>Psyche</span>
+            <p
+              className="psy-serif font-semibold"
+              style={{
+                color: 'var(--psy-ink)', fontSize: '11cqw', lineHeight: 1.15,
+                display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}
+            >
+              {text}
+            </p>
+            <div className="flex items-center justify-center" style={{ gap: '2cqw', width: '64%' }}>
+              <span style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${GOLD_FAINT})` }} />
+              <span style={{ color: GOLD, fontSize: '4cqw', opacity: 0.85 }}>◆</span>
+              <span style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${GOLD_FAINT}, transparent)` }} />
+            </div>
+            <p
+              style={{
+                color: 'var(--psy-muted)', fontSize: '7cqw', lineHeight: 1.32,
+                display: '-webkit-box', WebkitLineClamp: 7, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}
+            >
+              {description}
+            </p>
+          </div>
+        ) : (
         <div className="relative flex h-full w-full flex-col" style={{ gap: '2.5cqw' }}>
           {/* 图片窗：占卡片高度 60%，圆角矩形 */}
           <div
@@ -164,6 +197,7 @@ export function TarotCard({
             </p>
           </div>
         </div>
+        )}
 
         {/* 揭示维度角标：贴右上角、放大 */}
         {revealedDimension && (

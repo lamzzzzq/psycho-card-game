@@ -842,6 +842,7 @@ export default function PvpGamePage() {
                       textEn={isPersonalityCard(gameState.pendingDiscard) ? gameState.pendingDiscard.textEn : undefined}
                       dimension={isPersonalityCard(gameState.pendingDiscard) ? gameState.pendingDiscard.dimension : undefined}
                       isDummy={!isPersonalityCard(gameState.pendingDiscard)}
+                      description={isPersonalityCard(gameState.pendingDiscard) ? undefined : gameState.pendingDiscard.definition}
                       imageSrc={isPersonalityCard(gameState.pendingDiscard) ? `/cards/${gameState.pendingDiscard.id}.webp` : undefined}
                       locale={locale}
                       fluid

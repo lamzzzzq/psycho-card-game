@@ -15,6 +15,7 @@ function tarotProps(card: GameCard, locale: Locale) {
     dimension: persona ? card.dimension : undefined,
     imageSrc: persona ? `/cards/${card.id}.webp` : undefined,
     isDummy: !persona,
+    description: persona ? undefined : card.definition,
     locale,
   };
 }

@@ -1,32 +1,30 @@
-export const DUMMY_CARD_TEXTS: string[] = [
-  '人在說謊時瞳孔會放大',
-  '巴納姆效應：人們傾向於接受模糊的性格描述',
-  '鏡像神經元讓你看到別人打哈欠也會想打',
-  '人類大腦每天會產生約6萬個想法',
-  '顏色會影響食慾，藍色會抑制飢餓感',
-  '鄧寧-克魯格效應：能力越差越容易高估自己',
-  '人對損失的敏感度是收益的兩倍',
-  '首因效應：第一印象在7秒內形成',
-  '人在做決定時90%靠情緒，10%靠邏輯',
-  '雞尾酒會效應：嘈雜中你總能聽到自己的名字',
-  '人類只能同時維持約150個社交關係',
-  '蔡格尼克效應：未完成的事比完成的事更難忘',
-  '人更容易記住故事而非數據',
-  '從衆效應：75%的人會跟隨多數人的錯誤選擇',
-  '錨定效應：先看到的數字會影響後續判斷',
-  '微表情只持續1/25到1/5秒',
-  '人在憤怒時智商會暫時降低',
-  '倖存者偏差：你只看到了成功者的故事',
-  '習得性無助：反覆失敗後人會放棄嘗試',
-  '光環效應：長得好看的人被認爲更聰明',
-  '人在35歲後性格基本穩定',
-  '心流狀態下大腦會釋放5種快感化學物質',
-  '延遲滿足能力是預測成功的重要指標',
-  '人在羣體中的責任感會降低（旁觀者效應）',
-  '音樂能改變人對時間流逝的感知',
-  '人的短期記憶只能保持約7個信息塊',
-  '選擇悖論：選項越多反而越難做決定',
-  '人對不確定性的恐懼往往大於確定的壞結果',
-  '睡眠期間大腦會清除有毒蛋白質',
-  '積極的身體語言能反過來提升你的情緒',
+// 知识牌（dummy / 檔案註記）：APSS 课程心理学概念，术语 + 一句话定义（Bryant 修订版）。
+// 来源：课程 sheet A 列(术语) + C 列(Bryant's version 定义)。统一英文。
+// 用途：作为手牌里的「噪音牌/知识牌」，不计入人格归档；同时承载课程知识点。
+export interface KnowledgeCard {
+  term: string;
+  definition: string;
+}
+
+export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
+  { term: 'Biological Approach', definition: 'Personality shaped by genetics and inherited biological structures.' },
+  { term: 'Humanistic Approach', definition: 'Focuses on inherent human goodness and striving for self-actualization.' },
+  { term: 'Behavioural Perspective', definition: 'Behavioral patterns learned entirely through external rewards and punishments.' },
+  { term: 'Social-Cognitive Theory', definition: 'How mental processes and social environments interact to guide behavior.' },
+  { term: 'Trait Theory', definition: 'Views personality as a configuration of stable, measurable traits.' },
+  { term: "Erikson's Stages of Development", definition: 'Eight lifelong developmental stages centered on unique psychosocial conflicts.' },
+  { term: 'Temperament', definition: 'Innate, biological tendencies shaping how we emotionally react and adapt.' },
+  { term: 'Traits', definition: 'Stable, enduring tendencies to think, feel, and behave in specific ways.' },
+  { term: 'Personality', definition: "An individual's unique, enduring pattern of thinking, feeling, and acting." },
+  { term: 'Self-Concept', definition: "An individual's internal perception and mental blueprint of who they are." },
+  { term: 'Self-Efficacy', definition: "One's belief and confidence in their own ability to succeed." },
+  { term: 'Archetypes', definition: 'Universal, inherited symbols or themes within the collective unconscious.' },
+  { term: 'Reciprocal Determinism', definition: 'The continuous feedback loop between thoughts, behavior, and environment.' },
+  { term: 'Congruence', definition: 'A state of high alignment between real self and ideal self.' },
+  { term: 'Id', definition: 'The unconscious mind driven by primitive urges and immediate pleasure.' },
+  { term: 'Ego', definition: 'The rational, conscious mind balancing primitive desires with reality.' },
+  { term: 'Superego', definition: 'The internalized moral conscience tracking societal rules, ideals, and guilt.' },
+  { term: 'Locus of Control', definition: "Believing life's outcomes are driven by your actions versus external forces." },
+  { term: 'Defense Mechanisms', definition: 'Unconscious mental strategies used by the ego to distort reality and reduce anxiety.' },
+  { term: 'Projective Testing', definition: 'Using ambiguous stimuli (like inkblots) to expose unconscious dynamics.' },
 ];

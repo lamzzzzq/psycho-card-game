@@ -164,6 +164,7 @@ export function PlayerHand({
                   dimension={isPersonalityCard(card) ? card.dimension : undefined}
                   imageSrc={isPersonalityCard(card) ? `/cards/${card.id}.webp` : undefined}
                   isDummy={!isPersonalityCard(card)}
+                  description={isPersonalityCard(card) ? undefined : card.definition}
                   selected={isSelected}
                   revealedDimension={revealed}
                   locale={locale}

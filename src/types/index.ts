@@ -45,8 +45,9 @@ export interface PersonalityCard {
 
 export interface DummyCard {
   id: number;
-  text: string;
+  text: string;        // 知识牌：术语(term)
   textEn?: string;
+  definition?: string; // 知识牌：一句话定义（正文）
   isDummy: true;
 }
 
