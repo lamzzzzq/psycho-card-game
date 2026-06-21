@@ -182,12 +182,16 @@ export function OrnateCard({
           </p>
         </div>
 
-        {/* 揭示维度角标 */}
+        {/* 揭示维度角标：实心金底 + 深色字，放大，居中压在拱底分隔处 */}
         {revealedDimension && (
-          <div className="absolute z-20" style={{ right: '5%', top: '2.5%' }}>
+          <div className="absolute z-20" style={{ left: '50%', top: '58.5%', transform: 'translate(-50%,-50%)' }}>
             <span
-              className="psy-serif inline-flex items-center rounded-full font-semibold leading-none"
-              style={{ padding: '2cqw 4cqw', fontSize: '6.5cqw', backgroundColor: 'rgba(200,155,93,0.28)', color: '#e7cfa3', border: '1px solid rgba(200,155,93,0.6)' }}
+              className="psy-serif inline-flex items-center rounded-full font-semibold leading-none whitespace-nowrap"
+              style={{
+                padding: '2.6cqw 6.5cqw', fontSize: '8.5cqw', letterSpacing: '0.04em',
+                background: 'linear-gradient(180deg, #dcc07f, #b88a3e)', color: '#2a1c06',
+                border: '1px solid #efd9a8', boxShadow: '0 0.5cqw 1.4cqw rgba(0,0,0,0.5)',
+              }}
             >
               {locale === 'en' ? DIMENSION_META[revealedDimension].nameEn : DIMENSION_META[revealedDimension].name}
             </span>

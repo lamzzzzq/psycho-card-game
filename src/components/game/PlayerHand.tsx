@@ -171,19 +171,20 @@ export function PlayerHand({
                   onClick={() => handleCardClick(card.id)}
                   fluid
                 />
-                {/* "NEW" badge on the just-drawn card. */}
+                {/* "NEW" badge on the just-drawn card：实心金底 + 深色字，放大。 */}
                 {isNewCard && (
                   <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, y: -4, scale: 0.8 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 18, delay: 0.1 }}
-                    className="absolute left-[5%] top-[3%] z-30 pointer-events-none select-none"
+                    className="absolute left-[6%] top-[4%] z-30 pointer-events-none select-none"
                   >
                     <div
-                      className="rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none tracking-[0.12em] text-[var(--psy-accent)] shadow-[0_8px_18px_rgba(0,0,0,0.22)]"
+                      className="psy-serif rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase leading-none tracking-[0.14em] shadow-[0_6px_14px_rgba(0,0,0,0.45)]"
                       style={{
-                        background: 'linear-gradient(180deg, rgba(20,31,46,0.96), rgba(12,21,31,0.98))',
-                        borderColor: 'rgba(200,155,93,0.45)',
+                        background: 'linear-gradient(180deg, #dcc07f, #b88a3e)',
+                        color: '#2a1c06',
+                        borderColor: '#efd9a8',
                       }}
                     >
                       {t.newDraw}
