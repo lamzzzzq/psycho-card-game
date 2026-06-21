@@ -79,6 +79,11 @@ export function TarotCard({
   const showImg = !!imageSrc && !imgError;
   // 知识牌(dummy)：有定义则走纯文字版式（术语标题 + 定义正文，无图窗）。
   const isKnowledge = isDummy && !!description;
+  // 按文本长度自适应字号/行数，最长的(Erikson/Defense)也不裁切。
+  const termFont = text.length > 24 ? 11 : text.length > 15 ? 12 : 13;
+  const defLen = (description ?? '').length;
+  const defFont = defLen > 72 ? 7 : defLen > 56 ? 7.8 : 8.5;
+  const defClamp = defLen > 72 ? 7 : 6;
   // 全卡统一 4:7（高/宽≈1.75）：图窗占 60% + 文字占剩余。手牌和看大图场景同一比例，
   // 不再用细长 1:2（太瘦不好看）。
   const cardAspect = '4 / 7';
@@ -141,7 +146,7 @@ export function TarotCard({
             <p
               className="psy-serif font-semibold"
               style={{
-                color: 'var(--psy-ink)', fontSize: '13cqw', lineHeight: 1.12, overflowWrap: 'break-word',
+                color: 'var(--psy-ink)', fontSize: `${termFont}cqw`, lineHeight: 1.12, overflowWrap: 'break-word',
                 display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}
             >
@@ -154,8 +159,8 @@ export function TarotCard({
             </div>
             <p
               style={{
-                color: 'var(--psy-muted)', fontSize: '8.5cqw', lineHeight: 1.34,
-                display: '-webkit-box', WebkitLineClamp: 6, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                color: 'var(--psy-muted)', fontSize: `${defFont}cqw`, lineHeight: 1.34, overflowWrap: 'break-word',
+                display: '-webkit-box', WebkitLineClamp: defClamp, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}
             >
               {description}

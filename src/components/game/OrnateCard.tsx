@@ -56,6 +56,13 @@ export function OrnateCard({
   const isKnowledge = isDummy && !!description;
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
 
+  // 知识牌按文本长度自适应字号/行数：短的保持大、最长的(如 Erikson/Defense)自动缩到刚好放下不裁切。
+  const termLen = text.length;
+  const termFont = termLen > 24 ? 10 : termLen > 15 ? 11.5 : 13;        // cqw
+  const defLen = (description ?? '').length;
+  const defFont = defLen > 72 ? 6.6 : defLen > 56 ? 7.4 : 8.5;          // cqw
+  const defClamp = defLen > 72 ? 6 : 5;
+
   const wrapperStyle: React.CSSProperties = { containerType: 'inline-size', width: fluid ? '100%' : width };
 
   // 背面：双线框 + 中央 ◈。
@@ -150,24 +157,25 @@ export function OrnateCard({
           {selected && <rect x="5" y="5" width="390" height="690" rx="40" fill="none" stroke={GREEN} strokeWidth="5" />}
         </svg>
 
-        {/* 知识牌术语：拱区居中大字 */}
+        {/* 知识牌术语：拱区居中大字（按长度自适应） */}
         {isKnowledge && (
           <div className="psy-serif absolute flex items-center justify-center text-center" style={{ left: '11%', right: '11%', top: '7%', height: '50%' }}>
-            <p className="font-semibold" style={{ color: 'var(--psy-ink)', fontSize: '13cqw', lineHeight: 1.12, overflowWrap: 'break-word', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            <p className="font-semibold" style={{ color: 'var(--psy-ink)', fontSize: `${termFont}cqw`, lineHeight: 1.12, overflowWrap: 'break-word', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
               {text}
             </p>
           </div>
         )}
 
-        {/* 底框文字：人格陈述 / 知识定义（放大、铺开） */}
-        <div className="psy-serif absolute flex items-center justify-center text-center" style={{ left: '9%', right: '9%', top: '65.5%', height: '28.5%' }}>
+        {/* 底框文字：人格陈述 / 知识定义（按长度自适应字号/行数，最长也不裁切） */}
+        <div className="psy-serif absolute flex items-center justify-center text-center" style={{ left: '9%', right: '9%', top: '64.5%', height: '30%' }}>
           <p
             className={isKnowledge ? '' : 'font-semibold leading-snug'}
             style={{
               color: isKnowledge ? 'var(--psy-muted)' : 'var(--psy-ink)',
-              fontSize: isKnowledge ? '8.5cqw' : (locale === 'en' ? '9.5cqw' : '10.5cqw'),
-              lineHeight: isKnowledge ? 1.34 : 1.25,
-              display: '-webkit-box', WebkitLineClamp: isKnowledge ? 5 : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              fontSize: isKnowledge ? `${defFont}cqw` : (locale === 'en' ? '9.5cqw' : '10.5cqw'),
+              lineHeight: isKnowledge ? 1.32 : 1.25,
+              overflowWrap: isKnowledge ? 'break-word' : undefined,
+              display: '-webkit-box', WebkitLineClamp: isKnowledge ? defClamp : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
             }}
           >
             {isKnowledge ? description : renderLabel(label, locale)}
