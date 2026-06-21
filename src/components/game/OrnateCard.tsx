@@ -185,16 +185,17 @@ export function OrnateCard({
         {/* 揭示维度角标：实心金底 + 深色字，放大，居中压在拱底分隔处。
             字号按名字长度自适应——长英文名(Conscientiousness/Emotional Stability)缩到不溢出。 */}
         {revealedDimension && (() => {
-          const dimLabel = locale === 'en' ? DIMENSION_META[revealedDimension].nameEn : DIMENSION_META[revealedDimension].name;
-          const dimFont = dimLabel.length > 14 ? 6 : dimLabel.length > 9 ? 7.2 : 8.5;
+          const meta = DIMENSION_META[revealedDimension];
+          const dimLabel = locale === 'en' ? meta.nameEn : meta.name;
+          const dimFont = dimLabel.length > 14 ? 5.8 : dimLabel.length > 9 ? 7 : 8.2;
           return (
-            <div className="absolute z-20" style={{ left: '50%', top: '58.5%', transform: 'translate(-50%,-50%)', maxWidth: '94%' }}>
+            <div className="absolute z-20" style={{ left: '50%', top: '58.5%', transform: 'translate(-50%,-50%)', maxWidth: '95%' }}>
               <span
-                className="psy-serif inline-flex items-center rounded-full font-semibold leading-none whitespace-nowrap"
+                className="psy-serif inline-flex items-center rounded-full font-bold uppercase leading-none whitespace-nowrap"
                 style={{
-                  padding: `2.6cqw 6cqw`, fontSize: `${dimFont}cqw`, letterSpacing: '0.03em',
-                  background: 'linear-gradient(180deg, #dcc07f, #b88a3e)', color: '#2a1c06',
-                  border: '1px solid #efd9a8', boxShadow: '0 0.5cqw 1.4cqw rgba(0,0,0,0.5)',
+                  padding: '2.6cqw 6cqw', fontSize: `${dimFont}cqw`, letterSpacing: '0.06em',
+                  background: meta.colorHex, color: '#0a0a0a',
+                  border: '1.5px solid rgba(0,0,0,0.4)', boxShadow: '0 0.5cqw 1.6cqw rgba(0,0,0,0.55)',
                 }}
               >
                 {dimLabel}
