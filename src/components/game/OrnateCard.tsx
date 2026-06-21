@@ -4,7 +4,7 @@
 // 全功能 drop-in：人格牌(图+陈述) / 知识牌(术语在拱区·定义在底框) / 背面 / 选中 / 维度角标。
 // 由 TarotCard 在 ORNATE 开关下委托调用；关掉开关即回到无装饰版。
 // viewBox=400×700(=4:7) 内联 SVG：矢量、任意尺寸清晰、可换色、零素材。padding 对齐现版。
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import { Dimension } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 
@@ -52,6 +52,9 @@ export function OrnateCard({
   isDummy = false, locale = 'zh', faceDown = false, onClick, width = 200, fluid = false, description,
 }: OrnateCardProps) {
   const [imgError, setImgError] = useState(false);
+  // 每张卡唯一的 SVG defs id（避免多卡同页 id 重复——技术上无效 DOM、且会妨碍日后 per-card 渐变/裁切）。
+  const uid = useId().replace(/:/g, '');
+  const archId = `arch-${uid}`, bgId = `bg-${uid}`, phId = `ph-${uid}`, bgDnId = `bgdn-${uid}`;
   const showImg = !!imageSrc && !imgError;
   const isKnowledge = isDummy && !!description;
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
@@ -72,11 +75,11 @@ export function OrnateCard({
         <div className="relative" style={{ aspectRatio: '4 / 7' }}>
           <svg viewBox="0 0 400 700" width="100%" height="100%" style={{ display: 'block' }}>
             <defs>
-              <linearGradient id="cardBgDn" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={bgDnId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" stopColor="#19293c" /><stop offset="1" stopColor="#0d1825" />
               </linearGradient>
             </defs>
-            <rect x="3" y="3" width="394" height="694" rx="42" fill="url(#cardBgDn)" />
+            <rect x="3" y="3" width="394" height="694" rx="42" fill={`url(#${bgDnId})`} />
             <rect x="7" y="7" width="386" height="686" rx="38" fill="none" stroke={GOLD} strokeWidth="2" />
             <rect x="15" y="15" width="370" height="670" rx="30" fill="none" stroke={GOLD_SOFT} strokeWidth="1" opacity="0.8" />
             <text x="200" y="372" textAnchor="middle" fontSize="64" fill={GOLD} opacity="0.55">◈</text>
@@ -95,22 +98,22 @@ export function OrnateCard({
       >
         <svg viewBox="0 0 400 700" width="100%" height="100%" style={{ display: 'block' }}>
           <defs>
-            <clipPath id="archClip"><path d={ARCH} /></clipPath>
-            <linearGradient id="cardBg" x1="0" y1="0" x2="0" y2="1">
+            <clipPath id={archId}><path d={ARCH} /></clipPath>
+            <linearGradient id={bgId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor="#16243a" /><stop offset="0.6" stopColor="#0e1a28" /><stop offset="1" stopColor="#0a131e" />
             </linearGradient>
-            <linearGradient id="imgPh" x1="0" y1="0" x2="1" y2="1">
+            <linearGradient id={phId} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stopColor="#1c2c44" /><stop offset="1" stopColor="#0f1c2b" />
             </linearGradient>
           </defs>
 
-          <rect x="3" y="3" width="394" height="694" rx="42" fill="url(#cardBg)" />
+          <rect x="3" y="3" width="394" height="694" rx="42" fill={`url(#${bgId})`} />
 
           {/* 拱区：人格牌=插画/占位；知识牌=空拱(术语由 HTML 叠加) */}
           {!isKnowledge && (
             <>
-              <g clipPath="url(#archClip)">
-                <rect x={M} y="20" width={R - M} height="400" fill="url(#imgPh)" />
+              <g clipPath={`url(#${archId})`}>
+                <rect x={M} y="20" width={R - M} height="400" fill={`url(#${phId})`} />
                 {showImg && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <image href={imageSrc} x={M} y="20" width={R - M} height="400" preserveAspectRatio="xMidYMid slice" onError={() => setImgError(true)} />
