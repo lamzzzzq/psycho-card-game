@@ -1,69 +1,117 @@
 'use client';
 
 // 装饰版塔罗卡（SVG 边框）—— 拱形图窗 + 双线金框 + 四角星 + 顶纹章 + 底部文字框。
-// ⚠️ 目前只在 card-lab 沙盒试用，不接入正式 TarotCard / 游戏。满意后再决定是否合并。
-// 全部用一个 viewBox=400×700(=4:7) 的内联 SVG 绘制：矢量、任意尺寸清晰、可换色、零素材。
-// padding 对齐现版 TarotCard：内容(图窗/文字框)内缩 ~18/400≈4.5%，尽量贴近边框、留白小。
+// 全功能 drop-in：人格牌(图+陈述) / 知识牌(术语在拱区·定义在底框) / 背面 / 选中 / 维度角标。
+// 由 TarotCard 在 ORNATE 开关下委托调用；关掉开关即回到无装饰版。
+// viewBox=400×700(=4:7) 内联 SVG：矢量、任意尺寸清晰、可换色、零素材。padding 对齐现版。
 import { useState } from 'react';
+import { Dimension } from '@/types';
+import { DIMENSION_META } from '@/data/dimensions';
 
-const GOLD = '#c9a45c';        // 主线
-const GOLD_SOFT = '#9c7c44';   // 次线/内线
+const GOLD = '#c9a45c';
+const GOLD_SOFT = '#9c7c44';
 const GOLD_DIM = 'rgba(201,164,92,0.45)';
+const GREEN = 'rgba(143,199,135,0.85)';
 
-const M = 18;                  // 内容内缩（≈4.5%，对齐现版 4cqw padding）
-const R = 400 - M;            // 右/对称用 = 382
+const M = 18;            // 内容内缩（≈4.5%，对齐现版）
+const R = 400 - M;      // 382
 
-// 4 角星(sparkle)路径，中心 (cx,cy)、尺寸 s。
 function spark(cx: number, cy: number, s: number) {
   const k = s * 0.28;
   return `M${cx},${cy - s} C${cx},${cy - k} ${cx + k},${cy} ${cx + s},${cy} C${cx + k},${cy} ${cx},${cy + k} ${cx},${cy + s} C${cx},${cy + k} ${cx - k},${cy} ${cx - s},${cy} C${cx - k},${cy} ${cx},${cy - k} ${cx},${cy - s} Z`;
 }
-
-// 拱形图窗：x 18..382, 顶峰 y20, 肩 ~110, 底 418。占卡高约 60%，与现版图窗一致。
 const ARCH = `M${M},418 L${M},110 C${M},52 105,30 200,22 C295,30 ${R},52 ${R},110 L${R},418 Z`;
+
+// 中文按词换行（英文原样返回）。
+function renderLabel(text: string, locale: 'zh' | 'en'): React.ReactNode {
+  if (locale === 'en' || typeof Intl === 'undefined' || !('Segmenter' in Intl)) return text;
+  const seg = new Intl.Segmenter('zh', { granularity: 'word' });
+  return Array.from(seg.segment(text)).map((p, i) =>
+    p.isWordLike ? <span key={i} style={{ whiteSpace: 'nowrap' }}>{p.segment}</span> : <span key={i}>{p.segment}</span>,
+  );
+}
 
 interface OrnateCardProps {
   text: string;
   textEn?: string;
+  dimension?: Dimension;
   imageSrc?: string;
+  selected?: boolean;
+  revealedDimension?: Dimension | null;
+  isDummy?: boolean;
   locale?: 'zh' | 'en';
+  faceDown?: boolean;
+  onClick?: () => void;
   width?: number;
+  fluid?: boolean;
+  description?: string;
 }
 
-export function OrnateCard({ text, textEn, imageSrc, locale = 'zh', width = 200 }: OrnateCardProps) {
+export function OrnateCard({
+  text, textEn, imageSrc, selected = false, revealedDimension = null,
+  isDummy = false, locale = 'zh', faceDown = false, onClick, width = 200, fluid = false, description,
+}: OrnateCardProps) {
   const [imgError, setImgError] = useState(false);
   const showImg = !!imageSrc && !imgError;
+  const isKnowledge = isDummy && !!description;
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
 
+  const wrapperStyle: React.CSSProperties = { containerType: 'inline-size', width: fluid ? '100%' : width };
+
+  // 背面：双线框 + 中央 ◈。
+  if (faceDown) {
+    return (
+      <div className="shrink-0" style={wrapperStyle}>
+        <div className="relative" style={{ aspectRatio: '4 / 7' }}>
+          <svg viewBox="0 0 400 700" width="100%" height="100%" style={{ display: 'block' }}>
+            <defs>
+              <linearGradient id="cardBgDn" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#19293c" /><stop offset="1" stopColor="#0d1825" />
+              </linearGradient>
+            </defs>
+            <rect x="3" y="3" width="394" height="694" rx="42" fill="url(#cardBgDn)" />
+            <rect x="7" y="7" width="386" height="686" rx="38" fill="none" stroke={GOLD} strokeWidth="2" />
+            <rect x="15" y="15" width="370" height="670" rx="30" fill="none" stroke={GOLD_SOFT} strokeWidth="1" opacity="0.8" />
+            <text x="200" y="372" textAnchor="middle" fontSize="64" fill={GOLD} opacity="0.55">◈</text>
+          </svg>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="shrink-0" style={{ containerType: 'inline-size', width }}>
-      <div className="relative" style={{ aspectRatio: '4 / 7' }}>
+    <div className="shrink-0" style={wrapperStyle}>
+      <div
+        onClick={onClick}
+        className={`relative w-full select-none ${onClick ? 'cursor-pointer transition-transform hover:-translate-y-1' : ''}`}
+        style={{ aspectRatio: '4 / 7', filter: 'drop-shadow(0 14px 30px rgba(0,0,0,0.4))', opacity: isDummy ? 0.97 : 1 }}
+      >
         <svg viewBox="0 0 400 700" width="100%" height="100%" style={{ display: 'block' }}>
           <defs>
             <clipPath id="archClip"><path d={ARCH} /></clipPath>
             <linearGradient id="cardBg" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#16243a" />
-              <stop offset="0.6" stopColor="#0e1a28" />
-              <stop offset="1" stopColor="#0a131e" />
+              <stop offset="0" stopColor="#16243a" /><stop offset="0.6" stopColor="#0e1a28" /><stop offset="1" stopColor="#0a131e" />
             </linearGradient>
-            <linearGradient id="imgPlaceholder" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#1c2c44" />
-              <stop offset="1" stopColor="#0f1c2b" />
+            <linearGradient id="imgPh" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#1c2c44" /><stop offset="1" stopColor="#0f1c2b" />
             </linearGradient>
           </defs>
 
-          {/* 卡底 */}
           <rect x="3" y="3" width="394" height="694" rx="42" fill="url(#cardBg)" />
 
-          {/* 图窗（拱形裁切）：图片或占位。覆盖整个拱形 bbox。 */}
-          <g clipPath="url(#archClip)">
-            <rect x={M} y="20" width={R - M} height="400" fill="url(#imgPlaceholder)" />
-            {showImg && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <image href={imageSrc} x={M} y="20" width={R - M} height="400" preserveAspectRatio="xMidYMid slice" onError={() => setImgError(true)} />
-            )}
-          </g>
-          {!showImg && <text x="200" y="235" textAnchor="middle" fontSize="56" fill={GOLD_DIM} opacity="0.5">◈</text>}
+          {/* 拱区：人格牌=插画/占位；知识牌=空拱(术语由 HTML 叠加) */}
+          {!isKnowledge && (
+            <>
+              <g clipPath="url(#archClip)">
+                <rect x={M} y="20" width={R - M} height="400" fill="url(#imgPh)" />
+                {showImg && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <image href={imageSrc} x={M} y="20" width={R - M} height="400" preserveAspectRatio="xMidYMid slice" onError={() => setImgError(true)} />
+                )}
+              </g>
+              {!showImg && <text x="200" y="235" textAnchor="middle" fontSize="56" fill={GOLD_DIM} opacity="0.5">◈</text>}
+            </>
+          )}
 
           {/* 拱形描边（双线） */}
           <path d={ARCH} fill="none" stroke={GOLD} strokeWidth="2" />
@@ -73,13 +121,13 @@ export function OrnateCard({ text, textEn, imageSrc, locale = 'zh', width = 200 
           <rect x="7" y="7" width="386" height="686" rx="38" fill="none" stroke={GOLD} strokeWidth="2" />
           <rect x="13" y="13" width="374" height="674" rx="32" fill="none" stroke={GOLD_SOFT} strokeWidth="1" opacity="0.8" />
 
-          {/* 顶部中央纹章（菱形 + 两侧短线 + 上方小星） */}
+          {/* 顶部中央纹章 */}
           <path d={spark(200, 11, 6)} fill={GOLD} />
           <path d="M200,16 l8,8 l-8,8 l-8,-8 Z" fill="none" stroke={GOLD} strokeWidth="1.5" />
           <line x1="158" y1="24" x2="184" y2="24" stroke={GOLD_SOFT} strokeWidth="1" />
           <line x1="216" y1="24" x2="242" y2="24" stroke={GOLD_SOFT} strokeWidth="1" />
 
-          {/* 四角星（顶角在拱肩两侧的空隙；底角在文字框外角） */}
+          {/* 四角星 */}
           <path d={spark(40, 52, 6)} fill={GOLD} />
           <path d={spark(360, 52, 6)} fill={GOLD} />
           <path d={spark(40, 648, 5)} fill={GOLD} />
@@ -90,34 +138,53 @@ export function OrnateCard({ text, textEn, imageSrc, locale = 'zh', width = 200 
           <path d="M200,425 l7,7 l-7,7 l-7,-7 Z" fill={GOLD} />
           <line x1="214" y1="432" x2="340" y2="432" stroke={GOLD_DIM} strokeWidth="1" />
 
-          {/* 底部文字框 + 角部括号 + 顶部小菱（贴近边框、放大） */}
+          {/* 底部文字框 + 括号角 + 顶部小菱 */}
           <rect x={M} y="448" width={R - M} height="226" rx="12" fill="none" stroke={GOLD_SOFT} strokeWidth="1.5" />
           <path d={`M${M + 14},462 v-8 a4,4 0 0 1 4,-4 h8`} fill="none" stroke={GOLD} strokeWidth="1.5" />
           <path d={`M${R - 14},462 v-8 a4,4 0 0 0 -4,-4 h-8`} fill="none" stroke={GOLD} strokeWidth="1.5" />
           <path d={`M${M + 14},660 v8 a4,4 0 0 0 4,4 h8`} fill="none" stroke={GOLD} strokeWidth="1.5" />
           <path d={`M${R - 14},660 v8 a4,4 0 0 1 -4,4 h-8`} fill="none" stroke={GOLD} strokeWidth="1.5" />
           <path d="M194,448 l6,-6 l6,6 l-6,6 Z" fill={GOLD} />
+
+          {/* 选中：绿色外描边 */}
+          {selected && <rect x="5" y="5" width="390" height="690" rx="40" fill="none" stroke={GREEN} strokeWidth="5" />}
         </svg>
 
-        {/* 文字层（HTML 叠加，便于字体/换行/省略）：盖在底部文字框上，字号对齐现版 */}
-        <div
-          className="psy-serif absolute flex items-center justify-center text-center"
-          style={{ left: `${M / 4}%`, right: `${M / 4}%`, top: '65%', height: '30%' }}
-        >
+        {/* 知识牌术语：拱区居中大字 */}
+        {isKnowledge && (
+          <div className="psy-serif absolute flex items-center justify-center text-center" style={{ left: '11%', right: '11%', top: '7%', height: '50%' }}>
+            <p className="font-semibold" style={{ color: 'var(--psy-ink)', fontSize: '13cqw', lineHeight: 1.12, overflowWrap: 'break-word', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              {text}
+            </p>
+          </div>
+        )}
+
+        {/* 底框文字：人格陈述 / 知识定义（放大、铺开） */}
+        <div className="psy-serif absolute flex items-center justify-center text-center" style={{ left: '9%', right: '9%', top: '65.5%', height: '28.5%' }}>
           <p
-            className="font-semibold leading-snug"
+            className={isKnowledge ? '' : 'font-semibold leading-snug'}
             style={{
-              color: 'var(--psy-ink)',
-              fontSize: locale === 'en' ? '9.5cqw' : '10.5cqw',
-              display: '-webkit-box',
-              WebkitLineClamp: 4,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
+              color: isKnowledge ? 'var(--psy-muted)' : 'var(--psy-ink)',
+              fontSize: isKnowledge ? '8.5cqw' : (locale === 'en' ? '9.5cqw' : '10.5cqw'),
+              lineHeight: isKnowledge ? 1.34 : 1.25,
+              display: '-webkit-box', WebkitLineClamp: isKnowledge ? 5 : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
             }}
           >
-            {label}
+            {isKnowledge ? description : renderLabel(label, locale)}
           </p>
         </div>
+
+        {/* 揭示维度角标 */}
+        {revealedDimension && (
+          <div className="absolute z-20" style={{ right: '5%', top: '2.5%' }}>
+            <span
+              className="psy-serif inline-flex items-center rounded-full font-semibold leading-none"
+              style={{ padding: '2cqw 4cqw', fontSize: '6.5cqw', backgroundColor: 'rgba(200,155,93,0.28)', color: '#e7cfa3', border: '1px solid rgba(200,155,93,0.6)' }}
+            >
+              {locale === 'en' ? DIMENSION_META[revealedDimension].nameEn : DIMENSION_META[revealedDimension].name}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

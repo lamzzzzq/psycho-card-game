@@ -3,9 +3,9 @@
 // 卡面设计沙盒 —— 仅用于预览新塔罗风卡框，不影响正式游戏组件。定稿后再替换 Card.tsx。
 import { useState } from 'react';
 import { TarotCard } from '@/components/game/TarotCard';
-import { OrnateCard } from '@/components/game/OrnateCard';
 import { MockGameScene } from '@/components/game/MockGameScene';
 import { QUESTIONS } from '@/data/questions';
+import { KNOWLEDGE_CARDS } from '@/data/dummy-cards';
 import { DIMENSIONS, Dimension } from '@/types';
 
 // 每个维度取一题做样本（中英对照）
@@ -55,6 +55,28 @@ export default function CardLabPage() {
           </div>
         </section>
 
+        {/* 全 20 张知识牌（dummy）：术语 + 定义。重点看移动端真实手牌尺寸 96px。 */}
+        <section className="space-y-4">
+          <h2 className="psy-serif text-lg text-[var(--psy-ink)]">全 20 张知识牌（术语+定义）</h2>
+          <p className="text-xs text-[var(--psy-muted)]">下面第一组是<strong>移动端真实手牌尺寸 96px</strong>；第二组放大可读。装饰版：术语在拱区、定义在底框。</p>
+          <div>
+            <p className="mb-2 text-xs text-[var(--psy-accent)]">① 移动端真实尺寸（96px）</p>
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8" style={{ maxWidth: '32rem' }}>
+              {KNOWLEDGE_CARDS.map((k, i) => (
+                <TarotCard key={i} text={k.term} description={k.definition} isDummy locale={locale} width={96} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 text-xs text-[var(--psy-accent)]">② 放大可读（{width}px）</p>
+            <div className="flex flex-wrap gap-4">
+              {KNOWLEDGE_CARDS.map((k, i) => (
+                <TarotCard key={i} text={k.term} description={k.definition} isDummy locale={locale} width={width} />
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* 已生成卡牌画廊：全 50 题，imageSrc=/cards/{id}.webp，缺图自动回退 ◈。随生随看。 */}
         <section className="space-y-3">
           <h2 className="psy-serif text-lg text-[var(--psy-ink)]">已生成画廊（全 50 题 · 缺图显 ◈）</h2>
@@ -69,25 +91,6 @@ export default function CardLabPage() {
           </div>
         </section>
 
-        {/* 装饰边框试做（SVG）：拱顶 + 四角星 + 顶纹章 + 底框。仅 card-lab。 */}
-        <section className="space-y-3">
-          <h2 className="psy-serif text-lg text-[var(--psy-ink)]">装饰边框试做（SVG · 拱顶/四角星/顶纹章/底框）</h2>
-          <p className="text-xs text-[var(--psy-muted)]">左=现版（圆角矩形图窗），右=新装饰版（SVG 拱形+纹章+底框）。同一张 _lab-sample 图对比。</p>
-          <div className="flex flex-wrap items-end gap-8">
-            <div className="space-y-2 text-center">
-              <TarotCard text="我和其他人在一起時感覺自在" textEn="Feel comfortable around people." dimension={'E' as Dimension} imageSrc="/cards/_lab-sample.webp" locale={locale} width={width} />
-              <p className="text-xs text-[var(--psy-muted)]">现版</p>
-            </div>
-            <div className="space-y-2 text-center">
-              <OrnateCard text="我和其他人在一起時感覺自在" textEn="Feel comfortable around people." imageSrc="/cards/_lab-sample.webp" locale={locale} width={width} />
-              <p className="text-xs text-[var(--psy-accent)]">装饰版(SVG)</p>
-            </div>
-            <div className="space-y-2 text-center">
-              <OrnateCard text="我和其他人在一起時感覺自在" textEn="Feel comfortable around people." imageSrc="/cards/_lab-sample.webp" locale={locale} width={96} />
-              <p className="text-xs text-[var(--psy-muted)]">装饰版 96px</p>
-            </div>
-          </div>
-        </section>
 
         {/* 真实打牌场景（手机优先） */}
         <section className="space-y-3">

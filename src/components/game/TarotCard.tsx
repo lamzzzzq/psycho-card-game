@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Dimension } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
+import { OrnateCard } from './OrnateCard';
+import { ORNATE_FRAME } from './cardStyle';
 
 interface TarotCardProps {
   text: string;
@@ -61,6 +63,19 @@ export function TarotCard({
   description,
 }: TarotCardProps) {
   const [imgError, setImgError] = useState(false);
+
+  // 装饰版总开关：开 → 委托给 OrnateCard（拱形+纹章+底框）；关 → 走下方无装饰现版。
+  // （hook 已在上面声明，故此处条件 return 不违反 hook 规则。）
+  if (ORNATE_FRAME) {
+    return (
+      <OrnateCard
+        text={text} textEn={textEn} dimension={dimension} imageSrc={imageSrc}
+        selected={selected} revealedDimension={revealedDimension} isDummy={isDummy}
+        locale={locale} faceDown={faceDown} onClick={onClick} width={width} fluid={fluid} description={description}
+      />
+    );
+  }
+
   const showImg = !!imageSrc && !imgError;
   // 知识牌(dummy)：有定义则走纯文字版式（术语标题 + 定义正文，无图窗）。
   const isKnowledge = isDummy && !!description;
@@ -121,27 +136,26 @@ export function TarotCard({
         <span className="pointer-events-none absolute" style={{ right: '7cqw', top: '5.5cqw', color: GOLD, opacity: 0.7, fontSize: '5cqw' }}>✦</span>
 
         {isKnowledge ? (
-          /* 知识牌：纯文字版式 —— 眉标 + 术语标题 + 分隔 + 定义正文，无图窗 */
-          <div className="relative flex h-full w-full flex-col items-center justify-center text-center" style={{ gap: '3cqw', padding: '2cqw 1cqw' }}>
-            <span className="psy-serif uppercase" style={{ fontSize: '4.2cqw', letterSpacing: '0.28em', color: GOLD_FAINT }}>Psyche</span>
+          /* 知识牌：纯文字版式 —— 术语标题(大) + 分隔 + 定义正文(放大)，上下铺开，无眉标/无图窗 */
+          <div className="relative flex h-full w-full flex-col items-center justify-evenly text-center" style={{ padding: '5cqw 2cqw' }}>
             <p
               className="psy-serif font-semibold"
               style={{
-                color: 'var(--psy-ink)', fontSize: '11cqw', lineHeight: 1.15,
-                display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                color: 'var(--psy-ink)', fontSize: '13cqw', lineHeight: 1.12, overflowWrap: 'break-word',
+                display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}
             >
               {text}
             </p>
-            <div className="flex items-center justify-center" style={{ gap: '2cqw', width: '64%' }}>
+            <div className="flex items-center justify-center" style={{ gap: '2cqw', width: '70%' }}>
               <span style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${GOLD_FAINT})` }} />
-              <span style={{ color: GOLD, fontSize: '4cqw', opacity: 0.85 }}>◆</span>
+              <span style={{ color: GOLD, fontSize: '4.5cqw', opacity: 0.85 }}>◆</span>
               <span style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${GOLD_FAINT}, transparent)` }} />
             </div>
             <p
               style={{
-                color: 'var(--psy-muted)', fontSize: '7cqw', lineHeight: 1.32,
-                display: '-webkit-box', WebkitLineClamp: 7, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                color: 'var(--psy-muted)', fontSize: '8.5cqw', lineHeight: 1.34,
+                display: '-webkit-box', WebkitLineClamp: 6, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}
             >
               {description}
