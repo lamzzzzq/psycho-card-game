@@ -10,7 +10,7 @@ import { useHydrated } from '@/stores/useHydration';
 import { QuestionCard } from '@/components/assessment/QuestionCard';
 import { LikertScore, BigFiveScores, DIMENSIONS } from '@/types';
 import { saveAssessmentResult, checkStudentIdExists } from '@/lib/assessment-record';
-import { normalizeStudentId, isValidStudentId, STUDENT_ID_LENGTH } from '@/lib/utils';
+import { normalizeStudentId, isValidStudentId, STUDENT_ID_LENGTH, clamp } from '@/lib/utils';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 
 // 題目嚴格按 IPIP-50 文件「correct order」排列，不打亂。
@@ -260,10 +260,12 @@ export default function AssessmentPage() {
             </div>
             <button
               onClick={() => {
-                setManualScores(manualScores);
+                // 提交前统一 clamp 到 [1,5]：防越界值绕过 onBlur(不失焦直接确认/回车) → 脏分数 + target/手牌异常。
+                const safe: BigFiveScores = { O: clamp(manualScores.O, 1, 5), C: clamp(manualScores.C, 1, 5), E: clamp(manualScores.E, 1, 5), A: clamp(manualScores.A, 1, 5), N: clamp(manualScores.N, 1, 5) };
+                setManualScores(safe);
                 // 手動填分也存一行（答案為空，source=manual）
                 const sid = useAssessmentStore.getState().studentId;
-                if (sid) void saveAssessmentResult(sid, {}, manualScores, 'manual');
+                if (sid) void saveAssessmentResult(sid, {}, safe, 'manual');
                 router.push('/results');
               }}
               className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[linear-gradient(135deg,#9b6430_0%,#d4a469_100%)] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95"

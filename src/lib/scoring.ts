@@ -28,13 +28,10 @@ export function calculateBigFiveScores(
 }
 
 export function getTargetCounts(scores: BigFiveScores): Record<Dimension, number> {
-  return {
-    O: Math.round(scores.O),
-    C: Math.round(scores.C),
-    E: Math.round(scores.E),
-    A: Math.round(scores.A),
-    N: Math.round(scores.N),
-  };
+  // 每维目标张数下限 1：Likert 1-5 正常都 ≥1，但脏数据/越界分可能 round 到 0，而 target=0 会让
+  // 「空集归档 / 空集胡牌」成立(见 attemptHu / selfPongCard) → 强制 ≥1 堵死该隐患。
+  const t = (v: number) => Math.max(1, Math.round(v));
+  return { O: t(scores.O), C: t(scores.C), E: t(scores.E), A: t(scores.A), N: t(scores.N) };
 }
 
 export function getTotalTarget(scores: BigFiveScores): number {

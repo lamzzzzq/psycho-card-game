@@ -134,10 +134,12 @@ export function PongPanel({
           {canClaimThisDim && (
             <button
               onClick={() => onClaim(pendingDim, selectedCardIds)}
-              disabled={selectedCardIds.length === 0}
+              // 截胡碰需选 target-1 张手牌(+那张弃牌=target)。target=1 时正解是「0 张手牌」，
+              // 故仅在 target>1 时禁用空选；否则 target=1 维度永远无法碰、还会吃罚停。
+              disabled={selectedCardIds.length === 0 && targets[pendingDim] > 1}
               className="psy-btn psy-btn-accent px-3 py-1.5 text-[11px] font-bold disabled:cursor-not-allowed disabled:opacity-30 sm:px-4 sm:py-2 sm:text-xs"
               title={
-                selectedCardIds.length === 0
+                selectedCardIds.length === 0 && targets[pendingDim] > 1
                   ? t.pongSelectFirst
                   : undefined
               }

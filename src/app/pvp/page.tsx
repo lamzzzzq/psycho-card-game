@@ -10,7 +10,7 @@ import { usePvpStore } from '@/stores/usePvpStore';
 import { upsertPlayer, createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerActiveRoom, STALE_ROOM_MS } from '@/lib/room-api';
 import { retryPendingSaves } from '@/lib/game-record';
 import { saveAssessmentResult, checkStudentIdExists } from '@/lib/assessment-record';
-import { normalizeStudentId, isValidStudentId } from '@/lib/utils';
+import { normalizeStudentId, isValidStudentId, clamp } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { PlayerInfo, DeckId } from '@/types/pvp';
 import { BigFiveScores, DIMENSIONS } from '@/types';
@@ -371,11 +371,13 @@ export default function PvpLobbyPage() {
                         const exists = await checkStudentIdExists(sid);
                         if (exists) { setManualDupWarn(true); return; }
                       }
-                      setManualScores(manualScoresInput);
+                      // 提交前统一 clamp 到 [1,5]：防越界值绕过 onBlur(不失焦直接确认) → 脏分数 + target/手牌异常。
+                      const safe: BigFiveScores = { O: clamp(manualScoresInput.O, 1, 5), C: clamp(manualScoresInput.C, 1, 5), E: clamp(manualScoresInput.E, 1, 5), A: clamp(manualScoresInput.A, 1, 5), N: clamp(manualScoresInput.N, 1, 5) };
+                      setManualScores(safe);
                       // 手动设分时一并把学号定为真相源，保证"有分数→有学号"，下次锁定。
                       persistStudentId(sid);
                       // ③ 写库：手动填分 = 提交过一条记录（source='manual'），查重/研究数据都认。
-                      void saveAssessmentResult(sid, {}, manualScoresInput, 'manual');
+                      void saveAssessmentResult(sid, {}, safe, 'manual');
                       setManualDupWarn(false);
                       setError('');
                       setShowManualInput(false);

@@ -24,8 +24,11 @@ type DimName = (dim: Dimension) => string;
 //   4. 選對 → 歸檔成功
 //   5. 出 1 張牌結束回合
 
+// 教学沙盒卡用自造 id(101+)，本身无对应 /cards 图。imageId 指向「同维度的一张真题图」(1-50)，
+// 让沙盒也显示真插画、且不刷 /cards/101.webp 这类 404（教学演示，图文不必严格对应）。
+const DIM_IMG: Record<Dimension, number> = { E: 1, A: 2, C: 3, N: 4, O: 5 };
 const PC = (id: number, dim: Dimension, text: string, textEn: string, facet = 'demo'): PersonalityCard => ({
-  id, dimension: dim, text, textEn, facet,
+  id, dimension: dim, text, textEn, facet, imageId: DIM_IMG[dim],
 });
 // 知识牌：term 存进 text、定义存进 definition（与正式 KNOWLEDGE_CARDS 一致，英文）。
 const DC = (id: number, term: string, definition: string): DummyCard => ({ id, text: term, definition, isDummy: true });
