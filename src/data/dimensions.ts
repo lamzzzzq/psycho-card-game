@@ -31,8 +31,8 @@ export const DIMENSION_META: Record<Dimension, DimensionMeta> = {
   },
   N: {
     key: 'N',
-    // ⚠️ 2026-06 由「情緒穩定性」改回「神經質 / Neuroticism」計分（參考 Goldberg 1999 /
-    // Ehrhart et al. 2008）。N 題正反向已對調，故此維度高分 = 情緒不穩、易焦慮緊張。
+    // ⚠️ 2026-06 改用「神經質 / Neuroticism」計分（參考 Goldberg 1999 / Ehrhart et al. 2008）。
+    // N 題正反向已對調，故此維度高分 = 情緒不穩、易焦慮緊張。
     name: '神經質',
     nameEn: 'Neuroticism',
     colorHex: '#f87171',

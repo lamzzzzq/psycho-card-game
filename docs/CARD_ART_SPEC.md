@@ -66,7 +66,7 @@
 | C 尽责性 | Conscientiousness | 蓝 `#60a5fa` |
 | E 外向性 | Extraversion | 黄 `#facc15` |
 | A 宜人性 | Agreeableness | 绿 `#4ade80` |
-| N 情绪稳定性 | Emotional Stability | 红 `#f87171` |
+| N 神经质 | Neuroticism | 红 `#f87171` |
 
 ---
 

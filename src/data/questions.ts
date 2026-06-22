@@ -7,7 +7,7 @@ import { Question } from '@/types';
  * reversed：嚴格照文件 (- keyed) 標記。計分 reversed 時用 6 - rawScore。
  * ⚠️ N 維度按『神經質 / Neuroticism』方向計分（參考 Goldberg 1999 / Ehrhart et al. 2008）：
  *    第 9、19 題反向（放鬆/不憂鬱→低神經質），其餘 8 題（4,14,24,29,34,39,44,49）正向。
- *    故 N 高分 = 情緒不穩、易焦慮。（2026-06 由「情緒穩定性」改回「神經質」，正反向已對調）
+ *    故 N 高分 = 情緒不穩、易焦慮。（2026-06 改用「神經質 / Neuroticism」計分，N 題正反向已對調）
  * 中英雙語：text 繁中、textEn 英文，語言由 locale 切換。
  */
 export const QUESTIONS: Question[] = [
@@ -38,7 +38,7 @@ export const QUESTIONS: Question[] = [
   { id: 25, dimension: 'O', reversed: false, text: '我常有絕佳的點子。', textEn: 'I have excellent ideas.' },
   { id: 26, dimension: 'E', reversed: true, text: '我沒什麼話說。', textEn: 'I have little to say.' },
   { id: 27, dimension: 'A', reversed: false, text: '我有顆柔軟的心。', textEn: 'I have a soft heart.' },
-  { id: 28, dimension: 'C', reversed: true, text: '我常忘記物歸原處。', textEn: 'I often forget to put things back in their proper place.' },
+  { id: 28, dimension: 'C', reversed: true, text: '我常忘記物歸原處。', textEn: 'I often forget to put things back in the right place.' },
   { id: 29, dimension: 'N', reversed: false, text: '我容易感到悶悶不樂。', textEn: 'I get upset easily.' },
   { id: 30, dimension: 'O', reversed: true, text: '我想像力欠佳。', textEn: 'I do not have a good imagination.' },
   { id: 31, dimension: 'E', reversed: false, text: '在聚會中我會跟許多不同的人說話。', textEn: 'I talk to a lot of different people at parties.' },

@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS assessment_results (
   device_token   TEXT,                               -- 弱提示：本机随机 token
   source         TEXT NOT NULL DEFAULT 'assessment', -- 'assessment'（答 50 题 IPIP-50）| 'manual'（手动填分）
   answers        JSONB NOT NULL DEFAULT '{}'::jsonb, -- {"1":4,"2":3,...,"50":5}（手动填分时为空 {}）
-  scores         JSONB NOT NULL,                     -- {"O":3.2,"C":4.1,"E":2.8,"A":3.5,"N":3.0}；N=情绪稳定性(高分=冷静)
+  scores         JSONB NOT NULL,                     -- {"O":3.2,"C":4.1,"E":2.8,"A":3.5,"N":3.0}；N=神经质(高分=冷静)
   answered_count INTEGER NOT NULL DEFAULT 0,         -- 实际作答题数（完整测评 = 50）
   submitted_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
