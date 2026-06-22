@@ -54,7 +54,8 @@ export function OrnateCard({
   const [imgError, setImgError] = useState(false);
   // 每张卡唯一的 SVG defs id（避免多卡同页 id 重复——技术上无效 DOM、且会妨碍日后 per-card 渐变/裁切）。
   const uid = useId().replace(/:/g, '');
-  const archId = `arch-${uid}`, bgId = `bg-${uid}`, phId = `ph-${uid}`, bgDnId = `bgdn-${uid}`, glowId = `glow-${uid}`;
+  const archId = `arch-${uid}`, bgId = `bg-${uid}`, phId = `ph-${uid}`, bgDnId = `bgdn-${uid}`;
+  const glowId = `glow-${uid}`, vigId = `vig-${uid}`, dotId = `dot-${uid}`;
   const showImg = !!imageSrc && !imgError;
   const isKnowledge = isDummy && !!description;
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
@@ -106,19 +107,34 @@ export function OrnateCard({
             <linearGradient id={phId} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stopColor="#1c2c44" /><stop offset="1" stopColor="#0f1c2b" />
             </linearGradient>
-            <radialGradient id={glowId} cx="50%" cy="30%" r="58%">
-              <stop offset="0" stopColor="#e8cd8f" stopOpacity="0.16" />
-              <stop offset="1" stopColor="#e8cd8f" stopOpacity="0" />
+            {/* 顶部柔光聚光：3 段平滑衰减，不再是一坨 */}
+            <radialGradient id={glowId} cx="50%" cy="15%" r="52%">
+              <stop offset="0" stopColor="#ecd9a0" stopOpacity="0.15" />
+              <stop offset="0.55" stopColor="#ecd9a0" stopOpacity="0.04" />
+              <stop offset="1" stopColor="#ecd9a0" stopOpacity="0" />
             </radialGradient>
+            {/* 暗角 vignette：四周压暗、聚焦中心，给柔光加层次/高级感 */}
+            <radialGradient id={vigId} cx="50%" cy="40%" r="62%">
+              <stop offset="0.45" stopColor="#060d16" stopOpacity="0" />
+              <stop offset="1" stopColor="#060d16" stopOpacity="0.5" />
+            </radialGradient>
+            {/* art-deco 网点 */}
+            <pattern id={dotId} width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="3" cy="3" r="1.1" fill={GOLD} opacity="0.06" />
+            </pattern>
           </defs>
 
           <rect x="3" y="3" width="394" height="694" rx="42" fill={`url(#${bgId})`} />
 
-          {/* 知识牌拱区底纹：柔光 + ψ(psi) 半透明水印（统一标识「心理学知识牌」，不抢术语） */}
+          {/* 知识牌拱区底纹：网点 + 柔光 + 暗角 + 同心弧（art-deco，呼应金框，不抢术语） */}
           {isKnowledge && (
             <g clipPath={`url(#${archId})`}>
+              <rect x={M} y="20" width={R - M} height="400" fill={`url(#${dotId})`} />
               <rect x={M} y="20" width={R - M} height="400" fill={`url(#${glowId})`} />
-              <text x="200" y="320" textAnchor="middle" fontSize="240" fontWeight="700" fill={GOLD} opacity="0.07" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>ψ</text>
+              <rect x={M} y="20" width={R - M} height="400" fill={`url(#${vigId})`} />
+              {/* 同心弧：呼应拱形金框 */}
+              <path d="M34,110 C34,64 112,46 200,40 C288,46 366,64 366,110" fill="none" stroke={GOLD} strokeWidth="1" opacity="0.13" />
+              <path d="M50,112 C50,80 122,64 200,59 C278,64 350,80 350,112" fill="none" stroke={GOLD} strokeWidth="0.8" opacity="0.08" />
             </g>
           )}
 
