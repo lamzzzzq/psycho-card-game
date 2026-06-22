@@ -56,7 +56,7 @@ export function OrnateCard({
   // 每张卡唯一的 SVG defs id（避免多卡同页 id 重复——技术上无效 DOM、且会妨碍日后 per-card 渐变/裁切）。
   const uid = useId().replace(/:/g, '');
   const archId = `arch-${uid}`, bgId = `bg-${uid}`, phId = `ph-${uid}`, bgDnId = `bgdn-${uid}`;
-  const glowId = `glow-${uid}`, vigId = `vig-${uid}`, dotId = `dot-${uid}`;
+  const glowId = `glow-${uid}`, vigId = `vig-${uid}`, plaqueId = `plaque-${uid}`;
   const showImg = !!imageSrc && !imgError;
   const isKnowledge = isDummy && !!description;
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
@@ -119,30 +119,47 @@ export function OrnateCard({
               <stop offset="0.5" stopColor="#060d16" stopOpacity="0" />
               <stop offset="1" stopColor="#060d16" stopOpacity="0.38" />
             </radialGradient>
-            {/* art-deco 网点（加浓加大，更明显） */}
-            <pattern id={dotId} width="18" height="18" patternUnits="userSpaceOnUse">
-              <circle cx="3" cy="3" r="1.35" fill={GOLD_BRIGHT} opacity="0.2" />
-            </pattern>
+            {/* 文字区留白：以底色柔和清空中心一块（让术语干净，不压纹理） */}
+            <radialGradient id={plaqueId} cx="50%" cy="50%" r="50%">
+              <stop offset="0" stopColor="#101d2c" stopOpacity="0.96" />
+              <stop offset="0.62" stopColor="#101d2c" stopOpacity="0.9" />
+              <stop offset="1" stopColor="#101d2c" stopOpacity="0" />
+            </radialGradient>
           </defs>
 
           <rect x="3" y="3" width="394" height="694" rx="42" fill={`url(#${bgId})`} />
 
-          {/* 知识牌拱区底纹：网点 + 放射暗纹(sunburst) + 柔光 + 暗角 + 同心弧（art-deco，填满空间又不抢术语） */}
-          {isKnowledge && (
-            <g clipPath={`url(#${archId})`}>
-              <rect x={M} y="20" width={R - M} height="400" fill={`url(#${dotId})`} />
-              {/* 放射状细线：从拱顶发散，呼应聚光、填充空白（加浓加粗，更明显） */}
-              {Array.from({ length: 15 }).map((_, i) => {
-                const a = ((-77 + i * 11) * Math.PI) / 180;
-                return <line key={i} x1="200" y1="34" x2={200 + Math.sin(a) * 460} y2={34 + Math.cos(a) * 460} stroke={GOLD_BRIGHT} strokeWidth="0.9" opacity="0.13" />;
-              })}
-              <rect x={M} y="20" width={R - M} height="400" fill={`url(#${glowId})`} />
-              <rect x={M} y="20" width={R - M} height="400" fill={`url(#${vigId})`} />
-              {/* 同心弧：呼应拱形金框（加浓） */}
-              <path d="M34,110 C34,64 112,46 200,40 C288,46 366,64 366,110" fill="none" stroke={GOLD_BRIGHT} strokeWidth="1.1" opacity="0.28" />
-              <path d="M50,112 C50,80 122,64 200,59 C278,64 350,80 350,112" fill="none" stroke={GOLD} strokeWidth="0.9" opacity="0.18" />
-            </g>
-          )}
+          {/* 知识牌拱区暗纹：极坐标网格（放射线 × 同心弧，交点放大网点）+ 中心留白给术语 */}
+          {isKnowledge && (() => {
+            const PX = 200, PY = 16;                       // 放射/同心圆的共同圆心(拱顶上方)
+            const angles = [-72, -54, -36, -18, 0, 18, 36, 54, 72]; // 放射线角度(度)
+            const radii = [120, 188, 256, 324, 392];       // 同心弧半径
+            const d2r = Math.PI / 180;
+            return (
+              <g clipPath={`url(#${archId})`}>
+                {/* 放射线 */}
+                {angles.map((deg, i) => {
+                  const a = deg * d2r;
+                  return <line key={`ray${i}`} x1={PX} y1={PY} x2={PX + Math.sin(a) * 470} y2={PY + Math.cos(a) * 470} stroke={GOLD} strokeWidth="0.7" opacity="0.11" />;
+                })}
+                {/* 同心弧（以 P 为心的圆，裁在拱内 = 一圈圈涟漪） */}
+                {radii.map((r, j) => (
+                  <circle key={`arc${j}`} cx={PX} cy={PY} r={r} fill="none" stroke={GOLD} strokeWidth="0.8" opacity="0.13" />
+                ))}
+                {/* 交界处网点（放大、提亮） */}
+                {angles.flatMap((deg, i) => {
+                  const a = deg * d2r;
+                  return radii.map((r, j) => (
+                    <circle key={`dot${i}-${j}`} cx={PX + Math.sin(a) * r} cy={PY + Math.cos(a) * r} r="2.4" fill={GOLD_BRIGHT} opacity="0.55" />
+                  ));
+                })}
+                <rect x={M} y="20" width={R - M} height="400" fill={`url(#${glowId})`} />
+                <rect x={M} y="20" width={R - M} height="400" fill={`url(#${vigId})`} />
+                {/* 中心留白：柔和清空术语所在区域（按 ~4 行预留），让文字干净 */}
+                <ellipse cx="200" cy="222" rx="138" ry="104" fill={`url(#${plaqueId})`} />
+              </g>
+            );
+          })()}
 
           {/* 拱区：人格牌=插画/占位；知识牌=空拱(术语由 HTML 叠加) */}
           {!isKnowledge && (
