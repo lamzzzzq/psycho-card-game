@@ -164,7 +164,7 @@ export function OrnateCard({
         {/* 知识牌术语：拱区居中大字（按长度自适应） */}
         {isKnowledge && (
           <div className="psy-serif absolute flex items-center justify-center text-center" style={{ left: '11%', right: '11%', top: '7%', height: '50%' }}>
-            <p className="font-semibold" style={{ color: 'var(--psy-ink)', fontSize: `${termFont}cqw`, lineHeight: 1.14, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            <p className="font-semibold" style={{ color: 'var(--psy-ink)', fontSize: `${termFont}cqw`, lineHeight: 1.3, paddingBottom: '1.5cqw', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
               {text}
             </p>
           </div>

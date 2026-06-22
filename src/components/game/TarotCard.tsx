@@ -147,7 +147,7 @@ export function TarotCard({
             <p
               className="psy-serif font-semibold"
               style={{
-                color: 'var(--psy-ink)', fontSize: `${termFont}cqw`, lineHeight: 1.14,
+                color: 'var(--psy-ink)', fontSize: `${termFont}cqw`, lineHeight: 1.3, paddingBottom: '1.5cqw',
                 display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}
             >
