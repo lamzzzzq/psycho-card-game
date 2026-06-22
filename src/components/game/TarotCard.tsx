@@ -79,8 +79,9 @@ export function TarotCard({
   const showImg = !!imageSrc && !imgError;
   // 知识牌(dummy)：有定义则走纯文字版式（术语标题 + 定义正文，无图窗）。
   const isKnowledge = isDummy && !!description;
-  // 按文本长度自适应字号/行数，最长的(Erikson/Defense)也不裁切。
-  const termFont = text.length > 24 ? 11 : text.length > 15 ? 12 : 13;
+  // 术语按「最长单词」缩放（保证整词放得下、绝不从词中间断）；定义按总长缩放，最长也不裁切。
+  const longestWord = Math.max(1, ...text.split(/[\s-]+/).filter(Boolean).map((w) => w.length));
+  const termFont = Math.max(7.5, Math.min(13, 118 / longestWord));
   const defLen = (description ?? '').length;
   const defFont = defLen > 72 ? 7 : defLen > 56 ? 7.8 : 8.5;
   const defClamp = defLen > 72 ? 7 : 6;
@@ -146,7 +147,7 @@ export function TarotCard({
             <p
               className="psy-serif font-semibold"
               style={{
-                color: 'var(--psy-ink)', fontSize: `${termFont}cqw`, lineHeight: 1.12, overflowWrap: 'break-word',
+                color: 'var(--psy-ink)', fontSize: `${termFont}cqw`, lineHeight: 1.14,
                 display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}
             >
@@ -159,7 +160,7 @@ export function TarotCard({
             </div>
             <p
               style={{
-                color: 'var(--psy-muted)', fontSize: `${defFont}cqw`, lineHeight: 1.34, overflowWrap: 'break-word',
+                color: 'var(--psy-muted)', fontSize: `${defFont}cqw`, lineHeight: 1.34,
                 display: '-webkit-box', WebkitLineClamp: defClamp, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}
             >
