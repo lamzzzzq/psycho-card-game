@@ -54,7 +54,7 @@ export function OrnateCard({
   const [imgError, setImgError] = useState(false);
   // 每张卡唯一的 SVG defs id（避免多卡同页 id 重复——技术上无效 DOM、且会妨碍日后 per-card 渐变/裁切）。
   const uid = useId().replace(/:/g, '');
-  const archId = `arch-${uid}`, bgId = `bg-${uid}`, phId = `ph-${uid}`, bgDnId = `bgdn-${uid}`;
+  const archId = `arch-${uid}`, bgId = `bg-${uid}`, phId = `ph-${uid}`, bgDnId = `bgdn-${uid}`, glowId = `glow-${uid}`;
   const showImg = !!imageSrc && !imgError;
   const isKnowledge = isDummy && !!description;
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
@@ -106,9 +106,21 @@ export function OrnateCard({
             <linearGradient id={phId} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stopColor="#1c2c44" /><stop offset="1" stopColor="#0f1c2b" />
             </linearGradient>
+            <radialGradient id={glowId} cx="50%" cy="30%" r="58%">
+              <stop offset="0" stopColor="#e8cd8f" stopOpacity="0.16" />
+              <stop offset="1" stopColor="#e8cd8f" stopOpacity="0" />
+            </radialGradient>
           </defs>
 
           <rect x="3" y="3" width="394" height="694" rx="42" fill={`url(#${bgId})`} />
+
+          {/* 知识牌拱区底纹：柔光 + ψ(psi) 半透明水印（统一标识「心理学知识牌」，不抢术语） */}
+          {isKnowledge && (
+            <g clipPath={`url(#${archId})`}>
+              <rect x={M} y="20" width={R - M} height="400" fill={`url(#${glowId})`} />
+              <text x="200" y="320" textAnchor="middle" fontSize="240" fontWeight="700" fill={GOLD} opacity="0.07" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>ψ</text>
+            </g>
+          )}
 
           {/* 拱区：人格牌=插画/占位；知识牌=空拱(术语由 HTML 叠加) */}
           {!isKnowledge && (
