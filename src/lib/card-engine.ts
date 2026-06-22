@@ -39,7 +39,8 @@ export function generatePersonalityCards(count: number = 50): PersonalityCard[] 
         out.push(pool[i]);
       } else {
         const src = pool[i % pool.length];
-        out.push({ id: placeholderId++, dimension: d, text: src.text, textEn: src.textEn, facet: src.facet });
+        // 复制牌：新 id 防重复，但 imageId 指回原题，确保 /cards/{imageId}.webp 有图（游戏里不空白）。
+        out.push({ id: placeholderId++, imageId: src.imageId ?? src.id, dimension: d, text: src.text, textEn: src.textEn, facet: src.facet });
       }
     }
   }

@@ -40,6 +40,8 @@ export interface PersonalityCard {
   text: string;
   textEn?: string;
   facet?: string;
+  /** 插画 id：复制牌(id 5000+)用它指回原题图 /cards/{imageId}.webp；缺省=id。 */
+  imageId?: number;
   isDummy?: false;
 }
 

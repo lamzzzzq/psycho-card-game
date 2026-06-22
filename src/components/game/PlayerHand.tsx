@@ -162,7 +162,7 @@ export function PlayerHand({
                   text={card.text}
                   textEn={isPersonalityCard(card) ? card.textEn : undefined}
                   dimension={isPersonalityCard(card) ? card.dimension : undefined}
-                  imageSrc={isPersonalityCard(card) ? `/cards/${card.id}.webp` : undefined}
+                  imageSrc={isPersonalityCard(card) ? `/cards/${card.imageId ?? card.id}.webp` : undefined}
                   isDummy={!isPersonalityCard(card)}
                   description={isPersonalityCard(card) ? undefined : card.definition}
                   selected={isSelected}
