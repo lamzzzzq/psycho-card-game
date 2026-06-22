@@ -119,22 +119,27 @@ export function OrnateCard({
               <stop offset="1" stopColor="#060d16" stopOpacity="0.5" />
             </radialGradient>
             {/* art-deco 网点 */}
-            <pattern id={dotId} width="20" height="20" patternUnits="userSpaceOnUse">
-              <circle cx="3" cy="3" r="1.1" fill={GOLD} opacity="0.06" />
+            <pattern id={dotId} width="19" height="19" patternUnits="userSpaceOnUse">
+              <circle cx="3" cy="3" r="1.1" fill={GOLD} opacity="0.085" />
             </pattern>
           </defs>
 
           <rect x="3" y="3" width="394" height="694" rx="42" fill={`url(#${bgId})`} />
 
-          {/* 知识牌拱区底纹：网点 + 柔光 + 暗角 + 同心弧（art-deco，呼应金框，不抢术语） */}
+          {/* 知识牌拱区底纹：网点 + 放射暗纹(sunburst) + 柔光 + 暗角 + 同心弧（art-deco，填满空间又不抢术语） */}
           {isKnowledge && (
             <g clipPath={`url(#${archId})`}>
               <rect x={M} y="20" width={R - M} height="400" fill={`url(#${dotId})`} />
+              {/* 放射状细线：从拱顶发散，呼应聚光、填充大面积空白 */}
+              {Array.from({ length: 15 }).map((_, i) => {
+                const a = ((-77 + i * 11) * Math.PI) / 180;
+                return <line key={i} x1="200" y1="34" x2={200 + Math.sin(a) * 460} y2={34 + Math.cos(a) * 460} stroke={GOLD} strokeWidth="0.6" opacity="0.05" />;
+              })}
               <rect x={M} y="20" width={R - M} height="400" fill={`url(#${glowId})`} />
               <rect x={M} y="20" width={R - M} height="400" fill={`url(#${vigId})`} />
               {/* 同心弧：呼应拱形金框 */}
-              <path d="M34,110 C34,64 112,46 200,40 C288,46 366,64 366,110" fill="none" stroke={GOLD} strokeWidth="1" opacity="0.13" />
-              <path d="M50,112 C50,80 122,64 200,59 C278,64 350,80 350,112" fill="none" stroke={GOLD} strokeWidth="0.8" opacity="0.08" />
+              <path d="M34,110 C34,64 112,46 200,40 C288,46 366,64 366,110" fill="none" stroke={GOLD} strokeWidth="1" opacity="0.14" />
+              <path d="M50,112 C50,80 122,64 200,59 C278,64 350,80 350,112" fill="none" stroke={GOLD} strokeWidth="0.8" opacity="0.09" />
             </g>
           )}
 
