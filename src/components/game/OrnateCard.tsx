@@ -151,10 +151,11 @@ export function OrnateCard({
 
           {/* 底部文字框 + 括号角 + 顶部小菱 */}
           <rect x={M} y="448" width={R - M} height="226" rx="12" fill="none" stroke={GOLD_SOFT} strokeWidth="1.5" />
-          <path d={`M${M + 14},462 v-8 a4,4 0 0 1 4,-4 h8`} fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <path d={`M${R - 14},462 v-8 a4,4 0 0 0 -4,-4 h-8`} fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <path d={`M${M + 14},660 v8 a4,4 0 0 0 4,4 h8`} fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <path d={`M${R - 14},660 v8 a4,4 0 0 1 -4,4 h-8`} fill="none" stroke={GOLD} strokeWidth="1.5" />
+          {/* 四角括号：内缩 ~10px，与底框边线留出间距，不重叠 */}
+          <path d={`M${M + 10},474 V462 a4,4 0 0 1 4,-4 H${M + 26}`} fill="none" stroke={GOLD} strokeWidth="1.5" />
+          <path d={`M${R - 10},474 V462 a4,4 0 0 0 -4,-4 H${R - 26}`} fill="none" stroke={GOLD} strokeWidth="1.5" />
+          <path d={`M${M + 10},648 V660 a4,4 0 0 0 4,4 H${M + 26}`} fill="none" stroke={GOLD} strokeWidth="1.5" />
+          <path d={`M${R - 10},648 V660 a4,4 0 0 1 -4,4 H${R - 26}`} fill="none" stroke={GOLD} strokeWidth="1.5" />
           <path d="M194,448 l6,-6 l6,6 l-6,6 Z" fill={GOLD} />
 
           {/* 选中：绿色外描边 */}
