@@ -115,13 +115,13 @@ export function OrnateCard({
               <stop offset="1" stopColor="#ecd9a0" stopOpacity="0" />
             </radialGradient>
             {/* 暗角 vignette：四周压暗、聚焦中心，给柔光加层次/高级感 */}
-            <radialGradient id={vigId} cx="50%" cy="40%" r="62%">
-              <stop offset="0.45" stopColor="#060d16" stopOpacity="0" />
-              <stop offset="1" stopColor="#060d16" stopOpacity="0.5" />
+            <radialGradient id={vigId} cx="50%" cy="40%" r="64%">
+              <stop offset="0.5" stopColor="#060d16" stopOpacity="0" />
+              <stop offset="1" stopColor="#060d16" stopOpacity="0.38" />
             </radialGradient>
-            {/* art-deco 网点 */}
-            <pattern id={dotId} width="19" height="19" patternUnits="userSpaceOnUse">
-              <circle cx="3" cy="3" r="1.1" fill={GOLD} opacity="0.085" />
+            {/* art-deco 网点（加浓加大，更明显） */}
+            <pattern id={dotId} width="18" height="18" patternUnits="userSpaceOnUse">
+              <circle cx="3" cy="3" r="1.35" fill={GOLD_BRIGHT} opacity="0.2" />
             </pattern>
           </defs>
 
@@ -131,16 +131,16 @@ export function OrnateCard({
           {isKnowledge && (
             <g clipPath={`url(#${archId})`}>
               <rect x={M} y="20" width={R - M} height="400" fill={`url(#${dotId})`} />
-              {/* 放射状细线：从拱顶发散，呼应聚光、填充大面积空白 */}
+              {/* 放射状细线：从拱顶发散，呼应聚光、填充空白（加浓加粗，更明显） */}
               {Array.from({ length: 15 }).map((_, i) => {
                 const a = ((-77 + i * 11) * Math.PI) / 180;
-                return <line key={i} x1="200" y1="34" x2={200 + Math.sin(a) * 460} y2={34 + Math.cos(a) * 460} stroke={GOLD} strokeWidth="0.6" opacity="0.05" />;
+                return <line key={i} x1="200" y1="34" x2={200 + Math.sin(a) * 460} y2={34 + Math.cos(a) * 460} stroke={GOLD_BRIGHT} strokeWidth="0.9" opacity="0.13" />;
               })}
               <rect x={M} y="20" width={R - M} height="400" fill={`url(#${glowId})`} />
               <rect x={M} y="20" width={R - M} height="400" fill={`url(#${vigId})`} />
-              {/* 同心弧：呼应拱形金框 */}
-              <path d="M34,110 C34,64 112,46 200,40 C288,46 366,64 366,110" fill="none" stroke={GOLD} strokeWidth="1" opacity="0.14" />
-              <path d="M50,112 C50,80 122,64 200,59 C278,64 350,80 350,112" fill="none" stroke={GOLD} strokeWidth="0.8" opacity="0.09" />
+              {/* 同心弧：呼应拱形金框（加浓） */}
+              <path d="M34,110 C34,64 112,46 200,40 C288,46 366,64 366,110" fill="none" stroke={GOLD_BRIGHT} strokeWidth="1.1" opacity="0.28" />
+              <path d="M50,112 C50,80 122,64 200,59 C278,64 350,80 350,112" fill="none" stroke={GOLD} strokeWidth="0.9" opacity="0.18" />
             </g>
           )}
 
