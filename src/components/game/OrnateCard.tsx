@@ -56,7 +56,7 @@ export function OrnateCard({
   // 每张卡唯一的 SVG defs id（避免多卡同页 id 重复——技术上无效 DOM、且会妨碍日后 per-card 渐变/裁切）。
   const uid = useId().replace(/:/g, '');
   const archId = `arch-${uid}`, bgId = `bg-${uid}`, phId = `ph-${uid}`, bgDnId = `bgdn-${uid}`;
-  const glowId = `glow-${uid}`, vigId = `vig-${uid}`, plaqueId = `plaque-${uid}`;
+  const glowId = `glow-${uid}`, vigId = `vig-${uid}`;
   const showImg = !!imageSrc && !imgError;
   const isKnowledge = isDummy && !!description;
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
@@ -119,12 +119,6 @@ export function OrnateCard({
               <stop offset="0.5" stopColor="#060d16" stopOpacity="0" />
               <stop offset="1" stopColor="#060d16" stopOpacity="0.38" />
             </radialGradient>
-            {/* 文字区留白：以底色柔和清空中心一块（让术语干净，不压纹理） */}
-            <radialGradient id={plaqueId} cx="50%" cy="50%" r="50%">
-              <stop offset="0" stopColor="#101d2c" stopOpacity="0.96" />
-              <stop offset="0.62" stopColor="#101d2c" stopOpacity="0.9" />
-              <stop offset="1" stopColor="#101d2c" stopOpacity="0" />
-            </radialGradient>
           </defs>
 
           <rect x="3" y="3" width="394" height="694" rx="42" fill={`url(#${bgId})`} />
@@ -155,8 +149,6 @@ export function OrnateCard({
                 })}
                 <rect x={M} y="20" width={R - M} height="400" fill={`url(#${glowId})`} />
                 <rect x={M} y="20" width={R - M} height="400" fill={`url(#${vigId})`} />
-                {/* 中心留白：柔和清空术语所在区域（按 ~4 行预留），让文字干净 */}
-                <ellipse cx="200" cy="222" rx="138" ry="104" fill={`url(#${plaqueId})`} />
               </g>
             );
           })()}
