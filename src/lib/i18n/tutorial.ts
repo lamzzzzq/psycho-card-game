@@ -80,7 +80,7 @@ export const TUTORIAL_T = {
     steps: [
       {
         title: '你的目標',
-        body: '5 個人格維度（開放性、盡責性、外向性、宜人性、情緒穩定性）全部完成「公開歸檔」，先達成的玩家獲勝。每個維度的目標張數等於你測評出來的分數四捨五入，所以每人的「胡牌路線」都不一樣。',
+        body: '5 個人格維度（開放性、盡責性、外向性、宜人性、神經質）全部完成「公開歸檔」，先達成的玩家獲勝。每個維度的目標張數等於你測評出來的分數四捨五入，所以每人的「胡牌路線」都不一樣。',
       },
       {
         title: '牌桌',
@@ -203,9 +203,9 @@ export const TUTORIAL_T = {
 
     // ── 沙盒：feedback（reducer 內）──
     fbDraw: '抽到一張線索牌。現在選擇很多，先演示「查看 2 張牌」。',
-    fbViewTwo: '本回合查看了 2 張牌：一張盡責性，一張情緒穩定性。真實牌局裏只會揭開你選的 2 張。',
+    fbViewTwo: '本回合查看了 2 張牌：一張盡責性，一張神經質。真實牌局裏只會揭開你選的 2 張。',
     fbFinishView: '現在你知道剛抽到的牌能補齊一組。下一步演示自摸碰。',
-    fbOpenPong: '自摸碰要先選定一個人格維度。提示：手牌裏有 4 張「情緒穩定性」，選它。',
+    fbOpenPong: '自摸碰要先選定一個人格維度。提示：手牌裏有 4 張「神經質」，選它。',
     fbChooseDim: (name: string, cnt: number) => `已選擇「${name}」。現在從手牌精確選擇 ${cnt} 張「${name}」的牌。`,
     fbPongSuccess: '歸檔成功。4 張進入公開歸檔區，歸檔後必須立即棄 1 張牌。',
     fbPongFailWrongCount: (selected: number, cnt: number) => `選了 ${selected} 張，必須正好 ${cnt} 張`,
@@ -330,7 +330,7 @@ export const TUTORIAL_T = {
     steps: [
       {
         title: 'Your Goal',
-        body: 'Complete a "Declared" set for all 5 personality dimensions (Openness, Conscientiousness, Extraversion, Agreeableness, Emotional Stability); the first player to do so wins. Each dimension’s target count equals your assessment score rounded, so everyone’s "path to a Win" is different.',
+        body: 'Complete a "Declared" set for all 5 personality dimensions (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism); the first player to do so wins. Each dimension’s target count equals your assessment score rounded, so everyone’s "path to a Win" is different.',
       },
       {
         title: 'The Table',
@@ -453,9 +453,9 @@ export const TUTORIAL_T = {
 
     // ── Sandbox: feedback (in reducer) ──
     fbDraw: 'Drew a clue card. There are many options now — first let’s demo "view 2 cards".',
-    fbViewTwo: 'This turn you viewed 2 cards: one Conscientiousness, one Emotional Stability. In a real game only the 2 you pick are revealed.',
+    fbViewTwo: 'This turn you viewed 2 cards: one Conscientiousness, one Neuroticism. In a real game only the 2 you pick are revealed.',
     fbFinishView: 'Now you know the just-drawn card can complete a set. Next, a demo of Self-draw Pong.',
-    fbOpenPong: 'Self-draw Pong needs you to fix a dimension first. Hint: your hand has 4 "Emotional Stability" cards — choose it.',
+    fbOpenPong: 'Self-draw Pong needs you to fix a dimension first. Hint: your hand has 4 "Neuroticism" cards — choose it.',
     fbChooseDim: (name: string, cnt: number) => `Chose "${name}". Now select exactly ${cnt} "${name}" cards from your hand.`,
     fbPongSuccess: 'Declared. The 4 cards enter the open declaration area; after declaring you must immediately discard 1 card.',
     fbPongFailWrongCount: (selected: number, cnt: number) => `You selected ${selected}, but it must be exactly ${cnt}`,

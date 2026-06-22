@@ -31,11 +31,11 @@ export const DIMENSION_META: Record<Dimension, DimensionMeta> = {
   },
   N: {
     key: 'N',
-    // ⚠️ IPIP-50 文件按「情緒穩定」方向 keying（放鬆/不憂鬱為正向計分），
-    // 故此維度高分 = 情緒穩定冷靜，標籤改為「情緒穩定性 / Emotional Stability」。
-    name: '情緒穩定性',
-    nameEn: 'Emotional Stability',
+    // ⚠️ 2026-06 由「情緒穩定性」改回「神經質 / Neuroticism」計分（參考 Goldberg 1999 /
+    // Ehrhart et al. 2008）。N 題正反向已對調，故此維度高分 = 情緒不穩、易焦慮緊張。
+    name: '神經質',
+    nameEn: 'Neuroticism',
     colorHex: '#f87171',
-    description: '情緒平穩、抗壓和不易焦慮的程度',
+    description: '情緒不穩、易焦慮緊張與情緒起伏的傾向',
   },
 };

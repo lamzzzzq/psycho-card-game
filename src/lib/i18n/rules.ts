@@ -18,14 +18,14 @@ export const RULES_T = {
     dimC: '盡責性',
     dimE: '外向性',
     dimA: '宜人性',
-    dimN: '情緒穩定性',
+    dimN: '神經質',
 
     // 一、遊戲目標
     sec1Title: '一、遊戲目標',
     goalIntroBefore: '每位玩家先完成 ',
     goalAssessment: 'Big Five 人格測評',
     goalIntroAfter: '，得到五個維度的分數：',
-    goalDims: '開放性 O、盡責性 C、外向性 E、宜人性 A、情緒穩定性 N。',
+    goalDims: '開放性 O、盡責性 C、外向性 E、宜人性 A、神經質 N。',
     goalCollectBefore: '遊戲目標是',
     goalCollectAll: '集齊全部五個維度',
     goalCollectMid: '。每個維度需要的牌數 = 你在該維度的分數',
@@ -100,14 +100,14 @@ export const RULES_T = {
     dimC: 'Conscientiousness',
     dimE: 'Extraversion',
     dimA: 'Agreeableness',
-    dimN: 'Emotional Stability',
+    dimN: 'Neuroticism',
 
     // 1. Goal
     sec1Title: '1. Goal',
     goalIntroBefore: 'Each player first completes the ',
     goalAssessment: 'Big Five assessment',
     goalIntroAfter: ' and gets a score for five dimensions: ',
-    goalDims: 'Openness O, Conscientiousness C, Extraversion E, Agreeableness A, Emotional Stability N.',
+    goalDims: 'Openness O, Conscientiousness C, Extraversion E, Agreeableness A, Neuroticism N.',
     goalCollectBefore: 'The goal is to ',
     goalCollectAll: 'collect all five dimensions',
     goalCollectMid: '. The number of cards each dimension needs = your score in that dimension',

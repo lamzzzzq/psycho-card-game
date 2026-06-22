@@ -34,7 +34,7 @@ const DC = (id: number, term: string, definition: string): DummyCard => ({ id, t
 const locCard = <T extends GameCard>(c: T, loc: Locale): T =>
   loc === 'en' && c.textEn ? ({ ...c, text: c.textEn } as T) : c;
 
-// 歸檔 4 張情緒穩定性後，手裏留兩對（盡責性 104/108、宜人性 105/106）+ 兩張單張 +
+// 歸檔 4 張神經質後，手裏留兩對（盡責性 104/108、宜人性 105/106）+ 兩張單張 +
 // 知識牌 → 無論玩家棄哪一張，都至少剩一對可用於「截胡碰」演示。
 const SANDBOX_HAND: GameCard[] = [
   PC(101, 'N', '我經常感到焦慮或憂慮', 'I often feel anxious or worried'),
@@ -181,7 +181,7 @@ function createReducer(s: TutStrings, dimName: DimName) {
       const allMatch = !!dim && selected.every((c) => !c.isDummy && 'dimension' in c && c.dimension === dim);
       const correctCount = selected.length === 4;
       if (allMatch && correctCount) {
-        // 成功：4 張情緒穩定性從手牌移除，drawnCard 也消耗
+        // 成功：4 張神經質從手牌移除，drawnCard 也消耗
         const remaining = state.hand.filter((c) => !state.selectedIds.includes(c.id));
         const drawnUsed = state.drawnCard && state.selectedIds.includes(state.drawnCard.id);
         return {

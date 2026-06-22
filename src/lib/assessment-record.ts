@@ -57,7 +57,7 @@ export async function saveAssessmentResult(
       device_token: getOrCreateDeviceToken(),
       source,
       answers,                              // jsonb：{ "1": 4, ..., "50": 5 }（IPIP-50，50 题；手动填分为空 {}）
-      scores,                               // jsonb：{ O, C, E, A, N }（注意：N = 情緒穩定性，高分=冷靜）
+      scores,                               // jsonb：{ O, C, E, A, N }（注意：N = 神經質，高分=易焦慮）
       answered_count: Object.keys(answers).length,
     });
     if (error) {

@@ -121,10 +121,10 @@ export default function CardLabPage() {
           </div>
         </section>
 
-        {/* 维度角标·全 5 维（测最长名 Conscientiousness / Emotional Stability 不溢出） */}
+        {/* 维度角标·全 5 维（测最长名 Conscientiousness 不溢出） */}
         <section className="space-y-3">
           <h2 className="psy-serif text-lg text-[var(--psy-ink)]">维度角标 · 全 5 维（测长名）</h2>
-          <p className="text-xs text-[var(--psy-muted)]">切到 English 看 Conscientiousness / Emotional Stability 是否撑出卡宽（已按长度自适应缩字号）。</p>
+          <p className="text-xs text-[var(--psy-muted)]">切到 English 看 Conscientiousness 是否撑出卡宽（已按长度自适应缩字号）。</p>
           <div className="flex flex-wrap gap-4">
             {DIMENSIONS.map((d) => {
               const q = QUESTIONS.find((x) => x.dimension === d)!;

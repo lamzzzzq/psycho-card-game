@@ -160,7 +160,7 @@ export function TarotCard({
             </div>
             <p
               style={{
-                color: 'var(--psy-muted)', fontSize: `${defFont}cqw`, lineHeight: 1.34,
+                color: 'var(--psy-ink-soft)', fontSize: `${defFont}cqw`, lineHeight: 1.34,
                 display: '-webkit-box', WebkitLineClamp: defClamp, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}
             >

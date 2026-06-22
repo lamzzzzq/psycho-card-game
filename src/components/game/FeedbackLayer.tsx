@@ -213,7 +213,7 @@ export function FeedbackOverlays({
               transition={{ type: 'spring', stiffness: 400, damping: 24 }}
               className="rounded-full px-5 py-2 text-sm font-bold shadow-2xl backdrop-blur"
               style={{
-                // 固定语义色，不再用维度色（避免红色既=情绪稳定维度又=成功/失败）
+                // 固定语义色，不再用维度色（避免红色既=神经质维度又=成功/失败）
                 backgroundColor:
                   pop.kind === 'hu'
                     ? FB_HU

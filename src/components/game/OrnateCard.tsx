@@ -219,7 +219,7 @@ export function OrnateCard({
           <p
             className={isKnowledge ? '' : 'font-semibold leading-snug'}
             style={{
-              color: isKnowledge ? 'var(--psy-muted)' : 'var(--psy-ink)',
+              color: isKnowledge ? 'var(--psy-ink-soft)' : 'var(--psy-ink)',
               fontSize: isKnowledge ? `${defFont}cqw` : (locale === 'en' ? '9.5cqw' : '10.5cqw'),
               lineHeight: isKnowledge ? 1.32 : 1.25,
               display: '-webkit-box', WebkitLineClamp: isKnowledge ? defClamp : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
@@ -230,7 +230,7 @@ export function OrnateCard({
         </div>
 
         {/* 揭示维度角标：实心金底 + 深色字，放大，居中压在拱底分隔处。
-            字号按名字长度自适应——长英文名(Conscientiousness/Emotional Stability)缩到不溢出。 */}
+            字号按名字长度自适应——长英文名(Conscientiousness)缩到不溢出。 */}
         {revealedDimension && (() => {
           const meta = DIMENSION_META[revealedDimension];
           const dimLabel = locale === 'en' ? meta.nameEn : meta.name;
