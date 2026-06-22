@@ -11,6 +11,7 @@ import { DIMENSION_META } from '@/data/dimensions';
 const GOLD = '#c9a45c';
 const GOLD_SOFT = '#9c7c44';
 const GOLD_DIM = 'rgba(201,164,92,0.45)';
+const GOLD_BRIGHT = '#f0d695'; // 点缀(星/菱)用更亮的金，小图也看得清
 const GREEN = 'rgba(143,199,135,0.85)';
 
 const M = 18;            // 内容内缩（≈4.5%，对齐现版）
@@ -158,38 +159,38 @@ export function OrnateCard({
           )}
 
           {/* 拱形描边（双线） */}
-          <path d={ARCH} fill="none" stroke={GOLD} strokeWidth="2" />
+          <path d={ARCH} fill="none" stroke={GOLD} strokeWidth="2.4" />
           <path d={`M${M + 7},414 L${M + 7},112 C${M + 7},58 108,36 200,28 C292,36 ${R - 7},58 ${R - 7},112 L${R - 7},414`} fill="none" stroke={GOLD_SOFT} strokeWidth="1" opacity="0.85" />
 
           {/* 外双线框 */}
-          <rect x="7" y="7" width="386" height="686" rx="38" fill="none" stroke={GOLD} strokeWidth="2" />
+          <rect x="7" y="7" width="386" height="686" rx="38" fill="none" stroke={GOLD} strokeWidth="2.4" />
           <rect x="13" y="13" width="374" height="674" rx="32" fill="none" stroke={GOLD_SOFT} strokeWidth="1" opacity="0.8" />
 
-          {/* 顶部中央纹章 */}
-          <path d={spark(200, 11, 6)} fill={GOLD} />
-          <path d="M200,16 l8,8 l-8,8 l-8,-8 Z" fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <line x1="158" y1="24" x2="184" y2="24" stroke={GOLD_SOFT} strokeWidth="1" />
-          <line x1="216" y1="24" x2="242" y2="24" stroke={GOLD_SOFT} strokeWidth="1" />
+          {/* 顶部中央纹章（放大+提亮） */}
+          <path d={spark(200, 10, 9)} fill={GOLD_BRIGHT} />
+          <path d="M200,13 l11,11 l-11,11 l-11,-11 Z" fill="none" stroke={GOLD_BRIGHT} strokeWidth="2.4" />
+          <line x1="150" y1="24" x2="184" y2="24" stroke={GOLD} strokeWidth="1.4" />
+          <line x1="216" y1="24" x2="250" y2="24" stroke={GOLD} strokeWidth="1.4" />
 
-          {/* 四角星 */}
-          <path d={spark(40, 52, 6)} fill={GOLD} />
-          <path d={spark(360, 52, 6)} fill={GOLD} />
-          <path d={spark(40, 648, 5)} fill={GOLD} />
-          <path d={spark(360, 648, 5)} fill={GOLD} />
+          {/* 四角星（放大+提亮） */}
+          <path d={spark(40, 54, 9)} fill={GOLD_BRIGHT} />
+          <path d={spark(360, 54, 9)} fill={GOLD_BRIGHT} />
+          <path d={spark(40, 646, 9)} fill={GOLD_BRIGHT} />
+          <path d={spark(360, 646, 9)} fill={GOLD_BRIGHT} />
 
-          {/* 拱底分隔 ◆ */}
-          <line x1="60" y1="432" x2="186" y2="432" stroke={GOLD_DIM} strokeWidth="1" />
-          <path d="M200,425 l7,7 l-7,7 l-7,-7 Z" fill={GOLD} />
-          <line x1="214" y1="432" x2="340" y2="432" stroke={GOLD_DIM} strokeWidth="1" />
+          {/* 拱底分隔 ◆（放大+提亮） */}
+          <line x1="56" y1="432" x2="184" y2="432" stroke={GOLD_DIM} strokeWidth="1.2" />
+          <path d="M200,423 l9,9 l-9,9 l-9,-9 Z" fill={GOLD_BRIGHT} />
+          <line x1="216" y1="432" x2="344" y2="432" stroke={GOLD_DIM} strokeWidth="1.2" />
 
           {/* 底部文字框 + 括号角 + 顶部小菱 */}
           <rect x={M} y="448" width={R - M} height="226" rx="12" fill="none" stroke={GOLD_SOFT} strokeWidth="1.5" />
           {/* 四角括号：内缩 ~10px，与底框边线留出间距，不重叠 */}
-          <path d={`M${M + 10},474 V462 a4,4 0 0 1 4,-4 H${M + 26}`} fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <path d={`M${R - 10},474 V462 a4,4 0 0 0 -4,-4 H${R - 26}`} fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <path d={`M${M + 10},648 V660 a4,4 0 0 0 4,4 H${M + 26}`} fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <path d={`M${R - 10},648 V660 a4,4 0 0 1 -4,4 H${R - 26}`} fill="none" stroke={GOLD} strokeWidth="1.5" />
-          <path d="M194,448 l6,-6 l6,6 l-6,6 Z" fill={GOLD} />
+          <path d={`M${M + 10},474 V462 a4,4 0 0 1 4,-4 H${M + 26}`} fill="none" stroke={GOLD} strokeWidth="2" />
+          <path d={`M${R - 10},474 V462 a4,4 0 0 0 -4,-4 H${R - 26}`} fill="none" stroke={GOLD} strokeWidth="2" />
+          <path d={`M${M + 10},648 V660 a4,4 0 0 0 4,4 H${M + 26}`} fill="none" stroke={GOLD} strokeWidth="2" />
+          <path d={`M${R - 10},648 V660 a4,4 0 0 1 -4,4 H${R - 26}`} fill="none" stroke={GOLD} strokeWidth="2" />
+          <path d="M192,448 l8,-8 l8,8 l-8,8 Z" fill={GOLD_BRIGHT} />
 
           {/* 选中：绿色外描边 */}
           {selected && <rect x="5" y="5" width="390" height="690" rx="40" fill="none" stroke={GREEN} strokeWidth="5" />}
