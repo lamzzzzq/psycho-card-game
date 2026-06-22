@@ -33,13 +33,13 @@ export function generatePersonalityCards(count: number = 50): PersonalityCard[] 
   const out: PersonalityCard[] = [];
   let placeholderId = 5000; // 5000+ 佔位牌；真實題面 1-50，dummy 1000+
   for (const d of DIMENSIONS) {
-    const pool = byDim[d];
-    for (let i = 0; i < perDim; i++) {
-      if (i < pool.length) {
-        out.push(pool[i]);
-      } else {
-        const src = pool[i % pool.length];
-        // 复制牌：新 id 防重复，但 imageId 指回原题，确保 /cards/{imageId}.webp 有图（游戏里不空白）。
+    const pool = byDim[d];              // 该维度 10 张真题
+    out.push(...pool);                  // 真题全放
+    // 需复制 = perDim − 10 张。从该维度 10 张里「随机不重复」抽这么多张复制（每局不同、更公平，
+    // 避免固定永远复制前几题）。60 张→每维抽 2、80 张→每维抽 6。复制牌 imageId 指回原题保证有图。
+    const copies = perDim - pool.length;
+    if (copies > 0) {
+      for (const src of shuffle([...pool]).slice(0, Math.min(copies, pool.length))) {
         out.push({ id: placeholderId++, imageId: src.imageId ?? src.id, dimension: d, text: src.text, textEn: src.textEn, facet: src.facet });
       }
     }
