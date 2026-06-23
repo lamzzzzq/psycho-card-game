@@ -38,7 +38,7 @@ export const QUESTIONS: Question[] = [
   { id: 25, dimension: 'O', reversed: false, text: '我常有絕佳的點子。', textEn: 'I have excellent ideas.' },
   { id: 26, dimension: 'E', reversed: true, text: '我沒什麼話說。', textEn: 'I have little to say.' },
   { id: 27, dimension: 'A', reversed: false, text: '我有顆柔軟的心。', textEn: 'I have a soft heart.' },
-  { id: 28, dimension: 'C', reversed: true, text: '我常忘記物歸原處。', textEn: 'I often forget to put things back in the right place.' },
+  { id: 28, dimension: 'C', reversed: true, text: '我常忘記物歸原處。', textEn: 'I often forget to put things back in their proper place.' },
   { id: 29, dimension: 'N', reversed: false, text: '我容易感到悶悶不樂。', textEn: 'I get upset easily.' },
   { id: 30, dimension: 'O', reversed: true, text: '我想像力欠佳。', textEn: 'I do not have a good imagination.' },
   { id: 31, dimension: 'E', reversed: false, text: '在聚會中我會跟許多不同的人說話。', textEn: 'I talk to a lot of different people at parties.' },

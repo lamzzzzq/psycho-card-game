@@ -1,7 +1,7 @@
 # IPIP-50 计分对照（代码真相源自动生成）
 
 > 自动从 `src/data/questions.ts` + `src/data/dimensions.ts` 生成，与游戏实际计分**完全一致**。
-> 生成命令：`node scripts/gen-scoring-ref.mjs`（或见仓库）。
+> 生成命令：`node scripts/gen-scoring-ref.mjs`。
 
 ## 计分规则
 - 每题原始作答 raw ∈ {1,2,3,4,5}（Likert：非常不同意→非常同意）。
@@ -52,7 +52,7 @@
 | 25 | Openness | + | I have excellent ideas. | 我常有絕佳的點子。 |
 | 26 | Extraversion | − | I have little to say. | 我沒什麼話說。 |
 | 27 | Agreeableness | + | I have a soft heart. | 我有顆柔軟的心。 |
-| 28 | Conscientiousness | − | I often forget to put things back in the right place. | 我常忘記物歸原處。 |
+| 28 | Conscientiousness | − | I often forget to put things back in their proper place. | 我常忘記物歸原處。 |
 | 29 | Neuroticism | + | I get upset easily. | 我容易感到悶悶不樂。 |
 | 30 | Openness | − | I do not have a good imagination. | 我想像力欠佳。 |
 | 31 | Extraversion | + | I talk to a lot of different people at parties. | 在聚會中我會跟許多不同的人說話。 |
