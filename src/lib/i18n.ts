@@ -36,7 +36,7 @@ export const STRINGS = {
       tutorial: '玩法教學',
       footer: {
         prefix: '© 2026 香港理工大學 ',
-        link: '應用社會科學系（APSS）',
+        link: '應用社會科學系',
         suffix: ' · 本網站僅供教學與研究用途',
       },
     },
