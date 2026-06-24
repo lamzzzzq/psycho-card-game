@@ -34,6 +34,8 @@ interface DiscardPileProps {
   /** Action log used to attach timestamps + players to each discard */
   actions?: GameAction[];
   players?: PlayerLite[];
+  /** 轮到我出牌时 = true：弃牌堆脉冲发光 + 浮「丟這裡」标签，强引导出牌。 */
+  highlight?: boolean;
   locale?: Locale;
 }
 
@@ -50,6 +52,7 @@ export function DiscardPile({
   discardPile,
   actions,
   players,
+  highlight = false,
   locale = 'zh',
 }: DiscardPileProps) {
   const t = STRINGS[locale].game;
@@ -73,15 +76,42 @@ export function DiscardPile({
 
   return (
     <>
+      <div className="relative flex flex-col items-center">
+      {/* 出牌引导：浮一个跳动的「丟這裡」，配合手牌→弃牌堆的引导箭头 */}
+      {highlight && (
+        <motion.div
+          aria-hidden
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: [0, -6, 0] }}
+          transition={{ y: { repeat: Infinity, duration: 1, ease: 'easeInOut' }, opacity: { duration: 0.3 } }}
+          className="pointer-events-none absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold sm:-top-8 sm:text-[11px]"
+          style={{
+            background: 'rgba(200,155,93,0.96)',
+            color: '#1a1206',
+            boxShadow: '0 4px 14px rgba(200,155,93,0.45)',
+          }}
+        >
+          👇 {t.dropHere}
+        </motion.div>
+      )}
       <button
         type="button"
         onClick={() => canOpen && setOpen(true)}
         disabled={!canOpen}
-        className={`flex flex-col items-center gap-2 ${
+        className={`relative flex flex-col items-center gap-2 ${
           canOpen ? 'cursor-pointer hover:scale-105 active:scale-95 transition-transform' : ''
         }`}
         aria-label={t.viewDiscardPile}
       >
+        {/* 脉冲光环（出牌引导）：套在卡面外圈 */}
+        {highlight && (
+          <motion.div
+            animate={{ opacity: [0.5, 0, 0.5], scale: [1, 1.12, 1] }}
+            transition={{ repeat: Infinity, duration: 1.8, ease: 'easeOut' }}
+            className="pointer-events-none absolute -inset-1 top-0 h-24 rounded-[1.25rem] border sm:h-36 sm:rounded-[1.4rem]"
+            style={{ borderColor: 'rgba(200,155,93,0.6)', boxShadow: '0 0 22px rgba(200,155,93,0.4)' }}
+          />
+        )}
         {topCard ? (
           <div className="relative">
             <div className="sm:hidden">
@@ -110,6 +140,7 @@ export function DiscardPile({
         )}
         <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">{t.discardedCount} {count} {t.cardsUnit}</span>
       </button>
+      </div>
 
       <AnimatePresence>
         {open && (

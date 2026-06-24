@@ -9,6 +9,7 @@ import {
   FeedbackOverlays,
   useYourTurnNotifier,
   YourTurnBanner,
+  turnNudge,
 } from '@/components/game/FeedbackLayer';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
@@ -83,10 +84,15 @@ export default function GamePage() {
     dimension: Dimension;
   } | null>(null);
 
-  // Arrow state
-  const [arrowFrom, setArrowFrom] = useState<{ x: number; y: number } | null>(null);
-  const [arrowTo, setArrowTo] = useState<{ x: number; y: number } | null>(null);
+  // Arrow state — 存「取点函数」而非静态坐标，ArrowOverlay 每帧重算 → 跟随滚动。
+  type Pt = { x: number; y: number };
+  const [arrowFrom, setArrowFrom] = useState<(() => Pt | null) | null>(null);
+  const [arrowTo, setArrowTo] = useState<(() => Pt | null) | null>(null);
   const [arrowColor, setArrowColor] = useState('#a855f7');
+
+  // 单人 idle 提醒：本回合超过一定时间未行动时，弹「輪到你」toast + 屏幕震动。
+  const [idleReminderVisible, setIdleReminderVisible] = useState(false);
+  const lastNudgeRef = useRef<number | null>(null);
 
   // Flying card animations
   const [flyingCards, setFlyingCards] = useState<FlyingAnim[]>([]);
@@ -169,6 +175,22 @@ export default function GamePage() {
     };
   }, [isHumanActive, game?.phase, game?.currentRound]);
 
+  // idle 提醒：本回合还剩 15s / 6s 仍未行动时，震动 + 弹 toast（每个阈值只触发一次）。
+  useEffect(() => {
+    if (!isHumanActive) {
+      lastNudgeRef.current = null;
+      setIdleReminderVisible(false);
+      return;
+    }
+    if ((timer === 15 || timer === 6) && lastNudgeRef.current !== timer) {
+      lastNudgeRef.current = timer;
+      turnNudge(shakeControls);
+      setIdleReminderVisible(true);
+      const h = window.setTimeout(() => setIdleReminderVisible(false), 2500);
+      return () => window.clearTimeout(h);
+    }
+  }, [timer, isHumanActive, shakeControls]);
+
   // Redirect if no game
   useEffect(() => {
     if (!game) {
@@ -223,14 +245,18 @@ export default function GamePage() {
     setTimeout(() => setResultBanner(null), 3000);
   };
 
-  // Draw pile hover
+  // Draw pile hover — 取点函数读 ref.current，每帧实时算，滚动时箭头跟着动。
   const handleDrawPileHover = useCallback((hovering: boolean) => {
     if (!drawPileRef.current || !handAreaRef.current) return;
     if (hovering && game?.phase === 'drawing' && game.currentPlayerIndex === 0) {
-      const fromRect = drawPileRef.current.getBoundingClientRect();
-      const toRect = handAreaRef.current.getBoundingClientRect();
-      setArrowFrom({ x: fromRect.left + fromRect.width / 2, y: fromRect.top + fromRect.height / 2 });
-      setArrowTo({ x: toRect.left + toRect.width / 2, y: toRect.top + Math.min(40, toRect.height * 0.35) });
+      setArrowFrom(() => () => {
+        const r = drawPileRef.current?.getBoundingClientRect();
+        return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+      });
+      setArrowTo(() => () => {
+        const r = handAreaRef.current?.getBoundingClientRect();
+        return r ? { x: r.left + r.width / 2, y: r.top + Math.min(40, r.height * 0.35) } : null;
+      });
       setArrowColor('#c89b5d');
     } else {
       setArrowFrom(null);
@@ -240,10 +266,14 @@ export default function GamePage() {
 
   const handleCardHover = useCallback((cardEl: HTMLElement | null) => {
     if (!cardEl || !discardPileRef.current) { setArrowFrom(null); setArrowTo(null); return; }
-    const rect = cardEl.getBoundingClientRect();
-    const discardRect = discardPileRef.current.getBoundingClientRect();
-    setArrowFrom({ x: rect.left + rect.width / 2, y: rect.top });
-    setArrowTo({ x: discardRect.left + discardRect.width / 2, y: discardRect.top + discardRect.height / 2 });
+    setArrowFrom(() => () => {
+      const r = cardEl.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top };
+    });
+    setArrowTo(() => () => {
+      const r = discardPileRef.current?.getBoundingClientRect();
+      return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+    });
     setArrowColor('#c89b5d');
   }, []);
 
@@ -454,6 +484,19 @@ export default function GamePage() {
       <YourTurnBanner bannerKey={yourTurnKey} />
       <ArrowOverlay from={arrowFrom} to={arrowTo} color={arrowColor} />
 
+      {/* idle 提醒 toast：本回合久未行动时弹出（配合震动） */}
+      {idleReminderVisible && (
+        <motion.div
+          initial={{ opacity: 0, y: -10, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed top-28 left-1/2 -translate-x-1/2 z-[60] max-w-[90vw] rounded-xl border border-amber-400/60 bg-amber-500/90 px-5 py-2.5 text-xs font-bold text-white shadow-2xl sm:top-32 sm:px-6 sm:py-3 sm:text-sm"
+        >
+          {tg.idleYourTurn}
+        </motion.div>
+      )}
+
       {/* Result banner */}
       {resultBanner && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl text-sm font-bold shadow-2xl animate-bounce ${
@@ -546,6 +589,7 @@ export default function GamePage() {
               discardPile={game.discardPile}
               actions={game.actionLog}
               players={game.players}
+              highlight={isDiscarding}
               locale={locale}
             />
           </div>

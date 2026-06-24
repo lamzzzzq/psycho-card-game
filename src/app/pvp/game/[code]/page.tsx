@@ -12,6 +12,7 @@ import {
   FeedbackOverlays,
   useYourTurnNotifier,
   YourTurnBanner,
+  turnNudge,
 } from '@/components/game/FeedbackLayer';
 import { FlyingCard } from '@/components/game/FlyingCard';
 import { supabase } from '@/lib/supabase';
@@ -86,8 +87,10 @@ export default function PvpGamePage() {
   const [pickedViewIds, setPickedViewIds] = useState<number[]>([]);
   const [viewedCardIds, setViewedCardIds] = useState<number[]>([]);
   const [viewUsedThisTurn, setViewUsedThisTurn] = useState(false);
-  const [arrowFrom, setArrowFrom] = useState<{ x: number; y: number } | null>(null);
-  const [arrowTo, setArrowTo] = useState<{ x: number; y: number } | null>(null);
+  // Arrow state — 存「取点函数」，ArrowOverlay 每帧重算 → 移动端滚动时跟随卡牌。
+  type Pt = { x: number; y: number };
+  const [arrowFrom, setArrowFrom] = useState<(() => Pt | null) | null>(null);
+  const [arrowTo, setArrowTo] = useState<(() => Pt | null) | null>(null);
   const [flyingCards, setFlyingCards] = useState<FlyingAnim[]>([]);
   const flyIdRef = useRef(0);
   const [slowLoad, setSlowLoad] = useState(false);
@@ -241,6 +244,7 @@ export default function PvpGamePage() {
     let hideTimer: number | null = null;
     const interval = window.setInterval(() => {
       setIdleReminderVisible(true);
+      turnNudge(shakeControls); // 屏幕震动 + 设备震动，提醒该你了
       if (hideTimer) window.clearTimeout(hideTimer);
       hideTimer = window.setTimeout(() => setIdleReminderVisible(false), 3000);
     }, 30_000);
@@ -249,6 +253,8 @@ export default function PvpGamePage() {
       if (hideTimer) window.clearTimeout(hideTimer);
       setIdleReminderVisible(false);
     };
+    // shakeControls 是 useAnimationControls 的稳定引用，不会重置 30s 时钟。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myIsCurrent]);
 
   const showBanner = useCallback((success: boolean, message: string) => {
@@ -271,10 +277,14 @@ export default function PvpGamePage() {
   const handleDrawPileHover = useCallback((hovering: boolean) => {
     if (!drawPileRef.current || !handAreaRef.current) return;
     if (hovering && canDrawRef.current) {
-      const fromRect = drawPileRef.current.getBoundingClientRect();
-      const toRect = handAreaRef.current.getBoundingClientRect();
-      setArrowFrom({ x: fromRect.left + fromRect.width / 2, y: fromRect.top + fromRect.height / 2 });
-      setArrowTo({ x: toRect.left + toRect.width / 2, y: toRect.top + Math.min(40, toRect.height * 0.35) });
+      setArrowFrom(() => () => {
+        const r = drawPileRef.current?.getBoundingClientRect();
+        return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+      });
+      setArrowTo(() => () => {
+        const r = handAreaRef.current?.getBoundingClientRect();
+        return r ? { x: r.left + r.width / 2, y: r.top + Math.min(40, r.height * 0.35) } : null;
+      });
     } else {
       setArrowFrom(null);
       setArrowTo(null);
@@ -283,10 +293,14 @@ export default function PvpGamePage() {
 
   const handleCardHover = useCallback((el: HTMLElement | null) => {
     if (!el || !discardPileRef.current) { setArrowFrom(null); setArrowTo(null); return; }
-    const rect = el.getBoundingClientRect();
-    const discardRect = discardPileRef.current.getBoundingClientRect();
-    setArrowFrom({ x: rect.left + rect.width / 2, y: rect.top });
-    setArrowTo({ x: discardRect.left + discardRect.width / 2, y: discardRect.top + discardRect.height / 2 });
+    setArrowFrom(() => () => {
+      const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top };
+    });
+    setArrowTo(() => () => {
+      const r = discardPileRef.current?.getBoundingClientRect();
+      return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+    });
   }, []);
 
   if (!gameState) {
@@ -726,6 +740,7 @@ export default function PvpGamePage() {
               discardPile={gameState.discardPile}
               actions={gameState.actionLog as any}
               players={gameState.players}
+              highlight={isDiscarding}
               locale={locale}
             />
           </div>

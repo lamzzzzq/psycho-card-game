@@ -9,6 +9,21 @@ import { STRINGS, type Locale } from '@/lib/i18n';
 type AnimationControls = ReturnType<typeof useAnimationControls>;
 type MinimalPlayer = { id: string; name: string };
 
+/**
+ * "輪到你 / 該行動了" 的提醒振動：屏幕抖一下 + 设备震动（移动端）。
+ * 单人 & 多人共用，确保两端体验一致。navigator.vibrate 在桌面/不支持的浏览器
+ * 上是 no-op，安全调用。
+ */
+export function turnNudge(shakeControls: AnimationControls) {
+  shakeControls.start({
+    x: [0, -9, 9, -7, 7, -4, 4, -2, 2, 0],
+    transition: { duration: 0.55, ease: 'easeInOut' },
+  });
+  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+    navigator.vibrate([55, 45, 55]);
+  }
+}
+
 // 语义反馈色：游玩界面里维度已不带色，故颜色专用于语义 —— 成功绿/失败红/提示黄。
 const FB_SUCCESS = '#22c55e'; // 绿 — 碰成功 / 胡牌
 const FB_HU = '#22c55e';      // 胡牌也归为成功(绿)

@@ -171,6 +171,8 @@ export const STRINGS = {
       // Action bar
       clickToDraw: '點擊牌堆抽一張牌',
       pongDoneDiscard: '碰牌成功 — 請直接出一張手牌',
+      dropHere: '丟這裡',
+      tapCardToDiscard: '點一張手牌丟出',
       viewTwoCards: '查看 2 張牌',
       viewCardsTitle: '本回合可查看 2 張自己的手牌的人格',
       viewUsed: '本回合查看已用',
@@ -533,6 +535,8 @@ export const STRINGS = {
       // Action bar
       clickToDraw: 'Tap the draw pile to draw a card',
       pongDoneDiscard: 'Pong successful — discard a card now',
+      dropHere: 'Drop here',
+      tapCardToDiscard: 'Tap a card to discard',
       viewTwoCards: 'View 2 cards',
       viewCardsTitle: 'This turn you may reveal the traits of 2 of your own cards',
       viewUsed: 'View used this turn',

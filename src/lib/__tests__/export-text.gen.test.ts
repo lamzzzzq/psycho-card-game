@@ -87,6 +87,72 @@ function noteFor(key: string): string {
   return '';
 }
 
+// 合并组：把运行时拼接的「碎片」整句合成一行，供同事按完整句子审校/翻译。
+// parts 用扁平 key（section.subkey）；{…} 为运行时变量占位（翻译时须保留占位与空格）。
+// 被合并的碎片行会从导出中移除，合并行插在该组首个碎片原位置。
+// 安全：若某 part key 因重构不存在，会自动跳过；整组都缺则不产出该合并行。
+interface MergeGroup { key: string; parts: string[]; zh: string; en: string }
+const MERGE_GROUPS: MergeGroup[] = [
+  // —— 多碎片整句（真正被拆散、单看读不懂的）——
+  { key: 'assessment.progress', parts: ['assessment.progressPrefix', 'assessment.progressSuffix'],
+    zh: '當前正在抽取 {維度} 維度的人格線索。', en: 'Currently drawing clues for the {dimension} dimension.' },
+  { key: 'game.declaredLine', parts: ['game.declaredPrefix', 'game.declaredSuffix', 'game.remainingPrefix', 'game.cardsUnit'],
+    zh: '申報 {N} 組 · 剩餘 {M} 張', en: 'Declared {N} sets · left {M} cards' },
+  { key: 'game.toastSelfPong', parts: ['game.toastSelfPongPrefix', 'game.toastDoneSuffix'],
+    zh: '自摸碰！{維度} 完成！', en: 'Self-draw Pong! {dimension} done!' },
+  { key: 'game.toastPong', parts: ['game.toastPongPrefix', 'game.toastDoneSuffix'],
+    zh: '碰！{維度} 完成！', en: 'Pong! {dimension} done!' },
+  { key: 'game.logFullTitle', parts: ['game.logFullTitlePrefix', 'game.logFullTitleSuffix'],
+    zh: '行動記錄 · 共 {N} 條', en: 'Action log · {N} total' },
+  { key: 'game.logRound', parts: ['game.logRoundPrefix', 'game.logRoundSuffix'],
+    zh: '第 {N} 輪', en: 'Round {N}' },
+  { key: 'pvpLobby.fullAssess', parts: ['pvpLobby.fullAssessPrefix', 'pvpLobby.fullAssessSuffix'],
+    zh: '完整測評（{N} 題）', en: 'Full Test ({N} Q)' },
+  { key: 'pvpRoom.waitingPlayers', parts: ['pvpRoom.waitingPlayersPrefix', 'pvpRoom.waitingPlayersSuffix'],
+    zh: '等待玩家（{N}/2）', en: 'Waiting for players ({N}/2)' },
+  // —— 单碎片但需补全成整句（只显示前/后缀读不出全貌的）——
+  { key: 'game.target', parts: ['game.targetPrefix'], zh: '目標 {N} 張', en: 'Target {N} cards' },
+  { key: 'game.selected', parts: ['game.selectedPrefix'], zh: '已選 {N}', en: 'selected {N}' },
+  { key: 'game.roundDesktop', parts: ['game.roundWord'], zh: '第 {N} / {M} 輪', en: 'Round {N} / {M}' },
+  { key: 'game.roundMobile', parts: ['game.roundUnit'], zh: '第 {N}/{M} 輪', en: 'Round {N}/{M}' },
+  { key: 'game.roomTitle', parts: ['game.roomTitlePrefix'], zh: '人格麻將 · 聯機房 {房間碼}', en: 'Personalities Mahjong · Room {code}' },
+  { key: 'game.win', parts: ['game.winSuffix'], zh: '{玩家名} 贏了', en: '{name} wins' },
+  { key: 'game.turn', parts: ['game.turnSuffix'], zh: '{玩家名} 中（對方回合進行中）', en: '{name}（EN 無後綴）' },
+  { key: 'assessment.answered', parts: ['assessment.answeredSuffix'], zh: '{N} 已作答', en: '{N} answered' },
+  { key: 'pvpLobby.stillInRoom', parts: ['pvpLobby.stillInRoomPrefix'], zh: '你還在房間 {房間碼} …', en: 'You are still in room {code} …' },
+];
+
+// 把碎片行合并成整句行；返回新的 rows（其余行原样保留、相对顺序不变）。
+function applyMerges(rows: Row[]): Row[] {
+  const idxOf = (k: string) => rows.findIndex((r) => r.key === k);
+  const removeSet = new Set<string>();
+  const mergedAt: { anchor: number; row: Row }[] = [];
+  for (const g of MERGE_GROUPS) {
+    const present = g.parts.filter((p) => idxOf(p) >= 0);
+    if (present.length === 0) {
+      // eslint-disable-next-line no-console
+      console.warn(`⚠ 合并组 ${g.key} 的碎片 key 全部缺失（可能已重构），跳过`);
+      continue;
+    }
+    present.forEach((p) => removeSet.add(p));
+    const anchor = Math.min(...present.map(idxOf));
+    mergedAt.push({
+      anchor,
+      row: {
+        source: 'i18n', section: g.key.split('.')[0], key: `${g.key}（合并）`,
+        zh: g.zh, en: g.en,
+        note: `🧩 已合并整句：由 ${present.join(' + ')} 运行时拼接而成。{…} 为运行时变量，翻译时请保留占位符与前后空格。`,
+      },
+    });
+  }
+  const out: Row[] = [];
+  rows.forEach((r, i) => {
+    mergedAt.filter((m) => m.anchor === i).forEach((m) => out.push(m.row));
+    if (!removeSet.has(r.key)) out.push(r);
+  });
+  return out;
+}
+
 // 噪音过滤：纯 emoji / 标点 / 箭头 / 模板碎片，无实际可读词。
 const hasCJK = (s: string) => /[一-鿿]/.test(s);
 const hasLatinWord = (s: string) => /[A-Za-z]{3,}/.test(s);
@@ -113,6 +179,10 @@ test('export bilingual text to docs/i18n-review.csv', () => {
   for (const key of keys) {
     rows.push({ source: 'i18n', section: key.split(/[.[]/)[0], key, zh: zhFlat[key] ?? '', en: enFlat[key] ?? '', note: noteFor(key) });
   }
+  // 合并：碎片拼接句 → 整句行（只作用于中心 STRINGS 这批，此时 rows 仅含它们）
+  const mergedRows = applyMerges(rows);
+  rows.length = 0;
+  rows.push(...mergedRows);
   for (const q of QUESTIONS) {
     rows.push({ source: 'i18n', section: 'cards', key: `card.${q.id}`, zh: q.text, en: q.textEn, note: '' });
   }
