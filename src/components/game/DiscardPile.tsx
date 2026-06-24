@@ -77,23 +77,6 @@ export function DiscardPile({
   return (
     <>
       <div className="relative flex flex-col items-center">
-      {/* 出牌引导：浮一个跳动的「丟這裡」，配合手牌→弃牌堆的引导箭头 */}
-      {highlight && (
-        <motion.div
-          aria-hidden
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: [0, -6, 0] }}
-          transition={{ y: { repeat: Infinity, duration: 1, ease: 'easeInOut' }, opacity: { duration: 0.3 } }}
-          className="pointer-events-none absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold sm:-top-8 sm:text-[11px]"
-          style={{
-            background: 'rgba(200,155,93,0.96)',
-            color: '#1a1206',
-            boxShadow: '0 4px 14px rgba(200,155,93,0.45)',
-          }}
-        >
-          👇 {t.dropHere}
-        </motion.div>
-      )}
       <button
         type="button"
         onClick={() => canOpen && setOpen(true)}
