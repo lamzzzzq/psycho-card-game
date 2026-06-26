@@ -667,6 +667,27 @@ export default function GamePage() {
             <span className="truncate">{tg.doneLabel} {humanPlayer.declaredSets.length}/5</span>
             <span className={`font-mono tabular-nums ${timer <= 5 ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-accent)]'}`}>{timer}s</span>
           </div>
+          {/* 5 維目標常駐迷你條：字母 + 目標張數，已歸檔顯示 ✓ 並轉金。
+              只顯示目標 + 是否歸檔，不洩露手上已有幾張（保留靠記憶推理的核心）。*/}
+          <div className="flex items-center justify-center gap-1">
+            {DIMENSIONS.map((d) => {
+              const isDone = declaredDims.has(d);
+              return (
+                <span
+                  key={d}
+                  className="flex flex-1 items-center justify-center gap-0.5 rounded-md py-0.5 text-[9px] font-bold tabular-nums"
+                  style={{
+                    backgroundColor: isDone ? 'rgba(200,155,93,0.22)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${isDone ? 'rgba(200,155,93,0.5)' : 'rgba(200,155,93,0.14)'}`,
+                    color: isDone ? 'var(--psy-accent)' : 'var(--psy-ink-soft)',
+                  }}
+                >
+                  <span className="opacity-80">{d}</span>
+                  <span>{isDone ? '✓' : targets[d]}</span>
+                </span>
+              );
+            })}
+          </div>
           <div className="flex items-center justify-end gap-1">
             <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{tg.persona}</button>
             <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{tg.archive}</button>

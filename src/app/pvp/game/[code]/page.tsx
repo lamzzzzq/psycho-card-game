@@ -829,6 +829,29 @@ export default function PvpGamePage() {
               </span>
               <span className="shrink-0">{t.archiveCount} {mePlayer.declaredSets.length}/5</span>
             </div>
+            {/* 5 維目標常駐迷你條：字母 + 目標張數，已歸檔顯示 ✓ 並轉金。
+                只顯示目標 + 是否歸檔，不洩露手上已有幾張。*/}
+            {targets && (
+              <div className="flex items-center justify-center gap-1">
+                {DIMENSIONS.map((d) => {
+                  const isDone = declaredDims.has(d);
+                  return (
+                    <span
+                      key={d}
+                      className="flex flex-1 items-center justify-center gap-0.5 rounded-md py-0.5 text-[9px] font-bold tabular-nums"
+                      style={{
+                        backgroundColor: isDone ? 'rgba(200,155,93,0.22)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${isDone ? 'rgba(200,155,93,0.5)' : 'rgba(200,155,93,0.14)'}`,
+                        color: isDone ? 'var(--psy-accent)' : 'var(--psy-ink-soft)',
+                      }}
+                    >
+                      <span className="opacity-80">{d}</span>
+                      <span>{isDone ? '✓' : targets[d]}</span>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
             <div className="flex items-center justify-end gap-1">
               <button onClick={() => setMobileSheet('persona')} style={{ borderRadius: '0.7rem' }} className="psy-btn psy-btn-ghost px-3 py-1 text-[11px]">{t.persona}</button>
               <button onClick={() => setMobileSheet('declared')} style={{ borderRadius: '0.7rem' }} className="psy-btn psy-btn-ghost px-3 py-1 text-[11px]">{t.archive}</button>
