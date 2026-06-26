@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useReducer, useState } from 'react';
+import { useMemo, useReducer, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TarotCard } from '@/components/game/TarotCard';
@@ -727,7 +727,8 @@ function InteractiveSandbox({
   );
 }
 
-// 規則示意圖的迷你卡（CSS 拼圖基元）：小圓角卡 + 維度字母，純教學示意。
+// ── 規則示意圖基元（CSS 拼圖，跟 FlowScreenshot 同一套設計語言）──
+// 迷你卡：小圓角卡 + 維度字母／符號，可指定主題色。
 function MiniCard({ label, color }: { label: string; color: string }) {
   return (
     <span
@@ -744,46 +745,224 @@ function MiniCard({ label, color }: { label: string; color: string }) {
   );
 }
 
-// 每條規則下的示意圖。用 CSS 拼，跟 FlowScreenshot 同一套設計語言。
-// flex-wrap 自適應：桌面 2 欄、手機 1 欄都不擠。先做「碰」(index 4) 作樣板。
+// 蓋著的牌（未知維度）
+function FaceDownCard() {
+  return (
+    <span
+      className="inline-flex h-11 w-8 items-center justify-center rounded-md text-[15px] font-bold text-[var(--psy-muted)]"
+      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,155,93,0.18)' }}
+    >
+      ?
+    </span>
+  );
+}
+
+// 牌堆 / 棄牌堆小方塊
+function PileBox({ label, glow = false }: { label: string; glow?: boolean }) {
+  return (
+    <span
+      className="inline-flex h-11 w-8 flex-col items-center justify-center rounded-md tracking-wider"
+      style={{
+        background: 'linear-gradient(180deg, rgba(24,42,59,0.92), rgba(13,24,35,0.92))',
+        border: `1px solid ${glow ? 'rgba(214,170,98,0.7)' : 'rgba(200,155,93,0.28)'}`,
+        boxShadow: glow ? '0 0 14px rgba(200,155,93,0.4)' : undefined,
+      }}
+    >
+      <span className="text-sm text-[var(--psy-ink)]">◈</span>
+      <span className="text-[7px] text-[var(--psy-ink-soft)]">{label}</span>
+    </span>
+  );
+}
+
+// 已歸檔維度小膠囊（字母 + ✓，金色）
+function DonePill({ label }: { label: string }) {
+  return (
+    <span
+      className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+      style={{ color: 'var(--psy-accent)', background: 'rgba(200,155,93,0.2)', border: '1px solid rgba(200,155,93,0.45)' }}
+    >
+      {label}
+      <span className="text-[8px]">✓</span>
+    </span>
+  );
+}
+
+// 連接符號（+ = →）
+function Sym({ children }: { children: ReactNode }) {
+  return <span className="px-0.5 text-sm font-bold text-[var(--psy-accent)]">{children}</span>;
+}
+
+// 帶說明的示意圖外框
+function DiagramFrame({ caption, children }: { caption?: string; children: ReactNode }) {
+  return (
+    <div className="mt-3 rounded-xl border border-[rgba(200,155,93,0.14)] bg-[rgba(255,255,255,0.02)] px-3 py-3">
+      <div className="flex flex-wrap items-center justify-center gap-2">{children}</div>
+      {caption && <p className="mt-2 text-center text-[10px] leading-4 text-[var(--psy-muted)]">{caption}</p>}
+    </div>
+  );
+}
+
+// 每條規則下的示意圖。flex-wrap 自適應：桌面 2 欄、手機 1 欄都不擠。
 function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
   const c = DIMENSION_META.E.colorHex; // 示例維度用外向性 E 的主題色
+  const danger = '#d66a4f'; // 罰停／亮牌的紅
 
-  if (index === 4) {
-    // 碰：兩張同維度手牌 + 一張進來的牌（抽到／別人棄的）= 鎖定一組
-    return (
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-2 rounded-xl border border-[rgba(200,155,93,0.14)] bg-[rgba(255,255,255,0.02)] px-3 py-3">
-        <div className="flex flex-col items-center gap-1">
+  switch (index) {
+    case 0: // 你的目標：5 維全部歸檔 → 食胡
+      return (
+        <DiagramFrame caption={s.dgGoalCaption}>
+          <div className="flex gap-1">
+            {DIMENSIONS.map((d) => (
+              <DonePill key={d} label={d} />
+            ))}
+          </div>
+          <Sym>→</Sym>
+          <span className="text-xl">🏆</span>
+        </DiagramFrame>
+      );
+
+    case 1: // 牌桌：你 + 3 AI 圍住牌堆
+      return (
+        <DiagramFrame caption={s.dgTableCaption}>
+          <span className="text-lg">🧑</span>
+          <span className="text-lg opacity-80">🤖</span>
+          <PileBox label="DRAW" />
+          <span className="text-lg opacity-80">🤖</span>
+          <span className="text-lg opacity-80">🤖</span>
+        </DiagramFrame>
+      );
+
+    case 2: // 抽牌：牌堆 → +1 手牌
+      return (
+        <DiagramFrame caption={s.dgDrawCaption}>
+          <PileBox label="DRAW" />
+          <Sym>→</Sym>
+          <MiniCard label="E" color={c} />
+        </DiagramFrame>
+      );
+
+    case 3: // 出牌：打 1 張 → 棄牌堆（開判讀窗口）
+      return (
+        <DiagramFrame caption={s.dgDiscardCaption}>
+          <MiniCard label="E" color={c} />
+          <Sym>→</Sym>
+          <PileBox label="棄" glow />
+          <span className="text-lg">👀</span>
+        </DiagramFrame>
+      );
+
+    case 4: // 碰：兩張同維度手牌 + 一張進來的牌 = 鎖定一組
+      return (
+        <DiagramFrame>
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex gap-1">
+              <MiniCard label="E" color={c} />
+              <MiniCard label="E" color={c} />
+            </div>
+            <span className="text-[9px] text-[var(--psy-muted)]">{s.dgHand}</span>
+          </div>
+          <Sym>+</Sym>
+          <div className="flex flex-col items-center gap-1">
+            <MiniCard label="E" color={c} />
+            <span className="text-[9px] text-[var(--psy-muted)]">{s.dgIncoming}</span>
+          </div>
+          <Sym>=</Sym>
+          <div className="flex flex-col items-center gap-1">
+            <span
+              className="inline-flex h-11 items-center gap-1 rounded-md px-2.5 text-[12px] font-bold tracking-[0.15em]"
+              style={{
+                color: 'var(--psy-accent)',
+                background: 'rgba(200,155,93,0.16)',
+                border: '1px solid rgba(200,155,93,0.5)',
+              }}
+            >
+              E E E
+            </span>
+            <span className="text-[9px] font-medium text-[var(--psy-accent)]">✓ {s.dgLocked}</span>
+          </div>
+        </DiagramFrame>
+      );
+
+    case 5: // 食胡：5 維湊齊 → 按食胡
+      return (
+        <DiagramFrame caption={s.dgWinCaption}>
+          <div className="flex gap-1">
+            {DIMENSIONS.map((d) => (
+              <DonePill key={d} label={d} />
+            ))}
+          </div>
+          <Sym>→</Sym>
+          <span
+            className="rounded-full px-3 py-1 text-[11px] font-bold text-white"
+            style={{ background: 'rgba(214,90,72,0.9)', border: '1px solid rgba(214,90,72,0.6)' }}
+          >
+            {s.dgWinBtn}
+          </span>
+        </DiagramFrame>
+      );
+
+    case 6: // 罰停：宣告失敗 → 罰停 1 回合 + 亮牌
+      return (
+        <DiagramFrame caption={s.dgFrozenCaption}>
+          <span className="text-xl">⛔</span>
+          <div className="flex gap-1">
+            <MiniCard label="E" color={danger} />
+            <MiniCard label="A" color={danger} />
+          </div>
+        </DiagramFrame>
+      );
+
+    case 7: // 查看 2 張：蓋牌 → 🔍 → 揭開維度
+      return (
+        <DiagramFrame caption={s.dgViewCaption}>
+          <div className="flex gap-1">
+            <FaceDownCard />
+            <FaceDownCard />
+          </div>
+          <Sym>🔍</Sym>
           <div className="flex gap-1">
             <MiniCard label="E" color={c} />
-            <MiniCard label="E" color={c} />
+            <MiniCard label="A" color={DIMENSION_META.A.colorHex} />
           </div>
-          <span className="text-[9px] text-[var(--psy-muted)]">{s.dgHand}</span>
-        </div>
-        <span className="px-0.5 text-sm font-bold text-[var(--psy-accent)]">+</span>
-        <div className="flex flex-col items-center gap-1">
-          <MiniCard label="E" color={c} />
-          <span className="text-[9px] text-[var(--psy-muted)]">{s.dgIncoming}</span>
-        </div>
-        <span className="px-0.5 text-sm font-bold text-[var(--psy-accent)]">=</span>
-        <div className="flex flex-col items-center gap-1">
-          <span
-            className="inline-flex h-11 items-center gap-1 rounded-md px-2.5 text-[12px] font-bold tracking-[0.15em]"
-            style={{
-              color: 'var(--psy-accent)',
-              background: 'rgba(200,155,93,0.16)',
-              border: '1px solid rgba(200,155,93,0.5)',
-            }}
-          >
-            E E E
-          </span>
-          <span className="text-[9px] font-medium text-[var(--psy-accent)]">✓ {s.dgLocked}</span>
-        </div>
-      </div>
-    );
-  }
+        </DiagramFrame>
+      );
 
-  return null;
+    case 8: // 知識牌：無維度、安全棄牌
+      return (
+        <DiagramFrame caption={s.dgKnowledgeCaption}>
+          <span
+            className="inline-flex h-11 w-8 items-center justify-center rounded-md text-[15px] font-bold text-[var(--psy-muted)]"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(200,155,93,0.32)' }}
+          >
+            ⓘ
+          </span>
+        </DiagramFrame>
+      );
+
+    case 9: // 聯機退出：退出 → 座位永久跳過
+      return (
+        <DiagramFrame caption={s.dgExitCaption}>
+          <span className="text-lg">🚪</span>
+          <Sym>→</Sym>
+          <span className="text-lg">🪑</span>
+          <span className="text-sm font-bold" style={{ color: danger }}>✕</span>
+        </DiagramFrame>
+      );
+
+    case 10: // 勝負結算：比已歸檔維度數排名
+      return (
+        <DiagramFrame caption={s.dgScoringCaption}>
+          <span className="text-base">🥇</span>
+          <span className="flex gap-0.5"><DonePill label="O" /><DonePill label="C" /><DonePill label="E" /></span>
+          <Sym>›</Sym>
+          <span className="text-base">🥈</span>
+          <span className="flex gap-0.5"><DonePill label="O" /><DonePill label="C" /></span>
+        </DiagramFrame>
+      );
+
+    default:
+      return null;
+  }
 }
 
 function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: number; s: TutStrings }) {
