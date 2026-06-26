@@ -99,7 +99,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '牌桌',
-        body: '單機固定 4 人（你 + 3 個 AI）；聯機 2–4 名真實玩家。牌堆會依人數縮放。牌分兩類：帶顏色標記的「人格描述牌」（屬於某一維度），以及無維度歸屬的「檔案註記 / 知識牌」（中立，可棄可觀察對手風格）。',
+        body: '單機固定 4 人（你 + 3 個 AI）；聯機 1 到 3 名玩家。牌堆會依人數縮放。牌分兩類：帶顏色標記的「人格描述牌」（屬於某一維度），以及無維度歸屬的「檔案註記 / 知識牌」（中立，可棄可觀察對手風格）。',
         hint: '初始手牌張數 = 5 個維度目標張數之和 − 1。少的那張要靠「碰」或「食胡」補齊。',
       },
       {
@@ -364,7 +364,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'The Table',
-        body: 'Single player is always 4 players (you + 3 AI); online is 2–4 real players. The draw pile scales with the player count. Cards come in two kinds: color-tagged "personality description cards" (belonging to one dimension), and the dimensionless "Knowledge cards" (neutral — discardable, and useful for reading opponents’ styles).',
+        body: 'Single player is always 4 players (you + 3 AI); online is 1 to 3 players. The draw pile scales with the player count. Cards come in two kinds: color-tagged "personality description cards" (belonging to one dimension), and the dimensionless "Knowledge cards" (neutral — discardable, and useful for reading opponents’ styles).',
         hint: 'Starting hand size = the sum of all 5 dimension targets − 1. The missing card must be completed via "Pong" or "Win".',
       },
       {
