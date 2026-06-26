@@ -17,6 +17,10 @@ export const TUTORIAL_T = {
 
     // ── 概念卡片區標題 ──
     rulesPointsLabel: '規則要點',
+    // 規則示意圖（CSS 拼圖）文案
+    dgHand: '你的手牌',
+    dgIncoming: '抽到／別人棄的',
+    dgLocked: '鎖定一組',
     directStartAssess: '直接開始測評',
 
     // ── 開始遊戲流程（StartFlowGuide）──
@@ -267,6 +271,10 @@ export const TUTORIAL_T = {
 
     // ── Concept cards section title ──
     rulesPointsLabel: 'Key Rules',
+    // Rule diagram (CSS mockup) captions
+    dgHand: 'Your hand',
+    dgIncoming: 'Drawn / discarded',
+    dgLocked: 'Locked set',
     directStartAssess: 'Go Straight to Assessment',
 
     // ── Start flow guide ──

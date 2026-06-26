@@ -727,6 +727,65 @@ function InteractiveSandbox({
   );
 }
 
+// 規則示意圖的迷你卡（CSS 拼圖基元）：小圓角卡 + 維度字母，純教學示意。
+function MiniCard({ label, color }: { label: string; color: string }) {
+  return (
+    <span
+      className="inline-flex h-11 w-8 items-center justify-center rounded-md text-[13px] font-bold"
+      style={{
+        color,
+        background: color + '1a',
+        border: `1px solid ${color}66`,
+        boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.04)',
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
+// 每條規則下的示意圖。用 CSS 拼，跟 FlowScreenshot 同一套設計語言。
+// flex-wrap 自適應：桌面 2 欄、手機 1 欄都不擠。先做「碰」(index 4) 作樣板。
+function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
+  const c = DIMENSION_META.E.colorHex; // 示例維度用外向性 E 的主題色
+
+  if (index === 4) {
+    // 碰：兩張同維度手牌 + 一張進來的牌（抽到／別人棄的）= 鎖定一組
+    return (
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-2 rounded-xl border border-[rgba(200,155,93,0.14)] bg-[rgba(255,255,255,0.02)] px-3 py-3">
+        <div className="flex flex-col items-center gap-1">
+          <div className="flex gap-1">
+            <MiniCard label="E" color={c} />
+            <MiniCard label="E" color={c} />
+          </div>
+          <span className="text-[9px] text-[var(--psy-muted)]">{s.dgHand}</span>
+        </div>
+        <span className="px-0.5 text-sm font-bold text-[var(--psy-accent)]">+</span>
+        <div className="flex flex-col items-center gap-1">
+          <MiniCard label="E" color={c} />
+          <span className="text-[9px] text-[var(--psy-muted)]">{s.dgIncoming}</span>
+        </div>
+        <span className="px-0.5 text-sm font-bold text-[var(--psy-accent)]">=</span>
+        <div className="flex flex-col items-center gap-1">
+          <span
+            className="inline-flex h-11 items-center gap-1 rounded-md px-2.5 text-[12px] font-bold tracking-[0.15em]"
+            style={{
+              color: 'var(--psy-accent)',
+              background: 'rgba(200,155,93,0.16)',
+              border: '1px solid rgba(200,155,93,0.5)',
+            }}
+          >
+            E E E
+          </span>
+          <span className="text-[9px] font-medium text-[var(--psy-accent)]">✓ {s.dgLocked}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: number; s: TutStrings }) {
   const frameTitle = mode === 'pvp' ? s.shotPvpTitle : s.shotSoloTitle;
 
@@ -1032,6 +1091,7 @@ export default function TutorialPage() {
                     <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[var(--psy-ink-soft)]">
                       {step.body}
                     </p>
+                    <RuleDiagram index={i} s={s} />
                     {step.hint && (
                       <p className="mt-3 rounded-lg border border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.06)] px-3 py-2 text-xs text-[var(--psy-accent)]">
                         💡 {step.hint}
