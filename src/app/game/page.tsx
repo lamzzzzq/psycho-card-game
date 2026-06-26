@@ -675,10 +675,10 @@ export default function GamePage() {
               return (
                 <span
                   key={d}
-                  className="flex flex-1 items-center justify-center gap-0.5 rounded-md py-0.5 text-[9px] font-bold tabular-nums"
+                  className="flex flex-1 items-center justify-center gap-0.5 rounded-full px-1 py-0.5 text-[9px] font-bold tabular-nums"
                   style={{
-                    backgroundColor: isDone ? 'rgba(200,155,93,0.22)' : 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${isDone ? 'rgba(200,155,93,0.5)' : 'rgba(200,155,93,0.14)'}`,
+                    backgroundColor: isDone ? 'rgba(200,155,93,0.2)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${isDone ? 'rgba(200,155,93,0.45)' : 'rgba(200,155,93,0.14)'}`,
                     color: isDone ? 'var(--psy-accent)' : 'var(--psy-ink-soft)',
                   }}
                 >
