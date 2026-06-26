@@ -1,7 +1,7 @@
 ﻿"来源","区块/页面","key","中文","English","备注"
 "i18n","common","common.tutorial","玩法教學","How to Play",""
 "i18n","common","common.footer.prefix","© 2026 香港理工大學 ","© 2026 ",""
-"i18n","common","common.footer.link","應用社會科學系（APSS）","Department of Applied Social Sciences (APSS), The Hong Kong Polytechnic University",""
+"i18n","common","common.footer.link","應用社會科學系","Department of Applied Social Sciences (APSS), The Hong Kong Polytechnic University",""
 "i18n","common","common.footer.suffix"," · 本網站僅供教學與研究用途"," · For educational and research use only",""
 "i18n","home","home.eyebrow","Personalities Mahjong","Personalities Mahjong",""
 "i18n","home","home.title","人格麻將","Personalities Mahjong",""
@@ -121,6 +121,8 @@
 "i18n","game","game.win","食胡","Win",""
 "i18n","game","game.clickToDraw","點擊牌堆抽一張牌","Tap the draw pile to draw a card",""
 "i18n","game","game.pongDoneDiscard","碰牌成功 — 請直接出一張手牌","Pong successful — discard a card now",""
+"i18n","game","game.dropHere","丟這裡","Drop here",""
+"i18n","game","game.tapCardToDiscard","點一張手牌丟出","Tap a card to discard",""
 "i18n","game","game.viewTwoCards","查看 2 張牌","View 2 cards",""
 "i18n","game","game.viewCardsTitle","本回合可查看 2 張自己的手牌的人格","This turn you may reveal the traits of 2 of your own cards",""
 "i18n","game","game.viewUsed","本回合查看已用","View used this turn",""
@@ -525,7 +527,7 @@
 "i18n(页面模块)","tutorial","tutorial.soloFlow[4].title","開始遊戲","Start the Game",""
 "i18n(页面模块)","tutorial","tutorial.soloFlow[4].body","進入牌桌後流程和聯機一致：抽牌、查看、歸檔、棄牌、響應別人棄牌。","Once at the table the flow matches online play: draw, view, declare, discard, and respond to others’ discards.",""
 "i18n(页面模块)","tutorial","tutorial.steps[0].title","你的目標","Your Goal",""
-"i18n(页面模块)","tutorial","tutorial.steps[0].body","5 個人格維度（開放性、盡責性、外向性、宜人性、神經質）全部完成「公開歸檔」，先達成的玩家獲勝。每個維度的目標張數等於你測評出來的分數四捨五入，所以每人的「胡牌路線」都不一樣。","Complete a ""Declared"" set for all 5 personality dimensions (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism); the first player to do so wins. Each dimension’s target count equals your assessment score rounded, so everyone’s ""path to a Win"" is different.",""
+"i18n(页面模块)","tutorial","tutorial.steps[0].body","5 個人格維度（開放性、盡責性、外向性、宜人性、神經質）全部完成「公開歸檔」，先達成的玩家獲勝。每個維度需要湊多少張，取決於你自己的測評分數 —— 所以每個人的「胡牌路線」都不一樣。","Complete a ""Declared"" set for all 5 personality dimensions (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism); the first player to do so wins. How many cards each dimension needs comes from your own assessment score — so every player has a different path to a win.",""
 "i18n(页面模块)","tutorial","tutorial.steps[1].title","牌桌","The Table",""
 "i18n(页面模块)","tutorial","tutorial.steps[1].body","單機固定 4 人（你 + 3 個 AI）；聯機 2–4 名真實玩家。牌堆會依人數縮放。牌分兩類：帶顏色標記的「人格描述牌」（屬於某一維度），以及無維度歸屬的「檔案註記 / 知識牌」（中立，可棄可觀察對手風格）。","Single player is always 4 players (you + 3 AI); online is 2–4 real players. The draw pile scales with the player count. Cards come in two kinds: color-tagged ""personality description cards"" (belonging to one dimension), and the dimensionless ""Knowledge cards"" (neutral — discardable, and useful for reading opponents’ styles).",""
 "i18n(页面模块)","tutorial","tutorial.steps[1].hint","初始手牌張數 = 5 個維度目標張數之和 − 1。少的那張要靠「碰」或「食胡」補齊。","Starting hand size = the sum of all 5 dimension targets − 1. The missing card must be completed via ""Pong"" or ""Win"".",""
@@ -538,8 +540,8 @@
 • 自摸碰（你自己回合內，每回合最多 1 次）→ 從你的「手牌 + 剛抽到的牌」裏挑選恰好「該維度目標張數」張同維度牌；
 • 截胡碰（claim 窗口內先點先得）→ 從手牌挑選「該維度目標張數 − 1」張同維度牌，加上那張棄牌正好湊齊；
 選錯維度、混入其他人格牌、張數不對 → 視爲「碰失敗」，會被罰停（見下「罰停」一節）。","Collect enough same-dimension cards to reach the target count and declare. Two ways to trigger:
-• Self-draw Pong (during your own turn, at most once per turn) → pick exactly ""that dimension’s target count"" same-dimension cards from your ""hand + just-drawn card"";
-• Claim Pong (first click wins, within the claim window) → pick ""that dimension’s target count − 1"" same-dimension cards from your hand, plus the discard, to complete the set exactly;
+• Self-draw Pong (during your own turn, at most once per turn) → with a drawn card and the cards in your hand, your cards are exactly that target count for a dimension;
+• Claim Pong (first click wins, within the discard/claim window) → with a discarded card and the cards in your hand, your cards are exactly the target count for a dimension;
 Wrong dimension, mixing in other traits, or wrong count → counts as a ""failed Pong"" and you are frozen (see ""Frozen"" below).",""
 "i18n(页面模块)","tutorial","tutorial.steps[4].hint","系統不會告訴你「這個維度你夠了」，5 個未歸檔維度全部讓你選，需要自己判斷。","The system will not tell you ""you have enough for this dimension""; all 5 unsealed dimensions are offered, so you must judge for yourself.",""
 "i18n(页面模块)","tutorial","tutorial.steps[5].title","食胡（宣佈勝利）","Win (Declare Victory)",""
@@ -547,7 +549,7 @@ Wrong dimension, mixing in other traits, or wrong count → counts as a ""failed
 觸發時機：
 • 你的回合中（自摸食胡）；
 • 任意人棄牌進入判讀窗口時（截胡食胡）。
-判定不成立 → 食胡失敗，整副手牌公開並罰停。","When your cards (declared + in hand + this card under judgement) exactly complete all 5 dimensions, press ""Win"".
+判定不成立 → 食胡失敗，整副手牌公開並罰停。","When all of your cards exactly completes target counts for all 5 dimensions, press ""Win"".
 When to trigger:
 • During your own turn (self-draw Win);
 • When anyone discards and the read window opens (claim Win).

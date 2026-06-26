@@ -80,7 +80,7 @@ export const TUTORIAL_T = {
     steps: [
       {
         title: '你的目標',
-        body: '5 個人格維度（開放性、盡責性、外向性、宜人性、神經質）全部完成「公開歸檔」，先達成的玩家獲勝。每個維度的目標張數等於你測評出來的分數四捨五入，所以每人的「胡牌路線」都不一樣。',
+        body: '5 個人格維度（開放性、盡責性、外向性、宜人性、神經質）全部完成「公開歸檔」，先達成的玩家獲勝。每個維度需要湊多少張，取決於你自己的測評分數 —— 所以每個人的「胡牌路線」都不一樣。',
       },
       {
         title: '牌桌',
@@ -330,7 +330,7 @@ export const TUTORIAL_T = {
     steps: [
       {
         title: 'Your Goal',
-        body: 'Complete a "Declared" set for all 5 personality dimensions (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism); the first player to do so wins. Each dimension’s target count equals your assessment score rounded, so everyone’s "path to a Win" is different.',
+        body: 'Complete a "Declared" set for all 5 personality dimensions (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism); the first player to do so wins. How many cards each dimension needs comes from your own assessment score — so every player has a different path to a win.',
       },
       {
         title: 'The Table',
@@ -347,12 +347,12 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Pong (Declare)',
-        body: 'Collect enough same-dimension cards to reach the target count and declare. Two ways to trigger:\n• Self-draw Pong (during your own turn, at most once per turn) → pick exactly "that dimension’s target count" same-dimension cards from your "hand + just-drawn card";\n• Claim Pong (first click wins, within the claim window) → pick "that dimension’s target count − 1" same-dimension cards from your hand, plus the discard, to complete the set exactly;\nWrong dimension, mixing in other traits, or wrong count → counts as a "failed Pong" and you are frozen (see "Frozen" below).',
+        body: 'Collect enough same-dimension cards to reach the target count and declare. Two ways to trigger:\n• Self-draw Pong (during your own turn, at most once per turn) → with a drawn card and the cards in your hand, your cards are exactly that target count for a dimension;\n• Claim Pong (first click wins, within the discard/claim window) → with a discarded card and the cards in your hand, your cards are exactly the target count for a dimension;\nWrong dimension, mixing in other traits, or wrong count → counts as a "failed Pong" and you are frozen (see "Frozen" below).',
         hint: 'The system will not tell you "you have enough for this dimension"; all 5 unsealed dimensions are offered, so you must judge for yourself.',
       },
       {
         title: 'Win (Declare Victory)',
-        body: 'When your cards (declared + in hand + this card under judgement) exactly complete all 5 dimensions, press "Win".\nWhen to trigger:\n• During your own turn (self-draw Win);\n• When anyone discards and the read window opens (claim Win).\nIf the judgement fails → the Win fails, your whole hand is revealed and you are frozen.',
+        body: 'When all of your cards exactly completes target counts for all 5 dimensions, press "Win".\nWhen to trigger:\n• During your own turn (self-draw Win);\n• When anyone discards and the read window opens (claim Win).\nIf the judgement fails → the Win fails, your whole hand is revealed and you are frozen.',
       },
       {
         title: 'Frozen (the Penalty for Failure)',
