@@ -209,7 +209,11 @@ export const TUTORIAL_T = {
 
     // ── 沙盒：caption（按 scene）──
     captionStart: '這是你的開局：手牌裏有多種人格描述和 1 張檔案註記。你需要先抽牌，再決定要查看、歸檔還是棄牌。',
-    captionViewing: '每回合可以查看 2 張手牌的真實維度。點擊「查看 2 張」後，再繼續進入歸檔判斷。',
+    captionViewing: '每回合可查看 2 張手牌的真實維度。先點上方高亮的「查看 2 張」開始。',
+    captionViewPicking: (n: number) =>
+      n >= 2
+        ? '兩張都看過了！點高亮的「完成查看」繼續。'
+        : `點選下方高亮的 2 張牌，揭開它們的真實維度（已看 ${n}/2）。`,
     captionAfterDraw: '看牌桌上方的「目標張數」：神經質要 4 張。數數高亮的手牌——正好 4 張神經質，湊夠了！點高亮的「自摸碰」開始。',
     captionPongDimension: (name: string) =>
       `自摸碰先選定一個維度。目標板上「${name}」需要的張數，正是你手裏有的張數——選高亮的「${name}」。`,
@@ -233,6 +237,9 @@ export const TUTORIAL_T = {
     // ── 沙盒：feedback（reducer 內）──
     fbDraw: '抽到一張線索牌。現在選擇很多，先演示「查看 2 張牌」。',
     fbViewTwo: '本回合查看了 2 張牌：一張盡責性，一張神經質。真實牌局裏只會揭開你選的 2 張。',
+    fbViewStart: '點選下方高亮的 2 張牌（盡責性 + 剛抽到的神經質），揭開它們的維度。',
+    fbViewPicked: '已揭開一張。再點另一張高亮的牌。',
+    fbViewDone: '兩張都看過了。真實牌局裏每回合也只能看 2 張。',
     fbFinishView: '現在你知道剛抽到的牌能補齊一組。下一步演示自摸碰。',
     fbOpenPong: '自摸碰要先選定一個人格維度。提示：手牌裏有 4 張「神經質」，選它。',
     fbChooseDim: (name: string, cnt: number) => `已選擇「${name}」。現在從手牌精確選擇 ${cnt} 張「${name}」的牌。`,
@@ -496,7 +503,11 @@ export const TUTORIAL_T = {
 
     // ── Sandbox: captions (by scene) ──
     captionStart: 'This is your opening: your hand has several personality descriptions and 1 Knowledge card. You must draw first, then decide whether to view, declare, or discard.',
-    captionViewing: 'Each turn you may view the true dimensions of 2 hand cards. After tapping "View 2", continue on to the declaration judgement.',
+    captionViewing: 'Each turn you may reveal the true dimensions of 2 hand cards. Tap the highlighted "View 2" above to start.',
+    captionViewPicking: (n: number) =>
+      n >= 2
+        ? 'You’ve seen both! Tap the highlighted "Done viewing" to continue.'
+        : `Tap the 2 highlighted cards below to reveal their true dimensions (${n}/2 seen).`,
     captionAfterDraw: 'Look at the "Targets" board above: Neuroticism needs 4. Count the highlighted hand cards — exactly 4 Neuroticism, just enough! Tap the highlighted "Self-draw Pong" to start.',
     captionPongDimension: (name: string) =>
       `Self-draw Pong needs a dimension first. The count "${name}" needs on the board is exactly what you hold — choose the highlighted "${name}".`,
@@ -520,6 +531,9 @@ export const TUTORIAL_T = {
     // ── Sandbox: feedback (in reducer) ──
     fbDraw: 'Drew a clue card. There are many options now — first let’s demo "view 2 cards".',
     fbViewTwo: 'This turn you viewed 2 cards: one Conscientiousness, one Neuroticism. In a real game only the 2 you pick are revealed.',
+    fbViewStart: 'Tap the 2 highlighted cards below (Conscientiousness + the just-drawn Neuroticism) to reveal their dimensions.',
+    fbViewPicked: 'One revealed. Now tap the other highlighted card.',
+    fbViewDone: 'Both viewed. In a real game you can also only see 2 cards per turn.',
     fbFinishView: 'Now you know the just-drawn card can complete a set. Next, a demo of Self-draw Pong.',
     fbOpenPong: 'Self-draw Pong needs you to fix a dimension first. Hint: your hand has 4 "Neuroticism" cards — choose it.',
     fbChooseDim: (name: string, cnt: number) => `Chose "${name}". Now select exactly ${cnt} "${name}" cards from your hand.`,

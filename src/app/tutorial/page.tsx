@@ -55,6 +55,8 @@ const SANDBOX_HAND: GameCard[] = [
   DC(109, '特質理論', 'Trait Theory', '認為人格是由穩定且可測量的特質所組成。', 'Views personality as a configuration of stable, measurable traits.'),
 ];
 const SANDBOX_DRAWN: PersonalityCard = PC(110, 'N', '我對批評比較敏感', 'I am rather sensitive to criticism', 34);
+// 「查看 2 張」教學指定可看的兩張：104 盡責性 + 110 剛抽到的神經質。玩家手動點選它們揭開。
+const VIEW_IDS = [104, 110];
 // 對手棄牌（截胡碰用）：維度在 open-claim 時按手裏現存的對子動態選定。插畫與手牌錯開。
 const CLAIM_CARDS: Record<Dimension, PersonalityCard> = {
   O: PC(111, 'O', '我喜歡探索新奇的點子', 'I enjoy exploring novel ideas', 35),
@@ -74,8 +76,9 @@ const HU_DECLARED: Dimension[] = ['O', 'C', 'E', 'A'];
 
 type Scene =
   | 'start'            // 等抽牌
-  | 'viewing'          // 查看 2 張
-  | 'after-draw'       // 抽完，看目標板，等點自摸碰
+  | 'viewing'          // 抽完，等點「查看 2 張」
+  | 'view-picking'     // 點了查看 2 張，等玩家手動點選 2 張揭開
+  | 'after-draw'       // 看完／跳過，看目標板，等點自摸碰
   | 'pong-dimension'   // 自摸碰：選人格維度
   | 'pong-picking'     // 自摸碰：選牌
   | 'pong-success'     // 自摸碰成功，等選棄牌
@@ -126,6 +129,7 @@ const initialState: SandboxState = {
 type Action =
   | { type: 'draw' }
   | { type: 'view-two' }
+  | { type: 'pick-view'; id: number }
   | { type: 'finish-view' }
   | { type: 'open-pong' }
   | { type: 'choose-dim'; dim: Dimension }
@@ -149,9 +153,18 @@ function createReducer(s: TutStrings, dimName: DimName) {
       return { ...state, scene: 'viewing', drawnCard: SANDBOX_DRAWN, feedback: { tone: 'success', text: s.fbDraw } };
     case 'view-two':
       if (state.scene !== 'viewing') return state;
-      return { ...state, revealedIds: [104, 110], feedback: { tone: 'info', text: s.fbViewTwo } };
+      // 不再自動揭開：進入手動點選，玩家點高亮的 2 張才揭開。
+      return { ...state, scene: 'view-picking', feedback: { tone: 'info', text: s.fbViewStart } };
+    case 'pick-view': {
+      if (state.scene !== 'view-picking') return state;
+      if (!VIEW_IDS.includes(action.id) || state.revealedIds.includes(action.id)) return state;
+      const revealedIds = [...state.revealedIds, action.id];
+      const done = VIEW_IDS.every((id) => revealedIds.includes(id));
+      return { ...state, revealedIds, feedback: { tone: done ? 'success' : 'info', text: done ? s.fbViewDone : s.fbViewPicked } };
+    }
     case 'finish-view':
-      if (state.scene !== 'viewing') return state;
+      if (state.scene !== 'view-picking') return state;
+      if (!VIEW_IDS.every((id) => state.revealedIds.includes(id))) return state; // 必須先看完 2 張
       return { ...state, scene: 'after-draw', feedback: { tone: 'success', text: s.fbFinishView } };
     case 'open-pong':
       if (state.scene !== 'after-draw') return state;
@@ -287,6 +300,7 @@ function InteractiveSandbox({
   const captionByScene: Record<Scene, string> = {
     start: s.captionStart,
     viewing: s.captionViewing,
+    'view-picking': s.captionViewPicking(state.revealedIds.filter((id) => VIEW_IDS.includes(id)).length),
     'after-draw': s.captionAfterDraw,
     'pong-dimension': s.captionPongDimension(dimName('N')),
     'pong-picking':
@@ -320,6 +334,8 @@ function InteractiveSandbox({
             const inPick = state.scene === 'pong-picking';
             const inClaim = state.scene === 'claim-window';
             const inDiscard = state.scene === 'pong-success' || state.scene === 'discard-confirm';
+            // 「查看 2 張」手動點選：只開放指定的 2 張且尚未揭開。
+            const canClickToView = state.scene === 'view-picking' && VIEW_IDS.includes(c.id) && !state.revealedIds.includes(c.id);
             // 抽完 / 選維度階段：先把 4 張神經質點亮，配合旁白點名。
             const inPreSelect = state.scene === 'after-draw' || state.scene === 'pong-dimension';
             const canClickToSelect = inPick || inClaim;
@@ -327,8 +343,10 @@ function InteractiveSandbox({
             const isDiscardPick = c.id === state.selectedDiscardId;
             const targetDim = inPick ? state.chosenDim : inClaim ? state.claimDim : null;
             const lifted = isSelected || isDiscardPick;
-            // 引導高亮：選牌/截胡高亮目標維度未選的牌；抽完高亮 4 張神經質；棄牌階段高亮可棄手牌。
+            const clickable = canClickToSelect || canClickToDiscard || canClickToView;
+            // 引導高亮：查看點選 2 張；選牌/截胡高亮目標維度未選；抽完高亮 4 張神經質；棄牌高亮可棄手牌。
             const spotlight =
+              canClickToView ||
               (canClickToSelect && !isSelected && dimension === targetDim) ||
               (inPreSelect && dimension === 'N') ||
               (canClickToDiscard && !isDiscardPick);
@@ -340,12 +358,13 @@ function InteractiveSandbox({
                 animate={{ opacity: 1, scale: 1, y: lifted ? -8 : 0 }}
                 exit={{ opacity: 0, scale: 0.6 }}
                 transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-                className={`relative ${
-                  lifted ? 'ring-2 ring-emerald-400 rounded-[1.1rem]' : ''
-                } ${spotlight ? 'tut-spotlight' : ''} ${(canClickToSelect || canClickToDiscard) ? 'cursor-pointer' : ''}`}
+                className={`relative rounded-[0.55rem] ${
+                  lifted ? 'ring-2 ring-emerald-400' : ''
+                } ${spotlight ? 'tut-spotlight' : ''} ${clickable ? 'cursor-pointer' : ''}`}
                 onClick={() => {
                   if (canClickToSelect) dispatch({ type: 'toggle-select', id: c.id });
                   else if (canClickToDiscard) dispatch({ type: 'select-discard', id: c.id });
+                  else if (canClickToView) dispatch({ type: 'pick-view', id: c.id });
                 }}
               >
                 <TarotCard
@@ -465,24 +484,21 @@ function InteractiveSandbox({
           )}
         </div>
 
-        {/* 目標板（自摸碰／截胡碰／食胡階段常駐）+ 操作橫幅 */}
+        {/* 操作橫幅（自摸碰／截胡碰／食胡）——目標板挪到手牌正上方，見下方 */}
         {op && (
-          <div className="space-y-2">
-            <TargetBoard label={s.targetBoardLabel} activeDim={op === 'claim' ? state.claimDim : 'N'} dimName={dimName} />
-            <div className="flex justify-center">
-              <span
-                className="rounded-full px-3 py-1 text-[11px] font-bold tracking-wider"
-                style={
-                  op === 'self'
-                    ? { background: 'rgba(200,155,93,0.92)', color: '#1a1206' }
-                    : op === 'claim'
-                    ? { background: 'rgba(63,174,159,0.92)', color: '#062420' }
-                    : { background: 'rgba(214,90,72,0.92)', color: '#fff' }
-                }
-              >
-                {op === 'self' ? s.opSelfPong : op === 'claim' ? s.opClaim : s.opHu}
-              </span>
-            </div>
+          <div className="flex justify-center">
+            <span
+              className="rounded-full px-3 py-1 text-[11px] font-bold tracking-wider"
+              style={
+                op === 'self'
+                  ? { background: 'rgba(200,155,93,0.92)', color: '#1a1206' }
+                  : op === 'claim'
+                  ? { background: 'rgba(63,174,159,0.92)', color: '#062420' }
+                  : { background: 'rgba(214,90,72,0.92)', color: '#fff' }
+              }
+            >
+              {op === 'self' ? s.opSelfPong : op === 'claim' ? s.opClaim : s.opHu}
+            </span>
           </div>
         )}
 
@@ -498,7 +514,7 @@ function InteractiveSandbox({
             <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">
               {state.scene === 'start' ? s.drawPileClick : s.drawPile}
             </span>
-            <div className={state.scene === 'start' ? 'tut-spotlight' : ''}>
+            <div className={`rounded-[0.55rem] ${state.scene === 'start' ? 'tut-spotlight' : ''}`}>
               <TarotCard faceDown text="" width={73} />
             </div>
           </button>
@@ -516,19 +532,19 @@ function InteractiveSandbox({
             {s.btnHu}
           </button>
           <button
-            disabled={state.scene !== 'viewing' || state.revealedIds.length > 0}
+            disabled={state.scene !== 'viewing'}
             onClick={() => dispatch({ type: 'view-two' })}
             className={`psy-btn psy-btn-ghost px-4 py-1.5 text-xs font-bold ${
-              state.scene === 'viewing' && state.revealedIds.length === 0 ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
+              state.scene === 'viewing' ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
             }`}
           >
             {s.btnViewTwo}
           </button>
           <button
-            disabled={state.scene !== 'viewing' || state.revealedIds.length === 0}
+            disabled={state.scene !== 'view-picking' || !VIEW_IDS.every((id) => state.revealedIds.includes(id))}
             onClick={() => dispatch({ type: 'finish-view' })}
             className={`psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold ${
-              state.scene === 'viewing' && state.revealedIds.length > 0 ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
+              state.scene === 'view-picking' && VIEW_IDS.every((id) => state.revealedIds.includes(id)) ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
             }`}
           >
             {s.btnContinueJudge}
@@ -654,6 +670,11 @@ function InteractiveSandbox({
           </motion.div>
         )}
 
+        {/* 目標板：緊貼手牌上方，方便對照「目標張數」與手牌 */}
+        {op && (
+          <TargetBoard label={s.targetBoardLabel} activeDim={op === 'claim' ? state.claimDim : 'N'} dimName={dimName} />
+        )}
+
         {/* 手牌 */}
         <div>
           <div className="mb-1.5 flex items-baseline justify-between">
@@ -700,18 +721,20 @@ function InteractiveSandbox({
 
     </motion.div>
 
-    {/* 固定在視窗底部、永遠可見的指引欄。渲染在 motion.div 之外，
-        避免 framer transform 祖先讓 fixed 失效。 */}
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[rgba(200,155,93,0.3)] bg-[rgba(11,18,28,0.97)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] backdrop-blur-md">
-      <div className="mx-auto max-w-4xl space-y-2">
-        <div className="flex items-start gap-2">
-          <span className="psy-eyebrow mt-0.5 shrink-0 text-[10px] text-[var(--psy-accent)]">{s.guideLabel}</span>
+    {/* 固定在視窗底部、永遠可見的指引欄。做大做醒目（佔更多空間、強對比）。
+        渲染在 motion.div 之外，避免 framer transform 祖先讓 fixed 失效。 */}
+    <div className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-[rgba(214,170,98,0.7)] bg-[linear-gradient(180deg,rgba(28,40,56,0.98),rgba(11,18,28,0.99))] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-12px_40px_rgba(0,0,0,0.5)] backdrop-blur-md">
+      <div className="mx-auto max-w-3xl space-y-2.5">
+        <div className="flex items-start gap-3">
+          <span className="psy-serif mt-0.5 shrink-0 rounded-full bg-[var(--psy-accent)] px-3 py-1 text-[11px] font-bold tracking-[0.2em] text-[#1a1206]">
+            {s.guideLabel}
+          </span>
           <motion.p
-            key={state.scene + '-' + state.selectedIds.length}
-            initial={{ opacity: 0, y: 3 }}
+            key={state.scene + '-' + state.selectedIds.length + '-' + state.revealedIds.length}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.22 }}
-            className="text-sm leading-6 text-[var(--psy-ink)]"
+            className="text-base font-medium leading-7 text-[var(--psy-ink)] sm:text-lg sm:leading-8"
           >
             {captionByScene[state.scene]}
           </motion.p>
@@ -724,7 +747,7 @@ function InteractiveSandbox({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.22 }}
-              className={`rounded-lg border px-3 py-1.5 text-xs leading-5 ${feedbackToneClass}`}
+              className={`rounded-lg border px-3 py-2 text-sm leading-6 ${feedbackToneClass}`}
             >
               {state.feedback.text}
             </motion.p>
