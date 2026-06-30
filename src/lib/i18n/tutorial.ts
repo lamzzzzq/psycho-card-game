@@ -21,7 +21,8 @@ export const TUTORIAL_T = {
     dgHand: '你的手牌',
     dgIncoming: '抽到／別人棄的',
     dgLocked: '鎖定一組',
-    dgGoalCaption: '5 維全部歸檔 → 食胡獲勝',
+    dgGoalCaption: '每維各需湊夠對應張數（圈內數字＝要幾張，每維不同）→ 5 維全部歸檔即食胡獲勝',
+    dgPongCaption: '湊滿「該維度目標張數」即可鎖定：2 張手牌 + 1 張進來的牌 = 3 張（張數要與目標一致）',
     dgTableCaption: '你 + 3 AI（或 1 到 3 名玩家）圍住牌堆',
     dgDrawCaption: '每回合先從牌堆摸 1 張',
     dgDiscardCaption: '棄 1 張 → 開啟判讀窗口',
@@ -174,6 +175,11 @@ export const TUTORIAL_T = {
     btnSimDiscard: '模擬別人棄牌',
     btnPlayAgain: '再來一遍',
 
+    // ── 沙盒：開局介紹遮罩 ──
+    introTitle: '開局先看「目標張數」',
+    introBody: '每個維度上的數字 = 你要湊夠多少張該維度的牌，才能把它「碰」下來公開鎖定。數字由你的測評分數決定，每維不同、數字越大越難湊。下面是本局示範的目標：',
+    introBtn: '開始教學',
+
     // ── 沙盒：目標板 + 操作橫幅 ──
     targetBoardLabel: '目標張數',
     opSelfPong: '自摸碰',
@@ -214,7 +220,7 @@ export const TUTORIAL_T = {
       n >= 2
         ? '兩張都看過了！點高亮的「完成查看」繼續。'
         : `點選下方高亮的 2 張牌，揭開它們的真實維度（已看 ${n}/2）。`,
-    captionAfterDraw: '看牌桌上方的「目標張數」：神經質要 4 張。數數高亮的手牌——正好 4 張神經質，湊夠了！點高亮的「自摸碰」開始。',
+    captionAfterDraw: '看下方「目標張數」：神經質要 4 張，而你手裏正好有 4 張神經質。點高亮的「自摸碰」開始（之後再選維度、再點牌）。',
     captionPongDimension: (name: string) =>
       `自摸碰先選定一個維度。目標板上「${name}」需要的張數，正是你手裏有的張數——選高亮的「${name}」。`,
     captionPongPickingDone: (name: string, cnt: number) => `已選滿 ${cnt} 張「${name}」。點高亮的「確認自摸碰」完成歸檔。`,
@@ -237,7 +243,7 @@ export const TUTORIAL_T = {
     // ── 沙盒：feedback（reducer 內）──
     fbDraw: '抽到一張線索牌。現在選擇很多，先演示「查看 2 張牌」。',
     fbViewTwo: '本回合查看了 2 張牌：一張盡責性，一張神經質。真實牌局裏只會揭開你選的 2 張。',
-    fbViewStart: '點選下方高亮的 2 張牌（盡責性 + 剛抽到的神經質），揭開它們的維度。',
+    fbViewStart: '點選下方高亮的 2 張牌，揭開它們的真實維度。',
     fbViewPicked: '已揭開一張。再點另一張高亮的牌。',
     fbViewDone: '兩張都看過了。真實牌局裏每回合也只能看 2 張。',
     fbFinishView: '現在你知道剛抽到的牌能補齊一組。下一步演示自摸碰。',
@@ -315,7 +321,8 @@ export const TUTORIAL_T = {
     dgHand: 'Your hand',
     dgIncoming: 'Drawn / discarded',
     dgLocked: 'Locked set',
-    dgGoalCaption: 'Declare all 5 dimensions → win (Hu)',
+    dgGoalCaption: 'Each dimension needs its own count (the number in the chip = how many cards, different per dimension) → declare all 5 to win.',
+    dgPongCaption: 'Reach that dimension’s target count to lock it: 2 hand cards + 1 incoming card = 3 (the count must match the target).',
     dgTableCaption: 'You + 3 AI (or 1 to 3 players) around the pile',
     dgDrawCaption: 'Draw 1 from the pile to start your turn',
     dgDiscardCaption: 'Discard 1 → opens the read window',
@@ -468,6 +475,11 @@ export const TUTORIAL_T = {
     btnSimDiscard: 'Simulate a discard',
     btnPlayAgain: 'Play again',
 
+    // ── Sandbox: intro overlay ──
+    introTitle: 'First: the "Targets" board',
+    introBody: 'The number on each dimension = how many cards of that dimension you must collect to lock it in ("Pong"). It comes from your assessment score — different per dimension, and the bigger the number the harder. Here are this demo’s targets:',
+    introBtn: 'Start the lesson',
+
     // ── Sandbox: target board + operation banner ──
     targetBoardLabel: 'Targets',
     opSelfPong: 'Self-draw Pong',
@@ -508,7 +520,7 @@ export const TUTORIAL_T = {
       n >= 2
         ? 'You’ve seen both! Tap the highlighted "Done viewing" to continue.'
         : `Tap the 2 highlighted cards below to reveal their true dimensions (${n}/2 seen).`,
-    captionAfterDraw: 'Look at the "Targets" board above: Neuroticism needs 4. Count the highlighted hand cards — exactly 4 Neuroticism, just enough! Tap the highlighted "Self-draw Pong" to start.',
+    captionAfterDraw: 'Look at the "Targets" board below: Neuroticism needs 4, and your hand has exactly 4 Neuroticism. Tap the highlighted "Self-draw Pong" to start (you’ll pick the dimension, then the cards).',
     captionPongDimension: (name: string) =>
       `Self-draw Pong needs a dimension first. The count "${name}" needs on the board is exactly what you hold — choose the highlighted "${name}".`,
     captionPongPickingDone: (name: string, cnt: number) => `${cnt} "${name}" cards selected. Tap the highlighted "Confirm Pong" to declare.`,
@@ -531,7 +543,7 @@ export const TUTORIAL_T = {
     // ── Sandbox: feedback (in reducer) ──
     fbDraw: 'Drew a clue card. There are many options now — first let’s demo "view 2 cards".',
     fbViewTwo: 'This turn you viewed 2 cards: one Conscientiousness, one Neuroticism. In a real game only the 2 you pick are revealed.',
-    fbViewStart: 'Tap the 2 highlighted cards below (Conscientiousness + the just-drawn Neuroticism) to reveal their dimensions.',
+    fbViewStart: 'Tap the 2 highlighted cards below to reveal their true dimensions.',
     fbViewPicked: 'One revealed. Now tap the other highlighted card.',
     fbViewDone: 'Both viewed. In a real game you can also only see 2 cards per turn.',
     fbFinishView: 'Now you know the just-drawn card can complete a set. Next, a demo of Self-draw Pong.',

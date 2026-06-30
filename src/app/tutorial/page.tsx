@@ -285,6 +285,7 @@ function InteractiveSandbox({
 }) {
   const reducer = useMemo(() => createReducer(s, dimName), [s, dimName]);
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [introSeen, setIntroSeen] = useState(false);
   const N = DIMENSION_META.N;
   const archived = state.chosenDim ? DIMENSION_META[state.chosenDim] : N;
   const claimed = state.claimDim ? DIMENSION_META[state.claimDim] : DIMENSION_META.A;
@@ -336,26 +337,29 @@ function InteractiveSandbox({
             const inDiscard = state.scene === 'pong-success' || state.scene === 'discard-confirm';
             // 「查看 2 張」手動點選：只開放指定的 2 張且尚未揭開。
             const canClickToView = state.scene === 'view-picking' && VIEW_IDS.includes(c.id) && !state.revealedIds.includes(c.id);
-            // 抽完 / 選維度階段：先把 4 張神經質點亮，配合旁白點名。
-            const inPreSelect = state.scene === 'after-draw' || state.scene === 'pong-dimension';
             const canClickToSelect = inPick || inClaim;
             const canClickToDiscard = inDiscard && !isDrawn;
             const isDiscardPick = c.id === state.selectedDiscardId;
             const targetDim = inPick ? state.chosenDim : inClaim ? state.claimDim : null;
             const lifted = isSelected || isDiscardPick;
             const clickable = canClickToSelect || canClickToDiscard || canClickToView;
-            // 引導高亮：查看點選 2 張；選牌/截胡高亮目標維度未選；抽完高亮 4 張神經質；棄牌高亮可棄手牌。
+            // 引導高亮：查看點選 2 張；選牌/截胡高亮目標維度未選；棄牌高亮可棄手牌。
+            // 注意：after-draw / pong-dimension 不預先高亮手牌——必須先點自摸碰、選維度後才高亮。
             const spotlight =
               canClickToView ||
               (canClickToSelect && !isSelected && dimension === targetDim) ||
-              (inPreSelect && dimension === 'N') ||
               (canClickToDiscard && !isDiscardPick);
+            // 聚焦調暗：當某步驟只關注特定卡時，把無關卡片壓暗，讓高亮更突出。
+            const dimmed =
+              (state.scene === 'view-picking' && !VIEW_IDS.includes(c.id)) ||
+              (inPick && dimension !== state.chosenDim) ||
+              (inClaim && dimension !== state.claimDim);
             return (
               <motion.div
                 key={c.id}
                 layout
                 initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1, y: lifted ? -8 : 0 }}
+                animate={{ opacity: dimmed ? 0.32 : 1, scale: 1, y: lifted ? -8 : 0 }}
                 exit={{ opacity: 0, scale: 0.6 }}
                 transition={{ type: 'spring', stiffness: 280, damping: 22 }}
                 className={`relative rounded-[0.55rem] ${
@@ -395,13 +399,44 @@ function InteractiveSandbox({
 
   return (
     <>
+    {/* 開局介紹遮罩：先講清「目標張數」是什麼，再開始教學 */}
+    <AnimatePresence>
+      {!introSeen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 px-5 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+            className="psy-panel psy-etched w-full max-w-md space-y-4 rounded-[1.6rem] p-6 text-center"
+          >
+            <h3 className="psy-serif text-xl text-[var(--psy-ink)]">{s.introTitle}</h3>
+            <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">{s.introBody}</p>
+            <TargetBoard label={s.targetBoardLabel} activeDim="N" dimName={dimName} />
+            <button
+              onClick={() => setIntroSeen(true)}
+              className="psy-btn psy-btn-accent psy-serif w-full px-6 py-3 text-sm font-semibold"
+            >
+              {s.introBtn}
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    {/* 聚焦遮罩：壓暗頁面外圍，沙盒抬到遮罩之上保持明亮（配合卡片聚焦調暗）*/}
+    <div className="fixed inset-0 z-[35] bg-black/55 pointer-events-none" />
     <motion.div
       key="sandbox"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.3 }}
-      className="psy-panel psy-etched rounded-[1.8rem] p-5 pb-8 sm:p-7 sm:pb-8 mb-44"
+      className="psy-panel psy-etched relative z-40 rounded-[1.8rem] p-5 pb-8 sm:p-7 sm:pb-8 mb-44"
     >
       <div className="mb-4 flex items-center justify-between">
         <span className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-muted)]">
@@ -422,22 +457,6 @@ function InteractiveSandbox({
           </button>
         </div>
       </div>
-
-      {/* 成功提示 toast */}
-      <AnimatePresence>
-        {successToast && (
-          <motion.div
-            key={successToast}
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 340, damping: 22 }}
-            className="mx-auto mb-3 w-fit rounded-full border border-emerald-400/50 bg-emerald-500/90 px-5 py-2 text-sm font-bold text-white shadow-xl"
-          >
-            {successToast}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* 牌桌 */}
       <div className="space-y-4 rounded-[1.4rem] border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] p-4">
@@ -721,6 +740,22 @@ function InteractiveSandbox({
 
     </motion.div>
 
+    {/* 成功提示 bubble：固定浮層，不隨滾動跑掉，永遠在視窗頂部彈出 */}
+    <AnimatePresence>
+      {successToast && (
+        <motion.div
+          key={successToast}
+          initial={{ opacity: 0, y: -16, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+          className="psy-serif fixed left-1/2 top-20 z-[70] -translate-x-1/2 whitespace-nowrap rounded-full border border-emerald-300/60 bg-emerald-500/95 px-6 py-2.5 text-base font-bold text-white shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
+        >
+          {successToast}
+        </motion.div>
+      )}
+    </AnimatePresence>
+
     {/* 固定在視窗底部、永遠可見的指引欄。做大做醒目（佔更多空間、強對比）。
         渲染在 motion.div 之外，避免 framer transform 祖先讓 fixed 失效。 */}
     <div className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-[rgba(214,170,98,0.7)] bg-[linear-gradient(180deg,rgba(28,40,56,0.98),rgba(11,18,28,0.99))] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-12px_40px_rgba(0,0,0,0.5)] backdrop-blur-md">
@@ -867,18 +902,30 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
   const danger = '#d66a4f'; // 罰停／亮牌的紅
 
   switch (index) {
-    case 0: // 你的目標：5 維全部歸檔 → 食胡
+    case 0: { // 你的目標：每維各需要 N 張（數字=要湊幾張）→ 全部湊齊食胡
+      const sample: Record<Dimension, number> = { O: 3, C: 4, E: 2, A: 5, N: 4 };
       return (
         <DiagramFrame caption={s.dgGoalCaption}>
-          <div className="flex gap-1">
-            {DIMENSIONS.map((d) => (
-              <DonePill key={d} label={d} />
-            ))}
+          <div className="flex flex-wrap justify-center gap-1">
+            {DIMENSIONS.map((d) => {
+              const m = DIMENSION_META[d];
+              return (
+                <span
+                  key={d}
+                  className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
+                  style={{ color: m.colorHex, background: m.colorHex + '20', border: `1px solid ${m.colorHex}66` }}
+                >
+                  <span>{d}</span>
+                  <span>{sample[d]}</span>
+                </span>
+              );
+            })}
           </div>
           <Sym>→</Sym>
           <span className="text-xl">🏆</span>
         </DiagramFrame>
       );
+    }
 
     case 1: // 牌桌：你 + 3 AI 圍住牌堆
       return (
@@ -910,25 +957,25 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
         </DiagramFrame>
       );
 
-    case 4: // 碰：兩張同維度手牌 + 一張進來的牌 = 鎖定一組
+    case 4: // 碰：2 張同維度手牌 + 1 張進來的牌 = 湊滿 3 張鎖定（數字=該維度目標張數）
       return (
-        <DiagramFrame>
+        <DiagramFrame caption={s.dgPongCaption}>
           <div className="flex flex-col items-center gap-1">
             <div className="flex gap-1">
               <MiniCard label="E" color={c} />
               <MiniCard label="E" color={c} />
             </div>
-            <span className="text-[9px] text-[var(--psy-muted)]">{s.dgHand}</span>
+            <span className="text-[9px] text-[var(--psy-muted)]">{s.dgHand}（2）</span>
           </div>
           <Sym>+</Sym>
           <div className="flex flex-col items-center gap-1">
             <MiniCard label="E" color={c} />
-            <span className="text-[9px] text-[var(--psy-muted)]">{s.dgIncoming}</span>
+            <span className="text-[9px] text-[var(--psy-muted)]">{s.dgIncoming}（1）</span>
           </div>
           <Sym>=</Sym>
           <div className="flex flex-col items-center gap-1">
             <span
-              className="inline-flex h-11 items-center gap-1 rounded-md px-2.5 text-[12px] font-bold tracking-[0.15em]"
+              className="inline-flex h-11 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-bold tracking-[0.15em]"
               style={{
                 color: 'var(--psy-accent)',
                 background: 'rgba(200,155,93,0.16)',
@@ -936,6 +983,7 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
               }}
             >
               E E E
+              <span className="rounded-full bg-[var(--psy-accent)] px-1.5 text-[10px] text-[#1a1206]">3</span>
             </span>
             <span className="text-[9px] font-medium text-[var(--psy-accent)]">✓ {s.dgLocked}</span>
           </div>
