@@ -833,6 +833,7 @@ export default function PvpGamePage() {
                 只顯示目標 + 是否歸檔，不洩露手上已有幾張。*/}
             {targets && (
               <div className="flex items-center justify-center gap-1">
+                <span className="shrink-0 pr-0.5 text-[9px] text-[var(--psy-muted)]">{t.targetPrefix}</span>
                 {DIMENSIONS.map((d) => {
                   const isDone = declaredDims.has(d);
                   return (

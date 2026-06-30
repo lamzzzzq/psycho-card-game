@@ -670,6 +670,7 @@ export default function GamePage() {
           {/* 5 維目標常駐迷你條：字母 + 目標張數，已歸檔顯示 ✓ 並轉金。
               只顯示目標 + 是否歸檔，不洩露手上已有幾張（保留靠記憶推理的核心）。*/}
           <div className="flex items-center justify-center gap-1">
+            <span className="shrink-0 pr-0.5 text-[9px] text-[var(--psy-muted)]">{tg.targetPrefix}</span>
             {DIMENSIONS.map((d) => {
               const isDone = declaredDims.has(d);
               return (
