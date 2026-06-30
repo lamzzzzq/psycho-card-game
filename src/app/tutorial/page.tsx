@@ -274,11 +274,13 @@ function createReducer(s: TutStrings, dimName: DimName) {
 
 function InteractiveSandbox({
   onClose,
+  onComplete,
   s,
   dimName,
   loc,
 }: {
   onClose: () => void;
+  onComplete: () => void;
   s: TutStrings;
   dimName: DimName;
   loc: Locale;
@@ -326,7 +328,8 @@ function InteractiveSandbox({
     }
     return (
       <AnimatePresence>
-        <div className="flex flex-wrap justify-center gap-2">
+        {/* 約束寬度 → 桌面也分成兩行，不再一長排顯得平鋪難看 */}
+        <div className="mx-auto flex max-w-[26rem] flex-wrap justify-center gap-2">
           {all.map((c) => {
             const isDrawn = state.drawnCard?.id === c.id;
             const isSelected = state.selectedIds.includes(c.id);
@@ -349,11 +352,19 @@ function InteractiveSandbox({
               canClickToView ||
               (canClickToSelect && !isSelected && dimension === targetDim) ||
               (canClickToDiscard && !isDiscardPick);
-            // 聚焦調暗：當某步驟只關注特定卡時，把無關卡片壓暗，讓高亮更突出。
-            const dimmed =
-              (state.scene === 'view-picking' && !VIEW_IDS.includes(c.id)) ||
-              (inPick && dimension !== state.chosenDim) ||
-              (inClaim && dimension !== state.claimDim);
+            // 聚焦調暗：手牌與當前步驟無關時壓暗，只留「該步真正要看／點」的卡明亮。
+            // 桌面端也生效（純 opacity，不依賴遮罩層級）。
+            const handActive = inPick || inClaim || inDiscard || state.scene === 'view-picking';
+            const relevant = state.scene === 'view-picking'
+              ? VIEW_IDS.includes(c.id)
+              : inPick
+              ? dimension === state.chosenDim
+              : inClaim
+              ? dimension === state.claimDim
+              : inDiscard
+              ? !isDrawn
+              : false;
+            const dimmed = handActive ? !relevant && !lifted : true;
             return (
               <motion.div
                 key={c.id}
@@ -378,7 +389,7 @@ function InteractiveSandbox({
                   selected={lifted}
                 />
                 {isDrawn && (
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-[var(--psy-accent)] px-2 py-0.5 text-[8px] font-bold text-black">
+                  <div className="absolute -top-2.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--psy-accent)] px-2.5 py-0.5 text-[9px] font-bold text-[#1a1206] shadow-md">
                     {s.justDrawn}
                   </div>
                 )}
@@ -503,81 +514,71 @@ function InteractiveSandbox({
           )}
         </div>
 
-        {/* 操作橫幅（自摸碰／截胡碰／食胡）——目標板挪到手牌正上方，見下方 */}
+        {/* 操作大標題（自摸碰／截胡碰／食胡）——做成醒目章節標題，起區分作用，非按鈕 */}
         {op && (
-          <div className="flex justify-center">
-            <span
-              className="rounded-full px-3 py-1 text-[11px] font-bold tracking-wider"
-              style={
-                op === 'self'
-                  ? { background: 'rgba(200,155,93,0.92)', color: '#1a1206' }
-                  : op === 'claim'
-                  ? { background: 'rgba(63,174,159,0.92)', color: '#062420' }
-                  : { background: 'rgba(214,90,72,0.92)', color: '#fff' }
-              }
-            >
+          <div
+            className="rounded-xl py-2.5 text-center shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
+            style={
+              op === 'self'
+                ? { background: 'linear-gradient(180deg,rgba(214,170,98,0.96),rgba(200,155,93,0.96))', color: '#1a1206' }
+                : op === 'claim'
+                ? { background: 'linear-gradient(180deg,rgba(82,190,176,0.96),rgba(63,174,159,0.96))', color: '#06231f' }
+                : { background: 'linear-gradient(180deg,rgba(224,104,86,0.96),rgba(214,90,72,0.96))', color: '#fff' }
+            }
+          >
+            <span className="psy-serif text-lg font-black tracking-[0.18em]">
               {op === 'self' ? s.opSelfPong : op === 'claim' ? s.opClaim : s.opHu}
             </span>
           </div>
         )}
 
-        {/* 牌堆 */}
-        <div className="flex items-center justify-center gap-6">
-          <button
-            disabled={state.scene !== 'start'}
-            onClick={() => dispatch({ type: 'draw' })}
-            className={`flex flex-col items-center gap-1.5 transition ${
-              state.scene === 'start' ? 'cursor-pointer animate-pulse' : 'cursor-not-allowed opacity-50'
-            }`}
-          >
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">
-              {state.scene === 'start' ? s.drawPileClick : s.drawPile}
-            </span>
-            <div className={`rounded-[0.55rem] ${state.scene === 'start' ? 'tut-spotlight' : ''}`}>
-              <TarotCard faceDown text="" width={73} />
-            </div>
-          </button>
-        </div>
+        {/* 牌堆：只在開局抽牌時顯示，抽完即隱藏，避免後續步驟多餘 */}
+        {state.scene === 'start' && (
+          <div className="flex items-center justify-center gap-6">
+            <button
+              onClick={() => dispatch({ type: 'draw' })}
+              className="flex cursor-pointer flex-col items-center gap-1.5"
+            >
+              <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">{s.drawPileClick}</span>
+              <div className="tut-spotlight rounded-[0.55rem]">
+                <TarotCard faceDown text="" width={73} />
+              </div>
+            </button>
+          </div>
+        )}
 
-        {/* 操作按鈕 */}
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <button
-            disabled={state.scene !== 'hu-window'}
-            onClick={() => dispatch({ type: 'commit-hu' })}
-            className={`psy-btn psy-btn-danger px-4 py-1.5 text-xs font-bold ${
-              state.scene === 'hu-window' ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
-            }`}
-          >
-            {s.btnHu}
-          </button>
-          <button
-            disabled={state.scene !== 'viewing'}
-            onClick={() => dispatch({ type: 'view-two' })}
-            className={`psy-btn psy-btn-ghost px-4 py-1.5 text-xs font-bold ${
-              state.scene === 'viewing' ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
-            }`}
-          >
-            {s.btnViewTwo}
-          </button>
-          <button
-            disabled={state.scene !== 'view-picking' || !VIEW_IDS.every((id) => state.revealedIds.includes(id))}
-            onClick={() => dispatch({ type: 'finish-view' })}
-            className={`psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold ${
-              state.scene === 'view-picking' && VIEW_IDS.every((id) => state.revealedIds.includes(id)) ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
-            }`}
-          >
-            {s.btnContinueJudge}
-          </button>
-          <button
-            disabled={state.scene !== 'after-draw'}
-            onClick={() => dispatch({ type: 'open-pong' })}
-            className={`psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold transition ${
-              state.scene === 'after-draw' ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
-            }`}
-          >
-            {s.btnSelfPong}
-          </button>
-        </div>
+        {/* 操作按鈕排：只在「查看 / 完成查看 / 自摸碰」這幾步顯示，截胡碰 / 食胡 走各自面板 */}
+        {(state.scene === 'viewing' || state.scene === 'view-picking' || state.scene === 'after-draw') && (
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <button
+              disabled={state.scene !== 'viewing'}
+              onClick={() => dispatch({ type: 'view-two' })}
+              className={`psy-btn psy-btn-ghost px-4 py-1.5 text-xs font-bold ${
+                state.scene === 'viewing' ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
+              }`}
+            >
+              {s.btnViewTwo}
+            </button>
+            <button
+              disabled={state.scene !== 'view-picking' || !VIEW_IDS.every((id) => state.revealedIds.includes(id))}
+              onClick={() => dispatch({ type: 'finish-view' })}
+              className={`psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold ${
+                state.scene === 'view-picking' && VIEW_IDS.every((id) => state.revealedIds.includes(id)) ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
+              }`}
+            >
+              {s.btnContinueJudge}
+            </button>
+            <button
+              disabled={state.scene !== 'after-draw'}
+              onClick={() => dispatch({ type: 'open-pong' })}
+              className={`psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold transition ${
+                state.scene === 'after-draw' ? 'tut-spotlight' : 'opacity-40 cursor-not-allowed'
+              }`}
+            >
+              {s.btnSelfPong}
+            </button>
+          </div>
+        )}
 
         {/* 自摸碰第一步：選人格維度（只開放神經質，引導點擊）*/}
         {state.scene === 'pong-dimension' && (
@@ -682,9 +683,17 @@ function InteractiveSandbox({
             <div className="flex justify-center">
               <TarotCard {...cardToTarotProps(locCard(HU_DISCARD, loc), loc)} revealedDimension="N" width={73} />
             </div>
-            <div className="flex flex-col justify-center">
-              <div className="psy-serif text-sm text-[var(--psy-ink)]">{s.huWho}</div>
-              <div className="mt-1 leading-6">{s.huBody(dimName('N'))}</div>
+            <div className="flex flex-col justify-center gap-2">
+              <div>
+                <div className="psy-serif text-sm text-[var(--psy-ink)]">{s.huWho}</div>
+                <div className="mt-1 leading-6">{s.huBody(dimName('N'))}</div>
+              </div>
+              <button
+                onClick={() => dispatch({ type: 'commit-hu' })}
+                className="psy-btn psy-btn-danger tut-spotlight self-start px-5 py-2 text-sm font-bold"
+              >
+                {s.btnHu}
+              </button>
             </div>
           </motion.div>
         )}
@@ -728,11 +737,11 @@ function InteractiveSandbox({
           </div>
         )}
 
-        {/* 食胡成功 → 再來一遍 */}
+        {/* 食胡成功 → 完成教程，回首頁 */}
         {state.scene === 'hu-success' && (
           <div className="flex justify-center">
-            <button onClick={() => dispatch({ type: 'reset' })} className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs">
-              {s.btnPlayAgain}
+            <button onClick={onComplete} className="psy-btn psy-btn-accent tut-spotlight px-6 py-2.5 text-sm font-bold">
+              {s.btnFinishTutorial}
             </button>
           </div>
         )}
@@ -1406,7 +1415,7 @@ export default function TutorialPage() {
         )}
 
         <AnimatePresence mode="wait">
-          {mode === 'sandbox' && <InteractiveSandbox onClose={() => setMode('list')} s={s} dimName={dimName} loc={loc} />}
+          {mode === 'sandbox' && <InteractiveSandbox onClose={() => setMode('list')} onComplete={() => router.push('/')} s={s} dimName={dimName} loc={loc} />}
         </AnimatePresence>
       </div>
     </div>

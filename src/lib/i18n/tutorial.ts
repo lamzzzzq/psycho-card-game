@@ -174,6 +174,7 @@ export const TUTORIAL_T = {
     btnContinueHu: '進入食胡教學',
     btnSimDiscard: '模擬別人棄牌',
     btnPlayAgain: '再來一遍',
+    btnFinishTutorial: '完成教程',
 
     // ── 沙盒：開局介紹遮罩 ──
     introTitle: '開局先看「目標張數」',
@@ -474,6 +475,7 @@ export const TUTORIAL_T = {
     btnContinueHu: 'Next: Win lesson',
     btnSimDiscard: 'Simulate a discard',
     btnPlayAgain: 'Play again',
+    btnFinishTutorial: 'Finish tutorial',
 
     // ── Sandbox: intro overlay ──
     introTitle: 'First: the "Targets" board',
