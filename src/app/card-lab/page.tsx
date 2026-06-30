@@ -63,7 +63,7 @@ export default function CardLabPage() {
             <p className="mb-2 text-xs text-[var(--psy-accent)]">① 移动端真实尺寸（96px）</p>
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8" style={{ maxWidth: '32rem' }}>
               {KNOWLEDGE_CARDS.map((k, i) => (
-                <TarotCard key={i} text={k.term} description={k.definition} isDummy locale={locale} width={96} />
+                <TarotCard key={i} text={k.termZh} textEn={k.term} description={locale === 'en' ? k.definition : k.definitionZh} isDummy locale={locale} width={96} />
               ))}
             </div>
           </div>
@@ -71,7 +71,7 @@ export default function CardLabPage() {
             <p className="mb-2 text-xs text-[var(--psy-accent)]">② 放大可读（{width}px）</p>
             <div className="flex flex-wrap gap-4">
               {KNOWLEDGE_CARDS.map((k, i) => (
-                <TarotCard key={i} text={k.term} description={k.definition} isDummy locale={locale} width={width} />
+                <TarotCard key={i} text={k.termZh} textEn={k.term} description={locale === 'en' ? k.definition : k.definitionZh} isDummy locale={locale} width={width} />
               ))}
             </div>
           </div>

@@ -50,7 +50,8 @@ export function generatePersonalityCards(count: number = 50): PersonalityCard[] 
 export function generateDummyCards(count: number = 8): DummyCard[] {
   return Array.from({ length: count }, (_, i) => {
     const k = KNOWLEDGE_CARDS[i % KNOWLEDGE_CARDS.length];
-    return { id: 1000 + i, text: k.term, definition: k.definition, isDummy: true as const };
+    // text/definition 存繁中，textEn/definitionEn 存英文，渲染按 locale 切换。
+    return { id: 1000 + i, text: k.termZh, textEn: k.term, definition: k.definitionZh, definitionEn: k.definition, isDummy: true as const };
   });
 }
 

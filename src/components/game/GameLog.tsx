@@ -32,10 +32,12 @@ function getActionLabel(action: GameAction, locale: Locale): ActionLabel {
     // 兜底：正常流程已在第 2 跳解凍，此處一般不觸發（保留防殘留邊角）。
     const badge = action.clearedPenalty ? tg.logPenaltyCleared : undefined;
     if (action.card && isDummyCard(action.card)) {
-      return { tone: 'neutral', prefix: tg.logDiscardedNote, detail: action.card.text, badge };
+      const detail = locale === 'en' ? (action.card.textEn ?? action.card.text) : action.card.text;
+      return { tone: 'neutral', prefix: tg.logDiscardedNote, detail, badge };
     }
     if (action.card && isPersonalityCard(action.card)) {
-      return { tone: 'neutral', prefix: tg.logDiscardedClue, detail: action.card.text, badge };
+      const detail = locale === 'en' ? (action.card.textEn ?? action.card.text) : action.card.text;
+      return { tone: 'neutral', prefix: tg.logDiscardedClue, detail, badge };
     }
     return { tone: 'neutral', prefix: tg.logDiscardedCard, badge };
   }

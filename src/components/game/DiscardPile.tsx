@@ -11,11 +11,12 @@ function tarotProps(card: GameCard, locale: Locale) {
   const persona = isPersonalityCard(card);
   return {
     text: card.text,
-    textEn: persona ? card.textEn : undefined,
+    textEn: card.textEn,
     dimension: persona ? card.dimension : undefined,
-    imageSrc: isPersonalityCard(card) ? `/cards/${card.imageId ?? card.id}.webp` : undefined,
+    imageSrc: persona ? `/cards/${card.imageId ?? card.id}.webp` : undefined,
     isDummy: !persona,
-    description: persona ? undefined : card.definition,
+    // 知识牌定义按 locale 切换（繁中 / 英文）
+    description: persona ? undefined : (locale === 'en' ? (card.definitionEn ?? card.definition) : card.definition),
     locale,
   };
 }
