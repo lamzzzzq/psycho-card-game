@@ -163,22 +163,32 @@ export const TUTORIAL_T = {
     // ── 沙盒：操作按鈕 ──
     btnHu: '食胡',
     btnViewTwo: '查看 2 張',
-    btnContinueJudge: '繼續判斷',
+    btnContinueJudge: '完成查看',
     btnSelfPong: '自摸碰',
     btnCancel: '取消',
-    btnSelfArchive: '自摸歸檔',
+    btnSelfArchive: '確認自摸碰',
     btnContinue: '繼續 →',
     btnPong: '碰',
-    btnContinueHu: '繼續看食胡',
+    btnDiscard: '棄牌',
+    btnContinueHu: '進入食胡教學',
     btnSimDiscard: '模擬別人棄牌',
     btnPlayAgain: '再來一遍',
 
+    // ── 沙盒：目標板 + 操作橫幅 ──
+    targetBoardLabel: '目標張數',
+    opSelfPong: '自摸碰',
+    opClaim: '截胡碰',
+    opHu: '食胡',
+    toastPongDone: '自摸碰成功！',
+    toastClaimDone: '截胡碰成功！',
+    toastHuDone: '食胡成功！🏆',
+
     // ── 沙盒：自摸碰選維度 ──
-    pongStep1: '🎯 第一步 · 選擇要歸檔的人格維度',
+    pongStep1: '第一步 · 選擇要歸檔的人格維度',
 
     // ── 沙盒：自摸碰選牌（cnt = 目標張數，sel = 已選）──
     pongStep2: (name: string, cnt: number, sel: number) =>
-      `🎯 第二步 · 自摸碰 · ${name} · 請精確選擇 ${cnt} 張（已選 ${sel}/${cnt}）`,
+      `第二步 · 自摸碰 · ${name} · 請精確選擇 ${cnt} 張（已選 ${sel}/${cnt}）`,
 
     // ── 沙盒：罰停演示框 ──
     penaltyDemo: '罰停一回合演示：本輪不能參與別人棄牌的判讀窗口，下次輪到你時自動跳過。',
@@ -200,19 +210,23 @@ export const TUTORIAL_T = {
     // ── 沙盒：caption（按 scene）──
     captionStart: '這是你的開局：手牌裏有多種人格描述和 1 張檔案註記。你需要先抽牌，再決定要查看、歸檔還是棄牌。',
     captionViewing: '每回合可以查看 2 張手牌的真實維度。點擊「查看 2 張」後，再繼續進入歸檔判斷。',
-    captionAfterDraw: '你現在擁有足夠完成一組的線索。下一步點高亮的「自摸碰」試試。',
+    captionAfterDraw: '看牌桌上方的「目標張數」：神經質要 4 張。數數高亮的手牌——正好 4 張神經質，湊夠了！點高亮的「自摸碰」開始。',
     captionPongDimension: (name: string) =>
-      `自摸碰要先選定一個人格維度。在下方五個維度裏選擇高亮的「${name}」（手牌裏正好有 4 張）。`,
-    captionPongPickingDone: (name: string, cnt: number) => `已選 ${cnt} 張「${name}」。點高亮的「自摸歸檔」完成歸檔。`,
+      `自摸碰先選定一個維度。目標板上「${name}」需要的張數，正是你手裏有的張數——選高亮的「${name}」。`,
+    captionPongPickingDone: (name: string, cnt: number) => `已選滿 ${cnt} 張「${name}」。點高亮的「確認自摸碰」完成歸檔。`,
     captionPongPicking: (name: string, cnt: number, sel: number) =>
-      `從手牌精確選擇 ${cnt} 張「${name}」的牌（高亮的牌就是，已選 ${sel}/${cnt}）。`,
+      `從手牌精確選擇 ${cnt} 張「${name}」（高亮的就是，已選 ${sel}/${cnt}）。`,
     captionPongFailed: '失敗會公開你押錯的牌並罰停一回合（下次輪到你時自動跳過）。點「繼續」回到選牌模式。',
-    captionPongSuccess: '歸檔成功！現在必須棄 1 張牌結束回合。點下方高亮的手牌中任意一張棄掉。',
+    captionPongSuccess: '自摸碰成功！4 張公開歸檔鎖定。現在點一張手牌準備棄掉，結束回合。',
+    captionDiscardConfirm: '確認要棄這張嗎？點「棄牌」結束回合，或「取消」換一張。',
     captionClaimWindow: (name: string, sel: number) =>
-      `別人棄牌後的判讀窗口：從手牌選 2 張高亮的「${name}」，加那張棄牌湊一組，再點「碰」（已選 ${sel}/2）。`,
+      `別人棄牌後的判讀窗口：從手牌選 2 張高亮的「${name}」，加那張棄牌湊一組（${name} 目標 3 張），再點「碰」（已選 ${sel}/2）。`,
     captionClaimWindowFallback: '現在是別人棄牌後的判讀窗口。你可以截胡碰，也可以在已經滿足全部目標時食胡。',
-    captionClaimSuccess: '截胡碰也會形成公開歸檔。這個記錄會出現在玩家頭像下和歸檔記錄裏。',
+    captionClaimSuccess: '截胡碰也會形成公開歸檔。下一步示範「食胡」（宣告勝利）。',
     captionHuDemo: '食胡是勝利按鈕，只在所有目標完成時使用。失敗成本很高，所以不要拿它試錯。',
+    captionHuWindow: (name: string) =>
+      `你已歸檔 4 維，只差「${name}」。對手打出的這張判定為「${name}」，正是你缺的最後一維——點高亮的「食胡」宣告勝利。`,
+    captionHuSuccess: '食胡成功！五個維度全部集齊，你贏了。',
     captionDiscardPicking: '點擊要棄的牌。',
     captionDone: '你的回合結束。下一步模擬別人棄牌後的「碰 / 食胡」窗口。',
 
@@ -234,6 +248,14 @@ export const TUTORIAL_T = {
       `截胡碰需要正好 2 張「${name}」手牌（已選 ${picked}）。真實遊戲選錯會判失敗並罰停一回合。`,
     fbClaimSuccess: '截胡碰成功。你用手裏 2 張同類牌 + 對手棄牌完成了一組公開歸檔。',
     fbShowHu: '食胡用於宣佈勝利：當 5 個維度全部完成時按下。誤按會公開整副手牌並罰停。',
+    fbWrongDimHint: (name: string) => `這張不是「${name}」，混維度會碰失敗——只選「${name}」。`,
+    fbEnterHu: (name: string) => `食胡課：你已歸檔 4 維，只差「${name}」最後一組。`,
+    fbHuSuccess: '食胡成功！五維集齊，宣告勝利。',
+
+    // ── 沙盒：食胡窗口 + 缺口標籤 ──
+    huWho: '對手打出一張人格牌',
+    huBody: (name: string) => `判定它屬於「${name}」——正是你缺的最後一維。手裏 3 張「${name}」+ 這張 = 第 5 組，符合食胡！`,
+    huGapSuffix: (name: string) => `${name}（缺口）`,
 
     // ── 沙盒：失敗原因兜底維度名 ──
     fallbackDimName: '該維度',
@@ -428,22 +450,32 @@ export const TUTORIAL_T = {
     // ── Sandbox: action buttons ──
     btnHu: 'Win',
     btnViewTwo: 'View 2',
-    btnContinueJudge: 'Continue',
+    btnContinueJudge: 'Done viewing',
     btnSelfPong: 'Self-draw Pong',
     btnCancel: 'Cancel',
-    btnSelfArchive: 'Declare',
+    btnSelfArchive: 'Confirm Pong',
     btnContinue: 'Continue →',
     btnPong: 'Pong',
-    btnContinueHu: 'See the Win',
+    btnDiscard: 'Discard',
+    btnContinueHu: 'Next: Win lesson',
     btnSimDiscard: 'Simulate a discard',
     btnPlayAgain: 'Play again',
 
+    // ── Sandbox: target board + operation banner ──
+    targetBoardLabel: 'Targets',
+    opSelfPong: 'Self-draw Pong',
+    opClaim: 'Claim Pong',
+    opHu: 'Win',
+    toastPongDone: 'Self-draw Pong complete!',
+    toastClaimDone: 'Claim Pong complete!',
+    toastHuDone: 'You win! 🏆',
+
     // ── Sandbox: self-draw Pong dimension pick ──
-    pongStep1: '🎯 Step 1 · Choose the dimension to declare',
+    pongStep1: 'Step 1 · Choose the dimension to declare',
 
     // ── Sandbox: self-draw Pong card pick ──
     pongStep2: (name: string, cnt: number, sel: number) =>
-      `🎯 Step 2 · Self-draw Pong · ${name} · Select exactly ${cnt} (${sel}/${cnt} selected)`,
+      `Step 2 · Self-draw Pong · ${name} · Select exactly ${cnt} (${sel}/${cnt} selected)`,
 
     // ── Sandbox: frozen demo box ──
     penaltyDemo: 'Frozen-for-one-turn demo: you cannot join others’ read windows this round, and your next turn is auto-skipped.',
@@ -465,19 +497,23 @@ export const TUTORIAL_T = {
     // ── Sandbox: captions (by scene) ──
     captionStart: 'This is your opening: your hand has several personality descriptions and 1 Knowledge card. You must draw first, then decide whether to view, declare, or discard.',
     captionViewing: 'Each turn you may view the true dimensions of 2 hand cards. After tapping "View 2", continue on to the declaration judgement.',
-    captionAfterDraw: 'You now have enough clues to complete a set. Next, tap the highlighted "Self-draw Pong" to try it.',
+    captionAfterDraw: 'Look at the "Targets" board above: Neuroticism needs 4. Count the highlighted hand cards — exactly 4 Neuroticism, just enough! Tap the highlighted "Self-draw Pong" to start.',
     captionPongDimension: (name: string) =>
-      `Self-draw Pong needs you to fix a dimension first. From the five dimensions below, choose the highlighted "${name}" (your hand has exactly 4).`,
-    captionPongPickingDone: (name: string, cnt: number) => `${cnt} "${name}" cards selected. Tap the highlighted "Declare" to declare.`,
+      `Self-draw Pong needs a dimension first. The count "${name}" needs on the board is exactly what you hold — choose the highlighted "${name}".`,
+    captionPongPickingDone: (name: string, cnt: number) => `${cnt} "${name}" cards selected. Tap the highlighted "Confirm Pong" to declare.`,
     captionPongPicking: (name: string, cnt: number, sel: number) =>
       `Select exactly ${cnt} "${name}" cards from your hand (the highlighted ones; ${sel}/${cnt} selected).`,
     captionPongFailed: 'A failure reveals the cards you wrongly bet and freezes you for one turn (your next turn is auto-skipped). Tap "Continue" to return to card-picking.',
-    captionPongSuccess: 'Declared! Now you must discard 1 card to end the turn. Tap any of the highlighted hand cards below to discard it.',
+    captionPongSuccess: 'Self-draw Pong complete! 4 cards are locked in the declared area. Now tap a hand card to discard and end the turn.',
+    captionDiscardConfirm: 'Discard this one? Tap "Discard" to end the turn, or "Cancel" to pick another.',
     captionClaimWindow: (name: string, sel: number) =>
-      `The read window after someone discards: pick 2 highlighted "${name}" cards from your hand, plus that discard to form a set, then tap "Pong" (${sel}/2 selected).`,
+      `The read window after someone discards: pick 2 highlighted "${name}" cards, plus that discard to form a set (${name} target is 3), then tap "Pong" (${sel}/2 selected).`,
     captionClaimWindowFallback: 'This is the read window after someone discards. You can Claim Pong, or Win if you have already met every target.',
-    captionClaimSuccess: 'A Claim Pong also forms a declaration. This record appears under the player’s avatar and in the archive log.',
+    captionClaimSuccess: 'A Claim Pong also forms a declaration. Next, a demo of "Win".',
     captionHuDemo: 'Win is the victory button, used only when all targets are complete. Failure is costly, so do not use it for trial and error.',
+    captionHuWindow: (name: string) =>
+      `You have declared 4 dimensions and only "${name}" is left. The opponent’s discard is judged as "${name}" — exactly the dimension you needed. Tap the highlighted "Win" to declare victory.`,
+    captionHuSuccess: 'You win! All 5 dimensions are complete.',
     captionDiscardPicking: 'Tap the card to discard.',
     captionDone: 'Your turn is over. Next, simulate the "Pong / Win" window after someone else discards.',
 
@@ -499,6 +535,14 @@ export const TUTORIAL_T = {
       `Claim Pong needs exactly 2 "${name}" cards in hand (selected ${picked}). In a real game a wrong pick fails and freezes you for one turn.`,
     fbClaimSuccess: 'Claim Pong succeeded. You completed a declaration using 2 same-type cards from your hand + the opponent’s discard.',
     fbShowHu: 'Win declares victory: press it when all 5 dimensions are complete. Pressing it by mistake reveals your whole hand and freezes you.',
+    fbWrongDimHint: (name: string) => `This isn’t "${name}". Mixing dimensions fails the Pong — pick only "${name}".`,
+    fbEnterHu: (name: string) => `Win lesson: you’ve declared 4 dimensions and only "${name}" is left.`,
+    fbHuSuccess: 'You win! All 5 dimensions complete — victory declared.',
+
+    // ── Sandbox: Win window + gap label ──
+    huWho: 'An opponent discards a personality card',
+    huBody: (name: string) => `It is judged as "${name}" — exactly the dimension you needed. Your 3 "${name}" in hand + this card = the 5th set. That’s a Win!`,
+    huGapSuffix: (name: string) => `${name} (missing)`,
 
     // ── Sandbox: fallback dimension name for fail reasons ──
     fallbackDimName: 'that dimension',
