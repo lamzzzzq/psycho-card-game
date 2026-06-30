@@ -84,16 +84,17 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        {/* 与首页同一套按鈕組：psy-btn 設計系統 + 相同響應式佈局（PVP 整寬主色，其餘並排次按鈕）*/}
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-3 lg:gap-3">
           <button
             onClick={() => router.push('/pvp')}
-            className="psy-serif flex-1 rounded-full border border-[rgba(200,155,93,0.44)] bg-[linear-gradient(135deg,#9b6430_0%,#d4a469_100%)] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95"
+            className="psy-btn psy-btn-accent psy-serif col-span-2 w-full px-6 py-3.5 text-base font-semibold lg:col-span-1"
           >
             {t.pvp}
           </button>
           <button
             onClick={() => router.push('/lobby')}
-            className="flex-1 rounded-full border border-[rgba(200,155,93,0.24)] bg-[rgba(255,255,255,0.02)] py-3 font-semibold text-[var(--psy-ink)] transition hover:bg-[rgba(200,155,93,0.08)]"
+            className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
           >
             {t.single}
           </button>
@@ -102,7 +103,7 @@ export default function ResultsPage() {
               startRetake();
               router.push('/assessment');
             }}
-            className="flex-1 rounded-full border border-[rgba(200,155,93,0.24)] bg-[rgba(255,255,255,0.02)] py-3 font-semibold text-[var(--psy-ink)] transition hover:bg-[rgba(200,155,93,0.08)]"
+            className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
           >
             {t.reassess}
           </button>
