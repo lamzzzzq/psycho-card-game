@@ -34,6 +34,13 @@ export const RULES_T = {
     goalWinHu: '食胡',
     goalWinAfter: '」獲勝。',
 
+    // 圖例文案
+    figGoalCap: '圈內數字＝該維度要湊幾張（由你的測評分數決定，每維不同）',
+    figPongCap: '湊滿「該維度目標張數」即可鎖定（張數要與目標一致）',
+    figHand: '你的手牌',
+    figIncoming: '抽到／別人棄的',
+    figLocked: '鎖定一組',
+
     // 二、開局
     sec2Title: '二、開局',
     openItems: [
@@ -116,6 +123,13 @@ export const RULES_T = {
     goalWinBefore: '. The first to complete all five dimensions "',
     goalWinHu: 'Wins (Hu)',
     goalWinAfter: '".',
+
+    // Figure captions
+    figGoalCap: 'The number in each chip = how many cards that dimension needs (from your score, different per dimension)',
+    figPongCap: 'Reach that dimension’s target count to lock it in (the count must match the target)',
+    figHand: 'Your hand',
+    figIncoming: 'Drawn / discarded',
+    figLocked: 'Locked set',
 
     // 2. Opening
     sec2Title: '2. Opening',

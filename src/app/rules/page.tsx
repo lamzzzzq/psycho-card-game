@@ -90,6 +90,20 @@ export default function RulesPage() {
         .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }
         .chip { border: 1px solid #c9b48a; border-radius: 999px; padding: 3px 12px; background:#fff; }
         .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+        /* 圖例（浅色纸张主题）*/
+        .fig { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px;
+          border: 1px solid #d9c8a4; border-radius: 12px; background: #fff; padding: 10px 12px; margin: 6px 0; }
+        .fig-pill { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #c9b48a;
+          border-radius: 999px; padding: 2px 9px; font-size: 11px; font-weight: 700; background: #faf4e8; color: #5c451f; }
+        .fig-card { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 36px;
+          border: 1px solid #c9a258; border-radius: 6px; background: #faf1dd; color: #7a4d12; font-weight: 700; font-size: 13px; }
+        .fig-set { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #c9a258;
+          border-radius: 8px; padding: 4px 8px; background: #f3e6c8; color: #7a4d12; font-weight: 700; letter-spacing: 2px; }
+        .fig-num { background: #c89b5d; color: #20170c; border-radius: 999px; padding: 0 6px; font-size: 11px; }
+        .fig-op { color: #7a4d12; font-weight: 700; }
+        .fig-cap { text-align: center; font-size: 10.5px; color: #6b5a3e; margin-top: 4px; }
+        .fig-grp { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; }
+        .fig-grp small { font-size: 9.5px; color: #6b5a3e; }
         @media print {
           .no-print { display: none !important; }
           .rules-screen { background: #fff; padding: 0; }
@@ -132,6 +146,15 @@ export default function RulesPage() {
           <div className="dim"><b>A</b> {s.dimA}</div>
           <div className="dim"><b>N</b> {s.dimN}</div>
         </div>
+        {/* 圖例：目標張數（數字＝要幾張）→ 食胡 */}
+        <div className="fig">
+          {([['O', 3], ['C', 4], ['E', 2], ['A', 5], ['N', 4]] as const).map(([d, n]) => (
+            <span key={d} className="fig-pill">{d} {n}</span>
+          ))}
+          <span className="fig-op">→</span>
+          <span style={{ fontSize: 18 }}>🏆</span>
+        </div>
+        <div className="fig-cap">{s.figGoalCap}</div>
 
         <h2>{s.sec2Title}</h2>
         <ul>
@@ -159,6 +182,26 @@ export default function RulesPage() {
               ))}
               <li className="warn">{s.pongWarn}</li>
             </ul>
+            {/* 圖例：2 張手牌 + 1 張進來的牌 = 鎖定 3 張 */}
+            <div className="fig">
+              <span className="fig-grp">
+                <span style={{ display: 'inline-flex', gap: 3 }}>
+                  <span className="fig-card">E</span><span className="fig-card">E</span>
+                </span>
+                <small>{s.figHand}（2）</small>
+              </span>
+              <span className="fig-op">+</span>
+              <span className="fig-grp">
+                <span className="fig-card">E</span>
+                <small>{s.figIncoming}（1）</small>
+              </span>
+              <span className="fig-op">=</span>
+              <span className="fig-grp">
+                <span className="fig-set">E E E <span className="fig-num">3</span></span>
+                <small>✓ {s.figLocked}</small>
+              </span>
+            </div>
+            <div className="fig-cap">{s.figPongCap}</div>
           </div>
           <div>
             <h2>{s.sec5Title}</h2>
