@@ -12,7 +12,7 @@ import { Footer } from '@/components/shared/Footer';
 export default function Home() {
   const router = useRouter();
   const hydrated = useHydrated();
-  const { bigFiveScores, getProgress, startRetake } = useAssessmentStore();
+  const { bigFiveScores, getProgress } = useAssessmentStore();
   const progress = getProgress();
   const hasResults = hydrated && bigFiveScores !== null;
   // SSR/首屏用 zh 与服务端一致，hydrate 后切到持久化/?lang 的语言，避免 mismatch。
@@ -128,43 +128,41 @@ export default function Home() {
       {/* 主行动区：移动端固定底栏（拇指可达），桌面端回归内联网格。
           放在 motion.div 之外，避免 framer transform 祖先让 fixed 失效。 */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[rgba(200,155,93,0.18)] bg-[rgba(11,18,28,0.92)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:static lg:mx-auto lg:mt-2 lg:w-full lg:max-w-5xl lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
-        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-2 lg:grid-cols-[1.1fr_1.1fr_1fr_1fr] lg:gap-3">
-          <button
-            onClick={() => router.push('/pvp')}
-            className="psy-btn psy-btn-accent psy-serif col-span-2 w-full px-6 py-3.5 text-base font-semibold lg:col-span-1"
-          >
-            {t.pvp}
-          </button>
-          <button
-            onClick={() => (hasResults ? router.push('/lobby') : router.push('/assessment'))}
-            className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
-          >
-            {t.single}{!hasResults && <span className="ml-1.5 text-xs text-[var(--psy-accent)]">{t.needAssess}</span>}
-          </button>
-          <button
-            onClick={() => {
-              // 已完成测评(progress=50) → 非破坏式重测；重测进行中(progress<50)则不重置、继续答。
-              // 注: calculateScores 不清 answers，故完成后 progress 仍=50。
-              if (hasResults && progress >= QUESTIONS.length) startRetake();
-              router.push('/assessment');
-            }}
-            className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
-          >
-            {progress > 0 && progress < QUESTIONS.length
-              ? `${t.continueAssess} (${progress}/${QUESTIONS.length})`
-              : hasResults
-              ? t.reassess
-              : t.startAssess}
-          </button>
-          {hasResults && (
+        {/* 有報告：聯機 / 單機 / 查看人格報告（重新測評只在報告頁出現，首頁不暴露）。
+            無報告：只有一個「開始測評 / 繼續測評」入口，引導先完成測評。 */}
+        {hasResults ? (
+          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-2 lg:grid-cols-3 lg:gap-3">
+            <button
+              onClick={() => router.push('/pvp')}
+              className="psy-btn psy-btn-accent psy-serif col-span-2 w-full px-6 py-3.5 text-base font-semibold lg:col-span-1"
+            >
+              {t.pvp}
+            </button>
+            <button
+              onClick={() => router.push('/lobby')}
+              className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
+            >
+              {t.single}
+            </button>
             <button
               onClick={() => router.push('/results')}
-              className="psy-btn psy-btn-ghost col-span-2 w-full px-6 py-3 font-medium sm:py-3.5 lg:col-span-1"
+              className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
             >
               {t.report}
             </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="mx-auto max-w-md">
+            <button
+              onClick={() => router.push('/assessment')}
+              className="psy-btn psy-btn-accent psy-serif w-full px-6 py-3.5 text-base font-semibold"
+            >
+              {progress > 0 && progress < QUESTIONS.length
+                ? `${t.continueAssess} (${progress}/${QUESTIONS.length})`
+                : t.startAssess}
+            </button>
+          </div>
+        )}
       </div>
       <Footer />
     </div>

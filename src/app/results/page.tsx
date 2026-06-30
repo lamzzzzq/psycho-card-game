@@ -102,7 +102,7 @@ export default function ResultsPage() {
               startRetake();
               router.push('/assessment');
             }}
-            className="rounded-full border border-[rgba(200,155,93,0.24)] px-6 py-3 text-sm font-medium text-[var(--psy-ink-soft)] transition hover:bg-[rgba(200,155,93,0.08)]"
+            className="flex-1 rounded-full border border-[rgba(200,155,93,0.24)] bg-[rgba(255,255,255,0.02)] py-3 font-semibold text-[var(--psy-ink)] transition hover:bg-[rgba(200,155,93,0.08)]"
           >
             {t.reassess}
           </button>
