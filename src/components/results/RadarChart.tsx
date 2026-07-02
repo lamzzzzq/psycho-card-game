@@ -31,9 +31,17 @@ export function RadarChart({ scores, size = 280 }: RadarChartProps) {
   const dataPoints = DIMENSIONS.map((d) => getPoint(d, scores[d]));
   const dataPath = dataPoints.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ') + ' Z';
 
+  // viewBox 四周留白：五個維度標籤放在半徑外（尤其左右的神經質/盡責性 + 較長的英文），
+  // 否則會超出 0~size 被裁掉。左右留多些、上下少些。
+  const padX = size * 0.3;
+  const padY = size * 0.14;
+
   return (
     <div className="psy-panel psy-etched rounded-[1.9rem] p-5">
-      <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[300px]">
+      <svg
+        viewBox={`${-padX} ${-padY} ${size + padX * 2} ${size + padY * 2}`}
+        className="mx-auto w-full max-w-[340px]"
+      >
         <defs>
           <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#d3a364" stopOpacity="0.34" />
@@ -68,7 +76,7 @@ export function RadarChart({ scores, size = 280 }: RadarChartProps) {
 
         {DIMENSIONS.map((d) => {
           const meta = DIMENSION_META[d];
-          const point = getPoint(d, 6.2);
+          const point = getPoint(d, 6.0);
           return (
             <text
               key={d}
@@ -76,7 +84,7 @@ export function RadarChart({ scores, size = 280 }: RadarChartProps) {
               y={point.y}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="psy-serif text-xs font-medium"
+              className={`psy-serif font-medium ${locale === 'en' ? 'text-[10px]' : 'text-xs'}`}
               fill={meta.colorHex}
             >
               {locale === 'en' ? meta.nameEn : meta.name}
