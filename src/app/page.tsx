@@ -127,7 +127,7 @@ export default function Home() {
 
       {/* 主行动区：移动端固定底栏（拇指可达），桌面端回归内联网格。
           放在 motion.div 之外，避免 framer transform 祖先让 fixed 失效。 */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[rgba(200,155,93,0.18)] bg-[rgba(11,18,28,0.92)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:static lg:mx-auto lg:mt-2 lg:w-full lg:max-w-5xl lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[rgba(200,155,93,0.18)] bg-[rgba(11,18,28,0.92)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:static lg:mx-auto lg:mt-10 lg:w-full lg:max-w-5xl lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
         {/* 有報告：聯機 / 單機 / 查看人格報告（重新測評只在報告頁出現，首頁不暴露）。
             無報告：只有一個「開始測評 / 繼續測評」入口，引導先完成測評。 */}
         {hasResults ? (

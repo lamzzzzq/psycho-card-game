@@ -29,7 +29,7 @@ export const TUTORIAL_T = {
     dgWinBtn: '食胡',
     dgWinCaption: '5 維湊齊 → 按「食胡」',
     dgFrozenCaption: '宣告失敗 → 罰停 1 回合、亮牌',
-    dgViewCaption: '每回合 1 次：翻開 2 張看維度',
+    dgViewCaption: '翻開手牌看真實維度（張數／是否永久依難度）',
     dgKnowledgeCaption: '無維度 · 安全棄牌',
     dgExitCaption: '退出 → 座位永久跳過',
     dgScoringCaption: '無人胡 → 比已歸檔維度數',
@@ -105,7 +105,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '抽牌',
-        body: '輪到你時，先點擊牌堆抽 1 張。如果你願意，可以一次性開啓「查看 2 張牌」的特權 —— 每回合最多 1 次，把任意 2 張未知的手牌真實人格揭開。用完即重置到下次回合。',
+        body: '輪到你時，先點擊牌堆抽 1 張。抽完後可以查看手牌、歸檔或棄牌。能查看幾張、是否永久保留，取決於房主選的「揭示難度」（見下方「揭示難度與查看」）。',
       },
       {
         title: '出牌',
@@ -126,8 +126,8 @@ export const TUTORIAL_T = {
         hint: '一次誤判 ≈ 損失下一個出牌回合，務必想清楚再下手。罰停期間也不能宣告食胡。',
       },
       {
-        title: '查看 2 張牌（每回合 1 次）',
-        body: '手牌人格默認不顯示維度，必須靠記憶和推理。但你可以在自己回合開始抽完後，啓用「🔍 查看 2 張牌」一次性把 2 張手牌的真實維度揭開。本回合內有效，下回合自動重置。\n用得好的玩家會優先看自己最不確定的牌，避免歸檔時混入錯誤。',
+        title: '揭示難度與查看',
+        body: '聯機開房時，房主可選「揭示難度」，決定人格 tag 何時可見：\n• 明牌：全場公開——自己手牌 + 所有棄牌都直接顯示人格，無需查看。\n• 半公開：每回合可查看手上 4 張，看過的永久顯示（直到打出）；棄牌不顯示，需自行判斷。\n• 隱藏（預設）：每回合可看 2 張，一輪後自動重置；棄牌不顯示。\n用得好的玩家會優先看自己最不確定的牌，避免歸檔時混入錯誤。',
       },
       {
         title: '知識牌（檔案註記）',
@@ -330,7 +330,7 @@ export const TUTORIAL_T = {
     dgWinBtn: 'Win',
     dgWinCaption: 'All 5 complete → press "Win"',
     dgFrozenCaption: 'Failed call → frozen 1 turn, cards shown',
-    dgViewCaption: 'Once a turn: flip 2 cards to see dimensions',
+    dgViewCaption: 'Flip hand cards to see dimensions (count/persistence varies by difficulty)',
     dgKnowledgeCaption: 'No dimension · safe discard',
     dgExitCaption: 'Leave → seat skipped for good',
     dgScoringCaption: 'No win → rank by declared dimensions',
@@ -406,7 +406,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Draw',
-        body: 'On your turn, first tap the draw pile to draw 1 card. If you wish, you can activate the "view 2 cards" privilege once — at most once per turn — to reveal the true personality of any 2 unknown cards in your hand. It resets at the start of your next turn.',
+        body: 'On your turn, first tap the draw pile to draw 1 card. After drawing you can view hand cards, declare, or discard. How many you can view — and whether it is kept — depends on the host’s chosen "Reveal difficulty" (see "Reveal Difficulty & Viewing" below).',
       },
       {
         title: 'Discard',
@@ -427,8 +427,8 @@ export const TUTORIAL_T = {
         hint: 'One misjudgement ≈ losing your next discard turn, so think carefully before acting. You also cannot declare a Win while frozen.',
       },
       {
-        title: 'View 2 Cards (once per turn)',
-        body: 'Hand cards hide their dimension by default — you rely on memory and reasoning. But after drawing at the start of your turn, you can activate "🔍 view 2 cards" once to reveal the true dimensions of 2 hand cards. It applies this turn only and resets automatically next turn.\nGood players prioritize their least-certain cards to avoid mixing errors when they declare.',
+        title: 'Reveal Difficulty & Viewing',
+        body: 'When creating an online room, the host picks a "Reveal difficulty" that decides when personality tags are visible:\n• Open: fully public — your hand + all discards show their tags, no viewing needed.\n• Half: each turn you may view 4 of your hand cards, and they stay revealed for good (until played); discards stay hidden — judge them yourself.\n• Hidden (default): view 2 per turn, reset after one round; discards stay hidden.\nGood players prioritise their least-certain cards to avoid mixing errors when declaring.',
       },
       {
         title: 'Knowledge Cards',

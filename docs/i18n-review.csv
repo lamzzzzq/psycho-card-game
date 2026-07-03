@@ -525,7 +525,7 @@
 "i18n(页面模块)","tutorial","tutorial.dgWinBtn","食胡","Win",""
 "i18n(页面模块)","tutorial","tutorial.dgWinCaption","5 維湊齊 → 按「食胡」","All 5 complete → press ""Win""",""
 "i18n(页面模块)","tutorial","tutorial.dgFrozenCaption","宣告失敗 → 罰停 1 回合、亮牌","Failed call → frozen 1 turn, cards shown",""
-"i18n(页面模块)","tutorial","tutorial.dgViewCaption","每回合 1 次：翻開 2 張看維度","Once a turn: flip 2 cards to see dimensions",""
+"i18n(页面模块)","tutorial","tutorial.dgViewCaption","翻開手牌看真實維度（張數／是否永久依難度）","Flip hand cards to see dimensions (count/persistence varies by difficulty)",""
 "i18n(页面模块)","tutorial","tutorial.dgKnowledgeCaption","無維度 · 安全棄牌","No dimension · safe discard",""
 "i18n(页面模块)","tutorial","tutorial.dgExitCaption","退出 → 座位永久跳過","Leave → seat skipped for good",""
 "i18n(页面模块)","tutorial","tutorial.dgScoringCaption","無人胡 → 比已歸檔維度數","No win → rank by declared dimensions",""
@@ -563,7 +563,7 @@
 "i18n(页面模块)","tutorial","tutorial.steps[1].body","單機固定 4 人（你 + 3 個 AI）；聯機 1 到 3 名玩家。牌堆會依人數縮放。牌分兩類：帶顏色標記的「人格描述牌」（屬於某一維度），以及無維度歸屬的「檔案註記 / 知識牌」（中立，可棄可觀察對手風格）。","Single player is always 4 players (you + 3 AI); online is 1 to 3 players. The draw pile scales with the player count. Cards come in two kinds: color-tagged ""personality description cards"" (belonging to one dimension), and the dimensionless ""Knowledge cards"" (neutral — discardable, and useful for reading opponents’ styles).",""
 "i18n(页面模块)","tutorial","tutorial.steps[1].hint","初始手牌張數 = 5 個維度目標張數之和 − 1。少的那張要靠「碰」或「食胡」補齊。","Starting hand size = the sum of all 5 dimension targets − 1. The missing card must be completed via ""Pong"" or ""Win"".",""
 "i18n(页面模块)","tutorial","tutorial.steps[2].title","抽牌","Draw",""
-"i18n(页面模块)","tutorial","tutorial.steps[2].body","輪到你時，先點擊牌堆抽 1 張。如果你願意，可以一次性開啓「查看 2 張牌」的特權 —— 每回合最多 1 次，把任意 2 張未知的手牌真實人格揭開。用完即重置到下次回合。","On your turn, first tap the draw pile to draw 1 card. If you wish, you can activate the ""view 2 cards"" privilege once — at most once per turn — to reveal the true personality of any 2 unknown cards in your hand. It resets at the start of your next turn.",""
+"i18n(页面模块)","tutorial","tutorial.steps[2].body","輪到你時，先點擊牌堆抽 1 張。抽完後可以查看手牌、歸檔或棄牌。能查看幾張、是否永久保留，取決於房主選的「揭示難度」（見下方「揭示難度與查看」）。","On your turn, first tap the draw pile to draw 1 card. After drawing you can view hand cards, declare, or discard. How many you can view — and whether it is kept — depends on the host’s chosen ""Reveal difficulty"" (see ""Reveal Difficulty & Viewing"" below).",""
 "i18n(页面模块)","tutorial","tutorial.steps[3].title","出牌","Discard",""
 "i18n(页面模块)","tutorial","tutorial.steps[3].body","抽完後選 1 張你不需要的丟到中間的棄牌堆。被棄出的牌進入「心理判讀窗口」，其他 3 名玩家有幾秒鐘決定是否要「碰」（同維度歸檔）或「食胡」（直接勝利）。","After drawing, pick 1 card you do not need and discard it to the pile in the middle. The discarded card opens a ""psychological read window"" where the other 3 players have a few seconds to decide whether to ""Pong"" (same-dimension declaration) or ""Win"" (instant victory).",""
 "i18n(页面模块)","tutorial","tutorial.steps[4].title","碰（公開歸檔）","Pong (Declare)",""
@@ -596,10 +596,16 @@ While frozen:
 • You cannot take part when anyone discards and the read window opens (no Pong, no Win).
 All players see a ""⛔ Frozen"" badge under your avatar.",""
 "i18n(页面模块)","tutorial","tutorial.steps[6].hint","一次誤判 ≈ 損失下一個出牌回合，務必想清楚再下手。罰停期間也不能宣告食胡。","One misjudgement ≈ losing your next discard turn, so think carefully before acting. You also cannot declare a Win while frozen.",""
-"i18n(页面模块)","tutorial","tutorial.steps[7].title","查看 2 張牌（每回合 1 次）","View 2 Cards (once per turn)",""
-"i18n(页面模块)","tutorial","tutorial.steps[7].body","手牌人格默認不顯示維度，必須靠記憶和推理。但你可以在自己回合開始抽完後，啓用「🔍 查看 2 張牌」一次性把 2 張手牌的真實維度揭開。本回合內有效，下回合自動重置。
-用得好的玩家會優先看自己最不確定的牌，避免歸檔時混入錯誤。","Hand cards hide their dimension by default — you rely on memory and reasoning. But after drawing at the start of your turn, you can activate ""🔍 view 2 cards"" once to reveal the true dimensions of 2 hand cards. It applies this turn only and resets automatically next turn.
-Good players prioritize their least-certain cards to avoid mixing errors when they declare.",""
+"i18n(页面模块)","tutorial","tutorial.steps[7].title","揭示難度與查看","Reveal Difficulty & Viewing",""
+"i18n(页面模块)","tutorial","tutorial.steps[7].body","聯機開房時，房主可選「揭示難度」，決定人格 tag 何時可見：
+• 明牌：全場公開——自己手牌 + 所有棄牌都直接顯示人格，無需查看。
+• 半公開：每回合可查看手上 4 張，看過的永久顯示（直到打出）；棄牌不顯示，需自行判斷。
+• 隱藏（預設）：每回合可看 2 張，一輪後自動重置；棄牌不顯示。
+用得好的玩家會優先看自己最不確定的牌，避免歸檔時混入錯誤。","When creating an online room, the host picks a ""Reveal difficulty"" that decides when personality tags are visible:
+• Open: fully public — your hand + all discards show their tags, no viewing needed.
+• Half: each turn you may view 4 of your hand cards, and they stay revealed for good (until played); discards stay hidden — judge them yourself.
+• Hidden (default): view 2 per turn, reset after one round; discards stay hidden.
+Good players prioritise their least-certain cards to avoid mixing errors when declaring.",""
 "i18n(页面模块)","tutorial","tutorial.steps[8].title","知識牌（檔案註記）","Knowledge Cards",""
 "i18n(页面模块)","tutorial","tutorial.steps[8].body","牌堆裏有一類無人格歸屬的「檔案註記 / 知識牌」 —— 內容是心理學課程概念（術語 + 定義）。它們不能用於歸檔，但也不會""穿幫""成錯誤維度。
 用途：
