@@ -59,10 +59,11 @@ export function OrnateCard({
   const glowId = `glow-${uid}`, vigId = `vig-${uid}`;
   const showImg = !!imageSrc && !imgError;
   const isKnowledge = isDummy && !!description;
+  // 术语/题面按 locale 取：en → textEn（英文术语），zh → text（繁中术语）。
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
 
-  // 知识牌字号自适应：术语按「最长单词」缩放，保证整词放得下、绝不从词中间断（按空格/连字符切词）。
-  const longestWord = Math.max(1, ...text.split(/[\s-]+/).filter(Boolean).map((w) => w.length));
+  // 知识牌字号自适应：术语按「最长单词」缩放（用当前语言的术语算），保证整词放得下、绝不从词中间断。
+  const longestWord = Math.max(1, ...label.split(/[\s-]+/).filter(Boolean).map((w) => w.length));
   const termFont = Math.max(7.5, Math.min(13, 118 / longestWord));     // cqw
   // 定义按总长缩放，最长(如 Defense ~83字)也不裁切。
   const defLen = (description ?? '').length;
@@ -209,7 +210,7 @@ export function OrnateCard({
         {isKnowledge && (
           <div className="psy-serif absolute flex items-center justify-center text-center" style={{ left: '11%', right: '11%', top: '7%', height: '50%' }}>
             <p className="font-semibold" style={{ color: 'var(--psy-ink)', fontSize: `${termFont}cqw`, lineHeight: 1.3, paddingBottom: '1.5cqw', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-              {text}
+              {renderLabel(label, locale)}
             </p>
           </div>
         )}

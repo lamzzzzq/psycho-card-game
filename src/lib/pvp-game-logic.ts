@@ -50,7 +50,7 @@ export function initializePvpGame(
 
   return {
     phase: 'drawing',
-    settings: { totalRounds: settings.totalRounds, aiDifficulty: 'easy' },
+    settings: { totalRounds: settings.totalRounds, aiDifficulty: 'easy', revealDifficulty: settings.difficulty ?? 'hidden' },
     players,
     drawPile: remaining,
     discardPile: [],

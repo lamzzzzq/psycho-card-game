@@ -83,5 +83,6 @@ export function serializeGameState(state: RawGameState, viewerPlayerId: string |
     claimResponses: state.claimResponses ?? [],
     winner: state.winner,
     totalRounds: state.settings?.totalRounds ?? 0,
+    revealDifficulty: state.settings?.revealDifficulty ?? 'hidden',
   };
 }

@@ -79,8 +79,10 @@ export function TarotCard({
   const showImg = !!imageSrc && !imgError;
   // 知识牌(dummy)：有定义则走纯文字版式（术语标题 + 定义正文，无图窗）。
   const isKnowledge = isDummy && !!description;
-  // 术语按「最长单词」缩放（保证整词放得下、绝不从词中间断）；定义按总长缩放，最长也不裁切。
-  const longestWord = Math.max(1, ...text.split(/[\s-]+/).filter(Boolean).map((w) => w.length));
+  // 术语/题面按 locale 取（en → textEn 英文术语）。
+  const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
+  // 术语按「最长单词」缩放（用当前语言的术语算）；定义按总长缩放，最长也不裁切。
+  const longestWord = Math.max(1, ...label.split(/[\s-]+/).filter(Boolean).map((w) => w.length));
   const termFont = Math.max(7.5, Math.min(13, 118 / longestWord));
   const defLen = (description ?? '').length;
   const defFont = defLen > 72 ? 7 : defLen > 56 ? 7.8 : 8.5;
@@ -88,8 +90,6 @@ export function TarotCard({
   // 全卡统一 4:7（高/宽≈1.75）：图窗占 60% + 文字占剩余。手牌和看大图场景同一比例，
   // 不再用细长 1:2（太瘦不好看）。
   const cardAspect = '4 / 7';
-  // 卡面去掉句尾标点（。/.）——句号会影响排版换行。
-  const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
 
   // 外层容器：建立 cqw 基准 = 卡片宽度。
   const wrapperStyle: React.CSSProperties = {
@@ -151,7 +151,7 @@ export function TarotCard({
                 display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}
             >
-              {text}
+              {renderLabel(label, locale)}
             </p>
             <div className="flex items-center justify-center" style={{ gap: '2cqw', width: '70%' }}>
               <span style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${GOLD_FAINT})` }} />

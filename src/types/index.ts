@@ -142,9 +142,16 @@ export interface GameAction {
   timestamp: number;
 }
 
+// 揭示難度（人格 tag 何時可見）：
+//  open   = 明牌：自己手牌 + 所有棄牌都顯示人格；無需「查看」。
+//  half   = 半公開：每回合可查看手上至多 4 張，看過永久顯示（直到打出）；棄牌不顯示。
+//  hidden = 隱藏（預設/現狀）：每回合看 2 張、一輪後消失；棄牌不顯示。
+export type RevealDifficulty = 'open' | 'half' | 'hidden';
+
 export interface GameSettings {
   totalRounds: number; // 0 = unlimited (play until someone wins)
   aiDifficulty: AIDifficulty;
+  revealDifficulty?: RevealDifficulty; // 缺省 = 'hidden'
 }
 
 export interface GameState {

@@ -13,7 +13,7 @@ import { saveAssessmentResult, checkStudentIdExists } from '@/lib/assessment-rec
 import { normalizeStudentId, isValidStudentId, clamp } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { PlayerInfo, DeckId } from '@/types/pvp';
-import { BigFiveScores, DIMENSIONS } from '@/types';
+import { BigFiveScores, DIMENSIONS, RevealDifficulty } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 import { QUESTIONS } from '@/data/questions';
 import { DEFAULT_AVATAR } from '@/data/avatars';
@@ -63,6 +63,7 @@ export default function PvpLobbyPage() {
   const [maxPlayers, setMaxPlayers] = useState(3);
   const [totalRounds, setTotalRounds] = useState(5);
   const [deck, setDeck] = useState<DeckId>('big-five');
+  const [difficulty, setDifficulty] = useState<RevealDifficulty>('hidden');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
@@ -187,7 +188,7 @@ export default function PvpLobbyPage() {
       const info = await ensurePlayer();
       await leaveAllRooms(info.id);
       usePvpStore.getState().reset();
-      const room = await createRoom(info.id, { maxPlayers, totalRounds, deck }, info.avatar);
+      const room = await createRoom(info.id, { maxPlayers, totalRounds, deck, difficulty }, info.avatar);
       router.push(`/pvp/room/${room.code}`);
     } catch (e: any) {
       setError(e.message ?? t.createFailed);
@@ -464,6 +465,26 @@ export default function PvpLobbyPage() {
                     className={`psy-tile psy-serif text-sm ${totalRounds === n ? 'is-active' : ''}`}
                   >
                     {n === 0 ? '∞' : n}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="psy-eyebrow text-[10px]">{t.revealLabel}</p>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { id: 'open', name: t.revealOpenName, sub: t.revealOpenSub },
+                  { id: 'half', name: t.revealHalfName, sub: t.revealHalfSub },
+                  { id: 'hidden', name: t.revealHiddenName, sub: t.revealHiddenSub },
+                ] as const).map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => setDifficulty(d.id)}
+                    className={`psy-tile flex flex-col items-start gap-0.5 px-3 py-2.5 text-left ${difficulty === d.id ? 'is-active' : ''}`}
+                  >
+                    <span className="psy-serif text-sm text-[var(--psy-ink)]">{d.name}</span>
+                    <span className="text-[10px] leading-4 text-[var(--psy-muted)]">{d.sub}</span>
                   </button>
                 ))}
               </div>

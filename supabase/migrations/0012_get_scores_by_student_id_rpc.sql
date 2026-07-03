@@ -9,6 +9,8 @@
 -- 隐私权衡（用户已确认接受，课堂工具）：任何人输入某学号即可读到该学号的五维分数
 -- （无 PIN）。若日后要收紧，可在此加校验（device_token / PIN / 生日）。
 
+-- 取【最新一行】的 scores（不限 source）：与 student_id_exists(0009 起任何 source 都算)
+-- 保持一致——只要提示了「已有记录」，restore 就能取回（含手动填分的分数）。
 CREATE OR REPLACE FUNCTION public.get_scores_by_student_id(p_student_id TEXT)
 RETURNS JSONB
 LANGUAGE sql
@@ -18,8 +20,7 @@ AS $$
   SELECT scores
   FROM assessment_results
   WHERE student_id = p_student_id
-    AND source = 'assessment'   -- 只恢复真正答过题的完整记录（手动填分不算）
-  ORDER BY submitted_at DESC     -- 取最新一次
+  ORDER BY submitted_at DESC     -- 取最新一次（答题或手动填分皆可）
   LIMIT 1;
 $$;
 

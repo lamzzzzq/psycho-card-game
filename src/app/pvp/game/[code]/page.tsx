@@ -205,12 +205,13 @@ export default function PvpGamePage() {
   }, [gameState?.phase, gameState?.currentPlayerIndex, myPlayerId]);
 
   // Reset "view cards" state whenever the active turn changes (own or other).
+  // 半公開(half)難度：看過的牌永久顯示（不清 viewedCardIds）；隱藏/明牌每回合清空。
   useEffect(() => {
     setViewMode(false);
     setPickedViewIds([]);
-    setViewedCardIds([]);
     setViewUsedThisTurn(false);
-  }, [gameState?.currentPlayerIndex, gameState?.currentRound]);
+    if ((gameState?.revealDifficulty ?? 'hidden') !== 'half') setViewedCardIds([]);
+  }, [gameState?.currentPlayerIndex, gameState?.currentRound, gameState?.revealDifficulty]);
 
   // Reset pong-intent on phase / turn changes — keeps the modal honest.
   useEffect(() => {
@@ -350,6 +351,9 @@ export default function PvpGamePage() {
   }
 
   const myId = myPlayerId ?? player?.id;
+  // 揭示難度：open 明牌 / half 半公開(看4張永久) / hidden 隱藏(看2張一輪)
+  const revealDifficulty = gameState.revealDifficulty ?? 'hidden';
+  const viewCap = revealDifficulty === 'half' ? 4 : 2;
   const meSerialized = gameState.players.find(p => p.id === myId);
   const myIndex = gameState.players.findIndex(p => p.id === myId);
   const opponents = gameState.players.filter(p => p.id !== myId);
@@ -476,13 +480,14 @@ export default function PvpGamePage() {
     setPickedViewIds(prev =>
       prev.includes(cardId)
         ? prev.filter(id => id !== cardId)
-        : prev.length >= 2 ? prev : [...prev, cardId]
+        : prev.length >= viewCap ? prev : [...prev, cardId]
     );
   }
 
   function handleConfirmView() {
     if (pickedViewIds.length === 0) return;
-    setViewedCardIds(pickedViewIds);
+    // half 難度：累積到已看集合（永久）；hidden 每回合已清空，累積等同替換。
+    setViewedCardIds(prev => Array.from(new Set([...prev, ...pickedViewIds])));
     setViewMode(false);
     setPickedViewIds([]);
     setViewUsedThisTurn(true);
@@ -493,7 +498,8 @@ export default function PvpGamePage() {
     setPickedViewIds([]);
   }
 
-  const canStartView = isMyTurn && gameState.phase === 'discarding' && !viewUsedThisTurn && !viewMode;
+  // open(明牌)無需查看，隱藏按鈕；half/hidden 才顯示。
+  const canStartView = isMyTurn && gameState.phase === 'discarding' && !viewUsedThisTurn && !viewMode && revealDifficulty !== 'open';
   // 把最新 canDraw 同步到 ref，給 early-return 前定義的 handleDrawPileHover 用。
   canDrawRef.current = canDraw;
 
@@ -741,6 +747,7 @@ export default function PvpGamePage() {
               actions={gameState.actionLog as any}
               players={gameState.players}
               highlight={isDiscarding}
+              revealTags={revealDifficulty === 'open'}
               locale={locale}
             />
           </div>
@@ -879,6 +886,7 @@ export default function PvpGamePage() {
                       text={gameState.pendingDiscard.text}
                       textEn={isPersonalityCard(gameState.pendingDiscard) ? gameState.pendingDiscard.textEn : undefined}
                       dimension={isPersonalityCard(gameState.pendingDiscard) ? gameState.pendingDiscard.dimension : undefined}
+                      revealedDimension={revealDifficulty === 'open' && isPersonalityCard(gameState.pendingDiscard) ? gameState.pendingDiscard.dimension : null}
                       isDummy={!isPersonalityCard(gameState.pendingDiscard)}
                       description={isPersonalityCard(gameState.pendingDiscard) ? undefined : gameState.pendingDiscard.definition}
                       imageSrc={isPersonalityCard(gameState.pendingDiscard) ? `/cards/${gameState.pendingDiscard.imageId ?? gameState.pendingDiscard.id}.webp` : undefined}
@@ -962,7 +970,7 @@ export default function PvpGamePage() {
                   className="psy-btn psy-btn-ghost px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm"
                   title={t.viewCardsTitle}
                 >
-                  🔍 {t.viewTwoCards}（{viewUsedThisTurn ? '0' : '1'}/1）
+                  🔍 {locale === 'en' ? `View ${viewCap}` : `查看 ${viewCap} 張`}（{viewUsedThisTurn ? '0' : '1'}/1）
                 </button>
               )}
               {viewUsedThisTurn && !viewMode && (
@@ -1085,7 +1093,7 @@ export default function PvpGamePage() {
           {viewMode && (
             <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
               <p className="psy-serif text-center text-xs text-[var(--psy-accent)] sm:text-sm">
-                🔍 {t.viewPickPrompt}（{pickedViewIds.length}/2）
+                🔍 {t.viewPickPrompt}（{pickedViewIds.length}/{viewCap}）
               </p>
               <div className="flex justify-center gap-2">
                 <button
@@ -1120,7 +1128,14 @@ export default function PvpGamePage() {
                 mobileCompact={true}
                 locale={locale}
                 selectedCardIds={selectedCardIds}
-                viewedCardIds={viewedCardIds}
+                viewedCardIds={
+                  // open(明牌)：自己手牌全部顯示人格；half/hidden：只顯示看過的。
+                  revealDifficulty === 'open'
+                    ? [...mePlayer.hand, ...(gameState.drawnCard ? [gameState.drawnCard] : [])]
+                        .filter((c) => isPersonalityCard(c))
+                        .map((c) => c.id)
+                    : viewedCardIds
+                }
                 viewMode={viewMode}
                 pickedViewIds={pickedViewIds}
                 onTogglePickView={handleTogglePickView}

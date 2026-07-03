@@ -7,12 +7,14 @@ import { TarotCard } from './TarotCard';
 import { STRINGS, type Locale } from '@/lib/i18n';
 
 // 弃牌也用塔罗卡面（有图+文字），与手牌一致。
-function tarotProps(card: GameCard, locale: Locale) {
+// revealTags：open(明牌)难度下，弃牌显示人格 tag（所有人都知道打出牌的维度）。
+function tarotProps(card: GameCard, locale: Locale, revealTags = false) {
   const persona = isPersonalityCard(card);
   return {
     text: card.text,
     textEn: card.textEn,
     dimension: persona ? card.dimension : undefined,
+    revealedDimension: persona && revealTags ? card.dimension : null,
     imageSrc: persona ? `/cards/${card.imageId ?? card.id}.webp` : undefined,
     isDummy: !persona,
     // 知识牌定义按 locale 切换（繁中 / 英文）
@@ -37,6 +39,8 @@ interface DiscardPileProps {
   players?: PlayerLite[];
   /** 轮到我出牌时 = true：弃牌堆脉冲发光 + 浮「丟這裡」标签，强引导出牌。 */
   highlight?: boolean;
+  /** open(明牌)难度：弃牌显示人格 tag。 */
+  revealTags?: boolean;
   locale?: Locale;
 }
 
@@ -54,6 +58,7 @@ export function DiscardPile({
   actions,
   players,
   highlight = false,
+  revealTags = false,
   locale = 'zh',
 }: DiscardPileProps) {
   const t = STRINGS[locale].game;
@@ -99,10 +104,10 @@ export function DiscardPile({
         {topCard ? (
           <div className="relative">
             <div className="sm:hidden">
-              <TarotCard {...tarotProps(topCard, locale)} width={72} />
+              <TarotCard {...tarotProps(topCard, locale, revealTags)} width={72} />
             </div>
             <div className="hidden sm:block">
-              <TarotCard {...tarotProps(topCard, locale)} width={96} />
+              <TarotCard {...tarotProps(topCard, locale, revealTags)} width={96} />
             </div>
             {canOpen && (
               <div
@@ -179,7 +184,7 @@ export function DiscardPile({
                             #{originalIndex + 1}
                           </span>
                           <div className="flex-shrink-0">
-                            <TarotCard {...tarotProps(entry.card, locale)} width={84} />
+                            <TarotCard {...tarotProps(entry.card, locale, revealTags)} width={84} />
                           </div>
                           <div className="flex-1 min-w-0 ml-2 space-y-1">
                             <div className="flex items-center gap-2">
