@@ -24,6 +24,30 @@ export async function checkStudentIdExists(studentId: string): Promise<boolean> 
   }
 }
 
+// Restore：按学号取回「最新一次测评」的五维分数（换设备/清缓存后免重做）。
+// 走 RPC get_scores_by_student_id（SECURITY DEFINER，只回 scores 不回答案）。
+// 见 supabase/migrations/0012_get_scores_by_student_id_rpc.sql。
+// 返回 null = 无记录 / RPC 未建 / 网络失败 / 数据不完整（调用方回退到重新测评）。
+export async function restoreAssessmentScores(studentId: string): Promise<BigFiveScores | null> {
+  try {
+    const sid = studentId?.trim();
+    if (!sid) return null;
+    const { data, error } = await supabase.rpc('get_scores_by_student_id', { p_student_id: sid });
+    if (error) {
+      console.warn('[assessment-record] get_scores_by_student_id rpc failed', error.message);
+      return null;
+    }
+    if (!data || typeof data !== 'object') return null;
+    const s = data as Record<string, unknown>;
+    const keys: (keyof BigFiveScores)[] = ['O', 'C', 'E', 'A', 'N'];
+    if (!keys.every((k) => typeof s[k] === 'number')) return null;
+    return { O: s.O as number, C: s.C as number, E: s.E as number, A: s.A as number, N: s.N as number };
+  } catch (err) {
+    console.warn('[assessment-record] restoreAssessmentScores exception', err);
+    return null;
+  }
+}
+
 // 本机随机 token：弱提示字段，区分换浏览器/设备（localStorage 按浏览器隔离，
 // 清缓存/换浏览器会重新生成 —— 这是预期，不拿它挡写入）。
 export function getOrCreateDeviceToken(): string {

@@ -9,7 +9,7 @@ import { DIMENSION_META } from '@/data/dimensions';
 import { useHydrated } from '@/stores/useHydration';
 import { QuestionCard } from '@/components/assessment/QuestionCard';
 import { LikertScore, BigFiveScores, DIMENSIONS } from '@/types';
-import { saveAssessmentResult, checkStudentIdExists } from '@/lib/assessment-record';
+import { saveAssessmentResult, checkStudentIdExists, restoreAssessmentScores } from '@/lib/assessment-record';
 import { normalizeStudentId, isValidStudentId, STUDENT_ID_LENGTH, clamp } from '@/lib/utils';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 
@@ -20,7 +20,9 @@ export default function AssessmentPage() {
   const { studentId, setStudentId, answers, setAnswer, calculateScores, setManualScores, getProgress, bigFiveScores, retaking } = useAssessmentStore();
   const [studentIdInput, setStudentIdInput] = useState('');
   const [checkingId, setCheckingId] = useState(false);
-  const [dupWarn, setDupWarn] = useState(false); // 学号重复：第一次提示，再按一次放行
+  const [dupWarn, setDupWarn] = useState(false); // 学号重复：展示 恢复 / 覆盖 两个选择
+  const [restoring, setRestoring] = useState(false);
+  const [restoreError, setRestoreError] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualScores, setManualInputScores] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
@@ -122,17 +124,53 @@ export default function AssessmentPage() {
               style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: dupWarn ? 'rgba(220,106,79,0.55)' : 'rgba(200,155,93,0.18)' }}
             />
             {dupWarn ? (
-              <p className="text-xs leading-5 text-[var(--psy-danger)]">{t.dupWarn}</p>
+              <p className="text-xs leading-5 text-[var(--psy-accent)]">{t.dupWarn}</p>
             ) : studentIdInput.length > 0 && !idValid ? (
               <p className="text-xs leading-5 text-[var(--psy-muted)]">{t.idLenHint}</p>
             ) : null}
-            <button
-              type="submit"
-              disabled={!idValid || checkingId}
-              className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[#9b6430] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95 disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              {checkingId ? t.gateChecking : dupWarn ? t.dupConfirm : t.gateStart}
-            </button>
+            {dupWarn ? (
+              // 已有记录：恢复(拉回旧分数直接进报告) / 覆盖(重新测评)
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  disabled={restoring}
+                  onClick={async () => {
+                    setRestoreError(false);
+                    setRestoring(true);
+                    const scores = await restoreAssessmentScores(normalized);
+                    setRestoring(false);
+                    if (scores) {
+                      setStudentId(normalized);
+                      setManualScores(scores); // 标记完成 + 写入分数（本地）
+                      router.push('/results');
+                    } else {
+                      setRestoreError(true);
+                    }
+                  }}
+                  className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[#9b6430] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {restoring ? t.restoring : t.dupRestore}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStudentId(normalized)}
+                  className="psy-btn psy-btn-ghost w-full py-2.5 text-sm font-medium"
+                >
+                  {t.dupOverwrite}
+                </button>
+                {restoreError && (
+                  <p className="text-xs leading-5 text-[var(--psy-danger)]">{t.restoreFailed}</p>
+                )}
+              </div>
+            ) : (
+              <button
+                type="submit"
+                disabled={!idValid || checkingId}
+                className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[#9b6430] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                {checkingId ? t.gateChecking : t.gateStart}
+              </button>
+            )}
           </form>
         </motion.div>
       </div>
