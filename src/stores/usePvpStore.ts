@@ -26,6 +26,28 @@ function clearClaimTimer() {
   if (claimTimer) { clearTimeout(claimTimer); claimTimer = null; }
 }
 
+// 武裝 claim-window 超時器。除了「剛進入 claim-window」時調用，host 刷新後
+// 重新訂閱時也要調（rawGameState 從 localStorage 恢復停在 claim-window，而
+// claimTimer 是模塊變量刷新即丟——不補一針的話 AFK 玩家會把全桌卡死）。
+// 待響應名單以 rawGameState.players（座位穩定）為準，不用房間名冊。
+function armClaimTimer(getStore: () => PvpStore) {
+  clearClaimTimer();
+  claimTimer = setTimeout(() => {
+    claimTimer = null;
+    const store = getStore();
+    const s = store.rawGameState;
+    if (!store.isHost || !s || s.phase !== 'claim-window') return;
+    const responded = new Set(s.claimResponses as string[]);
+    const pending = (s.players as { id: string; hasLeft?: boolean }[]).filter(
+      (p, idx) => idx !== s.discardedByIndex && !p.hasLeft && !responded.has(p.id)
+    );
+    // 逐个补 skip-pong；engine 在全员响应后自动 finalize 推进回合。
+    for (const p of pending) {
+      store.handlePlayerAction(p.id, { type: 'skip-pong' });
+    }
+  }, CLAIM_WINDOW_MS);
+}
+
 // Client-side host-grace timer (non-host clients only). If the host
 // vanishes, every non-host independently starts a 3-min countdown.
 // Host comes back inside the window → cancel. Otherwise the room is
@@ -409,6 +431,11 @@ export const usePvpStore = create<PvpStore>()(
               },
             });
           }
+          // Host 刷新回來時若對局停在 claim-window，模塊級 claimTimer 已隨
+          // 刷新丟失 → 重新武裝，否則 AFK 玩家會把窗口永久卡死。
+          if (rawGameState.phase === 'claim-window' && !claimTimer) {
+            armClaimTimer(get);
+          }
         }
       });
 
@@ -485,8 +512,10 @@ export const usePvpStore = create<PvpStore>()(
     const wasAlreadyWinner = !!rawState.winner;
 
     const { players, room } = get();
-    const orderedPlayers = [...players].sort((a, b) => a.seat_index - b.seat_index);
-    const currentPlayerId = orderedPlayers[rawState.currentPlayerIndex]?.player_id;
+    // 當前玩家判定以引擎的 players（座位穩定）為準——房間名冊在玩家被剔除後
+    // 會縮短，用名冊索引會錯位（詳見 applyPvpAction 同款注釋）。
+    const rawPlayers = rawState.players as { id: string }[];
+    const currentPlayerId = rawPlayers[rawState.currentPlayerIndex]?.id;
 
     // 'leave' is unconditional — any player at any time can quit. Whitelist
     // it before the current-player gate, otherwise the host would silently
@@ -500,10 +529,11 @@ export const usePvpStore = create<PvpStore>()(
       action.type !== 'hu'
     ) return;
 
-    const newState = applyPvpAction(rawState, _fromPlayerId, action, orderedPlayers);
+    const newState = applyPvpAction(rawState, _fromPlayerId, action);
     set({ rawGameState: newState });
 
     // Per-recipient broadcast to keep hands private.
+    const orderedPlayers = [...players].sort((a, b) => a.seat_index - b.seat_index);
     for (const op of orderedPlayers) {
       const pid = op.player_id;
       const personal = serializeGameState(newState, pid);
@@ -519,21 +549,7 @@ export const usePvpStore = create<PvpStore>()(
     // （phase 不再是 claim-window）立即清除计时器。
     if (newState.phase === 'claim-window') {
       if (rawState.phase !== 'claim-window') {
-        clearClaimTimer();
-        claimTimer = setTimeout(() => {
-          claimTimer = null;
-          const s = get().rawGameState;
-          if (!get().isHost || !s || s.phase !== 'claim-window') return;
-          const ordered = [...get().players].sort((a, b) => a.seat_index - b.seat_index);
-          const responded = new Set(s.claimResponses as unknown as string[]);
-          const pending = ordered.filter(
-            (op, idx) => idx !== s.discardedByIndex && !responded.has(op.player_id)
-          );
-          // 逐个补 skip-pong；engine 在全员响应后自动 finalize 推进回合。
-          for (const op of pending) {
-            get().handlePlayerAction(op.player_id, { type: 'skip-pong' });
-          }
-        }, CLAIM_WINDOW_MS);
+        armClaimTimer(get);
       }
     } else {
       clearClaimTimer();
@@ -549,13 +565,15 @@ export const usePvpStore = create<PvpStore>()(
           (newState as { gameStartedAt?: number }).gameStartedAt ??
           newState.actionLog[0]?.timestamp ??
           Date.now();
-        const seatMeta = orderedPlayers.map((rp, i) => ({
+        // 座位以引擎的 players 為準（中途退出者仍佔位），名冊只用來補 student_id。
+        const roomPlayerById = new Map(players.map((rp) => [rp.player_id, rp]));
+        const seatMeta = (newState.players as { id: string }[]).map((p, i) => ({
           seatIndex: i,
-          playerId: rp.player_id,
+          playerId: p.id,
           // player_id 在 PVP 流程里恒等于学号（info={id:sid,studentId:sid}）。
           // 若某人的 player-joined 广播没收到，student_id 会是空 → 用 player_id 兜底，
           // 避免 game_participants.student_id 存成 null 丢失归属。
-          studentId: rp.student_id ?? rp.player_id ?? null,
+          studentId: roomPlayerById.get(p.id)?.student_id ?? p.id ?? null,
           isAi: false,
         }));
         // fire-and-forget but with internal 5s timeout + localStorage retry
@@ -589,12 +607,13 @@ export const usePvpStore = create<PvpStore>()(
       interruptedSaved.add(key);
     }
 
-    const orderedPlayers = [...players].sort((a, b) => a.seat_index - b.seat_index);
     const startedAt = key ?? Date.now();
-    const seatMeta = orderedPlayers.map((rp, i) => ({
+    // 同 winner 路徑：座位以引擎 players 為準，名冊補 student_id。
+    const roomPlayerById = new Map(players.map((rp) => [rp.player_id, rp]));
+    const seatMeta = (rawGameState.players as { id: string }[]).map((p, i) => ({
       seatIndex: i,
-      playerId: rp.player_id,
-      studentId: rp.student_id ?? null,
+      playerId: p.id,
+      studentId: roomPlayerById.get(p.id)?.student_id ?? p.id ?? null,
       isAi: false,
     }));
     // winner=null → game-record 寫入 winner_player_id=null，課堂查詢可區分中斷局。

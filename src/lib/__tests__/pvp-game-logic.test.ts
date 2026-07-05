@@ -70,8 +70,6 @@ describe('initializePvpGame', () => {
 
 // ─── applyPvpAction — security guards ────────────────────────────────────────
 describe('applyPvpAction — security guards', () => {
-  const roomPlayers = makeRoomPlayers(['uuid-a', 'uuid-b', 'uuid-c']);
-
   function stateWithCustomPlayers() {
     return makeGameState({
       phase: 'drawing',
@@ -87,7 +85,7 @@ describe('applyPvpAction — security guards', () => {
   it('rejects draw from a non-current player', () => {
     const state = stateWithCustomPlayers();
     state.drawPile = [makeCard('O')];
-    const result = applyPvpAction(state, 'uuid-b', { type: 'draw' }, roomPlayers);
+    const result = applyPvpAction(state, 'uuid-b', { type: 'draw' });
     expect(result).toBe(state); // unchanged reference
   });
 
@@ -96,7 +94,7 @@ describe('applyPvpAction — security guards', () => {
     const card = makeCard('O');
     state.players[1].hand = [card];
     const action: PvpAction = { type: 'discard', cardId: card.id };
-    const result = applyPvpAction(state, 'uuid-b', action, roomPlayers);
+    const result = applyPvpAction(state, 'uuid-b', action);
     expect(result).toBe(state);
   });
 
@@ -104,7 +102,7 @@ describe('applyPvpAction — security guards', () => {
     const state = stateWithCustomPlayers();
     state.phase = 'drawing';
     const action: PvpAction = { type: 'pong', dimension: 'O', handCardIds: [] };
-    const result = applyPvpAction(state, 'uuid-b', action, roomPlayers);
+    const result = applyPvpAction(state, 'uuid-b', action);
     expect(result).toBe(state);
   });
 
@@ -112,8 +110,33 @@ describe('applyPvpAction — security guards', () => {
     const state = stateWithCustomPlayers();
     state.phase = 'drawing';
     const action: PvpAction = { type: 'skip-pong' };
-    const result = applyPvpAction(state, 'uuid-b', action, roomPlayers);
+    const result = applyPvpAction(state, 'uuid-b', action);
     expect(result).toBe(state);
+  });
+
+  it('rejects hu from a non-current player outside claim-window (late-arriving hu must not steal drawnCard / warp the turn)', () => {
+    const state = stateWithCustomPlayers();
+    state.phase = 'drawing';
+    const result = applyPvpAction(state, 'uuid-b', { type: 'hu' });
+    expect(result).toBe(state);
+  });
+
+  it('rejects actions from a player not seated in the game state', () => {
+    const state = stateWithCustomPlayers();
+    const result = applyPvpAction(state, 'uuid-ghost', { type: 'hu' });
+    expect(result).toBe(state);
+  });
+
+  it('maps seats by engine state, not room roster: actions stay correct after a seat is removed from the roster', () => {
+    // 房間名冊剔除了 uuid-b（中途離線被移出），但引擎 players 座位不變。
+    // uuid-c（引擎 index 2）在 claim-window 中 skip-pong，記錄的必須是 uuid-c。
+    const state = stateWithCustomPlayers();
+    state.phase = 'claim-window';
+    state.discardedByIndex = 0;
+    state.pendingDiscard = makeCard('O');
+    const result = applyPvpAction(state, 'uuid-c', { type: 'skip-pong' });
+    expect(result.claimResponses).toContain('uuid-c');
+    expect(result.claimResponses).not.toContain('uuid-b');
   });
 
   it('locks out players who already responded in the current claim-window', () => {
@@ -124,15 +147,13 @@ describe('applyPvpAction — security guards', () => {
     state.claimResponses = ['uuid-b'] as any;
     // uuid-b already skipped — second skip-pong from same player must be no-op
     const action: PvpAction = { type: 'skip-pong' };
-    const result = applyPvpAction(state, 'uuid-b', action, roomPlayers);
+    const result = applyPvpAction(state, 'uuid-b', action);
     expect(result).toBe(state);
   });
 });
 
 // ─── applyPvpAction — happy path delegations ────────────────────────────────
 describe('applyPvpAction — happy paths', () => {
-  const roomPlayers = makeRoomPlayers(['uuid-a', 'uuid-b']);
-
   it('draw from current player advances state to discarding', () => {
     const card = makeCard('O');
     const state = makeGameState({
@@ -144,7 +165,7 @@ describe('applyPvpAction — happy paths', () => {
         makePlayer({ id: 'uuid-b' as any, isHuman: false }),
       ],
     });
-    const result = applyPvpAction(state, 'uuid-a', { type: 'draw' }, roomPlayers);
+    const result = applyPvpAction(state, 'uuid-a', { type: 'draw' });
     expect(result.phase).toBe('discarding');
     expect(result.drawnCard).toEqual(card);
   });
@@ -153,7 +174,6 @@ describe('applyPvpAction — happy paths', () => {
     // Need 3 players so the claim-window stays open after one skip
     // (with 2 players, the only eligible claimer's skip auto-finalizes
     //  the window and clears claimResponses).
-    const threeRoomPlayers = makeRoomPlayers(['uuid-a', 'uuid-b', 'uuid-c']);
     const state = makeGameState({
       phase: 'claim-window',
       discardedByIndex: 0,
@@ -164,7 +184,7 @@ describe('applyPvpAction — happy paths', () => {
         makePlayer({ id: 'uuid-c' as any, isHuman: false }),
       ],
     });
-    const result = applyPvpAction(state, 'uuid-b', { type: 'skip-pong' }, threeRoomPlayers);
+    const result = applyPvpAction(state, 'uuid-b', { type: 'skip-pong' });
     expect(result.claimResponses).toContain('uuid-b');
     // uuid-c hasn't responded yet, so window is still open
     expect(result.phase).toBe('claim-window');

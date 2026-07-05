@@ -8,7 +8,6 @@ import {
   Player,
   PlayerId,
   BigFiveScores,
-  Dimension,
 } from '@/types';
 import { RoomPlayer, RoomSettings, PvpAction } from '@/types/pvp';
 import {
@@ -18,11 +17,9 @@ import {
   pongCard,
   selfPongCard,
   skipPong,
-  getDeclaredDimensions,
   markPlayerLeft,
 } from './game-logic';
 import { createShuffledDeck, dealCardsVariable } from './card-engine';
-import { getTargetCounts } from './scoring';
 
 // ── Initialize ───────────────────────────────────────────────────────────────
 
@@ -70,11 +67,14 @@ export function initializePvpGame(
 export function applyPvpAction(
   state: GameState,
   fromPlayerId: string,
-  action: PvpAction,
-  orderedPlayers: RoomPlayer[]
+  action: PvpAction
 ): GameState {
-  const playerIndex = orderedPlayers.findIndex(p => p.player_id === fromPlayerId);
-  const currentPlayerId = orderedPlayers[state.currentPlayerIndex]?.player_id;
+  // ⚠️ 索引一律以引擎自己的 state.players 為準（座位穩定，hasLeft 只標記
+  // 不刪位）。不能用房間名冊：玩家中途被剔除後名冊會縮短，用名冊算出的
+  // index 會錯位指到別人的座位（碰/胡動到別人的手牌、當前玩家被誤攔）。
+  const playerIndex = state.players.findIndex(p => p.id === fromPlayerId);
+  if (playerIndex < 0) return state;
+  const currentPlayerId = state.players[state.currentPlayerIndex]?.id;
 
   // Non-current-player can pong, skip-pong, hu, or leave during claim-window
   const isCurrentPlayer = fromPlayerId === currentPlayerId;
@@ -93,6 +93,9 @@ export function applyPvpAction(
     if (action.type === 'pong' && !inClaimWindow) return state;
     if (action.type === 'skip-pong' && !inClaimWindow) return state;
     if (action.type === 'self-pong' && !isCurrentPlayer) return state;
+    // 非當前玩家的「胡」只在 claim-window 內合法。窗口剛關閉時遲到的胡若放行，
+    // fail 分支會把當前玩家的 drawnCard 塞進胡失敗者手牌，並從錯誤座位推進回合。
+    if (action.type === 'hu' && !inClaimWindow && !isCurrentPlayer) return state;
     // 弃牌者不能「胡」自己刚打出的牌（claim-window 期间）——否则会被错误计入
     // claimResponses，扰乱窗口结算。自摸胡走的是 draw 路径，不经此处。
     if (action.type === 'hu' && inClaimWindow && playerIndex === state.discardedByIndex) return state;
@@ -104,8 +107,7 @@ export function applyPvpAction(
     (action.type === 'pong' || action.type === 'skip-pong' || action.type === 'hu') &&
     !isCurrentPlayer
   ) {
-    if (playerIndex < 0) return state;
-    const pid = orderedPlayers[playerIndex].player_id as PlayerId;
+    const pid = state.players[playerIndex].id;
     if (state.claimResponses.includes(pid)) return state;
   }
 

@@ -514,7 +514,15 @@ export default function PvpGamePage() {
             {gameState.winner === myId ? t.youWin : `${winner?.name ?? t.opponent} ${t.winSuffix}`}
           </h1>
           <div className="space-y-2">
-            {gameState.players.map((p, i) => (
+            {/* 名次排序與引擎 getRankings 同款：歸檔多者前，手牌少者前（此前按座位序標 #1-#4 會誤導）。
+                winner 置頂：正常終局 winner 本就是第一名（無影響）；「僅剩一人獲勝」結局
+                （markPlayerLeft last-standing）繞過 getRankings 定 winner，不置頂會與標題矛盾。 */}
+            {[...gameState.players]
+              .sort((a, b) =>
+                ((b.id === gameState.winner ? 1 : 0) - (a.id === gameState.winner ? 1 : 0)) ||
+                (b.declaredSets.length - a.declaredSets.length) ||
+                (a.handCount - b.handCount))
+              .map((p, i) => (
               <div key={p.id} className="flex items-center justify-center gap-3 text-sm">
                 <span className="text-[var(--psy-muted)]">#{i + 1}</span>
                 <span className={p.id === gameState.winner ? 'psy-serif font-medium text-[var(--psy-accent)]' : 'text-[var(--psy-ink-soft)]'}>
