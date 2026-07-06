@@ -470,9 +470,10 @@ function InteractiveSandbox({
       </div>
 
       {/* 牌桌 */}
-      <div className="space-y-4 rounded-[1.4rem] border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] p-4">
-        {/* 歸檔區 */}
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+      <div className="space-y-3 rounded-[1.4rem] border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] p-4">
+        {/* 歸檔區（min-h 鎖行高：「（暫無）」純文字與 chip 高度差 ~3px，
+            會讓下方整體微移） */}
+        <div className="flex min-h-[23px] flex-wrap items-center gap-2 text-xs">
           <span className="text-[var(--psy-muted)]">{s.publicArchiveLabel}</span>
           {op === 'hu' ? (
             <>
@@ -514,10 +515,58 @@ function InteractiveSandbox({
           )}
         </div>
 
+        {/* ── 操作區等高槽位 ──────────────────────────────────────────
+            所有步驟的操作 UI（橫幅/牌堆/按鈕排/面板）疊進同一個 grid 格；
+            旁邊疊兩個 invisible 的「最高步影子」（自摸碰選維度 / 食胡卡）
+            一起撐高 → 槽位高度恆等於最高步，且隨語言斷行自動適配。
+            效果：目標板和手牌的 Y 位置在所有步驟間恆定，不再被新面板
+            頂出視窗、視窗不再忽高忽低（核心痛點）。新增更高的步驟時，
+            把它的結構補成第三個影子即可。 */}
+        <div className="grid">
+          {/* 影子 A：自摸碰步 = 橫幅 + 選維度面板（僅複製佔位結構，不可交互） */}
+          <div aria-hidden className="invisible pointer-events-none col-start-1 row-start-1 space-y-3">
+            <div className="rounded-xl py-1.5 text-center">
+              <span className="psy-serif text-base font-black tracking-[0.18em]">{s.opSelfPong}</span>
+            </div>
+            <div className="flex flex-col items-center gap-2 rounded-xl border px-3 py-2 text-xs">
+              <span>{s.pongStep1}</span>
+              <div className="flex flex-wrap justify-center gap-2">
+                {DIMENSIONS.map((d) => (
+                  <button key={d} disabled tabIndex={-1} className="psy-btn px-3 py-1.5 text-[11px] font-bold">
+                    {dimName(d)}
+                  </button>
+                ))}
+              </div>
+              <button disabled tabIndex={-1} className="psy-btn psy-btn-ghost px-3 py-1 text-[10px]">{s.btnCancel}</button>
+            </div>
+          </div>
+          {/* 影子 B：食胡步 = 橫幅 + 食胡卡面板 */}
+          <div aria-hidden className="invisible pointer-events-none col-start-1 row-start-1 space-y-3">
+            <div className="rounded-xl py-1.5 text-center">
+              <span className="psy-serif text-base font-black tracking-[0.18em]">{s.opHu}</span>
+            </div>
+            <div className="grid gap-3 rounded-xl border p-3 text-xs sm:grid-cols-[auto_1fr]">
+              <div className="flex justify-center">
+                <TarotCard {...cardToTarotProps(locCard(HU_DISCARD, loc), loc)} revealedDimension="N" width={73} />
+              </div>
+              <div className="flex flex-col justify-center gap-2">
+                <div>
+                  <div className="psy-serif text-sm">{s.huWho}</div>
+                  <div className="mt-1 leading-6">{s.huBody(dimName('N'))}</div>
+                </div>
+                <button disabled tabIndex={-1} className="psy-btn psy-btn-danger self-start px-5 py-2 text-sm font-bold">
+                  {s.btnHu}
+                </button>
+              </div>
+            </div>
+          </div>
+          {/* 真實內容：垂直居中在槽位裏（矮步驟上下留白，視覺穩定） */}
+          <div className="col-start-1 row-start-1 flex flex-col justify-center gap-3">
+
         {/* 操作大標題（自摸碰／截胡碰／食胡）——做成醒目章節標題，起區分作用，非按鈕 */}
         {op && (
           <div
-            className="rounded-xl py-2.5 text-center shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
+            className="rounded-xl py-1.5 text-center shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
             style={
               op === 'self'
                 ? { background: 'linear-gradient(180deg,rgba(214,170,98,0.96),rgba(200,155,93,0.96))', color: '#1a1206' }
@@ -526,7 +575,7 @@ function InteractiveSandbox({
                 : { background: 'linear-gradient(180deg,rgba(224,104,86,0.96),rgba(214,90,72,0.96))', color: '#fff' }
             }
           >
-            <span className="psy-serif text-lg font-black tracking-[0.18em]">
+            <span className="psy-serif text-base font-black tracking-[0.18em]">
               {op === 'self' ? s.opSelfPong : op === 'claim' ? s.opClaim : s.opHu}
             </span>
           </div>
@@ -585,7 +634,7 @@ function InteractiveSandbox({
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center gap-3 rounded-xl border border-[rgba(200,155,93,0.28)] bg-[rgba(200,155,93,0.08)] px-3 py-3 text-xs text-[var(--psy-accent)]"
+            className="flex flex-col items-center gap-2 rounded-xl border border-[rgba(200,155,93,0.28)] bg-[rgba(200,155,93,0.08)] px-3 py-2 text-xs text-[var(--psy-accent)]"
           >
             <span>{s.pongStep1}</span>
             <div className="flex flex-wrap justify-center gap-2">
@@ -698,10 +747,12 @@ function InteractiveSandbox({
           </motion.div>
         )}
 
-        {/* 目標板：緊貼手牌上方，方便對照「目標張數」與手牌 */}
-        {op && (
-          <TargetBoard label={s.targetBoardLabel} activeDim={op === 'claim' ? state.claimDim : 'N'} dimName={dimName} />
-        )}
+          </div>
+        </div>
+
+        {/* 目標板：常駐渲染（原本只在操作階段出現——它一出現/消失就會把
+            手牌上下推，破壞「手牌位置恆定」；開局就展示目標張數也更直觀）。 */}
+        <TargetBoard label={s.targetBoardLabel} activeDim={op === 'claim' ? state.claimDim : 'N'} dimName={dimName} />
 
         {/* 手牌 */}
         <div>
@@ -715,6 +766,9 @@ function InteractiveSandbox({
           </div>
           {renderHand()}
         </div>
+
+        {/* 手牌下方按鈕排：恆佔一行高度，按鈕出現/消失時面板底部不再忽高忽低 */}
+        <div className="flex min-h-[46px] flex-col justify-center">
 
         {/* 棄牌確認：選了一張後出現「棄牌」按鈕 */}
         {state.scene === 'discard-confirm' && (
@@ -745,6 +799,7 @@ function InteractiveSandbox({
             </button>
           </div>
         )}
+        </div>
       </div>
 
     </motion.div>
@@ -1324,14 +1379,18 @@ export default function TutorialPage() {
   const dimName: DimName = (dim) => (loc === 'en' ? DIMENSION_META[dim].nameEn : DIMENSION_META[dim].name);
 
   return (
-    <div className="flex flex-1 flex-col items-center px-4 py-8 sm:px-6 sm:py-10">
-      <div className="w-full max-w-4xl space-y-6 sm:space-y-8">
+    <div className={`flex flex-1 flex-col items-center px-4 sm:px-6 ${mode === 'sandbox' ? 'py-3 sm:py-4' : 'py-8 sm:py-10'}`}>
+      <div className={`w-full max-w-4xl ${mode === 'sandbox' ? 'space-y-3' : 'space-y-6 sm:space-y-8'}`}>
+        {/* 沙盒模式頁頭壓縮：大標題+eyebrow ≈ 150px 縱向空間，正是「自摸碰步
+            手牌第二行被指引欄蓋住」的元兇之一——沙盒裏收成一行小標題。 */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="psy-serif text-[11px] uppercase tracking-[0.42em] text-[var(--psy-ink-soft)] sm:text-xs">
-              {s.eyebrow}
-            </p>
-            <h1 className="psy-serif text-3xl text-[var(--psy-ink)] sm:text-5xl">
+            {mode !== 'sandbox' && (
+              <p className="psy-serif text-[11px] uppercase tracking-[0.42em] text-[var(--psy-ink-soft)] sm:text-xs">
+                {s.eyebrow}
+              </p>
+            )}
+            <h1 className={`psy-serif text-[var(--psy-ink)] ${mode === 'sandbox' ? 'text-xl sm:text-2xl' : 'text-3xl sm:text-5xl'}`}>
               {s.title}
             </h1>
           </div>
