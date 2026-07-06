@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useReducer, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TarotCard } from '@/components/game/TarotCard';
@@ -273,21 +273,30 @@ function createReducer(s: TutStrings, dimName: DimName) {
 }
 
 function InteractiveSandbox({
-  onClose,
   onComplete,
   s,
   dimName,
   loc,
+  resetSignal,
 }: {
-  onClose: () => void;
   onComplete: () => void;
   s: TutStrings;
   dimName: DimName;
   loc: Locale;
+  // 頁頭「重置」按鈕的信號（重置/退出已合併進頁頭標題行，省一行面板頭）。
+  // 每 +1 觸發一次 reset dispatch。
+  resetSignal: number;
 }) {
   const reducer = useMemo(() => createReducer(s, dimName), [s, dimName]);
   const [state, dispatch] = useReducer(reducer, initialState);
   const [introSeen, setIntroSeen] = useState(false);
+  const prevResetRef = useRef(resetSignal);
+  useEffect(() => {
+    if (prevResetRef.current !== resetSignal) {
+      prevResetRef.current = resetSignal;
+      dispatch({ type: 'reset' });
+    }
+  }, [resetSignal]);
   const N = DIMENSION_META.N;
   const archived = state.chosenDim ? DIMENSION_META[state.chosenDim] : N;
   const claimed = state.claimDim ? DIMENSION_META[state.claimDim] : DIMENSION_META.A;
@@ -449,25 +458,8 @@ function InteractiveSandbox({
       transition={{ duration: 0.3 }}
       className="psy-panel psy-etched relative z-40 rounded-[1.8rem] p-5 pb-8 sm:p-7 sm:pb-8 mb-44"
     >
-      <div className="mb-4 flex items-center justify-between">
-        <span className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-muted)]">
-          {s.sandboxLabel}
-        </span>
-        <div className="flex gap-3">
-          <button
-            onClick={() => dispatch({ type: 'reset' })}
-            className="text-xs text-[var(--psy-muted)] underline underline-offset-4 hover:text-[var(--psy-ink-soft)]"
-          >
-            {s.sandboxReset}
-          </button>
-          <button
-            onClick={onClose}
-            className="text-xs text-[var(--psy-muted)] underline underline-offset-4 hover:text-[var(--psy-ink-soft)]"
-          >
-            {s.sandboxExit}
-          </button>
-        </div>
-      </div>
+      {/* 面板頭（「交互式沙盒」標籤 + 重置/退出鏈接行）已刪：太佔縱向空間，
+          重置/退出按鈕合併進了頁頭標題行（見父組件 mode==='sandbox' 分支）。 */}
 
       {/* 牌桌 */}
       <div className="space-y-3 rounded-[1.4rem] border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] p-4">
@@ -1376,6 +1368,8 @@ function StartFlowGuide({ s }: { s: TutStrings }) {
 export default function TutorialPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'list' | 'sandbox'>('list');
+  // 沙盒重置信號：頁頭「重置」按鈕 +1，InteractiveSandbox 監聽後 dispatch reset。
+  const [sandboxResetSignal, setSandboxResetSignal] = useState(0);
   const hydrated = useHydrated();
   const locale = useLocaleStore((st) => st.locale);
   const loc: Locale = hydrated ? locale : 'zh';
@@ -1400,18 +1394,39 @@ export default function TutorialPage() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.push('/rules')}
-              className="psy-btn flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
-            >
-              {s.rulesHardcopy}
-            </button>
-            <button
-              onClick={() => router.push('/')}
-              className="psy-btn psy-btn-ghost flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
-            >
-              {s.backHome}
-            </button>
+            {mode === 'sandbox' ? (
+              <>
+                {/* 沙盒模式：重置/退出合併進頁頭（原沙盒面板頭一整行已刪，省縱向空間）。
+                    規則/返回首頁在沙盒裏用不上，退出後仍可達。 */}
+                <button
+                  onClick={() => setSandboxResetSignal((n) => n + 1)}
+                  className="psy-btn flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
+                >
+                  {s.sandboxReset}
+                </button>
+                <button
+                  onClick={() => setMode('list')}
+                  className="psy-btn psy-btn-ghost flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
+                >
+                  {s.sandboxExit}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => router.push('/rules')}
+                  className="psy-btn flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
+                >
+                  {s.rulesHardcopy}
+                </button>
+                <button
+                  onClick={() => router.push('/')}
+                  className="psy-btn psy-btn-ghost flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
+                >
+                  {s.backHome}
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -1479,7 +1494,7 @@ export default function TutorialPage() {
         )}
 
         <AnimatePresence mode="wait">
-          {mode === 'sandbox' && <InteractiveSandbox onClose={() => setMode('list')} onComplete={() => router.push('/')} s={s} dimName={dimName} loc={loc} />}
+          {mode === 'sandbox' && <InteractiveSandbox onComplete={() => router.push('/')} s={s} dimName={dimName} loc={loc} resetSignal={sandboxResetSignal} />}
         </AnimatePresence>
       </div>
     </div>
