@@ -838,20 +838,25 @@ function InteractiveSandbox({
             {captionByScene[state.scene]}
           </motion.p>
         </div>
-        <AnimatePresence>
-          {state.feedback && (
-            <motion.p
-              key={state.feedback.text}
-              initial={{ opacity: 0, y: 3 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.22 }}
-              className={`rounded-lg border px-3 py-2 text-sm leading-6 ${feedbackToneClass}`}
-            >
-              {state.feedback.text}
-            </motion.p>
-          )}
-        </AnimatePresence>
+        {/* 旁白框：min-h 鎖一行高度（有無旁白欄高都不變，貼底欄不再上下彈）；
+            mode="wait" 讓舊句完全退場後新句再進——默認 sync 模式會新舊同屏疊放
+            ~220ms，欄高瞬間翻倍、舊句一閃而過（錄屏裏的「一閃一閃」）。 */}
+        <div className="min-h-[40px]">
+          <AnimatePresence mode="wait">
+            {state.feedback && (
+              <motion.p
+                key={state.feedback.text}
+                initial={{ opacity: 0, y: 3 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className={`rounded-lg border px-3 py-2 text-sm leading-6 ${feedbackToneClass}`}
+              >
+                {state.feedback.text}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
     </>
