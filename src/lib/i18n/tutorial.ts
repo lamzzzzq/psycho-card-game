@@ -257,6 +257,9 @@ export const TUTORIAL_T = {
       `自摸碰失敗：${reason}。真實遊戲會罰停一回合（下次輪到你時自動跳過），並公開你剛剛押錯的牌。`,
     fbContinueAfterFail: (name: string, cnt: number) => `試試這次只選 ${cnt} 張「${name}」（高亮的牌）。`,
     fbPickDiscard: '出牌完成。現在切到別人棄牌時，你如何響應「碰 / 食胡」。',
+    fbOpenClaimDim: (name: string) => `對手棄出一張線索牌。截胡碰同樣先選定要歸檔的維度——選高亮的「${name}」。`,
+    captionClaimDim: (name: string) =>
+      `別人棄牌後的判讀窗口：和自摸碰一樣，先點高亮的「${name}」選定歸檔維度。`,
     fbOpenClaim: (name: string) => `對手棄出一張「${name}」線索牌。從手牌選 2 張「${name}」，加這張棄牌湊成一組。`,
     fbClaimFail: (name: string, picked: number) =>
       `截胡碰需要正好 2 張「${name}」手牌（已選 ${picked}）。真實遊戲選錯會判失敗並罰停一回合。`,
@@ -558,6 +561,9 @@ export const TUTORIAL_T = {
       `Self-draw Pong failed: ${reason}. In a real game you would be frozen for one turn (your next turn auto-skipped) and the cards you wrongly bet would be revealed.`,
     fbContinueAfterFail: (name: string, cnt: number) => `This time try selecting only the ${cnt} "${name}" cards (the highlighted ones).`,
     fbPickDiscard: 'Discard done. Now switching to how you respond with "Pong / Win" when someone else discards.',
+    fbOpenClaimDim: (name: string) => `An opponent discarded a clue card. Like Self-draw Pong, first choose the dimension to declare — pick the highlighted "${name}".`,
+    captionClaimDim: (name: string) =>
+      `The read window after a discard: just like Self-draw Pong, first tap the highlighted "${name}" to choose the dimension.`,
     fbOpenClaim: (name: string) => `An opponent discarded a "${name}" clue card. Pick 2 "${name}" cards from your hand, plus this discard to complete a set.`,
     fbClaimFail: (name: string, picked: number) =>
       `Claim Pong needs exactly 2 "${name}" cards in hand (selected ${picked}). In a real game a wrong pick fails and freezes you for one turn.`,

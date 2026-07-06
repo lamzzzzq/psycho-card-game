@@ -84,6 +84,7 @@ type Scene =
   | 'pong-success'     // 自摸碰成功，等選棄牌
   | 'discard-confirm'  // 選了一張要棄的牌，等點「棄牌」
   | 'turn-done'        // 本回合結束
+  | 'claim-dimension'  // 截胡碰：先選人格維度（教學步，真實對局中維度隱含於棄牌）
   | 'claim-window'     // 對手棄牌，等碰
   | 'claim-success'    // 截胡碰成功
   | 'hu-window'        // 食胡課：四維已歸檔，對手打出缺的那張
@@ -93,7 +94,7 @@ type Scene =
 type OpGroup = 'self' | 'claim' | 'hu' | null;
 function opOf(scene: Scene): OpGroup {
   if (scene === 'after-draw' || scene === 'pong-dimension' || scene === 'pong-picking' || scene === 'pong-success' || scene === 'discard-confirm') return 'self';
-  if (scene === 'claim-window' || scene === 'claim-success') return 'claim';
+  if (scene === 'claim-dimension' || scene === 'claim-window' || scene === 'claim-success') return 'claim';
   if (scene === 'hu-window' || scene === 'hu-success') return 'hu';
   return null;
 }
@@ -140,6 +141,7 @@ type Action =
   | { type: 'confirm-discard' }
   | { type: 'cancel-discard' }
   | { type: 'open-claim' }
+  | { type: 'choose-claim-dim'; dim: Dimension }
   | { type: 'commit-claim' }
   | { type: 'enter-hu' }
   | { type: 'commit-hu' }
@@ -235,7 +237,14 @@ function createReducer(s: TutStrings, dimName: DimName) {
         if (!c.isDummy && 'dimension' in c) counts[c.dimension] = (counts[c.dimension] ?? 0) + 1;
       }
       const claimDim = (DIMENSIONS.find((d) => (counts[d] ?? 0) >= 2) ?? 'C') as Dimension;
-      return { ...state, scene: 'claim-window', selectedIds: [], claimDim, feedback: { tone: 'info', text: s.fbOpenClaim(dimName(claimDim)) } };
+      // 教學步：先選維度再選牌（與自摸碰第一步同構）。真實對局中碰的維度
+      // 隱含於棄牌本身，這裏顯式選一次是爲了讓流程肌肉記憶一致。
+      return { ...state, scene: 'claim-dimension', selectedIds: [], claimDim, feedback: { tone: 'info', text: s.fbOpenClaimDim(dimName(claimDim)) } };
+    }
+    case 'choose-claim-dim': {
+      if (state.scene !== 'claim-dimension' || !state.claimDim) return state;
+      if (action.dim !== state.claimDim) return state; // 只開放正確維度（教學引導）
+      return { ...state, scene: 'claim-window', selectedIds: [], feedback: { tone: 'info', text: s.fbOpenClaim(dimName(state.claimDim)) } };
     }
     case 'commit-claim': {
       if (state.scene !== 'claim-window' || !state.claimDim) return state;
@@ -322,6 +331,9 @@ function InteractiveSandbox({
     'pong-success': s.captionPongSuccess,
     'discard-confirm': s.captionDiscardConfirm,
     'turn-done': s.captionDone,
+    'claim-dimension': state.claimDim
+      ? s.captionClaimDim(dimName(state.claimDim))
+      : s.captionClaimWindowFallback,
     'claim-window': state.claimDim
       ? s.captionClaimWindow(dimName(state.claimDim), state.selectedIds.length)
       : s.captionClaimWindowFallback,
@@ -673,6 +685,41 @@ function InteractiveSandbox({
               >
                 {s.btnSelfArchive}
               </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* 截胡碰第一步：選人格維度（教學步——只開放正確維度，引導點擊；
+            與自摸碰第一步同構，讓「碰=先選維度再選牌」的肌肉記憶一致） */}
+        {state.scene === 'claim-dimension' && state.claimDim && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid gap-3 rounded-xl border border-[rgba(63,174,159,0.32)] bg-[rgba(63,174,159,0.06)] p-3 text-xs text-[var(--psy-ink-soft)] sm:grid-cols-[auto_1fr]"
+          >
+            <div className="flex justify-center">
+              <TarotCard {...cardToTarotProps(locCard(CLAIM_CARDS[state.claimDim], loc), loc)} revealedDimension={state.claimDim} width={73} />
+            </div>
+            <div className="flex flex-col items-center justify-center gap-2">
+              <div className="psy-serif text-sm text-[var(--psy-ink)]">{s.claimWho}</div>
+              <span className="text-[rgba(102,212,196,0.95)]">{s.pongStep1}</span>
+              <div className="flex flex-wrap justify-center gap-2">
+                {DIMENSIONS.map((d) => {
+                  const meta = DIMENSION_META[d];
+                  const enabled = d === state.claimDim;
+                  return (
+                    <button
+                      key={d}
+                      disabled={!enabled}
+                      onClick={() => enabled && dispatch({ type: 'choose-claim-dim', dim: d })}
+                      className={`psy-btn px-3 py-1.5 text-[11px] font-bold ${enabled ? 'tut-spotlight' : 'opacity-30 cursor-not-allowed'}`}
+                      style={{ color: meta.colorHex, borderColor: meta.colorHex + '66' }}
+                    >
+                      {dimName(d)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </motion.div>
         )}
