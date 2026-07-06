@@ -768,21 +768,8 @@ export default function PvpGamePage() {
       {/* My player area */}
       {mePlayer && (
         <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
-          {/* Penalty banner — 真正 lockout 時顯示"罰停"，own-turn 解凍輪換成提示 */}
-          {meFrozenLockout && (
-            <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
-              <span>⛔</span>
-              <span className="hidden sm:inline">{t.penaltyLockoutFull}</span>
-              <span className="sm:hidden">{t.penaltyLockoutShort}</span>
-            </div>
-          )}
-          {meAwaitingOwnDischarge && (
-            <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-accent)] sm:text-sm">
-              <span>⏳</span>
-              <span className="hidden sm:inline">{t.thawFull}</span>
-              <span className="sm:hidden">{t.thawShort}</span>
-            </div>
-          )}
+          {/* 罰停橫幅 / 搶牌窗 / 查看 / 碰意圖面板已全部移入手牌上方的懸浮層
+              （見下方 Hand + Declared 前的錨點），不再插進文檔流把手牌往下推。 */}
           {/* Big Five scores */}
           <div className="hidden items-center justify-center gap-1.5 flex-wrap sm:flex">
             {DIMENSIONS.map(d => {
@@ -875,6 +862,31 @@ export default function PvpGamePage() {
             </div>
           </div>
 
+          {/* ── 懸浮操作層 ─────────────────────────────────────────────
+              罰停橫幅 / 搶牌窗 / 查看 / 碰意圖面板全部懸浮在操作排上方
+              （h-0 錨點 + absolute bottom 錨定；錨點必須在操作排之前——
+              否則面板會蓋住排裏的截胡/查看/AI回合按鈕），蓋住牌桌中央而不佔文檔流
+              —— 手牌位置在任何窗口彈出時都紋絲不動（牌類手游慣例做法）。 */}
+          <div className="relative z-30 h-0 overflow-visible">
+          <div className="pointer-events-none absolute inset-x-0 bottom-1 flex flex-col items-center">
+          <div className="pointer-events-auto w-full max-w-xl space-y-2 px-1">
+
+          {/* Penalty banner — 真正 lockout 時顯示"罰停"，own-turn 解凍輪換成提示 */}
+          {meFrozenLockout && (
+            <div className="psy-panel flex items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
+              <span>⛔</span>
+              <span className="hidden sm:inline">{t.penaltyLockoutFull}</span>
+              <span className="sm:hidden">{t.penaltyLockoutShort}</span>
+            </div>
+          )}
+          {meAwaitingOwnDischarge && (
+            <div className="psy-panel flex items-center justify-center gap-2 rounded-xl border border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-accent)] sm:text-sm">
+              <span>⏳</span>
+              <span className="hidden sm:inline">{t.thawFull}</span>
+              <span className="sm:hidden">{t.thawShort}</span>
+            </div>
+          )}
+
           {/* Claim window — opponent discarded. First-come-first-served:
               any non-discarder may pong / pass / hu. Whoever clicks
               first wins the race. */}
@@ -958,71 +970,6 @@ export default function PvpGamePage() {
                 </div>
               </>
               )}
-            </div>
-          )}
-
-          {/* Action buttons (my turn only) */}
-          {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && !viewMode && !pongIntent && (
-            <div className="flex shrink-0 flex-nowrap items-center justify-center gap-2 sm:gap-3">
-              {canDraw && (
-                <p className="psy-serif animate-pulse text-xs text-[var(--psy-accent)] sm:text-sm">{t.clickToDraw}</p>
-              )}
-              {isDiscarding && !gameState.drawnCard && (
-                <p className="psy-serif animate-pulse text-xs text-[var(--psy-accent)] sm:text-sm">
-                  {t.pongDoneDiscard}
-                </p>
-              )}
-              {canStartView && (
-                <button
-                  onClick={handleStartView}
-                  className="psy-btn psy-btn-ghost px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm"
-                  title={t.viewCardsTitle}
-                >
-                  🔍 {locale === 'en' ? `View ${viewCap}` : `查看 ${viewCap} 張`}（{viewUsedThisTurn ? '0' : '1'}/1）
-                </button>
-              )}
-              {viewUsedThisTurn && !viewMode && (
-                <span className="text-xs text-[var(--psy-muted)]">{t.viewUsed}</span>
-              )}
-              {!meFrozen && (
-                <button
-                  onClick={handleHu}
-                  className="psy-btn psy-btn-danger px-3 py-2 text-xs font-bold sm:px-5 sm:text-sm"
-                >
-                  {t.win}
-                </button>
-              )}
-              {/* Self-pong button — visible only on own turn. Stays
-                  enabled regardless of whether the player actually has
-                  matching cards; toggling on/off would leak "you have
-                  enough N-dim cards". Player decides, engine judges. */}
-              <button
-                onClick={() => {
-                  if (meFrozen || meAlreadySelfPonged) return;
-                  if (selfPongCandidates.length === 0) return;
-                  // 默認選第一個未歸檔維度，避免點擊「自摸碰」直接落到 trap 維度
-                  const defaultDim =
-                    selfPongCandidates.find((d) => !declaredDims.has(d)) ??
-                    selfPongCandidates[0];
-                  setPongIntent({ type: 'self', dimension: defaultDim });
-                  setSelectedCardIds([]);
-                }}
-                disabled={
-                  meFrozen ||
-                  meAlreadySelfPonged ||
-                  selfPongCandidates.length === 0
-                }
-                className="psy-btn psy-btn-accent px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35 sm:px-5 sm:text-sm"
-                title={
-                  meFrozen
-                    ? t.selfPongFrozen
-                    : meAlreadySelfPonged
-                    ? t.selfPongUsed
-                    : t.selfPongHint
-                }
-              >
-                {t.selfPong}
-              </button>
             </div>
           )}
 
@@ -1120,6 +1067,78 @@ export default function PvpGamePage() {
               </div>
             </div>
           )}
+
+          </div>
+          </div>
+          </div>
+
+          {/* Action buttons (my turn only) — 恆佔一行高度（min-h）：
+              按鈕隨回合出現/消失時手牌不再上下跳。 */}
+          <div className="flex min-h-[46px] shrink-0 flex-nowrap items-center justify-center gap-2 sm:gap-3">
+          {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && !viewMode && !pongIntent && (
+          <>
+            {canDraw && (
+              <p className="psy-serif animate-pulse text-xs text-[var(--psy-accent)] sm:text-sm">{t.clickToDraw}</p>
+            )}
+            {isDiscarding && !gameState.drawnCard && (
+              <p className="psy-serif animate-pulse text-xs text-[var(--psy-accent)] sm:text-sm">
+                {t.pongDoneDiscard}
+              </p>
+            )}
+            {canStartView && (
+              <button
+                onClick={handleStartView}
+                className="psy-btn psy-btn-ghost px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm"
+                title={t.viewCardsTitle}
+              >
+                🔍 {locale === 'en' ? `View ${viewCap}` : `查看 ${viewCap} 張`}（{viewUsedThisTurn ? '0' : '1'}/1）
+              </button>
+            )}
+            {viewUsedThisTurn && !viewMode && (
+              <span className="text-xs text-[var(--psy-muted)]">{t.viewUsed}</span>
+            )}
+            {!meFrozen && (
+              <button
+                onClick={handleHu}
+                className="psy-btn psy-btn-danger px-3 py-2 text-xs font-bold sm:px-5 sm:text-sm"
+              >
+                {t.win}
+              </button>
+            )}
+            {/* Self-pong button — visible only on own turn. Stays
+                enabled regardless of whether the player actually has
+                matching cards; toggling on/off would leak "you have
+                enough N-dim cards". Player decides, engine judges. */}
+            <button
+              onClick={() => {
+                if (meFrozen || meAlreadySelfPonged) return;
+                if (selfPongCandidates.length === 0) return;
+                // 默認選第一個未歸檔維度，避免點擊「自摸碰」直接落到 trap 維度
+                const defaultDim =
+                  selfPongCandidates.find((d) => !declaredDims.has(d)) ??
+                  selfPongCandidates[0];
+                setPongIntent({ type: 'self', dimension: defaultDim });
+                setSelectedCardIds([]);
+              }}
+              disabled={
+                meFrozen ||
+                meAlreadySelfPonged ||
+                selfPongCandidates.length === 0
+              }
+              className="psy-btn psy-btn-accent px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35 sm:px-5 sm:text-sm"
+              title={
+                meFrozen
+                  ? t.selfPongFrozen
+                  : meAlreadySelfPonged
+                  ? t.selfPongUsed
+                  : t.selfPongHint
+              }
+            >
+              {t.selfPong}
+            </button>
+          </>
+          )}
+          </div>
 
           {/* Hand + Declared */}
           <div className="flex flex-1 items-start justify-center gap-3 sm:gap-4">

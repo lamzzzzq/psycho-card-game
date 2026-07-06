@@ -611,21 +611,8 @@ export default function GamePage() {
 
       {/* Human player area */}
       <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
-        {/* Penalty banner — lockout 時顯示紅色"罰停"，own-turn 解凍輪顯示提示 */}
-        {humanFrozenLockout && (
-          <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
-            <span>⛔</span>
-            <span className="hidden sm:inline">{tg.penaltyLockoutFull}</span>
-            <span className="sm:hidden">{tg.penaltyLockoutShort}</span>
-          </div>
-        )}
-        {humanAwaitingOwnDischarge && (
-          <div className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-accent)] sm:text-sm">
-            <span>⏳</span>
-            <span className="hidden sm:inline">{tg.thawFull}</span>
-            <span className="sm:hidden">{tg.thawShort}</span>
-          </div>
-        )}
+        {/* 罰停橫幅 / 碰窗 / 查看 / 碰意圖面板已全部移入手牌上方的懸浮層
+            （見下方 Hand + Declared 區），不再插進文檔流把手牌往下推。 */}
         {/* Row 1: My personality scores */}
         <div className="hidden shrink-0 items-center justify-center gap-1.5 flex-wrap sm:flex">
           {DIMENSIONS.map((d) => {
@@ -706,6 +693,31 @@ export default function GamePage() {
           </div>
         </div>
 
+        {/* ── 懸浮操作層 ─────────────────────────────────────────────
+            罰停橫幅 / 碰窗 / 查看 / 碰意圖面板全部懸浮在操作排上方
+            （h-0 錨點 + absolute bottom 錨定；錨點必須在操作排之前——
+            否則面板會蓋住排裏的截胡/查看/AI回合按鈕），蓋住牌桌中央而不佔文檔流
+            —— 手牌位置在任何窗口彈出時都紋絲不動（牌類手游慣例做法）。 */}
+        <div className="relative z-30 h-0 overflow-visible">
+          <div className="pointer-events-none absolute inset-x-0 bottom-1 flex flex-col items-center">
+            <div className="pointer-events-auto w-full max-w-xl space-y-2 px-1">
+
+        {/* Penalty banner — lockout 時顯示紅色"罰停"，own-turn 解凍輪顯示提示 */}
+        {humanFrozenLockout && (
+          <div className="psy-panel flex items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
+            <span>⛔</span>
+            <span className="hidden sm:inline">{tg.penaltyLockoutFull}</span>
+            <span className="sm:hidden">{tg.penaltyLockoutShort}</span>
+          </div>
+        )}
+        {humanAwaitingOwnDischarge && (
+          <div className="psy-panel flex items-center justify-center gap-2 rounded-xl border border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-accent)] sm:text-sm">
+            <span>⏳</span>
+            <span className="hidden sm:inline">{tg.thawFull}</span>
+            <span className="sm:hidden">{tg.thawShort}</span>
+          </div>
+        )}
+
         {/* Pong panel — first-come-first-served: any non-discarder may
             attempt pong (race resolves naturally). Hidden when the human
             is pong-fail frozen so the panel never offers an action that
@@ -723,83 +735,6 @@ export default function GamePage() {
               locale={locale}
             />
           )}
-
-        {/* Action buttons */}
-        {!viewMode && !pongIntent && (
-          <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 sm:gap-3">
-            {/* Hu button — visible on own turn, or during an opponent's
-                claim-window ("跳着胡"). Hidden when the human has already
-                responded to this claim window. */}
-            {canHu && (
-              <button
-                onClick={handleHu}
-                className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
-              >
-                {tg.win}
-              </button>
-            )}
-
-            {/* Self-pong button — visible only on own turn (claim-window
-                pong is handled by the floating PongPanel). Stays enabled
-                regardless of whether the player actually has the cards —
-                we don't want to leak "you can pong dim X" by toggling
-                the button. The player decides; the engine judges. */}
-            {isHumanTurn && game.phase !== 'claim-window' && (
-              <button
-                onClick={() => {
-                  if (humanPlayer.selfPongUsedThisTurn || humanFrozen) return;
-                  if (selfPongCandidates.length === 0) return;
-                  // 默認選第一個未歸檔維度，防止誤觸 trap
-                  const defaultDim =
-                    selfPongCandidates.find((d) => !declaredDims.has(d)) ??
-                    selfPongCandidates[0];
-                  setPongIntent({ type: 'self', dimension: defaultDim });
-                  setSelectedCardIds([]);
-                }}
-                disabled={
-                  humanFrozen ||
-                  !!humanPlayer.selfPongUsedThisTurn ||
-                  selfPongCandidates.length === 0
-                }
-                className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
-                title={
-                  humanFrozen
-                    ? tg.selfPongFrozen
-                    : humanPlayer.selfPongUsedThisTurn
-                    ? tg.selfPongUsed
-                    : tg.selfPongHint
-                }
-              >
-                {tg.selfPong}
-              </button>
-            )}
-
-            {isHumanTurn && isDiscarding && !viewUsedThisTurn && (
-              <button
-                onClick={() => { setViewMode(true); setPickedViewIds([]); }}
-                className="psy-btn psy-btn-ghost px-4 py-2 text-sm font-medium"
-                title={tg.viewCardsTitle}
-              >
-                🔍 {tg.viewTwoCards}（1/1）
-              </button>
-            )}
-            {isHumanTurn && isDiscarding && viewUsedThisTurn && (
-              <span className="text-xs text-[var(--psy-muted)]">{tg.viewUsed}</span>
-            )}
-
-            {/* AI turn button */}
-            {!isHumanTurn && game.phase !== 'game-over' && game.phase !== 'claim-window' && (
-              <button
-                onClick={runOneAITurn}
-                disabled={aiRunning}
-                className="psy-btn psy-btn-accent px-6 py-2 text-sm font-medium"
-              >
-                {game.players[game.currentPlayerIndex].avatar}{' '}
-                {game.players[game.currentPlayerIndex].name}{tg.turnOf} — {tg.clickToRun}
-              </button>
-            )}
-          </div>
-        )}
 
         {viewMode && (
           <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
@@ -907,6 +842,90 @@ export default function GamePage() {
             </div>
           </div>
         )}
+
+            </div>
+          </div>
+        </div>
+
+        {/* Action buttons — 恆佔一行高度（min-h）：按鈕隨回合出現/消失時
+            手牌不再上下跳。面板打開時內容隱藏但行高保留。 */}
+        <div className="flex min-h-[46px] shrink-0 flex-wrap items-center justify-center gap-2 sm:gap-3">
+          {!viewMode && !pongIntent && (
+          <>
+            {/* Hu button — visible on own turn, or during an opponent's
+                claim-window ("跳着胡"). Hidden when the human has already
+                responded to this claim window. */}
+            {canHu && (
+              <button
+                onClick={handleHu}
+                className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
+              >
+                {tg.win}
+              </button>
+            )}
+
+            {/* Self-pong button — visible only on own turn (claim-window
+                pong is handled by the floating PongPanel). Stays enabled
+                regardless of whether the player actually has the cards —
+                we don't want to leak "you can pong dim X" by toggling
+                the button. The player decides; the engine judges. */}
+            {isHumanTurn && game.phase !== 'claim-window' && (
+              <button
+                onClick={() => {
+                  if (humanPlayer.selfPongUsedThisTurn || humanFrozen) return;
+                  if (selfPongCandidates.length === 0) return;
+                  // 默認選第一個未歸檔維度，防止誤觸 trap
+                  const defaultDim =
+                    selfPongCandidates.find((d) => !declaredDims.has(d)) ??
+                    selfPongCandidates[0];
+                  setPongIntent({ type: 'self', dimension: defaultDim });
+                  setSelectedCardIds([]);
+                }}
+                disabled={
+                  humanFrozen ||
+                  !!humanPlayer.selfPongUsedThisTurn ||
+                  selfPongCandidates.length === 0
+                }
+                className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
+                title={
+                  humanFrozen
+                    ? tg.selfPongFrozen
+                    : humanPlayer.selfPongUsedThisTurn
+                    ? tg.selfPongUsed
+                    : tg.selfPongHint
+                }
+              >
+                {tg.selfPong}
+              </button>
+            )}
+
+            {isHumanTurn && isDiscarding && !viewUsedThisTurn && (
+              <button
+                onClick={() => { setViewMode(true); setPickedViewIds([]); }}
+                className="psy-btn psy-btn-ghost px-4 py-2 text-sm font-medium"
+                title={tg.viewCardsTitle}
+              >
+                🔍 {tg.viewTwoCards}（1/1）
+              </button>
+            )}
+            {isHumanTurn && isDiscarding && viewUsedThisTurn && (
+              <span className="text-xs text-[var(--psy-muted)]">{tg.viewUsed}</span>
+            )}
+
+            {/* AI turn button */}
+            {!isHumanTurn && game.phase !== 'game-over' && game.phase !== 'claim-window' && (
+              <button
+                onClick={runOneAITurn}
+                disabled={aiRunning}
+                className="psy-btn psy-btn-accent px-6 py-2 text-sm font-medium"
+              >
+                {game.players[game.currentPlayerIndex].avatar}{' '}
+                {game.players[game.currentPlayerIndex].name}{tg.turnOf} — {tg.clickToRun}
+              </button>
+            )}
+          </>
+          )}
+          </div>
 
         {/* Hand + Declared cards */}
         <div className="flex flex-1 items-start justify-center gap-3 sm:gap-4">
