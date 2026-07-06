@@ -1,0 +1,6 @@
+# remotion-video 是独立的视频渲染工程（sandbox 走查视频），有自己的依赖；
+# vercel CLI 手动部署会上传整个本地目录，不隔离会被 Next.js typecheck 扫到
+# （@remotion/* 依赖在云端没装 → 构建失败）。主站构建不需要它。
+remotion-video
+card-art-src
+scripts/load-test/results
