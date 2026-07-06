@@ -15,7 +15,7 @@ export const KNOWLEDGE_CARDS: KnowledgeCard[] = [
   { term: 'Behavioural Perspective', definition: 'Behavioral patterns learned entirely through external rewards and punishments.', termZh: '行為主義觀點', definitionZh: '行為模式主要由外在獎賞與懲罰所習得。' },
   { term: 'Social-Cognitive Theory', definition: 'How mental processes and social environments interact to guide behavior.', termZh: '社會認知理論', definitionZh: '探討心理歷程與社會環境如何交互作用以引導行為。' },
   { term: 'Trait Theory', definition: 'Views personality as a configuration of stable, measurable traits.', termZh: '特質理論', definitionZh: '認為人格是由穩定且可測量的特質所組成。' },
-  { term: "Erikson's Stages of Development", definition: 'Eight lifelong developmental stages centered on unique psychosocial crises.', termZh: '艾瑞克森的心理社會發展階段', definitionZh: '一生包含八個以獨特心理社會危機為核心的發展階段。' },
+  { term: "Erikson's Psychosocial Stages of Development", definition: 'Eight lifelong developmental stages centered on unique psychosocial crises.', termZh: '艾瑞克森的心理社會發展階段', definitionZh: '一生包含八個以獨特心理社會危機為核心的發展階段。' },
   { term: 'Temperament', definition: 'Innate, biological tendencies shaping how we emotionally react and adapt.', termZh: '氣質', definitionZh: '塑造情緒反應與適應方式的先天生物傾向。' },
   { term: 'Traits', definition: 'Stable, enduring tendencies to think, feel, and behave in specific ways.', termZh: '特質', definitionZh: '穩定且持久的思考、感受與行為傾向。' },
   { term: 'Personality', definition: "An individual's unique, enduring pattern of thinking, feeling, and acting.", termZh: '人格', definitionZh: '個體獨特且持久的思考、情感與行為模式。' },
