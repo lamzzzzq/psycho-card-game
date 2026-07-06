@@ -51,15 +51,11 @@ export function PlayerHand({
   const rawCards = drawnCard ? [drawnCard, ...cards] : cards;
   const drawnCardId = drawnCard?.id ?? null;
 
-  // Cheat mode: hold Shift to reveal dimensions (debug — does not persist)
-  const [cheatMode, setCheatMode] = useState(false);
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => { if (e.key === 'Shift') setCheatMode(true); };
-    const up = (e: KeyboardEvent) => { if (e.key === 'Shift') setCheatMode(false); };
-    window.addEventListener('keydown', down);
-    window.addEventListener('keyup', up);
-    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
-  }, []);
+  // [已移除] Shift 作弊模式（按住 Shift 顯示全部維度）。移除原因：
+  //   1) 課堂上按住 Shift 就能破解半公開/隱藏模式（作弊漏洞）；
+  //   2) Shift 是無意識高頻按鍵（輸入法切換/大寫/截圖 Cmd+Shift+4），按住時
+  //      焦點被搶走會丟 keyup → 卡在全明牌狀態，即用戶報的
+  //      「level 2 玩着玩着突然顯示所有牌」。調試需要時走 card-lab。
 
   // Two-step discard: click a card to pick it (highlight), then press
   // the 出牌 button (or click the same card again) to actually discard.
@@ -82,7 +78,6 @@ export function PlayerHand({
 
   function getRevealed(card: GameCard): Dimension | null {
     if (!isPersonalityCard(card)) return null;
-    if (cheatMode) return card.dimension;
     if (viewedCardIds.includes(card.id)) return card.dimension;
     return null;
   }
@@ -126,12 +121,9 @@ export function PlayerHand({
           {t.selectSameDim}
         </motion.p>
       )}
-      {viewMode && (
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-          {t.pickViewHand}（{pickedViewIds.length}/2）
-        </motion.p>
-      )}
+      {/* viewMode 不再渲染自己的提示行：兩個調用方（單機/PVP 頁面）都有
+          自己的面板（含 n/cap 計數），這裏再顯示一條寫死 /2 的會跟 PVP
+          半公開檔的 /4 打架（用戶實測截圖裏兩行提示同屏、數字矛盾）。 */}
 
       {/* 固定 4 列 + 居中限宽（同 lab 观感）；卡片填满单元，不再封顶成小卡 */}
       <div className="mx-auto grid w-full max-w-[28rem] grid-cols-4 gap-x-2 gap-y-3">

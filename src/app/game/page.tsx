@@ -226,7 +226,17 @@ export default function GamePage() {
     if (!game) return;
     if (aiRunning) return;
     if (game.phase !== 'claim-window') return;
-    if (game.discardedByIndex !== 0) return;
+    // AI 響應窗口的驅動條件：人類已經「表過態」——
+    //   a) 人類是棄牌者（本來就不參與響應），或
+    //   b) 人類已在 claimResponses 裏（點過按鈕，或被罰停時由
+    //      autoSkipPenalizedClaimers 自動補了跳過）。
+    // 之前只驅動 (a)：人類被罰停時 AI 棄牌開窗 → 人類被引擎自動跳過、
+    // UI 也沒按鈕可點 → 沒有任何路徑去跑 resolvePongWindow → 全桌永久卡死。
+    const humanId = game.players[0]?.id;
+    const humanDone =
+      game.discardedByIndex === 0 ||
+      (humanId != null && game.claimResponses.includes(humanId));
+    if (!humanDone) return;
 
     const timer = window.setTimeout(async () => {
       setAiRunning(true);
@@ -238,7 +248,7 @@ export default function GamePage() {
     }, 320);
 
     return () => window.clearTimeout(timer);
-  }, [game?.phase, game?.discardedByIndex, game?.pendingDiscard?.id, aiRunning, resolvePongWindow, game]);
+  }, [game?.phase, game?.discardedByIndex, game?.pendingDiscard?.id, game?.claimResponses.length, aiRunning, resolvePongWindow, game]);
 
   const showBanner = (success: boolean, message: string) => {
     setResultBanner({ success, message });

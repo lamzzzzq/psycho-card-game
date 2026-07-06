@@ -196,7 +196,7 @@ export const STRINGS = {
       selfArchive: '自摸歸檔',
       archiveJudge: '歸檔判定',
       // View-cards panel
-      viewPickPrompt: '選 2 張你想要查看的手牌',
+      viewPickPrompt: '選擇你想要查看的手牌', // 張數由旁邊 n/cap 計數器表達（半公開4/隱藏2），文字不寫死
       view: '查看',
       // Round info (desktop)
       roundWord: '輪',
@@ -247,7 +247,6 @@ export const STRINGS = {
       confirmDiscardHint: '點「提交棄牌」確認（再次點擊該牌可取消選中）',
       submitDiscard: '提交棄牌',
       selectSameDim: '選出你認爲屬於同一人格線索的牌',
-      pickViewHand: '選出 2 張你想要查看的手牌',
       newDraw: '新抽',
       // relative time suffixes (DiscardPile)
       ago: '前',
@@ -571,7 +570,7 @@ export const STRINGS = {
       selfArchive: 'Self-Archive',
       archiveJudge: 'Archive',
       // View-cards panel
-      viewPickPrompt: 'Pick 2 hand cards you want to view',
+      viewPickPrompt: 'Pick the hand cards you want to view',
       view: 'View',
       // Round info (desktop)
       roundWord: 'Round',
@@ -622,7 +621,6 @@ export const STRINGS = {
       confirmDiscardHint: 'Tap “Discard” to confirm (tap the card again to deselect)',
       submitDiscard: 'Discard',
       selectSameDim: 'Pick the cards you believe share the same personality clue',
-      pickViewHand: 'Pick 2 hand cards you want to view',
       newDraw: 'NEW',
       // relative time suffixes (DiscardPile)
       ago: 'ago',
