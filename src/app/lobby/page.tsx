@@ -9,7 +9,7 @@ import { useHydrated } from '@/stores/useHydration';
 import { useLocaleStore } from '@/lib/i18n';
 import { LOBBY_T } from '@/lib/i18n/lobby';
 import { AI_PERSONAS } from '@/data/ai-personas';
-import { AIDifficulty } from '@/types';
+import { AIDifficulty, RevealDifficulty } from '@/types';
 
 export default function LobbyPage() {
   const router = useRouter();
@@ -24,6 +24,7 @@ export default function LobbyPage() {
 
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [totalRounds, setTotalRounds] = useState(10);
+  const [revealDifficulty, setRevealDifficulty] = useState<RevealDifficulty>('hidden');
 
   if (!bigFiveScores) {
     return (
@@ -49,7 +50,7 @@ export default function LobbyPage() {
   }
 
   const handleStart = () => {
-    initGame(bigFiveScores, { totalRounds, aiDifficulty: difficulty });
+    initGame(bigFiveScores, { totalRounds, aiDifficulty: difficulty, revealDifficulty });
     router.push('/game');
   };
 
@@ -65,6 +66,9 @@ export default function LobbyPage() {
     label: s.roundOptions[i].label(value),
     desc: s.roundOptions[i].desc,
   }));
+
+  const revealValues: RevealDifficulty[] = ['open', 'half', 'hidden'];
+  const revealOptions = revealValues.map((value, i) => ({ value, ...s.revealOptions[i] }));
 
   return (
     // 移动端：内容顶部对齐 + 底部留白给 sticky CTA；桌面端垂直居中。
@@ -124,6 +128,26 @@ export default function LobbyPage() {
                         >
                           <div className="psy-serif text-base text-[var(--psy-ink)] sm:text-lg">{r.label}</div>
                           <div className="mt-1 text-[11px] leading-tight text-[var(--psy-muted)] sm:mt-2 sm:text-xs">{r.desc}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="space-y-2.5 sm:space-y-3">
+                  <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">{s.revealLabel}</label>
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                    {revealOptions.map((opt) => {
+                      const active = revealDifficulty === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => setRevealDifficulty(opt.value)}
+                          aria-pressed={active}
+                          className={`psy-tile ${active ? 'is-active' : ''}`}
+                        >
+                          <div className="psy-serif text-base text-[var(--psy-ink)] sm:text-lg">{opt.label}</div>
+                          <div className="mt-1 text-[11px] leading-tight text-[var(--psy-muted)] sm:mt-2 sm:text-xs">{opt.desc}</div>
                         </button>
                       );
                     })}

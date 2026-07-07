@@ -59,6 +59,9 @@ export default function GamePage() {
   const locale = hydrated ? localeRaw : 'zh';
   const tg = STRINGS[locale].game;
   const dimName = (d: Dimension) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name);
+  // 看牌難度（對應聯機版）：open=全公開 / half=每回合看 4 張且保留 / hidden=每回合看 2 張（預設）
+  const revealDifficulty = game?.settings?.revealDifficulty ?? 'hidden';
+  const viewCap = revealDifficulty === 'half' ? 4 : 2;
   const [aiRunning, setAiRunning] = useState(false);
   const [timer, setTimer] = useState(30);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -66,7 +69,7 @@ export default function GamePage() {
   // Card selection state (for pong)
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
   const [mobileSheet, setMobileSheet] = useState<'log' | 'declared' | 'persona' | null>(null);
-  // "View 2 cards" feature: 1 use per own turn. Resets when active player changes.
+  // "View N cards" feature (N=viewCap: half=4 / hidden=2): 1 use per own turn. Resets when active player changes (half 保留跨回合).
   const [viewMode, setViewMode] = useState(false);
   const [pickedViewIds, setPickedViewIds] = useState<number[]>([]);
   const [viewedCardIds, setViewedCardIds] = useState<number[]>([]);
@@ -129,13 +132,13 @@ export default function GamePage() {
     setSelectedCardIds([]);
   }, [game?.currentPlayerIndex, game?.phase]);
 
-  // Reset view-cards state on turn change
+  // Reset view-cards state on turn change. half 模式：已看的牌保留（不清 viewedCardIds）。
   useEffect(() => {
     setViewMode(false);
     setPickedViewIds([]);
-    setViewedCardIds([]);
+    if (revealDifficulty !== 'half') setViewedCardIds([]);
     setViewUsedThisTurn(false);
-  }, [game?.currentPlayerIndex, game?.currentRound]);
+  }, [game?.currentPlayerIndex, game?.currentRound, revealDifficulty]);
 
   useEffect(() => {
     if (isHumanActive) {
@@ -417,6 +420,10 @@ export default function GamePage() {
   }
 
   const humanPlayer = game.players[0];
+  // open 模式：所有手牌（含剛抽到）維度全公開，複用 viewedCardIds 渲染
+  const effectiveViewedIds = revealDifficulty === 'open'
+    ? [...humanPlayer.hand.map((c) => c.id), ...(game.drawnCard ? [game.drawnCard.id] : [])]
+    : viewedCardIds;
   const opponents = game.players.slice(1);
   const isHumanTurn = game.currentPlayerIndex === 0;
   const isPongWindow = game.phase === 'claim-window' && game.pendingDiscard !== null && game.discardedByIndex !== 0;
@@ -741,7 +748,7 @@ export default function GamePage() {
         {viewMode && (
           <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
             <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-              🔍 {tg.viewPickPrompt}（{pickedViewIds.length}/2）
+              🔍 {tg.viewPickPrompt}（{pickedViewIds.length}/{viewCap}）
             </p>
             <div className="flex justify-center gap-2">
               <button
@@ -753,7 +760,8 @@ export default function GamePage() {
               <button
                 onClick={() => {
                   if (pickedViewIds.length === 0) return;
-                  setViewedCardIds(pickedViewIds);
+                  // half 累加保留；hidden 每回合已清空，累加等同替换
+                  setViewedCardIds((prev) => [...new Set([...prev, ...pickedViewIds])]);
                   setViewMode(false);
                   setPickedViewIds([]);
                   setViewUsedThisTurn(true);
@@ -901,16 +909,16 @@ export default function GamePage() {
               </button>
             )}
 
-            {isHumanTurn && isDiscarding && !viewUsedThisTurn && (
+            {isHumanTurn && isDiscarding && !viewUsedThisTurn && revealDifficulty !== 'open' && (
               <button
                 onClick={() => { setViewMode(true); setPickedViewIds([]); }}
                 className="psy-btn psy-btn-ghost px-4 py-2 text-sm font-medium"
                 title={tg.viewCardsTitle}
               >
-                🔍 {tg.viewTwoCards}（1/1）
+                🔍 {locale === 'en' ? `View ${viewCap}` : `查看 ${viewCap} 張`}
               </button>
             )}
-            {isHumanTurn && isDiscarding && viewUsedThisTurn && (
+            {isHumanTurn && isDiscarding && viewUsedThisTurn && revealDifficulty !== 'open' && (
               <span className="text-xs text-[var(--psy-muted)]">{tg.viewUsed}</span>
             )}
 
@@ -943,14 +951,14 @@ export default function GamePage() {
               isMyTurn={isHumanTurn}
               mobileCompact
               selectedCardIds={selectedCardIds}
-              viewedCardIds={viewedCardIds}
+              viewedCardIds={effectiveViewedIds}
               viewMode={viewMode}
               pickedViewIds={pickedViewIds}
               onTogglePickView={(cardId) =>
                 setPickedViewIds((prev) =>
                   prev.includes(cardId)
                     ? prev.filter((id) => id !== cardId)
-                    : prev.length >= 2 ? prev : [...prev, cardId]
+                    : prev.length >= viewCap ? prev : [...prev, cardId]
                 )
               }
               onDiscardCard={handleDiscardCard}
@@ -1028,6 +1036,12 @@ export default function GamePage() {
         <GameOverModal
           players={game.players}
           onPlayAgain={() => {
+            // 原地重開局：手動清本地查看狀態，避免 half 檔把上一局看過的牌 id 帶進新局
+            // （turn-reset effect 在「新局 round/玩家 index 未變」時可能不觸發，兜不住）。
+            setViewMode(false);
+            setPickedViewIds([]);
+            setViewedCardIds([]);
+            setViewUsedThisTurn(false);
             if (bigFiveScores) initGame(bigFiveScores, game.settings);
           }}
           onBackToLobby={() => {
