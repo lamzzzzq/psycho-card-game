@@ -31,9 +31,17 @@ export function PongPanel({
   locale = 'zh',
 }: PongPanelProps) {
   const t = STRINGS[locale].game;
-  const [countdown, setCountdown] = useState(5);
   const targets = getTargetCounts(player.bigFiveScores);
   const declaredDims = getDeclaredDimensions(player);
+  // 倒計時初值分兩檔：能歸檔 20s（要看牌思考+選牌，5s 根本來不及——用戶反饋）；
+  // 無法歸檔只有「暫不歸檔」一個選項，5s 快速放行避免拖慢節奏。
+  const [countdown, setCountdown] = useState(() => {
+    if (!isPersonalityCard(pendingCard)) return 5;
+    const dim = pendingCard.dimension;
+    const sameCount = player.hand.filter((c) => isPersonalityCard(c) && c.dimension === dim).length;
+    const claimable = declaredDims.has(dim) || sameCount + 1 >= targets[dim];
+    return claimable ? 20 : 5;
+  });
 
   // Auto-skip after countdown
   useEffect(() => {

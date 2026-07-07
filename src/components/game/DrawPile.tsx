@@ -27,7 +27,9 @@ export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProp
         whileTap={canDraw ? { scale: 0.95 } : undefined}
         onClick={canDraw ? onDraw : undefined}
         disabled={!canDraw}
-        className={`psy-etched relative flex h-28 w-20 items-center justify-center rounded-[1.1rem] border transition sm:h-36 sm:w-24 sm:rounded-[1.25rem] ${
+        // 尺寸與棄牌堆的塔羅卡完全一致（寬 72/96 + TarotCard 的 4/7 比例），
+        // 兩堆並排時大小不再不齊（用戶反饋）。
+        className={`psy-etched relative flex aspect-[4/7] w-[72px] items-center justify-center rounded-[1.1rem] border transition sm:w-24 sm:rounded-[1.25rem] ${
           canDraw ? 'cursor-pointer' : 'cursor-default opacity-60'
         }`}
         style={{

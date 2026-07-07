@@ -664,23 +664,25 @@ export default function GamePage() {
             <span className="truncate">{tg.doneLabel} {humanPlayer.declaredSets.length}/5</span>
             <span className={`font-mono tabular-nums ${timer <= 5 ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-accent)]'}`}>{timer}s</span>
           </div>
-          {/* 5 維目標常駐迷你條：字母 + 目標張數，已歸檔顯示 ✓ 並轉金。
+          {/* 5 維目標常駐迷你條：維度全稱 + 目標張數，已歸檔顯示 ✓ 並轉金。
               只顯示目標 + 是否歸檔，不洩露手上已有幾張（保留靠記憶推理的核心）。*/}
-          <div className="flex items-center justify-center gap-1">
+          <div className="flex flex-wrap items-center justify-center gap-1">
             <span className="shrink-0 pr-0.5 text-[9px] text-[var(--psy-muted)]">{tg.targetPrefix}</span>
+            {/* 維度用全稱（開放性/Openness）而非 OCEAN 縮寫——單字母不可讀
+                （用戶反饋）。全稱較長，flex-wrap 允許換行。 */}
             {DIMENSIONS.map((d) => {
               const isDone = declaredDims.has(d);
               return (
                 <span
                   key={d}
-                  className="flex flex-1 items-center justify-center gap-0.5 rounded-full px-1 py-0.5 text-[9px] font-bold tabular-nums"
+                  className="flex items-center justify-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold tabular-nums"
                   style={{
                     backgroundColor: isDone ? 'rgba(200,155,93,0.2)' : 'rgba(255,255,255,0.04)',
                     border: `1px solid ${isDone ? 'rgba(200,155,93,0.45)' : 'rgba(200,155,93,0.14)'}`,
                     color: isDone ? 'var(--psy-accent)' : 'var(--psy-ink-soft)',
                   }}
                 >
-                  <span className="opacity-80">{d}</span>
+                  <span className="opacity-80">{dimName(d)}</span>
                   <span>{isDone ? '✓' : targets[d]}</span>
                 </span>
               );

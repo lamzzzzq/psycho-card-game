@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GameAction, Player, isDummyCard, isPersonalityCard } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
@@ -147,6 +148,10 @@ export function GameLog({ actions, players, locale = 'zh' }: GameLogProps) {
         </div>
       </button>
 
+      {/* 弹窗必须 portal 到 body：移动端此组件渲染在 MobileGameSheet（有
+          transform 动画）内部，fixed 会相对 transformed 祖先定位 → 弹窗被
+          抽屉裁切、无法滚动、关闭按钮不可见（用户实测反馈）。 */}
+      {typeof document !== 'undefined' && createPortal(
       <AnimatePresence>
         {open && (
           <motion.div
@@ -234,7 +239,8 @@ export function GameLog({ actions, players, locale = 'zh' }: GameLogProps) {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body)}
     </>
   );
 }

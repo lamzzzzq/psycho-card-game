@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameCard, GameAction, isPersonalityCard } from '@/types';
 import { TarotCard } from './TarotCard';
@@ -97,7 +98,7 @@ export function DiscardPile({
           <motion.div
             animate={{ opacity: [0.5, 0, 0.5], scale: [1, 1.12, 1] }}
             transition={{ repeat: Infinity, duration: 1.8, ease: 'easeOut' }}
-            className="pointer-events-none absolute -inset-1 top-0 h-24 rounded-[1.25rem] border sm:h-36 sm:rounded-[1.4rem]"
+            className="pointer-events-none absolute -inset-1 top-0 h-[130px] rounded-[1.25rem] border sm:h-[172px] sm:rounded-[1.4rem]"
             style={{ borderColor: 'rgba(200,155,93,0.6)', boxShadow: '0 0 22px rgba(200,155,93,0.4)' }}
           />
         )}
@@ -123,7 +124,7 @@ export function DiscardPile({
             )}
           </div>
         ) : (
-          <div className="flex h-24 w-18 items-center justify-center rounded-[1.1rem] border border-dashed sm:h-36 sm:w-24 sm:rounded-[1.25rem]" style={{ borderColor: 'rgba(200,155,93,0.14)' }}>
+          <div className="flex aspect-[4/7] w-[72px] items-center justify-center rounded-[1.1rem] border border-dashed sm:w-24 sm:rounded-[1.25rem]" style={{ borderColor: 'rgba(200,155,93,0.14)' }}>
             <span className="psy-serif text-[11px] text-[var(--psy-muted)] sm:text-xs">{t.discardPileName}</span>
           </div>
         )}
@@ -131,6 +132,8 @@ export function DiscardPile({
       </button>
       </div>
 
+      {/* portal 到 body：防 fixed 落在 transformed 祖先里被裁（同 GameLog）。 */}
+      {typeof document !== 'undefined' && createPortal(
       <AnimatePresence>
         {open && (
           <motion.div
@@ -211,7 +214,8 @@ export function DiscardPile({
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body)}
     </>
   );
 }
