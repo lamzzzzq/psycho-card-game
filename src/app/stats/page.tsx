@@ -207,7 +207,7 @@ export default function StatsPage() {
                   onClick={() => setView(v)}
                   className={`psy-serif rounded-full px-4 py-2 text-sm transition ${
                     active
-                      ? 'bg-[linear-gradient(180deg,rgba(64,46,27,0.92),rgba(27,22,17,0.96))] text-[var(--psy-ink)] shadow-[0_10px_24px_rgba(72,49,18,0.24)]'
+                      ? 'bg-[linear-gradient(180deg,rgba(64,46,27,0.92),rgba(27,22,17,0.96))] text-[#fff9f0] shadow-[0_10px_24px_rgba(72,49,18,0.24)]'
                       : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
                   }`}
                 >

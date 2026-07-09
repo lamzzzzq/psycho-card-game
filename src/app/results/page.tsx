@@ -69,12 +69,6 @@ export default function ResultsPage() {
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-4">
             <RadarChart scores={bigFiveScores} />
-            <div className="psy-panel psy-etched rounded-[1.6rem] p-5">
-              <p className="psy-serif text-sm text-[var(--psy-ink)]">{t.readHint}</p>
-              <p className="mt-3 text-sm leading-7 text-[var(--psy-ink-soft)]">
-                {t.readBody}
-              </p>
-            </div>
           </div>
 
           <div className="space-y-4">

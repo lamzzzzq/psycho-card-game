@@ -24,7 +24,7 @@ export default function LobbyPage() {
 
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [totalRounds, setTotalRounds] = useState(10);
-  const [revealDifficulty, setRevealDifficulty] = useState<RevealDifficulty>('hidden');
+  const [revealDifficulty, setRevealDifficulty] = useState<RevealDifficulty>('open');
 
   if (!bigFiveScores) {
     return (

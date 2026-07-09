@@ -294,9 +294,9 @@ export default function LightModeScenePage() {
 
       {/* 玩家面板 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 16, marginBottom: 26 }}>
-        <PlayerPanel s={s} emoji="🧑‍🎓" name="小明" count={12} />
-        <PlayerPanel s={s} emoji="👩‍🏫" name="林教授" count={16} />
-        <PlayerPanel s={s} emoji="👴" name="老陳" count={15} />
+        <PlayerPanel s={s} emoji="🧑‍🎓" name="Brian" count={12} />
+        <PlayerPanel s={s} emoji="👩‍🏫" name="Prof. Chen" count={16} />
+        <PlayerPanel s={s} emoji="👴" name="Lin" count={15} />
       </div>
 
       {/* 中部 */}

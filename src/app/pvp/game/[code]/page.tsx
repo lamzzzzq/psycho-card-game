@@ -724,8 +724,15 @@ export default function PvpGamePage() {
         </motion.div>
       )}
 
-      {/* Opponents */}
-      <div className="mb-1 grid shrink-0 grid-cols-3 gap-2 sm:mb-4 sm:h-[6.5rem] sm:gap-3">
+      {/* Opponents — 列数随对手数自适应并居中：4 人满宽 3 列；3 人 2 列居中；2 人单列居中，
+          避免固定 grid-cols-3 在少人时把卡片挤到左侧、右侧留空。 */}
+      <div className={`mb-1 grid shrink-0 gap-2 sm:mb-4 sm:h-[6.5rem] sm:gap-3 mx-auto ${
+        opponentPlayers.length === 1
+          ? 'grid-cols-1 max-w-[7.5rem] sm:max-w-[13rem]'
+          : opponentPlayers.length === 2
+          ? 'grid-cols-2 max-w-[15rem] sm:max-w-[26rem]'
+          : 'grid-cols-3 w-full'
+      }`}>
         {opponentPlayers.map(opp => (
           <OpponentHand
             key={opp.id}

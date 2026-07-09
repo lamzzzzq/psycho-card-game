@@ -64,7 +64,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '開始遊戲',
-        body: '房主負責點開始。進入牌桌後，所有人的手牌維度默認不公開，只能靠描述、記憶和每回合查看能力判斷。',
+        body: '房主負責點開始。進入牌桌後，所有人的手牌與棄牌默認直接顯示人格 tag（明牌）——房主也可改為半公開或隱藏，那時就得靠描述、記憶和每回合查看能力判斷。',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -127,7 +127,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '揭示難度與查看',
-        body: '聯機開房時，房主可選「揭示難度」，決定人格 tag 何時可見：\n• 明牌：全場公開——自己手牌 + 所有棄牌都直接顯示人格，無需查看。\n• 半公開：每回合可查看手上 4 張，看過的永久顯示（直到打出）；棄牌不顯示，需自行判斷。\n• 隱藏（預設）：每回合可看 2 張，一輪後自動重置；棄牌不顯示。\n用得好的玩家會優先看自己最不確定的牌，避免歸檔時混入錯誤。',
+        body: '聯機開房時，房主可選「揭示難度」，決定人格 tag 何時可見：\n• 明牌（預設）：全場公開——自己手牌 + 所有棄牌都直接顯示人格，無需查看。\n• 半公開：每回合可查看手上 4 張，看過的永久顯示（直到打出）；棄牌不顯示，需自行判斷。\n• 隱藏：每回合可看 2 張，一輪後自動重置；棄牌不顯示。\n用得好的玩家會優先看自己最不確定的牌，避免歸檔時混入錯誤。',
       },
       {
         title: '知識牌（檔案註記）',
@@ -201,7 +201,7 @@ export const TUTORIAL_T = {
     penaltyDemo: '罰停一回合演示：本輪不能參與別人棄牌的判讀窗口，下次輪到你時自動跳過。',
 
     // ── 沙盒：截胡窗口卡片 ──
-    claimWho: '小明棄出了一張線索牌',
+    claimWho: 'Brian棄出了一張線索牌',
     claimCardBodyA: '從下方手牌選 ',
     claimCardBodyMid: (name: string) => `2 張「${name}」`,
     claimCardBodyB: (sel: number) => `（高亮的牌），加這張棄牌湊成一組。已選 ${sel}/2。`,
@@ -304,7 +304,7 @@ export const TUTORIAL_T = {
     shotYou: '你',
     shotDifficulties: ['簡單', '中等', '困難'] as readonly string[],
     shotRounds: ['5輪', '10輪', '15輪', '無限'] as readonly string[],
-    shotAiOpponents: ['小明', '林教授', '老陳'] as readonly string[],
+    shotAiOpponents: ['Brian', 'Prof. Chen', 'Lin'] as readonly string[],
     shotAiOpponentLabel: 'AI 對手',
   },
   en: {
@@ -368,7 +368,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Start the Game',
-        body: 'The host taps start. Once at the table, everyone’s hand dimensions are hidden by default — you rely on descriptions, memory, and your per-turn view ability to judge.',
+        body: 'The host taps start. Once at the table, every hand and discard shows its personality tag by default (Open) — the host can switch to Half or Hidden, where you rely on descriptions, memory, and your per-turn view ability to judge.',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -431,7 +431,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Reveal Difficulty & Viewing',
-        body: 'When creating an online room, the host picks a "Reveal difficulty" that decides when personality tags are visible:\n• Open: fully public — your hand + all discards show their tags, no viewing needed.\n• Half: each turn you may view 4 of your hand cards, and they stay revealed for good (until played); discards stay hidden — judge them yourself.\n• Hidden (default): view 2 per turn, reset after one round; discards stay hidden.\nGood players prioritise their least-certain cards to avoid mixing errors when declaring.',
+        body: 'When creating an online room, the host picks a "Reveal difficulty" that decides when personality tags are visible:\n• Open (default): fully public — your hand + all discards show their tags, no viewing needed.\n• Half: each turn you may view 4 of your hand cards, and they stay revealed for good (until played); discards stay hidden — judge them yourself.\n• Hidden: view 2 per turn, reset after one round; discards stay hidden.\nGood players prioritise their least-certain cards to avoid mixing errors when declaring.',
       },
       {
         title: 'Knowledge Cards',
@@ -505,7 +505,7 @@ export const TUTORIAL_T = {
     penaltyDemo: 'Frozen-for-one-turn demo: you cannot join others’ read windows this round, and your next turn is auto-skipped.',
 
     // ── Sandbox: claim window card ──
-    claimWho: 'Xiao Ming discarded a clue card',
+    claimWho: 'Brian discarded a clue card',
     claimCardBodyA: 'From your hand below pick ',
     claimCardBodyMid: (name: string) => `2 "${name}" cards`,
     claimCardBodyB: (sel: number) => ` (highlighted), plus this discard to complete a set. ${sel}/2 selected.`,
@@ -608,7 +608,7 @@ export const TUTORIAL_T = {
     shotYou: 'You',
     shotDifficulties: ['Easy', 'Medium', 'Hard'] as readonly string[],
     shotRounds: ['5 rds', '10 rds', '15 rds', 'Unlimited'] as readonly string[],
-    shotAiOpponents: ['Xiao Ming', 'Prof. Lin', 'Old Chen'] as readonly string[],
+    shotAiOpponents: ['Brian', 'Prof. Chen', 'Lin'] as readonly string[],
     shotAiOpponentLabel: 'AI opponent',
   },
 } as const;
