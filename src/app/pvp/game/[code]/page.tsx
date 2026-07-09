@@ -841,23 +841,18 @@ export default function PvpGamePage() {
             {/* 5 維目標常駐迷你條：字母 + 目標張數，已歸檔顯示 ✓ 並轉金。
                 只顯示目標 + 是否歸檔，不洩露手上已有幾張。*/}
             {targets && (
-              <div className="flex flex-wrap items-center justify-center gap-1">
-                <span className="shrink-0 pr-0.5 text-[9px] text-[var(--psy-muted)]">{t.targetPrefix}</span>
+              /* 与单机一致的两行目标条：上=维度全称，下=已歸/未歸，固定两行不怕挤 */
+              <div className="grid grid-cols-5 gap-1" aria-label={locale === 'en' ? 'Archive progress' : '歸檔進度'}>
                 {DIMENSIONS.map((d) => {
                   const isDone = declaredDims.has(d);
                   return (
-                    <span
+                    <div
                       key={d}
-                      className="flex items-center justify-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold tabular-nums"
-                      style={{
-                        backgroundColor: isDone ? 'rgba(200,155,93,0.2)' : 'rgba(255,255,255,0.04)',
-                        border: `1px solid ${isDone ? 'rgba(200,155,93,0.45)' : 'rgba(200,155,93,0.14)'}`,
-                        color: isDone ? 'var(--psy-accent)' : 'var(--psy-ink-soft)',
-                      }}
+                      className={`flex min-w-0 flex-col items-center gap-0.5 rounded-md border px-0.5 py-1 text-center ${isDone ? 'border-[rgba(111,143,85,0.34)] bg-[rgba(111,143,85,0.1)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] text-[var(--psy-ink-soft)]'}`}
                     >
-                      <span className="opacity-80">{dimName(d)}</span>
-                      <span>{isDone ? '✓' : targets[d]}</span>
-                    </span>
+                      <span className="text-[10px] font-semibold leading-tight">{locale === 'en' ? d : dimName(d)}</span>
+                      <span className="text-[8px] leading-none opacity-80">{isDone ? (locale === 'en' ? 'Done' : '已歸') : (locale === 'en' ? 'Open' : '未歸')}</span>
+                    </div>
                   );
                 })}
               </div>
@@ -1221,7 +1216,7 @@ export default function PvpGamePage() {
             open={mobileSheet === 'declared'}
             onClose={() => setMobileSheet(null)}
           >
-            {mePlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={mePlayer.declaredSets} locale={locale} /> : <p className="text-sm text-[var(--psy-muted)]">{t.noArchiveYet}</p>}
+            {mePlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={mePlayer.declaredSets} locale={locale} overlayZIndex={98} expanded /> : <p className="text-sm text-[var(--psy-muted)]">{t.noArchiveYet}</p>}
           </MobileGameSheet>
           <MobileGameSheet
             title={t.sheetLogTitle}

@@ -17,6 +17,8 @@ interface DeclaredAreaProps {
   targets?: Partial<Record<Dimension, number>>;
   /** Nested mobile sheets need their detail overlay above the sheet itself. */
   overlayZIndex?: number;
+  /** 有空间的容器（结算页玩家卡 / 移动弹窗）直接内联展开维度列表，不再套一层「歸檔記錄」卡中卡。 */
+  expanded?: boolean;
 }
 
 export function DeclaredArea({
@@ -26,6 +28,7 @@ export function DeclaredArea({
   locale = 'zh',
   targets,
   overlayZIndex,
+  expanded = false,
 }: DeclaredAreaProps) {
   const t = STRINGS[locale].game;
   const dimName = (d: PersonalityCard['dimension']) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name);
@@ -114,6 +117,34 @@ export function DeclaredArea({
       )}
     </PsyOverlayPanel>
   );
+
+  if (expanded) {
+    return (
+      <>
+        {declaredSets.length === 0 ? (
+          <p className="text-sm text-[var(--psy-muted)]">{t.noArchiveDone}</p>
+        ) : (
+          <div className="flex flex-col gap-2.5">
+            {declaredSets.map((set) => (
+              <button
+                key={set.dimension}
+                type="button"
+                onClick={() => set.cards[0] && setDetailCard(set.cards[0])}
+                className="flex items-center gap-2 text-left"
+                aria-label={`${t.viewWord}: ${dimName(set.dimension)}`}
+              >
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: '#c89b5d' }} />
+                <span className="text-sm font-medium text-[var(--psy-accent)]">
+                  {dimName(set.dimension)} · {set.cards.length} {t.cardsUnit}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+        {detailNode}
+      </>
+    );
+  }
 
   if (isProgressView) {
     return (

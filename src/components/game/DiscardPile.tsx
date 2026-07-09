@@ -120,8 +120,8 @@ export function DiscardPile({
           <div className="relative">
             {highlight && (
               <motion.div
-                animate={{ boxShadow: ['0 0 0 0 rgba(195,154,82,0)', '0 0 0 4px rgba(195,154,82,0.28), 0 0 22px rgba(195,154,82,0.22)', '0 0 0 0 rgba(195,154,82,0)'] }}
-                transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+                animate={{ boxShadow: ['0 0 0 0 rgba(195,154,82,0)', '0 0 0 2px rgba(195,154,82,0.3), 0 0 13px rgba(195,154,82,0.16)', '0 0 0 0 rgba(195,154,82,0)'] }}
+                transition={{ repeat: Infinity, duration: 2.6, ease: 'easeInOut' }}
                 className="pointer-events-none absolute inset-0 rounded-[1.1rem] sm:rounded-[1.35rem]"
               />
             )}
@@ -146,15 +146,23 @@ export function DiscardPile({
             )}
           </div>
         ) : (
-          <div className="relative flex aspect-[4/7] w-[72px] items-center justify-center rounded-[1.1rem] border border-dashed bg-[var(--psy-card-content)] sm:w-32 sm:rounded-[1.35rem]" style={{ borderColor: 'rgba(154,116,72,0.24)' }}>
+          <div className="relative flex aspect-[4/7] w-[72px] items-center justify-center overflow-hidden rounded-[1.1rem] bg-[var(--psy-card-content)] sm:w-32 sm:rounded-[1.35rem]" style={{ border: '1.5px dashed rgba(154,116,72,0.16)' }}>
+            {/* 常驻轻呼吸内晕：空态也有生命感，不再是一个死板的空框 */}
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute inset-[10%] rounded-[0.8rem] sm:rounded-[1rem]"
+              animate={{ opacity: [0.3, 0.6, 0.3], scale: [0.96, 1, 0.96] }}
+              transition={{ repeat: Infinity, duration: 3.4, ease: 'easeInOut' }}
+              style={{ background: 'radial-gradient(circle at 50% 45%, rgba(195,154,82,0.14), transparent 72%)' }}
+            />
             {highlight && (
               <motion.div
-                animate={{ boxShadow: ['0 0 0 0 rgba(195,154,82,0)', '0 0 0 4px rgba(195,154,82,0.28), 0 0 22px rgba(195,154,82,0.22)', '0 0 0 0 rgba(195,154,82,0)'] }}
-                transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+                animate={{ boxShadow: ['0 0 0 0 rgba(195,154,82,0)', '0 0 0 2px rgba(195,154,82,0.3), 0 0 13px rgba(195,154,82,0.16)', '0 0 0 0 rgba(195,154,82,0)'] }}
+                transition={{ repeat: Infinity, duration: 2.6, ease: 'easeInOut' }}
                 className="pointer-events-none absolute inset-0 rounded-[1.1rem] sm:rounded-[1.35rem]"
               />
             )}
-            <span className="psy-serif text-[11px] text-[var(--psy-muted)] sm:text-xs">{t.discardPileName}</span>
+            <span className="psy-serif relative text-[11px] text-[var(--psy-muted)] sm:text-xs">{t.discardPileName}</span>
           </div>
         )}
         <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">{t.discardedCount} {count} {t.cardsUnit}</span>

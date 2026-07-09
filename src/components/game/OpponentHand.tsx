@@ -82,8 +82,12 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
           style={{
             padding: 2,
             background: 'conic-gradient(from 0deg, transparent 0deg 258deg, rgba(195,154,82,0.18) 274deg, #c39a52 300deg, #f3dc9b 326deg, rgba(195,154,82,0.18) 342deg, transparent 360deg)',
+            // 边框描边遮罩：content-box 与整体两层相减，只留 2px 边框；缺 maskComposite
+            // 会导致渐变铺满整卡（斜向扫射）。webkit(xor) + 标准(exclude) 双写保证跨浏览器。
             WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
             WebkitMaskComposite: 'xor',
+            mask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+            maskComposite: 'exclude',
           }}
         />
       )}

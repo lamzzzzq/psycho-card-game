@@ -222,10 +222,13 @@ export function FeedbackOverlays({
 }) {
   return (
     <>
+      {/* 反馈闪光：用软边径向渐变而非纯白矩形——纯白 fixed 矩形只盖到视口底，
+          硬下缘会在牌桌上形成一条横向「两截色」缝（用户反馈）。渐变边缘渐隐无硬边。 */}
       <motion.div
         animate={flashControls}
         initial={{ opacity: 0 }}
-        className="pointer-events-none fixed inset-0 z-[60] bg-white"
+        className="pointer-events-none fixed inset-0 z-[60]"
+        style={{ background: 'radial-gradient(circle at 50% 42%, rgba(255,255,255,0.55), rgba(255,255,255,0) 78%)' }}
       />
       <div className="pointer-events-none fixed left-1/2 top-20 z-[70] w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2">
         <AnimatePresence>

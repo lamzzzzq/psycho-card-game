@@ -77,7 +77,7 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby, locale = 'z
                     )}
                   </div>
                 </div>
-                <DeclaredArea declaredSets={player.declaredSets} locale={locale} />
+                <DeclaredArea declaredSets={player.declaredSets} locale={locale} expanded />
               </div>
             );
           })}

@@ -569,10 +569,10 @@ export default function GamePage() {
               return (
                 <div
                   key={dimension}
-                  className={`min-w-0 rounded-md border px-1 py-1 text-center text-[9px] tabular-nums ${done ? 'border-[rgba(111,143,85,0.34)] bg-[rgba(111,143,85,0.1)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] text-[var(--psy-ink-soft)]'}`}
+                  className={`flex min-w-0 flex-col items-center gap-0.5 rounded-md border px-0.5 py-1 text-center ${done ? 'border-[rgba(111,143,85,0.34)] bg-[rgba(111,143,85,0.1)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] text-[var(--psy-ink-soft)]'}`}
                 >
-                  <span className="font-semibold">{dimension}</span>{' '}
-                  <span>{done ? (locale === 'en' ? 'Done' : '已歸') : (locale === 'en' ? 'Open' : '未歸')}</span>
+                  <span className="text-[10px] font-semibold leading-tight">{locale === 'en' ? dimension : dimName(dimension)}</span>
+                  <span className="text-[8px] leading-none opacity-80">{done ? (locale === 'en' ? 'Done' : '已歸') : (locale === 'en' ? 'Open' : '未歸')}</span>
                 </div>
               );
             })}
@@ -923,7 +923,7 @@ export default function GamePage() {
         onClose={() => setMobileSheet(null)}
         locale={locale}
       >
-        {humanPlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={humanPlayer.declaredSets} locale={locale} overlayZIndex={96} /> : <p className="text-sm text-[var(--psy-muted)]">{tg.noArchiveYet}</p>}
+        {humanPlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={humanPlayer.declaredSets} locale={locale} overlayZIndex={98} expanded /> : <p className="text-sm text-[var(--psy-muted)]">{tg.noArchiveYet}</p>}
       </MobileGameSheet>
       <MobileGameSheet
         title={tg.sheetLogTitle}
