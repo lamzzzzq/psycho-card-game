@@ -339,3 +339,33 @@ a:focus-visible,
     box-shadow: 0 0 0 2.5px rgba(195, 154, 82, 0.95), 0 0 18px 4px rgba(195, 154, 82, 0.42);
   }
 }
+
+/* ── 出牌中「绕边框」高亮 ────────────────────────────────────────────
+   正解：元素本身不旋转（旋转被遮罩的元素会显示它自己的方形边框在转，
+   斜穿卡片），改为只让 conic 渐变的角度动画，亮点沿固定圆角边框绕圈。 */
+@property --psy-turn-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes psyTurnSpin {
+  to { --psy-turn-angle: 360deg; }
+}
+.psy-turn-border {
+  padding: 2px;
+  background: conic-gradient(from var(--psy-turn-angle),
+    transparent 0deg 250deg,
+    rgba(195, 154, 82, 0.16) 268deg,
+    #c39a52 300deg,
+    #f3dc9b 322deg,
+    rgba(195, 154, 82, 0.16) 344deg,
+    transparent 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: psyTurnSpin 3.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .psy-turn-border { animation: none; }
+}
