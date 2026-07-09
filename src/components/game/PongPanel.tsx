@@ -124,7 +124,7 @@ export function PongPanel({
       <div className="flex items-center justify-between">
         <div className="text-xs text-[var(--psy-ink-soft)]">
           {canClaimThisDim && selectedCardIds.length > 0 && (
-            <>{t.selectedPrefix} <span className="text-white font-medium">{selectedCardIds.length}</span> {t.pongSelectedCandidates}</>
+            <>{t.selectedPrefix} <span className="font-medium text-[var(--psy-accent-strong)]">{selectedCardIds.length}</span> {t.pongSelectedCandidates}</>
           )}
         </div>
         <div className="flex gap-2">
@@ -134,7 +134,7 @@ export function PongPanel({
             style={{
               borderColor: 'rgba(200, 155, 93, 0.24)',
               color: 'var(--psy-ink-soft)',
-              backgroundColor: 'rgba(255,255,255,0.02)',
+              backgroundColor: '#fdf8f1',
             }}
           >
             {t.pongSkip}

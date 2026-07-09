@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GameAction, Player, isDummyCard, isPersonalityCard } from '@/types';
@@ -82,6 +82,15 @@ export function GameLog({ actions, players, locale = 'zh' }: GameLogProps) {
   const allActions = [...actions].reverse();
   const getPlayer = (id: string) => players.find((p) => p.id === id);
 
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   return (
     <>
       <button
@@ -107,8 +116,9 @@ export function GameLog({ actions, players, locale = 'zh' }: GameLogProps) {
                   key={`${action.timestamp}-${action.type}-${i}`}
                   className="flex gap-1.5 rounded-xl border px-2.5 py-2 text-xs"
                   style={{
-                    borderColor: 'rgba(200,155,93,0.1)',
-                    background: 'linear-gradient(180deg, rgba(20,31,46,0.68), rgba(12,21,31,0.82))',
+                    borderColor: 'rgba(154,116,72,0.14)',
+                    background: 'linear-gradient(180deg, #fdf8f1, #f8f1e4)',
+                    boxShadow: '0 8px 18px rgba(96,72,38,0.08)',
                     color: 'var(--psy-ink-soft)',
                   }}
                 >
@@ -159,7 +169,7 @@ export function GameLog({ actions, players, locale = 'zh' }: GameLogProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-[rgba(58,48,32,0.42)] p-4 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           >
             <motion.div
@@ -196,8 +206,9 @@ export function GameLog({ actions, players, locale = 'zh' }: GameLogProps) {
                           key={`${action.timestamp}-${action.type}-full-${i}`}
                           className="flex gap-2 rounded-xl border px-3 py-2.5 text-sm"
                           style={{
-                            borderColor: 'rgba(200,155,93,0.1)',
-                            background: 'linear-gradient(180deg, rgba(20,31,46,0.68), rgba(12,21,31,0.82))',
+                            borderColor: 'rgba(154,116,72,0.14)',
+                            background: 'linear-gradient(180deg, #fdf8f1, #f8f1e4)',
+                            boxShadow: '0 8px 18px rgba(96,72,38,0.08)',
                             color: 'var(--psy-ink-soft)',
                           }}
                         >

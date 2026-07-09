@@ -25,7 +25,7 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
   const modalNode = (
     <PsyOverlayPanel open={open} onClose={() => setOpen(false)} title={resolvedTitle} variant="centered">
       {declaredSets.length === 0 ? (
-        <div className="rounded-xl border border-[rgba(200,155,93,0.12)] bg-[rgba(255,255,255,0.02)] px-4 py-8 text-center text-sm text-[var(--psy-muted)]">
+        <div className="rounded-xl border border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] px-4 py-8 text-center text-sm text-[var(--psy-muted)]">
           {t.noArchiveDone}
         </div>
       ) : (
@@ -109,7 +109,7 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
         <button
           type="button"
           onClick={() => declaredSets.length > 0 && setOpen(true)}
-          className="w-full rounded-[0.9rem] border border-[rgba(200,155,93,0.12)] bg-[rgba(255,255,255,0.02)] px-2.5 py-1.5 text-left transition hover:border-[rgba(200,155,93,0.22)]"
+          className="w-full rounded-[0.9rem] border border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] px-2.5 py-1.5 text-left transition hover:border-[rgba(154,116,72,0.28)]"
         >
           <div className="flex items-center gap-2">
             <div className="psy-serif shrink-0 text-[10px] text-[var(--psy-muted)]">{t.archiveWord}</div>
@@ -162,7 +162,7 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
           {declaredSets.length > 0 && <div className="text-[9px] text-[var(--psy-accent)]">{t.viewWord}</div>}
         </div>
         {declaredSets.length === 0 ? (
-          <div className="mt-2 rounded-xl border border-[rgba(200,155,93,0.12)] bg-[rgba(255,255,255,0.02)] px-2 py-4 text-center text-[11px] text-[var(--psy-muted)]">
+          <div className="mt-2 rounded-xl border border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] px-2 py-4 text-center text-[11px] text-[var(--psy-muted)]">
             {t.noArchiveDone}
           </div>
         ) : (

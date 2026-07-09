@@ -19,6 +19,9 @@ interface PlayerHandProps {
   // for the current turn (max 2). Caller is responsible for clearing on
   // turn change.
   viewedCardIds?: number[];
+  discardPickId?: number | null;
+  onDiscardPickChange?: (cardId: number | null) => void;
+  showDiscardControls?: boolean;
   // True when "view 2 cards" mode is active (user picking cards). In this
   // mode, clicking a card adds/removes it from the picked set.
   viewMode?: boolean;
@@ -34,10 +37,12 @@ export function PlayerHand({
   drawnCard,
   isDiscarding,
   isDeclaring = false,
-  isMyTurn = false,
   locale = 'zh',
   selectedCardIds = [],
   viewedCardIds = [],
+  discardPickId: controlledDiscardPickId,
+  onDiscardPickChange,
+  showDiscardControls = true,
   viewMode = false,
   pickedViewIds = [],
   onTogglePickView,
@@ -59,10 +64,14 @@ export function PlayerHand({
 
   // Two-step discard: click a card to pick it (highlight), then press
   // the 出牌 button (or click the same card again) to actually discard.
-  const [discardPickId, setDiscardPickId] = useState<number | null>(null);
+  const [internalDiscardPickId, setInternalDiscardPickId] = useState<number | null>(null);
+  const discardPickId = controlledDiscardPickId ?? internalDiscardPickId;
+  const setDiscardPickId = onDiscardPickChange ?? setInternalDiscardPickId;
   useEffect(() => {
-    if (!isDiscarding) setDiscardPickId(null);
-  }, [isDiscarding]);
+    if (isDiscarding) return;
+    const id = window.setTimeout(() => setDiscardPickId(null), 0);
+    return () => window.clearTimeout(id);
+  }, [isDiscarding, setDiscardPickId]);
 
   function handleCardClick(cardId: number) {
     if (viewMode && onTogglePickView) { onTogglePickView(cardId); return; }
@@ -71,7 +80,7 @@ export function PlayerHand({
       // Click toggles selection only. The actual discard requires the
       // explicit "提交棄牌" button — double-clicking a card no longer
       // commits, to prevent mis-taps.
-      setDiscardPickId((prev) => (prev === cardId ? null : cardId));
+      setDiscardPickId(discardPickId === cardId ? null : cardId);
       return;
     }
   }
@@ -84,13 +93,13 @@ export function PlayerHand({
 
   return (
     <div className="space-y-2">
-      {isDiscarding && !viewMode && (
+      {isDiscarding && !viewMode && showDiscardControls && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex flex-col items-center gap-2"
+          className="flex flex-wrap items-center justify-center gap-2"
         >
-          <p className="psy-serif text-sm text-[var(--psy-accent)]">
+          <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
             {discardPickId === null ? t.pickDiscard : t.confirmDiscardHint}
           </p>
           {discardPickId !== null && (
@@ -125,8 +134,8 @@ export function PlayerHand({
           自己的面板（含 n/cap 計數），這裏再顯示一條寫死 /2 的會跟 PVP
           半公開檔的 /4 打架（用戶實測截圖裏兩行提示同屏、數字矛盾）。 */}
 
-      {/* 固定 4 列 + 居中限宽（同 lab 观感）；卡片填满单元，不再封顶成小卡 */}
-      <div className="mx-auto grid w-full max-w-[28rem] grid-cols-4 gap-x-2 gap-y-3">
+      {/* Mobile keeps a stable 4-column hand; desktop uses the available table width. */}
+      <div className="mx-auto grid w-full grid-cols-4 gap-x-2 gap-y-3 sm:[grid-template-columns:repeat(auto-fit,minmax(clamp(6.5rem,7.2vw,9rem),1fr))]">
         <AnimatePresence>
           {rawCards.map((card) => {
             const isSelected =

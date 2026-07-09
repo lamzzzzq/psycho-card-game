@@ -25,9 +25,9 @@ interface TarotCardProps {
   description?: string;
 }
 
-const GOLD = '#c89b5d';
-const GOLD_LINE = 'rgba(207,167,112,0.62)';
-const GOLD_FAINT = 'rgba(200,155,93,0.40)';
+const GOLD = '#9a7448';
+const GOLD_LINE = 'rgba(154,116,72,0.58)';
+const GOLD_FAINT = 'rgba(154,116,72,0.34)';
 
 // 中文默认按「字符」换行，会把「概念」拆成上下两行。用 Intl.Segmenter 分词后，
 // 把每个词包进 white-space:nowrap → 换行只发生在词与词之间，词内不再断开。
@@ -105,9 +105,9 @@ export function TarotCard({
           style={{
             aspectRatio: cardAspect,
             borderRadius: '7cqw',
-            background: 'linear-gradient(180deg, #19293c 0%, #0d1825 100%)',
+            background: 'linear-gradient(180deg, #eaddc4 0%, #d7c49e 100%)',
             border: `1.5px solid ${GOLD_LINE}`,
-            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.03), 0 10px 22px rgba(0,0,0,0.34)',
+            boxShadow: 'inset 0 0 0 1px rgba(255,250,240,0.55), 0 10px 22px rgba(96,72,38,0.18)',
           }}
         >
           <div className="pointer-events-none absolute" style={{ inset: '4cqw', borderRadius: '5cqw', border: `1px solid ${GOLD_FAINT}` }} />
@@ -126,11 +126,11 @@ export function TarotCard({
           aspectRatio: cardAspect,
           borderRadius: '7cqw',
           padding: '4cqw',
-          background: 'linear-gradient(180deg, #16243a 0%, #0e1a28 60%, #0a131e 100%)',
+          background: 'linear-gradient(180deg, #eadfc8 0%, #e1d1b2 60%, #d5be95 100%)',
           border: `1.5px solid ${GOLD_LINE}`,
           boxShadow: selected
-            ? `0 0 0 2px rgba(143,199,135,0.7), 0 18px 40px rgba(0,0,0,0.4)`
-            : `inset 0 0 0 1px rgba(255,255,255,0.03), 0 16px 34px rgba(0,0,0,0.34)`,
+            ? `0 0 0 2px rgba(111,143,85,0.7), 0 18px 34px rgba(96,72,38,0.22)`
+            : `inset 0 0 0 1px rgba(255,250,240,0.55), 0 16px 30px rgba(96,72,38,0.2)`,
           opacity: isDummy ? 0.92 : 1,
         }}
       >
@@ -177,7 +177,7 @@ export function TarotCard({
               minHeight: 0,
               borderRadius: '5cqw',
               boxShadow: `inset 0 0 0 1px ${GOLD_FAINT}`,
-              background: showImg ? undefined : 'linear-gradient(160deg, #1c2c44 0%, #0f1c2b 100%)',
+              background: showImg ? undefined : 'linear-gradient(160deg, #fdf8f1 0%, #f5ecdd 100%)',
             }}
           >
             {showImg ? (
@@ -231,7 +231,7 @@ export function TarotCard({
                 style={{
                   padding: '2.6cqw 6cqw', fontSize: `${dimFont}cqw`, letterSpacing: '0.06em',
                   background: meta.colorHex, color: '#0a0a0a',
-                  border: '1.5px solid rgba(0,0,0,0.4)', boxShadow: '0 0.5cqw 1.6cqw rgba(0,0,0,0.55)',
+                  border: '1.5px solid rgba(154,116,72,0.45)', boxShadow: '0 0.5cqw 1.6cqw rgba(96,72,38,0.24)',
                 }}
               >
                 {dimLabel}

@@ -40,7 +40,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${geistSans.variable} ${geistMono.variable} ${notoSerifSc.variable} h-full antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} ${notoSerifSc.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[var(--psy-bg)] text-[var(--psy-ink)]">
         <LocaleSync />

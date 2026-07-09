@@ -9,13 +9,14 @@ import {
   FeedbackOverlays,
   useYourTurnNotifier,
   YourTurnBanner,
+  TurnNoticeToast,
   turnNudge,
 } from '@/components/game/FeedbackLayer';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { DIMENSION_META } from '@/data/dimensions';
-import { DIMENSIONS, Dimension, isPersonalityCard } from '@/types';
+import { DIMENSIONS, Dimension } from '@/types';
 import { getTargetCounts } from '@/lib/scoring';
 import { getDeclaredDimensions } from '@/lib/game-logic';
 import { PlayerHand } from '@/components/game/PlayerHand';
@@ -58,7 +59,7 @@ export default function GamePage() {
   const localeRaw = useLocaleStore((s) => s.locale);
   const locale = hydrated ? localeRaw : 'zh';
   const tg = STRINGS[locale].game;
-  const dimName = (d: Dimension) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name);
+  const dimName = useCallback((d: Dimension) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name), [locale]);
   // 看牌難度（對應聯機版）：open=全公開 / half=每回合看 4 張且保留 / hidden=每回合看 2 張（預設）
   const revealDifficulty = game?.settings?.revealDifficulty ?? 'hidden';
   const viewCap = revealDifficulty === 'half' ? 4 : 2;
@@ -74,6 +75,7 @@ export default function GamePage() {
   const [pickedViewIds, setPickedViewIds] = useState<number[]>([]);
   const [viewedCardIds, setViewedCardIds] = useState<number[]>([]);
   const [viewUsedThisTurn, setViewUsedThisTurn] = useState(false);
+  const [discardPickId, setDiscardPickId] = useState<number | null>(null);
 
   // Result feedback banner
   const [resultBanner, setResultBanner] = useState<{ success: boolean; message: string } | null>(null);
@@ -106,6 +108,15 @@ export default function GamePage() {
 
   // Timer for human turn
   const isHumanActive = game?.currentPlayerIndex === 0 && (game?.phase === 'drawing' || game?.phase === 'discarding');
+  const isHumanDiscardPhase =
+    game?.currentPlayerIndex === 0 &&
+    game?.phase === 'discarding' &&
+    !game.players[0]?.skipNextTurn;
+
+  useEffect(() => {
+    if (isHumanDiscardPhase) return;
+    setDiscardPickId(null);
+  }, [isHumanDiscardPhase]);
 
   const { shakeControls, flashControls, pops } = useGameFeedback(
     game?.actionLog ?? [],
@@ -362,7 +373,7 @@ export default function GamePage() {
         showBanner(false, tg.toastSelfPongFail);
       }
     }
-  }, [playerSelfPong, pongIntent, selectedCardIds, tg, locale]);
+  }, [playerSelfPong, pongIntent, selectedCardIds, tg, dimName]);
 
   // Pong (碰) handler
   const handlePong = useCallback((dimension: Dimension, handCardIds: number[]) => {
@@ -380,7 +391,7 @@ export default function GamePage() {
           : tg.toastPongFail);
       }
     }
-  }, [playerPong, tg, locale]);
+  }, [playerPong, tg, dimName]);
 
   const handleSkipPong = useCallback(async () => {
     setSelectedCardIds([]);
@@ -472,21 +483,6 @@ export default function GamePage() {
     }
   }
 
-  // Other-pong: 已歸檔維度也允許（強 trap），玩家點 → 選卡 → 提交 → fail。
-  const otherPongCandidate: Dimension | null = (() => {
-    if (!isPongWindow || !game.pendingDiscard || humanFrozen) return null;
-    if (game.claimResponses.includes(humanPlayer.id)) return null;
-    const pc = game.pendingDiscard;
-    if (!isPersonalityCard(pc)) return null;
-    const d = pc.dimension;
-    if (declaredDims.has(d)) return d;  // 強 trap：允許點
-    const sameInHand = humanPlayer.hand.filter(
-      (c) => isPersonalityCard(c) && c.dimension === d
-    ).length;
-    return sameInHand >= targets[d] - 1 ? d : null;
-  })();
-
-  const canPongAnywhere = selfPongCandidates.length > 0 || otherPongCandidate !== null;
   const pongIntentTarget = pongIntent ? targets[pongIntent.dimension] : 0;
   const pongIntentRequiredSelectCount =
     pongIntent?.type === 'self'
@@ -496,9 +492,9 @@ export default function GamePage() {
       : 0;
 
   return (
-    <motion.div animate={shakeControls} className="mx-auto flex min-h-[100dvh] max-w-6xl w-full flex-col px-3 py-3 sm:px-4 sm:py-4">
+    <motion.div animate={shakeControls} className="mx-auto flex min-h-[100dvh] w-full max-w-[min(96vw,112rem)] flex-col px-3 py-3 sm:px-4 sm:py-4">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
-      <YourTurnBanner bannerKey={yourTurnKey} />
+      <YourTurnBanner bannerKey={yourTurnKey} locale={locale} />
       <ArrowOverlay from={arrowFrom} to={arrowTo} color={arrowColor} />
 
       {/* idle 提醒 toast：本回合久未行动时弹出（配合震动） */}
@@ -508,9 +504,9 @@ export default function GamePage() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed top-28 left-1/2 -translate-x-1/2 z-[60] max-w-[90vw] rounded-xl border border-amber-400/60 bg-amber-500/90 px-5 py-2.5 text-xs font-bold text-white shadow-2xl sm:top-32 sm:px-6 sm:py-3 sm:text-sm"
+          className="fixed left-1/2 top-24 z-[60] w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 sm:top-28"
         >
-          {tg.idleYourTurn}
+          <TurnNoticeToast eyebrow={tg.idleYourTurnEyebrow} title={tg.idleYourTurn} icon="⏰" />
         </motion.div>
       )}
 
@@ -533,7 +529,7 @@ export default function GamePage() {
       <div className="mb-1 flex shrink-0 items-center justify-between sm:mb-2">
         <button
           onClick={() => setExitConfirmOpen(true)}
-          className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] px-3 py-1 text-[10px] text-[var(--psy-muted)] transition hover:border-[rgba(220,80,80,0.4)] hover:text-[var(--psy-danger)] sm:text-[11px]"
+          className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-1 text-[10px] text-[var(--psy-muted)] shadow-[0_8px_18px_rgba(96,72,38,0.1)] transition hover:border-[rgba(220,80,80,0.4)] hover:text-[var(--psy-danger)] sm:text-[11px]"
         >
           {tg.leaveGame}
         </button>
@@ -577,63 +573,62 @@ export default function GamePage() {
         </div>
       </PsyOverlayPanel>
 
-      {/* Opponents */}
-      <div className="mb-1 grid shrink-0 grid-cols-3 gap-2 sm:mb-4 sm:h-[6.5rem] sm:gap-3">
-        {opponents.map((opp) => (
-          <OpponentHand
-            key={opp.id}
-            player={opp}
-            isCurrentTurn={game.players[game.currentPlayerIndex].id === opp.id}
-            locale={locale}
-          />
-        ))}
-      </div>
-
-      {/* Center: Draw pile + Discard pile + Game log */}
-      <div className="my-1 flex shrink-0 items-center justify-center gap-3 sm:my-4 sm:grid sm:h-[11rem] sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
-        <div className="flex items-center gap-3 sm:col-start-2 sm:gap-6">
-          <div
-            ref={drawPileRef}
-            onMouseEnter={() => handleDrawPileHover(true)}
-            onMouseLeave={() => handleDrawPileHover(false)}
-          >
-            <DrawPile count={game.drawPile.length} canDraw={canDraw} onDraw={playerDraw} locale={locale} />
-          </div>
-          <div ref={discardPileRef}>
-            <DiscardPile
-              topCard={topDiscard}
-              count={game.discardPile.length}
-              discardPile={game.discardPile}
-              actions={game.actionLog}
-              players={game.players}
-              highlight={isDiscarding}
+      <div className="shrink-0 rounded-[1.7rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,rgba(253,248,241,0.76),rgba(234,221,196,0.42))] p-2 shadow-[0_18px_40px_rgba(96,72,38,0.12)] sm:rounded-[2rem] sm:p-3">
+        {/* Opponents */}
+        <div className="grid grid-cols-3 gap-2 sm:h-[6.5rem] sm:gap-3">
+          {opponents.map((opp) => (
+            <OpponentHand
+              key={opp.id}
+              player={opp}
+              isCurrentTurn={game.players[game.currentPlayerIndex].id === opp.id}
               locale={locale}
             />
-          </div>
+          ))}
         </div>
-        <div className="hidden md:block md:col-start-3 md:justify-self-end w-52">
-          <GameLog actions={game.actionLog} players={game.players} locale={locale} />
+
+        {/* Center: Draw pile + Discard pile + Game log */}
+        <div className="mt-3 grid items-center gap-3 sm:mt-4 sm:min-h-[11rem] sm:grid-cols-[minmax(12rem,26%)_minmax(18rem,34%)_minmax(12rem,26%)] sm:justify-between sm:gap-[2%]">
+          <div className="hidden min-w-0 self-stretch rounded-[1.35rem] border border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] p-3 md:flex md:items-center md:justify-center">
+            <div className="text-center">
+              <div className="psy-serif text-[11px] uppercase tracking-[0.26em] text-[var(--psy-muted)]">
+                {locale === 'en' ? `${tg.roundWord} ${game.currentRound}` : `第 ${game.currentRound} 輪`}
+              </div>
+              <div className="mt-2 text-xs leading-6 text-[var(--psy-ink-soft)]">
+                {tg.doneLabel} {humanPlayer.declaredSets.length}/5 · {timer}s
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-center gap-[clamp(1rem,3vw,3rem)] rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] px-[clamp(1rem,3vw,3rem)] py-3">
+            <div
+              ref={drawPileRef}
+              onMouseEnter={() => handleDrawPileHover(true)}
+              onMouseLeave={() => handleDrawPileHover(false)}
+            >
+              <DrawPile count={game.drawPile.length} canDraw={canDraw} onDraw={playerDraw} locale={locale} />
+            </div>
+            <div ref={discardPileRef}>
+              <DiscardPile
+                topCard={topDiscard}
+                count={game.discardPile.length}
+                discardPile={game.discardPile}
+                actions={game.actionLog}
+                players={game.players}
+                highlight={isDiscarding}
+                locale={locale}
+              />
+            </div>
+          </div>
+          <div className="hidden w-full md:block md:justify-self-stretch">
+            <GameLog actions={game.actionLog} players={game.players} locale={locale} />
+          </div>
         </div>
       </div>
 
       {/* Human player area */}
-      <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
+      <div className="mt-2 flex flex-1 flex-col space-y-2 rounded-[1.7rem] border border-[rgba(154,116,72,0.14)] bg-[rgba(253,248,241,0.56)] p-2 shadow-[0_18px_40px_rgba(96,72,38,0.1)] sm:mt-3 sm:space-y-3 sm:rounded-[2rem] sm:p-3">
         {/* 罰停橫幅 / 碰窗 / 查看 / 碰意圖面板已全部移入手牌上方的懸浮層
             （見下方 Hand + Declared 區），不再插進文檔流把手牌往下推。 */}
-        {/* Row 1: My personality scores */}
-        <div className="hidden shrink-0 items-center justify-center gap-1.5 flex-wrap sm:flex">
-          {DIMENSIONS.map((d) => {
-            const score = humanPlayer.bigFiveScores[d];
-            return (
-              <div key={d} className="flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: 'rgba(200,155,93,0.10)', border: '1px solid rgba(200,155,93,0.2)' }}>
-                <span className="text-[9px] text-[var(--psy-ink-soft)]">{dimName(d)}</span>
-                <span className="text-[10px] font-bold text-[var(--psy-accent)]">{score.toFixed(1)}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Row 2: Targets */}
+        {/* Targets */}
         <div className="hidden shrink-0 items-center justify-center gap-1.5 flex-wrap sm:flex">
           {DIMENSIONS.map((d) => {
             const target = targets[d];
@@ -643,8 +638,8 @@ export default function GamePage() {
                 key={d}
                 className="flex items-center gap-1 rounded-full px-2 py-0.5"
                 style={{
-                  backgroundColor: isDone ? 'rgba(200,155,93,0.2)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${isDone ? 'rgba(200,155,93,0.45)' : 'rgba(200,155,93,0.14)'}`,
+                  backgroundColor: isDone ? 'rgba(195,154,82,0.18)' : '#fdf8f1',
+                  border: `1px solid ${isDone ? 'rgba(154,116,72,0.45)' : 'rgba(154,116,72,0.16)'}`,
                 }}
               >
                 <span className="text-[9px]" style={{ color: isDone ? 'var(--psy-accent)' : 'var(--psy-muted)' }}>
@@ -659,14 +654,14 @@ export default function GamePage() {
               </div>
             );
           })}
-          <div className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2 py-0.5">
+          <div className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2 py-0.5">
             <span className="text-[9px] text-[var(--psy-muted)]">{tg.done} </span>
             <span className="text-[10px] font-medium text-[var(--psy-success)]">{humanPlayer.declaredSets.length}/5</span>
           </div>
         </div>
 
         <div className="flex shrink-0 flex-col gap-1.5 sm:hidden">
-          <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
+          <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
             <span className="psy-serif text-[var(--psy-accent)]">{locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}</span>
             <span className="truncate">{tg.doneLabel} {humanPlayer.declaredSets.length}/5</span>
             <span className={`font-mono tabular-nums ${timer <= 5 ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-accent)]'}`}>{timer}s</span>
@@ -684,8 +679,8 @@ export default function GamePage() {
                   key={d}
                   className="flex items-center justify-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold tabular-nums"
                   style={{
-                    backgroundColor: isDone ? 'rgba(200,155,93,0.2)' : 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${isDone ? 'rgba(200,155,93,0.45)' : 'rgba(200,155,93,0.14)'}`,
+                    backgroundColor: isDone ? 'rgba(195,154,82,0.18)' : '#fdf8f1',
+                    border: `1px solid ${isDone ? 'rgba(154,116,72,0.45)' : 'rgba(154,116,72,0.16)'}`,
                     color: isDone ? 'var(--psy-accent)' : 'var(--psy-ink-soft)',
                   }}
                 >
@@ -784,9 +779,9 @@ export default function GamePage() {
                 {dimName(pongIntent.dimension)}
               </span>{' '}
               · {tg.pongSelectPrompt}{' '}
-              <span className="text-white font-bold">{pongIntentRequiredSelectCount}</span> {tg.cardsUnit}
+              <span className="font-bold text-[var(--psy-accent-strong)]">{pongIntentRequiredSelectCount}</span> {tg.cardsUnit}
               {pongIntent.type === 'self' ? tg.pongSelectSelfSuffix : tg.pongSelectOtherPrefixA + pongIntentTarget + tg.pongSelectOtherPrefixB}
-              {locale === 'en' ? ' (' : '（'}{tg.selectedPrefix} <span className="text-white font-bold">{selectedCardIds.length}</span>{locale === 'en' ? ')' : '）'}
+              {locale === 'en' ? ' (' : '（'}{tg.selectedPrefix} <span className="font-bold text-[var(--psy-accent-strong)]">{selectedCardIds.length}</span>{locale === 'en' ? ')' : '）'}
             </p>
             {/* Self-pong dimension switcher (only when there are multiple candidates) */}
             {pongIntent.type === 'self' && selfPongCandidates.length > 1 && (
@@ -804,15 +799,15 @@ export default function GamePage() {
                     title={isDeclared ? tg.declaredWarn : undefined}
                     style={{
                       borderColor: pongIntent.dimension === d
-                        ? '#bb8e49'
+                        ? '#c39a52'
                         : isDeclared
                         ? 'rgba(220,106,79,0.35)'
                         : 'rgba(200,155,93,0.18)',
                       backgroundColor: pongIntent.dimension === d
-                        ? '#bb8e49'
+                        ? '#c39a52'
                         : isDeclared
                         ? 'rgba(220,106,79,0.06)'
-                        : 'rgba(255,255,255,0.02)',
+                        : '#fdf8f1',
                       color: pongIntent.dimension === d
                         ? '#fff7ea'
                         : isDeclared
@@ -859,7 +854,7 @@ export default function GamePage() {
 
         {/* Action buttons — 恆佔一行高度（min-h）：按鈕隨回合出現/消失時
             手牌不再上下跳。面板打開時內容隱藏但行高保留。 */}
-        <div className="flex min-h-[46px] shrink-0 flex-wrap items-center justify-center gap-2 sm:gap-3">
+        <div className="flex min-h-[46px] shrink-0 flex-wrap items-center justify-center gap-2 sm:flex-nowrap sm:gap-3">
           {!viewMode && !pongIntent && (
           <>
             {/* Hu button — visible on own turn, or during an opponent's
@@ -919,7 +914,35 @@ export default function GamePage() {
               </button>
             )}
             {isHumanTurn && isDiscarding && viewUsedThisTurn && revealDifficulty !== 'open' && (
-              <span className="text-xs text-[var(--psy-muted)]">{tg.viewUsed}</span>
+              <span className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2 text-xs text-[var(--psy-muted)]">{tg.viewUsed}</span>
+            )}
+
+            {isHumanTurn && isDiscarding && !viewMode && !pongIntent && (
+              <div className="flex min-w-0 items-center gap-2 rounded-full border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-3 py-1.5">
+                <span className="hidden max-w-[15rem] truncate text-xs text-[var(--psy-muted)] lg:inline">
+                  {discardPickId === null ? tg.pickDiscard : tg.confirmDiscardHint}
+                </span>
+                {discardPickId !== null && (
+                  <>
+                    <button
+                      onClick={() => setDiscardPickId(null)}
+                      className="psy-btn psy-btn-ghost px-3 py-1.5 text-xs"
+                    >
+                      {tg.cancel}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const id = discardPickId;
+                        handleDiscardCard(id);
+                        setDiscardPickId(null);
+                      }}
+                      className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold"
+                    >
+                      {tg.submitDiscard}
+                    </button>
+                  </>
+                )}
+              </div>
             )}
 
             {/* AI turn button */}
@@ -949,9 +972,11 @@ export default function GamePage() {
               isDiscarding={isDiscarding && !viewMode && !pongIntent}
               isDeclaring={isPongWindow || pongIntent !== null}
               isMyTurn={isHumanTurn}
-              mobileCompact
               selectedCardIds={selectedCardIds}
               viewedCardIds={effectiveViewedIds}
+              discardPickId={discardPickId}
+              onDiscardPickChange={setDiscardPickId}
+              showDiscardControls={false}
               viewMode={viewMode}
               pickedViewIds={pickedViewIds}
               onTogglePickView={(cardId) =>
@@ -1002,12 +1027,11 @@ export default function GamePage() {
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {DIMENSIONS.map((d) => {
-              const score = humanPlayer.bigFiveScores[d];
               const isDone = declaredDims.has(d);
               return (
-                <div key={d} className="rounded-xl border px-3 py-2" style={{ borderColor: isDone ? 'rgba(200,155,93,0.45)' : 'rgba(200,155,93,0.2)', backgroundColor: isDone ? 'rgba(200,155,93,0.12)' : 'rgba(255,255,255,0.03)' }}>
+                <div key={d} className="rounded-xl border px-3 py-2" style={{ borderColor: isDone ? 'rgba(154,116,72,0.45)' : 'rgba(154,116,72,0.2)', backgroundColor: isDone ? 'rgba(195,154,82,0.14)' : '#fdf8f1' }}>
                   <div className="psy-serif text-sm text-[var(--psy-accent)]">{dimName(d)}</div>
-                  <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{tg.scoreLabel} {score.toFixed(1)} · {isDone ? tg.doneLabel : (locale === 'en' ? `${tg.targetPrefix} ${targets[d]} ${tg.cardsUnit}` : `目標 ${targets[d]} 張`)}</div>
+                  <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{isDone ? tg.doneLabel : (locale === 'en' ? `${tg.targetPrefix} ${targets[d]} ${tg.cardsUnit}` : `目標 ${targets[d]} 張`)}</div>
                 </div>
               );
             })}

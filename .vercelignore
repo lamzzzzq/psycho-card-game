@@ -4,3 +4,7 @@
 remotion-video
 card-art-src
 scripts/load-test/results
+.agents
+SANDBOX_RECORDING_SCRIPT.md
+docs/SANDBOX_LAYOUT_FIX_SPEC.md
+skills-lock.json

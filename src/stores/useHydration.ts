@@ -7,17 +7,23 @@ export function useHydrated() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     // Zustand persist rehydrates synchronously after first render
     const unsub = useAssessmentStore.persist.onFinishHydration(() => {
-      setHydrated(true);
+      if (!cancelled) setHydrated(true);
     });
 
-    // If already hydrated (e.g. navigating between pages)
-    if (useAssessmentStore.persist.hasHydrated()) {
-      setHydrated(true);
-    }
+    const id = window.setTimeout(() => {
+      if (!cancelled && useAssessmentStore.persist.hasHydrated()) {
+        setHydrated(true);
+      }
+    }, 0);
 
-    return unsub;
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+      unsub();
+    };
   }, []);
 
   return hydrated;

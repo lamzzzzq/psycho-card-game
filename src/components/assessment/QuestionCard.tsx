@@ -13,7 +13,7 @@ interface QuestionCardProps {
 
 const LIKERT_SCORES: LikertScore[] = [1, 2, 3, 4, 5];
 // 中性強調色（金）：測評過程不按維度上色，避免暗示題目所屬維度。
-const ACCENT = '#c89b5d';
+const ACCENT = '#c39a52';
 
 export function QuestionCard({
   question,
@@ -50,14 +50,14 @@ export function QuestionCard({
                   : 'hover:-translate-y-0.5'
               }`}
               style={{
-                borderColor: selectedScore === score ? ACCENT : 'rgba(200,155,93,0.16)',
+                borderColor: selectedScore === score ? ACCENT : 'rgba(150,118,78,0.18)',
                 color: selectedScore === score ? ACCENT : 'var(--psy-ink-soft)',
                 background: selectedScore === score
-                  ? `linear-gradient(180deg, ${ACCENT}20, rgba(10,18,28,0.94))`
-                  : 'linear-gradient(180deg, rgba(22,34,49,0.9), rgba(14,22,33,0.92))',
+                  ? `linear-gradient(180deg, ${ACCENT}26, #eaddc4)`
+                  : 'linear-gradient(180deg, var(--psy-card-content), #f8f1e4)',
                 boxShadow: selectedScore === score
-                  ? `0 0 0 1px ${ACCENT}22, 0 14px 28px rgba(0,0,0,0.28)`
-                  : 'inset 0 0 0 1px rgba(255,255,255,0.03)',
+                  ? `0 0 0 1px ${ACCENT}22, 0 12px 24px rgba(120,90,50,0.16)`
+                  : 'inset 0 1px 0 rgba(255,255,255,0.55), 0 6px 14px rgba(120,90,50,0.08)',
               }}
             >
               <span className="psy-serif text-xl font-bold sm:text-2xl">{score}</span>

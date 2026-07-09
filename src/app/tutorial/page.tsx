@@ -424,10 +424,10 @@ function InteractiveSandbox({
 
   const feedbackToneClass =
     state.feedback?.tone === 'success'
-      ? 'border-emerald-400/45 bg-emerald-500/12 text-emerald-300'
+      ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-700'
       : state.feedback?.tone === 'fail'
-      ? 'border-red-400/45 bg-red-500/12 text-red-300'
-      : 'border-amber-400/45 bg-amber-500/12 text-amber-300';
+      ? 'border-red-500/35 bg-red-500/10 text-red-700'
+      : 'border-[rgba(154,116,72,0.36)] bg-[rgba(195,154,82,0.12)] text-[var(--psy-accent-strong)]';
 
   return (
     <>
@@ -438,7 +438,7 @@ function InteractiveSandbox({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 px-5 backdrop-blur-sm"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(58,48,32,0.45)] px-5 backdrop-blur-sm"
         >
           <motion.div
             initial={{ opacity: 0, y: 16, scale: 0.96 }}
@@ -461,7 +461,7 @@ function InteractiveSandbox({
     </AnimatePresence>
 
     {/* 聚焦遮罩：壓暗頁面外圍，沙盒抬到遮罩之上保持明亮（配合卡片聚焦調暗）*/}
-    <div className="fixed inset-0 z-[35] bg-black/55 pointer-events-none" />
+    <div className="fixed inset-0 z-[35] bg-[rgba(58,48,32,0.34)] pointer-events-none" />
     <motion.div
       key="sandbox"
       initial={{ opacity: 0, y: 16 }}
@@ -474,7 +474,7 @@ function InteractiveSandbox({
           重置/退出按鈕合併進了頁頭標題行（見父組件 mode==='sandbox' 分支）。 */}
 
       {/* 牌桌 */}
-      <div className="space-y-3 rounded-[1.4rem] border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] p-4">
+      <div className="space-y-3 rounded-[1.4rem] border border-[rgba(154,116,72,0.18)] bg-[linear-gradient(180deg,var(--psy-card-content),#f8f1e4)] p-4">
         {/* 歸檔區（min-h 鎖行高：「（暫無）」純文字與 chip 高度差 ~3px，
             會讓下方整體微移） */}
         <div className="flex min-h-[23px] flex-wrap items-center gap-2 text-xs">
@@ -852,7 +852,7 @@ function InteractiveSandbox({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ type: 'spring', stiffness: 320, damping: 20 }}
-          className="psy-serif fixed left-1/2 top-20 z-[70] -translate-x-1/2 whitespace-nowrap rounded-full border border-emerald-300/60 bg-emerald-500/95 px-6 py-2.5 text-base font-bold text-white shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
+          className="psy-serif fixed left-1/2 top-20 z-[70] -translate-x-1/2 whitespace-nowrap rounded-full border border-emerald-600/35 bg-emerald-50 px-6 py-2.5 text-base font-bold text-emerald-700 shadow-[0_12px_34px_rgba(96,72,38,0.18)]"
         >
           {successToast}
         </motion.div>
@@ -861,7 +861,7 @@ function InteractiveSandbox({
 
     {/* 固定在視窗底部、永遠可見的指引欄。做大做醒目（佔更多空間、強對比）。
         渲染在 motion.div 之外，避免 framer transform 祖先讓 fixed 失效。 */}
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-[rgba(214,170,98,0.7)] bg-[linear-gradient(180deg,rgba(28,40,56,0.98),rgba(11,18,28,0.99))] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-12px_40px_rgba(0,0,0,0.5)] backdrop-blur-md">
+    <div className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-[rgba(154,116,72,0.36)] bg-[linear-gradient(180deg,rgba(253,248,241,0.98),rgba(234,221,196,0.98))] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(96,72,38,0.18)] backdrop-blur-md">
       <div className="mx-auto max-w-3xl space-y-2.5">
         <div className="flex items-start gap-3">
           <span className="psy-serif mt-0.5 shrink-0 rounded-full bg-[var(--psy-accent)] px-3 py-1 text-[11px] font-bold tracking-[0.2em] text-[#1a1206]">
@@ -905,7 +905,7 @@ function InteractiveSandbox({
 // 沙盒目標板：5 維 + 目標張數，當前操作維度高亮。教學玩家「數字=要湊幾張」。
 function TargetBoard({ label, activeDim, dimName }: { label: string; activeDim: Dimension | null; dimName: DimName }) {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-1.5 rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] px-3 py-2">
+    <div className="flex flex-wrap items-center justify-center gap-1.5 rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2">
       <span className="mr-1 text-[10px] tracking-wide text-[var(--psy-muted)]">{label}</span>
       {DIMENSIONS.map((d) => {
         const active = d === activeDim;
@@ -916,8 +916,8 @@ function TargetBoard({ label, activeDim, dimName }: { label: string; activeDim: 
             className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums"
             style={{
               color: active ? '#1a1206' : 'var(--psy-ink-soft)',
-              background: active ? m.colorHex : 'rgba(255,255,255,0.04)',
-              border: `1px solid ${active ? m.colorHex : 'rgba(200,155,93,0.18)'}`,
+              background: active ? m.colorHex : '#f8f1e4',
+              border: `1px solid ${active ? m.colorHex : 'rgba(154,116,72,0.18)'}`,
             }}
           >
             <span>{dimName(d)}</span>
@@ -939,7 +939,7 @@ function MiniCard({ label, color }: { label: string; color: string }) {
         color,
         background: color + '1a',
         border: `1px solid ${color}66`,
-        boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.04)',
+        boxShadow: 'inset 0 0 0 1px rgba(253,248,241,0.55)',
       }}
     >
       {label}
@@ -952,7 +952,7 @@ function FaceDownCard() {
   return (
     <span
       className="inline-flex h-11 w-8 items-center justify-center rounded-md text-[15px] font-bold text-[var(--psy-muted)]"
-      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,155,93,0.18)' }}
+      style={{ background: '#fdf8f1', border: '1px solid rgba(154,116,72,0.18)' }}
     >
       ?
     </span>
@@ -965,9 +965,9 @@ function PileBox({ label, glow = false }: { label: string; glow?: boolean }) {
     <span
       className="inline-flex h-11 w-8 flex-col items-center justify-center rounded-md tracking-wider"
       style={{
-        background: 'linear-gradient(180deg, rgba(24,42,59,0.92), rgba(13,24,35,0.92))',
-        border: `1px solid ${glow ? 'rgba(214,170,98,0.7)' : 'rgba(200,155,93,0.28)'}`,
-        boxShadow: glow ? '0 0 14px rgba(200,155,93,0.4)' : undefined,
+        background: 'linear-gradient(180deg, #eaddc4, #d7c49e)',
+        border: `1px solid ${glow ? 'rgba(154,116,72,0.62)' : 'rgba(154,116,72,0.28)'}`,
+        boxShadow: glow ? '0 0 14px rgba(195,154,82,0.35)' : undefined,
       }}
     >
       <span className="text-sm text-[var(--psy-ink)]">◈</span>
@@ -981,7 +981,7 @@ function DonePill({ label }: { label: string }) {
   return (
     <span
       className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold"
-      style={{ color: 'var(--psy-accent)', background: 'rgba(200,155,93,0.2)', border: '1px solid rgba(200,155,93,0.45)' }}
+      style={{ color: 'var(--psy-accent-strong)', background: 'rgba(195,154,82,0.18)', border: '1px solid rgba(154,116,72,0.42)' }}
     >
       {label}
       <span className="text-[8px]">✓</span>
@@ -997,7 +997,7 @@ function Sym({ children }: { children: ReactNode }) {
 // 帶說明的示意圖外框
 function DiagramFrame({ caption, children }: { caption?: string; children: ReactNode }) {
   return (
-    <div className="mt-3 rounded-xl border border-[rgba(200,155,93,0.14)] bg-[rgba(255,255,255,0.02)] px-3 py-3">
+    <div className="mt-3 rounded-xl border border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] px-3 py-3">
       <div className="flex flex-wrap items-center justify-center gap-2">{children}</div>
       {caption && <p className="mt-2 text-center text-[10px] leading-4 text-[var(--psy-muted)]">{caption}</p>}
     </div>
@@ -1147,7 +1147,7 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
         <DiagramFrame caption={s.dgKnowledgeCaption}>
           <span
             className="inline-flex h-11 w-8 items-center justify-center rounded-md text-[15px] font-bold text-[var(--psy-muted)]"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(200,155,93,0.32)' }}
+            style={{ background: '#fdf8f1', border: '1px dashed rgba(154,116,72,0.32)' }}
           >
             ⓘ
           </span>
@@ -1187,10 +1187,10 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
     <div className="space-y-3">
       <div className="psy-serif text-sm text-[var(--psy-ink)]">{s.shotProductName}</div>
       <div className="grid gap-2">
-        <div className={`${mode === 'pvp' ? 'bg-[rgba(200,155,93,0.28)] text-[var(--psy-ink)]' : 'bg-[rgba(255,255,255,0.04)] text-[var(--psy-muted)]'} rounded-full border border-[rgba(200,155,93,0.24)] px-4 py-2 text-center text-sm`}>
+        <div className={`${mode === 'pvp' ? 'bg-[rgba(195,154,82,0.22)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-full border border-[rgba(154,116,72,0.24)] px-4 py-2 text-center text-sm`}>
           {s.shotPvp}
         </div>
-        <div className={`${mode === 'solo' ? 'bg-[rgba(200,155,93,0.28)] text-[var(--psy-ink)]' : 'bg-[rgba(255,255,255,0.04)] text-[var(--psy-muted)]'} rounded-full border border-[rgba(200,155,93,0.24)] px-4 py-2 text-center text-sm`}>
+        <div className={`${mode === 'solo' ? 'bg-[rgba(195,154,82,0.22)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-full border border-[rgba(154,116,72,0.24)] px-4 py-2 text-center text-sm`}>
           {s.shotSolo}
         </div>
       </div>
@@ -1200,11 +1200,11 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
   const identityForm = (
     <div className="space-y-3">
       <div className="psy-serif text-sm text-[var(--psy-ink)]">{s.shotPlayerInfo}</div>
-      <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] px-3 py-2">
+      <div className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2">
         <div className="text-[9px] text-[var(--psy-muted)]">{s.shotStudentId}</div>
         <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{s.shotEnterStudentId}</div>
       </div>
-      <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] px-3 py-2">
+      <div className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2">
         <div className="text-[9px] text-[var(--psy-muted)]">{s.shotConfirmStudentId}</div>
         <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{s.shotReenterStudentId}</div>
       </div>
@@ -1226,11 +1226,11 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
 
   const roomPanel = (
     <div className="grid gap-3 sm:grid-cols-2">
-      <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] p-3">
+      <div className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] p-3">
         <div className="psy-serif text-xs text-[var(--psy-ink)]">{s.shotCreateRoom}</div>
         <div className="mt-2 rounded-lg bg-[rgba(200,155,93,0.12)] px-3 py-2 text-center text-sm text-[var(--psy-accent)]">{s.shotRoomCode('4821')}</div>
       </div>
-      <div className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] p-3">
+      <div className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] p-3">
         <div className="psy-serif text-xs text-[var(--psy-ink)]">{s.shotJoinRoom}</div>
         <div className="mt-2 rounded-lg border border-[rgba(200,155,93,0.2)] px-3 py-2 text-center text-xs text-[var(--psy-muted)]">{s.shotEnter4Code}</div>
       </div>
@@ -1241,7 +1241,7 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
     <div className="space-y-3">
       <div className="grid grid-cols-4 gap-2">
         {[s.shotYou, '11', '12', '13'].map((name, i) => (
-          <div key={name} className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2 py-3 text-center">
+          <div key={name} className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2 py-3 text-center">
             <div className="text-xs text-[var(--psy-ink)]">{name}</div>
             <div className="mt-1 text-[9px] text-[var(--psy-muted)]">{i === 0 ? s.shotHost : s.shotReady}</div>
           </div>
@@ -1255,14 +1255,14 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
         {s.shotDifficulties.map((label, i) => (
-          <div key={label} className={`${i === Math.min(index, 2) ? 'bg-[rgba(200,155,93,0.22)] text-[var(--psy-ink)]' : 'bg-[rgba(255,255,255,0.03)] text-[var(--psy-muted)]'} rounded-xl border border-[rgba(200,155,93,0.18)] px-2 py-3 text-center text-xs`}>
+          <div key={label} className={`${i === Math.min(index, 2) ? 'bg-[rgba(195,154,82,0.2)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-xl border border-[rgba(154,116,72,0.18)] px-2 py-3 text-center text-xs`}>
             {label}
           </div>
         ))}
       </div>
       <div className="grid grid-cols-4 gap-2">
         {s.shotRounds.map((label, i) => (
-          <div key={label} className={`${i === 1 ? 'bg-[rgba(200,155,93,0.18)] text-[var(--psy-ink)]' : 'bg-[rgba(255,255,255,0.03)] text-[var(--psy-muted)]'} rounded-xl border border-[rgba(200,155,93,0.16)] px-2 py-2 text-center text-[10px]`}>
+          <div key={label} className={`${i === 1 ? 'bg-[rgba(195,154,82,0.18)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-xl border border-[rgba(154,116,72,0.16)] px-2 py-2 text-center text-[10px]`}>
             {label}
           </div>
         ))}
@@ -1273,7 +1273,7 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
   const soloOpponents = (
     <div className="grid grid-cols-3 gap-2">
       {s.shotAiOpponents.map((name) => (
-        <div key={name} className="rounded-xl border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.035)] px-2 py-4 text-center">
+        <div key={name} className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2 py-4 text-center">
           <div className="text-sm text-[var(--psy-ink)]">{name}</div>
           <div className="mt-2 text-[9px] leading-4 text-[var(--psy-muted)]">{s.shotAiOpponentLabel}</div>
         </div>
@@ -1293,12 +1293,12 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
   const frame = mode === 'pvp' ? pvpFrames[index] : soloFrames[index];
 
   return (
-    <div className="rounded-[1.2rem] border border-[rgba(200,155,93,0.16)] bg-[radial-gradient(circle_at_top,rgba(200,155,93,0.10),transparent_42%),rgba(9,15,23,0.68)] p-3">
+    <div className="rounded-[1.2rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,var(--psy-card),#efe4cf)] p-3 shadow-[0_14px_28px_rgba(96,72,38,0.12)]">
       <div className="mb-3 flex items-center justify-between">
         <span className="psy-serif text-[10px] text-[var(--psy-accent)]">{frameTitle}</span>
         <span className="rounded-full border border-[rgba(200,155,93,0.18)] px-2 py-0.5 text-[9px] text-[var(--psy-muted)]">{s.shotStaticBadge}</span>
       </div>
-      <div className="min-h-[12rem] rounded-[1rem] border border-[rgba(200,155,93,0.12)] bg-[linear-gradient(180deg,rgba(18,31,45,0.76),rgba(9,15,23,0.86))] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
+      <div className="min-h-[12rem] rounded-[1rem] border border-[rgba(154,116,72,0.14)] bg-[linear-gradient(180deg,var(--psy-card-content),#f8f1e4)] p-4 shadow-[inset_0_0_0_1px_rgba(255,250,240,0.62)]">
         {frame}
       </div>
     </div>
@@ -1323,12 +1323,12 @@ function StartFlowGuide({ s }: { s: TutStrings }) {
           <p className="psy-eyebrow text-[10px]">{s.flowEyebrow}</p>
           <h2 className="psy-serif mt-2 text-2xl text-[var(--psy-ink)]">{s.flowTitle}</h2>
         </div>
-        <div className="grid grid-cols-2 gap-2 rounded-full border border-[rgba(200,155,93,0.16)] bg-[rgba(255,255,255,0.02)] p-1">
+        <div className="grid grid-cols-2 gap-2 rounded-full border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] p-1">
           <button
             onClick={() => switchMode('pvp')}
             className={`rounded-full px-4 py-2 text-sm transition ${
               mode === 'pvp'
-                ? 'bg-[rgba(200,155,93,0.24)] text-[var(--psy-ink)]'
+                ? 'bg-[rgba(195,154,82,0.22)] text-[var(--psy-ink)]'
                 : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
             }`}
           >
@@ -1338,7 +1338,7 @@ function StartFlowGuide({ s }: { s: TutStrings }) {
             onClick={() => switchMode('solo')}
             className={`rounded-full px-4 py-2 text-sm transition ${
               mode === 'solo'
-                ? 'bg-[rgba(200,155,93,0.24)] text-[var(--psy-ink)]'
+                ? 'bg-[rgba(195,154,82,0.22)] text-[var(--psy-ink)]'
                 : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
             }`}
           >
@@ -1356,8 +1356,8 @@ function StartFlowGuide({ s }: { s: TutStrings }) {
               onClick={() => setIndex(i)}
               className={`shrink-0 whitespace-nowrap rounded-xl border px-3 py-2 text-left transition lg:w-full lg:shrink ${
                 i === index
-                  ? 'border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] text-[var(--psy-ink)]'
-                  : 'border-[rgba(200,155,93,0.12)] bg-[rgba(255,255,255,0.02)] text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
+                  ? 'border-[rgba(154,116,72,0.45)] bg-[rgba(195,154,82,0.14)] text-[var(--psy-ink)]'
+                  : 'border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'
               }`}
             >
               <span className="psy-serif mr-2 text-[10px] text-[var(--psy-accent)]">{String(i + 1).padStart(2, '0')}</span>
@@ -1370,7 +1370,7 @@ function StartFlowGuide({ s }: { s: TutStrings }) {
           key={`${mode}-${index}`}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-[1.2rem] border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.025)] p-5"
+          className="rounded-[1.2rem] border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] p-5"
         >
           <div className="grid gap-5 xl:grid-cols-[1fr_22rem]">
             <div>

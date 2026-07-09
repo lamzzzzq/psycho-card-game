@@ -7,24 +7,29 @@
 }
 
 :root {
-  --psy-bg: #07111b;
-  --psy-bg-soft: #0f1c28;
-  --psy-surface: rgba(13, 24, 36, 0.78);
-  --psy-surface-strong: rgba(15, 27, 40, 0.94);
-  --psy-card: rgba(20, 31, 46, 0.92);
-  --psy-card-2: rgba(24, 39, 56, 0.92);
-  --psy-border: rgba(179, 141, 92, 0.34);
-  --psy-border-strong: rgba(207, 167, 112, 0.56);
-  --psy-ink: #ecdfc8;
-  --psy-ink-soft: #bda988;
-  --psy-muted: #8c7c66;
-  --psy-accent: #c89b5d;
-  --psy-accent-soft: rgba(200, 155, 93, 0.16);
-  --psy-success: #8fc787;
-  --psy-success-soft: rgba(143, 199, 135, 0.18);
-  --psy-danger: #dc6a4f;
-  --psy-danger-soft: rgba(220, 106, 79, 0.18);
-  --psy-shadow: 0 20px 60px rgba(0, 0, 0, 0.34);
+  --psy-bg: #f4edd9;
+  --psy-bg-soft: #ede5cd;
+  --psy-surface: #fdf9f0;
+  --psy-surface-strong: #fffaf2;
+  --psy-card: #eaddc4;
+  --psy-card-2: #dccdae;
+  --psy-card-content: #fdf8f1;
+  --psy-border: rgba(150, 118, 78, 0.28);
+  --psy-border-strong: rgba(154, 116, 72, 0.7);
+  --psy-ink: #3a3020;
+  --psy-ink-soft: #6b5a3f;
+  --psy-muted: #9a8a68;
+  --psy-accent: #c39a52;
+  --psy-accent-strong: #9a7448;
+  --psy-accent-soft: rgba(195, 154, 82, 0.16);
+  --psy-success: #6f8f55;
+  --psy-success-soft: rgba(111, 143, 85, 0.18);
+  --psy-danger: #c9603f;
+  --psy-danger-soft: rgba(201, 96, 63, 0.16);
+  --psy-shadow: 0 10px 26px rgba(120, 90, 50, 0.12), 0 2px 5px rgba(120, 90, 50, 0.08);
+  --psy-page-bg:
+    radial-gradient(circle at 50% -8%, rgba(195, 154, 82, 0.14), transparent 48%),
+    linear-gradient(180deg, #f4edd9 0%, #ede5cd 46%, #e6ddc3 100%);
 }
 
 html,
@@ -36,40 +41,45 @@ body {
 }
 
 body {
-  background:
-    radial-gradient(circle at top, rgba(86, 111, 136, 0.2), transparent 38%),
-    radial-gradient(circle at 20% 20%, rgba(200, 155, 93, 0.08), transparent 26%),
-    linear-gradient(180deg, #0b1724 0%, #08111a 42%, #050b12 100%);
+  background: var(--psy-page-bg);
   color: var(--psy-ink);
+  isolation: isolate;
+  position: relative;
 }
 
 body::before {
   content: "";
   position: fixed;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
   background:
-    linear-gradient(rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.018)),
+    linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.16)),
     repeating-linear-gradient(
       90deg,
       transparent 0,
       transparent 54px,
-      rgba(255, 255, 255, 0.012) 55px,
+      rgba(120, 90, 50, 0.018) 55px,
       transparent 56px
     );
-  opacity: 0.35;
+  opacity: 0.42;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
 }
 
 ::selection {
-  background: rgba(200, 155, 93, 0.28);
-  color: #fff7e8;
+  background: rgba(195, 154, 82, 0.28);
+  color: var(--psy-ink);
 }
 
 .psy-panel {
-  background: rgba(15, 25, 37, 0.92);
+  background: var(--psy-surface);
   border: 1px solid var(--psy-border);
   box-shadow: var(--psy-shadow);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(10px);
 }
 
 .psy-etched {
@@ -80,7 +90,7 @@ body::before {
   content: "";
   position: absolute;
   inset: 8px;
-  border: 1px solid rgba(227, 201, 160, 0.12);
+  border: 1px solid rgba(150, 118, 78, 0.14);
   border-radius: inherit;
   pointer-events: none;
 }
@@ -92,14 +102,16 @@ body::before {
 .psy-btn {
   border-radius: 999px;
   border: 1px solid var(--psy-border);
-  background: #16222f;
+  background: var(--psy-surface);
   color: var(--psy-ink);
   /* 移动端触控目标下限：保证所有按钮 ≥40px 高、内容居中（小字按钮原来仅靠 padding 会偏矮） */
   min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 14px 30px rgba(0, 0, 0, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.52),
+    0 12px 26px rgba(120, 90, 50, 0.12);
   transition:
     transform 140ms ease,
     border-color 140ms ease,
@@ -121,29 +133,32 @@ body::before {
 }
 
 .psy-btn-ghost {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(253, 249, 240, 0.82);
   color: var(--psy-ink);
 }
 
 .psy-btn-accent {
-  border-color: rgba(200, 155, 93, 0.42);
-  background: #bb8e49;
-  color: #fff7ea;
-  box-shadow: 0 18px 34px rgba(97, 64, 21, 0.28);
+  border-color: rgba(154, 116, 72, 0.32);
+  background: #c39a52;
+  color: #fff9f0;
+  box-shadow:
+    0 12px 26px rgba(150, 105, 35, 0.24),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.32),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.12);
 }
 
 .psy-btn-danger {
-  border-color: rgba(220, 106, 79, 0.42);
-  background: #a8503a;
-  color: #fff3ea;
-  box-shadow: 0 18px 34px rgba(85, 30, 24, 0.26);
+  border-color: rgba(201, 96, 63, 0.38);
+  background: #c9603f;
+  color: #fff9f0;
+  box-shadow: 0 12px 26px rgba(150, 70, 40, 0.22);
 }
 
 .psy-input {
   width: 100%;
   border-radius: 0.9rem;
   border: 1px solid var(--psy-border);
-  background: rgba(11, 20, 30, 0.88);
+  background: rgba(255, 252, 245, 0.76);
   color: var(--psy-ink);
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
@@ -175,16 +190,15 @@ body::before {
 .psy-tile {
   position: relative;
   border-radius: 1rem;
-  border: 1px solid rgba(200, 155, 93, 0.18);
-  background: #17273a;
+  border: 1px solid var(--psy-border);
+  background: #f7f0e2;
   padding: 0.7rem 0.75rem;
   text-align: center;
   /* 凸起：顶部高光斜面 + 底部内阴影立边 + 外投影 */
   box-shadow:
-    inset 0 1px 0 rgba(255, 244, 225, 0.07),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.34),
-    0 5px 12px rgba(0, 0, 0, 0.32),
-    0 1px 0 rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -2px 3px rgba(120, 90, 50, 0.08),
+    0 5px 12px rgba(120, 90, 50, 0.1);
   transition:
     border-color 130ms ease,
     background 130ms ease,
@@ -196,40 +210,37 @@ body::before {
 
 .psy-tile:hover {
   transform: translateY(-1px);
-  border-color: rgba(200, 155, 93, 0.34);
+  border-color: var(--psy-border-strong);
   box-shadow:
-    inset 0 1px 0 rgba(255, 244, 225, 0.09),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.34),
-    0 9px 18px rgba(0, 0, 0, 0.36),
-    0 1px 0 rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -2px 3px rgba(120, 90, 50, 0.08),
+    0 9px 18px rgba(120, 90, 50, 0.14);
 }
 
 /* 手指按下：即时下沉 */
 .psy-tile:active {
   transform: translateY(1px) scale(0.992);
   box-shadow:
-    inset 0 2px 6px rgba(0, 0, 0, 0.5),
-    inset 0 0 0 1px rgba(200, 155, 93, 0.18),
-    0 2px 6px rgba(0, 0, 0, 0.3);
+    inset 0 2px 6px rgba(120, 90, 50, 0.18),
+    inset 0 0 0 1px rgba(195, 154, 82, 0.16),
+    0 2px 6px rgba(120, 90, 50, 0.08);
 }
 
 /* 选中：压陷进去 + 金色内发光，明确「按进去并点亮」 */
 .psy-tile.is-active {
-  border-color: rgba(207, 167, 112, 0.72);
-  background: #5c4220;
-  color: #f4e7cd;
+  border-color: rgba(154, 116, 72, 0.72);
+  background: #eaddc4;
+  color: var(--psy-ink);
   transform: translateY(1px);
   box-shadow:
-    inset 0 3px 7px rgba(0, 0, 0, 0.58),
-    inset 0 0 0 1px rgba(200, 155, 93, 0.42),
-    inset 0 -8px 16px rgba(150, 104, 42, 0.32),
-    0 0 0 1px rgba(200, 155, 93, 0.22),
-    0 0 20px rgba(200, 155, 93, 0.16);
+    inset 0 3px 7px rgba(120, 90, 50, 0.16),
+    inset 0 0 0 1px rgba(195, 154, 82, 0.32),
+    0 0 0 1px rgba(195, 154, 82, 0.18);
 }
 
 .psy-tile.is-active:hover {
   transform: translateY(1px);
-  border-color: rgba(218, 178, 122, 0.82);
+  border-color: rgba(154, 116, 72, 0.82);
 }
 
 .psy-tile.is-active:active {
@@ -256,8 +267,8 @@ body::before {
   align-items: center;
   gap: 0.375rem;
   border-radius: 999px;
-  border: 1px solid rgba(200, 155, 93, 0.22);
-  background: rgba(200, 155, 93, 0.08);
+  border: 1px solid var(--psy-border);
+  background: var(--psy-accent-soft);
   padding: 0.25rem 0.75rem;
   font-size: 0.75rem;
   color: var(--psy-ink-soft);
@@ -265,7 +276,7 @@ body::before {
 
 .psy-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(200, 155, 93, 0.52) rgba(13, 24, 36, 0.4);
+  scrollbar-color: rgba(154, 116, 72, 0.52) rgba(253, 249, 240, 0.62);
 }
 
 .psy-scroll::-webkit-scrollbar {
@@ -274,16 +285,16 @@ body::before {
 }
 
 .psy-scroll::-webkit-scrollbar-track {
-  background: linear-gradient(180deg, rgba(13, 24, 36, 0.78), rgba(10, 18, 28, 0.92));
+  background: linear-gradient(180deg, rgba(253, 249, 240, 0.78), rgba(247, 240, 226, 0.92));
   border-radius: 999px;
-  border: 1px solid rgba(200, 155, 93, 0.12);
+  border: 1px solid rgba(150, 118, 78, 0.12);
 }
 
 .psy-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(179, 141, 92, 0.88), rgba(124, 93, 54, 0.92));
+  background: linear-gradient(180deg, rgba(195, 154, 82, 0.88), rgba(154, 116, 72, 0.92));
   border-radius: 999px;
-  border: 2px solid rgba(13, 24, 36, 0.88);
-  box-shadow: inset 0 0 0 1px rgba(255, 244, 225, 0.08);
+  border: 2px solid rgba(253, 249, 240, 0.88);
+  box-shadow: inset 0 0 0 1px rgba(255, 244, 225, 0.18);
 }
 
 .psy-scroll::-webkit-scrollbar-thumb:hover {
@@ -310,10 +321,10 @@ a:focus-visible,
    給「當前該點的目標」套上明顯的金色脈動光暈，比細描邊醒目得多。 */
 @keyframes tutSpotlight {
   0%, 100% {
-    box-shadow: 0 0 0 1.5px rgba(200, 155, 93, 0.85), 0 0 14px 2px rgba(200, 155, 93, 0.32);
+    box-shadow: 0 0 0 1.5px rgba(195, 154, 82, 0.85), 0 0 14px 2px rgba(195, 154, 82, 0.32);
   }
   50% {
-    box-shadow: 0 0 0 3px rgba(212, 164, 105, 0.95), 0 0 26px 6px rgba(200, 155, 93, 0.55);
+    box-shadow: 0 0 0 3px rgba(195, 154, 82, 0.95), 0 0 26px 6px rgba(195, 154, 82, 0.48);
   }
 }
 /* border-radius 不自帶 —— 跟隨被高亮元素自身的圓角（小卡片走小圓角、pill 按鈕走全圓），
@@ -325,6 +336,6 @@ a:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .tut-spotlight {
     animation: none;
-    box-shadow: 0 0 0 2.5px rgba(212, 164, 105, 0.95), 0 0 18px 4px rgba(200, 155, 93, 0.5);
+    box-shadow: 0 0 0 2.5px rgba(195, 154, 82, 0.95), 0 0 18px 4px rgba(195, 154, 82, 0.42);
   }
 }

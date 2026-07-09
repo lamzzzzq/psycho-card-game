@@ -44,28 +44,28 @@ export function RadarChart({ scores, size = 280 }: RadarChartProps) {
       >
         <defs>
           <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#d3a364" stopOpacity="0.34" />
-            <stop offset="100%" stopColor="#7aa2d6" stopOpacity="0.22" />
+            <stop offset="0%" stopColor="#c39a52" stopOpacity="0.42" />
+            <stop offset="100%" stopColor="#9a7448" stopOpacity="0.26" />
           </linearGradient>
         </defs>
 
-        <circle cx={center} cy={center} r={radius + 24} fill="none" stroke="rgba(200,155,93,0.16)" strokeWidth="1" />
-        <circle cx={center} cy={center} r={radius + 8} fill="none" stroke="rgba(200,155,93,0.1)" strokeWidth="1" />
+        <circle cx={center} cy={center} r={radius + 24} fill="none" stroke="rgba(154,116,72,0.28)" strokeWidth="1.2" />
+        <circle cx={center} cy={center} r={radius + 8} fill="none" stroke="rgba(154,116,72,0.2)" strokeWidth="1.1" />
 
         {levels.map((level) => {
           const points = DIMENSIONS.map((d) => getPoint(d, level));
           const path = points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ') + ' Z';
-          return <path key={level} d={path} fill="none" stroke="rgba(226, 211, 184, 0.14)" strokeWidth="1" />;
+          return <path key={level} d={path} fill="none" stroke="rgba(154, 116, 72, 0.16)" strokeWidth="1" />;
         })}
 
         {DIMENSIONS.map((d) => {
           const point = getPoint(d, 5);
           return (
-            <line key={d} x1={center} y1={center} x2={point.x} y2={point.y} stroke="rgba(226, 211, 184, 0.14)" strokeWidth="1" />
+            <line key={d} x1={center} y1={center} x2={point.x} y2={point.y} stroke="rgba(154, 116, 72, 0.16)" strokeWidth="1" />
           );
         })}
 
-        <path d={dataPath} fill="url(#radarGradient)" stroke="#d3a364" strokeWidth="2.2" opacity={0.92} />
+        <path d={dataPath} fill="url(#radarGradient)" stroke="#c39a52" strokeWidth="2.6" opacity={0.96} />
 
         {dataPoints.map((p, i) => (
           <g key={i}>
@@ -92,10 +92,10 @@ export function RadarChart({ scores, size = 280 }: RadarChartProps) {
           );
         })}
 
-        <text x={center} y={center - 3} textAnchor="middle" className="psy-serif text-[12px]" fill="rgba(236,223,200,0.82)">
+        <text x={center} y={center - 3} textAnchor="middle" className="psy-serif text-[12px]" fill="rgba(107,90,63,0.62)">
           Persona
         </text>
-        <text x={center} y={center + 14} textAnchor="middle" className="psy-serif text-[18px]" fill="#d3a364">
+        <text x={center} y={center + 14} textAnchor="middle" className="psy-serif text-[18px]" fill="#c39a52">
           ✦
         </text>
       </svg>

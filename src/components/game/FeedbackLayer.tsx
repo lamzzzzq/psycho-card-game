@@ -169,6 +169,28 @@ export function useYourTurnNotifier(
   return banner;
 }
 
+export function TurnNoticeToast({
+  eyebrow,
+  title,
+  icon = '⏰',
+}: {
+  eyebrow: string;
+  title: string;
+  icon?: string;
+}) {
+  return (
+    <div className="psy-etched rounded-[1.35rem] border border-[rgba(154,116,72,0.28)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] px-5 py-3 text-center shadow-[0_18px_42px_rgba(96,72,38,0.2)] sm:px-7 sm:py-4">
+      <div className="psy-serif text-[10px] uppercase tracking-[0.28em] text-[var(--psy-accent-strong)]">
+        {eyebrow}
+      </div>
+      <div className="mt-1 flex items-center justify-center gap-2 text-base font-bold text-[var(--psy-ink)] sm:text-2xl">
+        <span aria-hidden>{icon}</span>
+        <span>{title}</span>
+      </div>
+    </div>
+  );
+}
+
 export function YourTurnBanner({ bannerKey, locale = 'zh' }: { bannerKey: number | null; locale?: Locale }) {
   const t = STRINGS[locale].game;
   return (
@@ -180,23 +202,9 @@ export function YourTurnBanner({ bannerKey, locale = 'zh' }: { bannerKey: number
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: 'spring', stiffness: 360, damping: 22 }}
-          className="pointer-events-none fixed top-1/3 left-1/2 -translate-x-1/2 z-[75] text-center"
+          className="pointer-events-none fixed left-1/2 top-[28%] z-[75] w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 text-center"
         >
-          <div
-            className="psy-etched rounded-[1.5rem] px-8 py-4"
-            style={{
-              background: 'linear-gradient(180deg, rgba(23,34,49,0.96), rgba(11,19,29,0.98))',
-              border: '1px solid rgba(200,155,93,0.38)',
-              boxShadow: '0 0 40px rgba(77, 53, 21, 0.28)',
-            }}
-          >
-            <div className="psy-serif text-[11px] tracking-[0.3em] text-[var(--psy-accent)]">
-              Your Turn
-            </div>
-            <div className="mt-1 psy-serif text-3xl font-black text-[var(--psy-ink)]">
-              {t.yourTurnBanner}
-            </div>
-          </div>
+          <TurnNoticeToast eyebrow={t.yourTurnEyebrow} title={t.yourTurnBanner} icon="✦" />
         </motion.div>
       )}
     </AnimatePresence>

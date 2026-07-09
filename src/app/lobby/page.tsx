@@ -40,7 +40,7 @@ export default function LobbyPage() {
           </button>
           <button
             onClick={() => router.push('/')}
-            className="block mx-auto text-xs text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
+            className="block mx-auto text-xs text-[var(--psy-muted)] underline decoration-[rgba(150,118,78,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
           >
             {s.needAssess.backHome}
           </button>
@@ -75,12 +75,12 @@ export default function LobbyPage() {
     <div className="flex flex-1 flex-col items-center px-4 pt-8 pb-28 sm:px-6 lg:justify-center lg:pb-8">
       <button
         onClick={() => router.push('/')}
-        className="psy-btn psy-btn-ghost psy-serif fixed left-4 top-4 z-40 px-3.5 py-2 text-sm font-medium shadow-[0_16px_38px_rgba(0,0,0,0.32)] sm:left-8 sm:top-8"
+        className="psy-btn psy-btn-ghost psy-serif fixed left-4 top-4 z-40 px-3.5 py-2 text-sm font-medium sm:left-8 sm:top-8"
       >
         {s.backHome}
       </button>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={false}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-5xl"
       >
@@ -165,7 +165,7 @@ export default function LobbyPage() {
                       className="psy-panel psy-etched rounded-2xl p-2.5 text-center sm:rounded-[1.4rem] sm:p-4 lg:text-left"
                     >
                       <div className="flex flex-col items-center gap-2 sm:gap-3 lg:flex-row lg:items-start">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(200,155,93,0.2)] bg-[rgba(200,155,93,0.08)] text-xl sm:h-12 sm:w-12 sm:text-2xl">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[var(--psy-accent-soft)] text-xl sm:h-12 sm:w-12 sm:text-2xl">
                           {p.avatar}
                         </div>
                         <div className="space-y-1">
@@ -183,7 +183,7 @@ export default function LobbyPage() {
       </motion.div>
 
       {/* 開始對戰：移动端 sticky 底栏，桌面端静态居中。放在 motion.div 之外。 */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[rgba(200,155,93,0.18)] bg-[rgba(11,18,28,0.92)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:static lg:mt-6 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--psy-border)] bg-[rgba(253,249,240,0.92)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgba(120,90,50,0.1)] backdrop-blur-md lg:static lg:mt-6 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
         <button
           onClick={handleStart}
           className="psy-btn psy-btn-accent mx-auto block w-full max-w-md px-10 py-3 text-base font-semibold lg:w-auto lg:min-w-[20rem]"

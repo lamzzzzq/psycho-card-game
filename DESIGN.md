@@ -1,216 +1,150 @@
-# PsychoCardGame · 设计系统
+# PsychoCardGame · Design System
 
-> 设计语言代号：**Psy（深夜书房 / 心理学手稿）**
-> 目标：营造一种「在昏黄台灯下翻开心理学典籍 + 现代游戏感」的氛围。
-> 真相源：`src/app/globals.css`（设计令牌） + `src/components/shared/PsyOverlayPanel.tsx`（蒙层规范）。
-> 修改本文档前请先同步 CSS 变量；CSS 与 DESIGN.md 必须始终一致。
-
----
-
-## 1. 设计意图
-
-| 维度 | 关键词 |
-|------|--------|
-| 氛围 | 深夜、内省、典籍、低饱和、温暖金属点缀 |
-| 节奏 | 安静的留白 + 有质感的高光 + 克制的动效 |
-| 反对 | 高饱和荧光、扁平贴纸感、卡通圆润、霓虹科幻 |
-| 借鉴 | 古籍封面、皮革封套、铜版印刷、深色 IDE |
-
-> 一切元素先问一句：**这玩意能不能想象成一本旧书或皮包上的金属饰件？** 不行就重做。
+> Design language: **Psy Light（暖纸牌桌 / 学术手稿）**
+> Selected direction: `/card-lab/palette` 的 `暖紙米白` + `內容白·外框深`.
+> Source of truth: `src/app/globals.css` tokens and shared `.psy-*` component classes.
+> Previous dark system is archived in `docs/DARK_PSY_DESIGN_ARCHIVE.md`.
 
 ---
 
-## 2. 色彩令牌
+## 1. Intent
 
-所有颜色都通过 `var(--psy-*)` 引用，**禁止硬编码 hex / Tailwind 灰阶**。
+| Dimension | Direction |
+| --- | --- |
+| Mood | warm paper, tabletop study, psychology handout, low-saturation academic texture |
+| Rhythm | clear surfaces, soft shadows, restrained copper accents, scan-friendly controls |
+| Avoid | dark glass, neon contrast, saturated game UI, decorative blobs, card-heavy marketing sections |
+| Reference | printed rules sheets, ivory playing cards, classroom tabletop, manuscript margins |
 
-### 2.1 基础（背景与表面）
-| Token | 值 | 用途 |
-|-------|----|------|
-| `--psy-bg` | `#07111b` | 最底层背景（黑底偏蓝） |
-| `--psy-bg-soft` | `#0f1c28` | 区块底色，比 bg 稍亮 |
-| `--psy-surface` | `rgba(13,24,36,0.78)` | 一级面板（玻璃） |
-| `--psy-surface-strong` | `rgba(15,27,40,0.94)` | 强调面板（更不透明） |
-| `--psy-card` | `rgba(20,31,46,0.92)` | 卡牌正面底色 |
-| `--psy-card-2` | `rgba(24,39,56,0.92)` | 卡牌渐变第二色 |
-
-### 2.2 文字
-| Token | 值 | 用途 |
-|-------|----|------|
-| `--psy-ink` | `#ecdfc8` | 主要正文 / 标题（米黄） |
-| `--psy-ink-soft` | `#bda988` | 次要文字 |
-| `--psy-muted` | `#8c7c66` | 提示 / 占位 / 元信息 |
-
-### 2.3 边框与强调
-| Token | 值 | 用途 |
-|-------|----|------|
-| `--psy-border` | `rgba(179,141,92,0.34)` | 默认描边（铜金） |
-| `--psy-border-strong` | `rgba(207,167,112,0.56)` | hover / 高亮描边 |
-| `--psy-accent` | `#c89b5d` | 标志色（铜金） |
-| `--psy-accent-soft` | `rgba(200,155,93,0.16)` | accent 软化背景 |
-
-### 2.4 语义色
-| Token | 值 | 用途 |
-|-------|----|------|
-| `--psy-success` | `#8fc787` | 成功 / 完成（柔和苔绿，避免霓虹绿） |
-| `--psy-success-soft` | `rgba(143,199,135,0.18)` | 成功底色 |
-| `--psy-danger` | `#dc6a4f` | 危险 / 失败（与 psy-btn-danger 同源） |
-| `--psy-danger-soft` | `rgba(220,106,79,0.18)` | 危险底色 |
-
-### 2.5 阴影
-| Token | 值 | 用途 |
-|-------|----|------|
-| `--psy-shadow` | `0 20px 60px rgba(0,0,0,0.34)` | 浮层默认阴影 |
-
-### 2.6 维度色（Big Five）
-来自 `src/data/dimensions.ts`，由 `meta.colorHex` 提供。**勿混入主色板**——它们只用于标识维度（标签、角条、归档色块）。
-
-> 透明度约定：`+'26'` ≈ 边框、`+'10'` ≈ 浅底、`+'0d'` ≈ 极浅底。
+The app should now feel like a playable academic card table in warm daylight, not a late-night archive.
 
 ---
 
-## 3. 字体
+## 2. Color Tokens
 
-| 变量 | 字体 | 场景 |
-|------|------|------|
-| `--font-geist-sans` | Geist | 默认 UI / 数字 / 英文 |
-| `--font-geist-mono` | Geist Mono | 卡牌编号、调试 |
-| `--font-serif-cn` | Noto Serif SC（400/500/600/700） | 标题、典籍感强调（用 `.psy-serif` 套用） |
+Use `var(--psy-*)` for system colors. Do not introduce Tailwind gray scales or one-off page hexes unless the value is a data color such as a Big Five dimension color.
 
-排版准则：
-- **标题/卡牌名**：`.psy-serif`，体现书卷感。
-- **正文**：sans，行高 1.5，字间距默认。
-- **数字/计数**：等宽更佳，必要时用 `font-variant-numeric: tabular-nums`。
-- 中文字体不走 `font-bold`，改用 `font-weight: 500`，避免假粗。
+### 2.1 Base
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--psy-bg` | `#f4edd9` | page base |
+| `--psy-bg-soft` | `#ede5cd` | secondary page depth |
+| `--psy-surface` | `#fdf9f0` | default panel |
+| `--psy-surface-strong` | `#fffaf2` | stronger panel/input |
+| `--psy-card` | `#eaddc4` | darker card shell |
+| `--psy-card-2` | `#dccdae` | card shell depth |
+| `--psy-card-content` | `#fdf8f1` | light card content |
+
+### 2.2 Text
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--psy-ink` | `#3a3020` | titles and primary text |
+| `--psy-ink-soft` | `#6b5a3f` | body and secondary text |
+| `--psy-muted` | `#9a8a68` | metadata, hints, disabled-copy context |
+
+### 2.3 Borders and Accents
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--psy-border` | `rgba(150,118,78,0.28)` | default warm outline |
+| `--psy-border-strong` | `rgba(154,116,72,0.7)` | hover/active outline |
+| `--psy-accent` | `#c39a52` | primary copper-gold |
+| `--psy-accent-strong` | `#9a7448` | card lines and strong focus |
+| `--psy-accent-soft` | `rgba(195,154,82,0.16)` | subtle fills |
+
+### 2.4 Semantic
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--psy-success` | `#6f8f55` | success/completion |
+| `--psy-success-soft` | `rgba(111,143,85,0.18)` | success fill |
+| `--psy-danger` | `#c9603f` | failure/destructive |
+| `--psy-danger-soft` | `rgba(201,96,63,0.16)` | danger fill |
+
+### 2.5 Dimension Colors
+
+Big Five colors still come from `src/data/dimensions.ts`. They remain data markers only and should not become the page palette.
 
 ---
 
-## 4. 圆角与间距
+## 3. Typography
 
-### 4.1 圆角阶梯
-| 用途 | 值 |
-|------|----|
-| 标签 / pill / 按钮 | `999px`（全圆） |
-| 小卡片 / 输入框 | `0.9rem` |
-| 内容卡块 | `1.2rem` |
-| 大面板 / Modal | `1.6rem` |
+| Variable | Font | Use |
+| --- | --- | --- |
+| `--font-geist-sans` | Geist | UI, controls, body, numbers |
+| `--font-geist-mono` | Geist Mono | counters and debug-like numeric text |
+| `--font-serif-cn` | Noto Serif SC | headings, card names, ritual labels |
 
-### 4.2 间距
-沿用 Tailwind 默认 4px 网格。常用：
-- 组件内部：`gap-1.5 / gap-2 / gap-3`
-- 区块之间：`space-y-4 / gap-4`
-- 页面外边距：`px-4` 移动 / `px-6` 桌面
+Rules:
+
+- Use `.psy-serif` for page titles, card titles, and small ceremonial labels.
+- Keep body text sans-serif with comfortable line height.
+- Do not scale font size with viewport width.
+- Keep letter spacing at `0` except small eyebrow labels.
 
 ---
 
-## 5. 组件令牌（CSS 类）
+## 4. Components
 
 ### `.psy-panel`
-玻璃面板基底：渐变 + 铜金描边 + 阴影 + `backdrop-filter: blur(16px)`。
-**所有浮层、卡片、Modal 都从这里起步。**
+
+Warm ivory panel with a light copper outline and soft paper shadow. Use it for repeated panels, modals, cards, and framed tool areas.
 
 ### `.psy-etched`
-内嵌雕刻线：在 `psy-panel` 内侧 8px 处加一条 12% 透明的米黄边框，模拟典籍/相框的双层边。
-**用于强调"这是一件被装裱的东西"——卡牌、Modal、归档区块。**
 
-### `.psy-serif`
-切换到 Noto Serif SC，专给标题与卡牌名。
+Adds an inner warm line. Use for important panels and card-like objects. Avoid nesting cards inside cards.
 
-### `.psy-btn`（+ 修饰符）
-| 类 | 用途 |
-|----|------|
-| `.psy-btn` | 默认按钮：圆角胶囊 + 铜金描边 + 渐变深底 |
-| `.psy-btn-ghost` | 透明底（`white/0.025`），用于次级动作 |
-| `.psy-btn-accent` | 铜金渐变实底，用于主 CTA |
-| `.psy-btn-danger` | 红铜渐变，用于销毁/弃牌等危险操作 |
+### `.psy-btn`
 
-交互规则：
-- hover 上浮 1px + 描边变强
-- disabled 透明度 0.52，无 transform
-- 过渡时长统一 **140ms ease**
+Pill button with warm paper base. Hover lifts by 1px.
 
-### `.psy-scroll`
-深棕铜金滚动条（兼容 webkit + Firefox），用在所有可滚动容器。
+Modifiers:
+
+| Class | Use |
+| --- | --- |
+| `.psy-btn-ghost` | secondary action on light surface |
+| `.psy-btn-accent` | primary CTA, copper-gold fill |
+| `.psy-btn-danger` | destructive or failure action |
 
 ### `.psy-input`
-统一表单输入框：圆角 0.9rem + 铜金描边 + 深底渐变。`:focus` 自动套金色 ring（3px soft accent）。错误态加 `.is-error`（描边变 danger）。
+
+Light paper input with copper focus ring. Use for all text/numeric inputs.
 
 ### `.psy-tile`
-方形选项块（用于难度/轮数/玩家数选择）：1.2rem 圆角，默认低对比，加 `.is-active` 切换到铜金高亮渐变 + 阴影。
 
-### `.psy-eyebrow`
-小标题前缀：思源宋体 + 0.32em 字距 + 大写 + accent 色。用于 section 标签（如「ROOM CODE」「玩家信息」）。
+Option tile for game settings and choices. Inactive state is raised paper; active state uses the darker card shell (`--psy-card`) and a stronger border.
 
 ### `.psy-chip`
-内联标签胶囊：胶囊形 + 浅金描边 + 浅金底。用于状态/数量/属性标识（不要用作按钮）。
 
-### `<PsyOverlayPanel>`
-所有蒙层（centered modal / bottom sheet）的唯一入口，封装：
-- Portal 到 `document.body`
-- 背景蒙层（`bg-black/65` 或 `/55`）+ `backdrop-blur-sm`
-- spring 入场（centered 用 scale，sheet 用 translateY）
-- 顶部标题栏 + 关闭按钮
-- ESC 键关闭
+Small metadata/status chip. Not a button.
 
-变体：
-- `variant="centered"`：z 82，最大宽 3xl，桌面用
-- `variant="bottom-sheet"`：z 90，`hideAbove="sm"`，仅移动端
+### `.psy-scroll`
+
+Light paper scrollbars with copper thumb.
 
 ---
 
-## 6. 背景与材质
+## 5. Layout Rules
 
-`<body>` 由三层叠加：
-1. 顶部柔和蓝色径向光（高光）
-2. 左上角铜金径向光（暖色点缀）
-3. 主体深蓝渐变（`#0b1724 → #050b12`）
-
-`body::before` 叠一层垂直 55px 周期的微纹理（≤1.2% 白），模拟纸纤维。
-**禁止直接覆盖整个背景的纯色——任何 wrapper 都应让底色透出来或用 `psy-panel`。**
+- Page background is always `--psy-page-bg`; do not cover the full viewport with a solid wrapper.
+- Fixed mobile bottom bars should use a translucent ivory background and `env(safe-area-inset-bottom)`.
+- Desktop pages should use centered, constrained work surfaces rather than marketing hero split sections.
+- Mobile layouts must be explicitly checked; do not rely on desktop grids squeezing into 390px.
+- Cards stay at stable dimensions with `aspect-ratio`, fixed tracks, or constrained widths.
 
 ---
 
-## 7. 动效
+## 6. Accessibility
 
-| 场景 | 时长 / 缓动 |
-|------|------------|
-| 按钮 hover / 颜色 / 阴影 | 140ms ease |
-| Modal/Sheet 入场 | spring `stiffness: 320, damping: 26~28` |
-| 蒙层 fade | 150ms linear |
-| 卡牌翻面（如有） | 220–280ms ease-out |
-| AI 思考延迟 | 280ms（手感节奏，见 `src/app/game/page.tsx`） |
-
-原则：
-- 一次只动一个量（要么位移要么缩放，避免堆叠）
-- 不超 320ms（再长就拖沓）
-- 移动端禁止视差、禁止 hover-only 反馈
+- `:focus-visible` must remain visible and use the copper accent.
+- Primary body text should use `--psy-ink-soft` or darker on warm paper.
+- `--psy-muted` is for hints, metadata, and low-emphasis labels, not important button text.
+- Maintain minimum touch target height through `.psy-btn` and `.psy-tile`.
 
 ---
 
-## 8. 选区与可达性
+## 7. Migration Notes
 
-- `::selection` 统一为铜金底（`rgba(200,155,93,0.28)`）
-- **焦点态**：全局 `:focus-visible` 默认 `outline: 2px solid var(--psy-accent); outline-offset: 2px`；按钮/链接 offset 加大到 3–4px。**禁止 `outline: none` 移除焦点环**——如要替换，请提供等效可见替代。
-- 文字最低对比度：`--psy-muted` on `--psy-bg` 实测约 4.6:1，达标 AA。`--psy-muted` 不要用于按钮主文。
-
----
-
-## 9. 维护规则（写代码前必读）
-
-1. **禁止硬编码颜色**——所有颜色走 `var(--psy-*)` 或维度色。
-2. **禁止裸用 Tailwind `bg-gray-*` / `border-gray-*`**——这些是 reset，不是设计。
-3. **新蒙层必走 `<PsyOverlayPanel>`**——不要再写第三个 portal+motion 组合。
-4. **新组件先想能否复用 `.psy-panel` / `.psy-btn`**——能复用就别自创。
-5. **改令牌请同步本文 §2 与 globals.css**，并在 commit message 注明。
-6. **维度色不进主色板**，保持 5 维独立可视。
-
----
-
-## 10. 待补 / 未决
-
-- [x] ~~焦点态视觉规范~~（已落地，§8）
-- [x] ~~success/danger 语义色~~（已落地，§2.4）
-- [ ] warning / info 语义色尚未需要
-- [ ] Toast / Banner 尚未规范
-- [ ] 暗色为唯一主题；浅色模式暂不计划
-- [x] ~~未主题化页面~~（pvp/page.tsx、pvp/room、stats 已迁移到 Psy 设计系统）
+The first migration pass covers global tokens, shared primitives, `/`, `/lobby`, and `/assessment`. `/game`, `/tutorial`, PVP, rules, results, and stats should be migrated as follow-up passes using these tokens rather than copying the old dark layout.

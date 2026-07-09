@@ -19,13 +19,11 @@ interface OpponentHandProps {
 export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false, locale = 'zh' }: OpponentHandProps) {
   const t = STRINGS[locale].game;
   const [openModal, setOpenModal] = useState(false);
-  // Portal mount guard. The modal needs to escape OpponentHand's outer
+  // Portal guard. The modal needs to escape OpponentHand's outer
   // motion.div, which gets `transform` from the bounce animation and
   // therefore breaks `position: fixed` containment. Portal-to-body fixes
-  // the squeeze. We gate on `mounted` because document.body is undefined
-  // during SSR.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  // the squeeze.
+  const mounted = typeof document !== 'undefined';
   const showCards = player.revealedHand;
   const hasRevealedSubset = !showCards && (player.revealedSelectedCards?.length ?? 0) > 0;
   const bounceControls = useAnimationControls();
@@ -38,6 +36,15 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
       });
     }
   }, [isCurrentTurn, bounceControls]);
+
+  useEffect(() => {
+    if (!openModal) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [openModal]);
 
   const stackWidth = Math.max(20, Math.min(72, (player.hand.length - 1) * 4 + 18));
   const isPenalized = player.skipNextTurn || !!player.frozenUntilOwnDiscard;
@@ -82,7 +89,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
               {player.revealedHand && <span className="ml-1 text-[var(--psy-accent)]">· {t.archivePublic}</span>}
               {hasLeft && <span className="ml-1 text-[var(--psy-danger)]">· {t.leftGame}</span>}
               {!hasLeft && isTentativeOffline && (
-                <span className="ml-1 text-amber-300">· {t.offline}</span>
+                <span className="ml-1 text-[var(--psy-accent-strong)]">· {t.offline}</span>
               )}
             </div>
           </div>
@@ -97,8 +104,8 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
               style={{
                 left: i * 4,
                 zIndex: i,
-                background: 'linear-gradient(180deg, rgba(31,45,63,0.96), rgba(18,28,39,0.96))',
-                borderColor: 'rgba(194,159,109,0.24)',
+                background: 'linear-gradient(180deg, #eaddc4, #d7c49e)',
+                borderColor: 'rgba(154,116,72,0.28)',
               }}
             >
               <span className="text-[6px] text-[var(--psy-ink-soft)] opacity-70 sm:text-[7px]">◈</span>
@@ -113,9 +120,9 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
         <div
           className="flex items-center justify-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold sm:text-[10px]"
           style={{
-            borderColor: 'rgba(245,200,90,0.45)',
-            backgroundColor: 'rgba(245,200,90,0.12)',
-            color: '#f5c85a',
+            borderColor: 'rgba(154,116,72,0.36)',
+            backgroundColor: 'rgba(195,154,82,0.14)',
+            color: 'var(--psy-accent-strong)',
           }}
         >
           <span>⚠</span>
@@ -182,7 +189,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+              className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-[rgba(58,48,32,0.42)] p-4 backdrop-blur-sm"
               onClick={() => setOpenModal(false)}
             >
               <motion.div
@@ -205,7 +212,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
                   </h3>
                   <button
                     onClick={() => setOpenModal(false)}
-                    className="px-2 py-1 text-sm text-[var(--psy-ink-soft)] hover:text-white"
+                    className="px-2 py-1 text-sm text-[var(--psy-ink-soft)] hover:text-[var(--psy-danger)]"
                     aria-label={t.close}
                   >
                     ✕

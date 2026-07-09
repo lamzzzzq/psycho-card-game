@@ -32,7 +32,7 @@ function Opponent({ avatar, name, count, tg }: { avatar: string; name: string; c
 export function MockGameScene({ locale }: { locale: 'zh' | 'en' }) {
   const tg = STRINGS[locale].game;
   return (
-    <div className="mx-auto w-full max-w-[430px] space-y-4 rounded-[1.6rem] border border-[var(--psy-border)] bg-[linear-gradient(180deg,rgba(14,24,38,0.6),rgba(8,15,24,0.6))] p-3">
+    <div className="mx-auto w-full max-w-[430px] space-y-4 rounded-[1.6rem] border border-[var(--psy-border)] bg-[linear-gradient(180deg,var(--psy-card),#efe4cf)] p-3 shadow-[0_18px_36px_rgba(96,72,38,0.14)]">
       {/* 顶部：回合 + 对手 */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-[var(--psy-muted)]">
@@ -46,7 +46,7 @@ export function MockGameScene({ locale }: { locale: 'zh' | 'en' }) {
       </div>
 
       {/* 中区：弃牌堆 + 刚抽到的牌 */}
-      <div className="flex items-start justify-between gap-3 rounded-[1.2rem] border border-[var(--psy-border)] bg-[rgba(0,0,0,0.18)] p-3">
+      <div className="flex items-start justify-between gap-3 rounded-[1.2rem] border border-[var(--psy-border)] bg-[var(--psy-card-content)] p-3">
         <div className="space-y-1.5">
           <p className="psy-eyebrow text-[10px]">{tg.discardPileName}</p>
           <div className="flex">

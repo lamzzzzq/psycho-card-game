@@ -75,7 +75,7 @@ export default function AssessmentPage() {
           ← {t.backHome}
         </button>
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={false}
           animate={{ opacity: 1 }}
           className="psy-panel psy-etched w-full max-w-md space-y-6 rounded-[1.7rem] p-8 text-center"
         >
@@ -120,8 +120,8 @@ export default function AssessmentPage() {
                 if (dupWarn) setDupWarn(false); // 改了学号 → 重新查重
               }}
               placeholder={t.gatePlaceholder}
-              className="w-full rounded-xl border px-4 py-3 text-center text-lg tracking-[0.15em] text-[var(--psy-ink)]"
-              style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: dupWarn ? 'rgba(220,106,79,0.55)' : 'rgba(200,155,93,0.18)' }}
+              className="psy-input text-center text-lg tracking-[0.15em]"
+              style={{ borderColor: dupWarn ? 'rgba(201,96,63,0.55)' : undefined }}
             />
             {dupWarn ? (
               <p className="text-xs leading-5 text-[var(--psy-accent)]">{t.dupWarn}</p>
@@ -147,7 +147,7 @@ export default function AssessmentPage() {
                       setRestoreError(true);
                     }
                   }}
-                  className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[#9b6430] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {restoring ? t.restoring : t.dupRestore}
                 </button>
@@ -166,7 +166,7 @@ export default function AssessmentPage() {
               <button
                 type="submit"
                 disabled={!idValid || checkingId}
-                className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[#9b6430] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-30"
               >
                 {checkingId ? t.gateChecking : t.gateStart}
               </button>
@@ -218,7 +218,7 @@ export default function AssessmentPage() {
         ← {t.backHome}
       </button>
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={false}
         animate={{ opacity: 1 }}
         className="w-full max-w-3xl space-y-8"
       >
@@ -241,14 +241,14 @@ export default function AssessmentPage() {
             <span className="ml-1 font-medium text-[var(--psy-ink-soft)]">{studentId}</span>
             <button
               onClick={() => { setStudentId(''); setStudentIdInput(''); setDupWarn(false); }}
-              className="ml-2 underline decoration-[rgba(200,155,93,0.3)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
+              className="ml-2 underline decoration-[rgba(150,118,78,0.3)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
             >
               {t.changeStudent}
             </button>
           </span>
           <button
             onClick={() => setShowManualInput(!showManualInput)}
-            className="text-xs text-[var(--psy-muted)] transition underline decoration-[rgba(200,155,93,0.3)] underline-offset-4 hover:text-[var(--psy-ink-soft)]"
+            className="text-xs text-[var(--psy-muted)] transition underline decoration-[rgba(150,118,78,0.3)] underline-offset-4 hover:text-[var(--psy-ink-soft)]"
           >
             {showManualInput ? t.backToAssess : t.skipToManual}
           </button>
@@ -283,10 +283,9 @@ export default function AssessmentPage() {
                         setManualInputScores({ ...manualScores, [d]: clamped });
                         setRawInputs(prev => ({ ...prev, [d]: String(clamped) }));
                       }}
-                      className="w-20 rounded-lg border px-3 py-1.5 text-center text-sm text-[var(--psy-ink)]"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(200,155,93,0.18)' }}
+                      className="psy-input w-20 px-3 py-1.5 text-center text-sm"
                     />
-                    <div className="h-2 flex-1 rounded-full bg-[rgba(255,255,255,0.05)]">
+                    <div className="h-2 flex-1 rounded-full bg-[rgba(150,118,78,0.12)]">
                       <div
                         className="h-2 rounded-full transition-all"
                         style={{ width: `${((manualScores[d] - 1) / 4) * 100}%`, backgroundColor: meta.colorHex }}
@@ -306,7 +305,7 @@ export default function AssessmentPage() {
                 if (sid) void saveAssessmentResult(sid, {}, safe, 'manual');
                 router.push('/results');
               }}
-              className="psy-serif w-full rounded-full border border-[rgba(200,155,93,0.44)] bg-[linear-gradient(135deg,#9b6430_0%,#d4a469_100%)] py-3 font-semibold text-[#fff7eb] transition hover:opacity-95"
+              className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold"
             >
               {t.manualConfirm}
             </button>
@@ -326,14 +325,14 @@ export default function AssessmentPage() {
           <button
             onClick={handlePrev}
             disabled={currentIndex === 0}
-            className="rounded-full border border-[rgba(200,155,93,0.18)] px-4 py-2 text-sm text-[var(--psy-ink-soft)] transition hover:bg-[rgba(200,155,93,0.08)] disabled:opacity-30 disabled:cursor-not-allowed"
+            className="psy-btn psy-btn-ghost px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-30"
           >
             {t.prev}
           </button>
           <button
             onClick={handleNext}
             disabled={currentIndex === total - 1}
-            className="rounded-full border border-[rgba(200,155,93,0.18)] px-4 py-2 text-sm text-[var(--psy-ink-soft)] transition hover:bg-[rgba(200,155,93,0.08)] disabled:opacity-30 disabled:cursor-not-allowed"
+            className="psy-btn psy-btn-ghost px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-30"
           >
             {t.next}
           </button>
@@ -356,7 +355,7 @@ export default function AssessmentPage() {
                   onClick={() => setCurrentIndex(i)}
                   className={`h-8 rounded text-[10px] font-medium transition-all sm:h-6 sm:text-[9px] ${
                     isCurrent
-                      ? 'ring-2 ring-[var(--psy-ink)] scale-110'
+                      ? 'ring-2 ring-[var(--psy-accent-strong)] scale-110'
                       : ''
                   } ${
                     isAnswered
@@ -364,8 +363,8 @@ export default function AssessmentPage() {
                       : 'opacity-30'
                   }`}
                   style={{
-                    backgroundColor: `rgba(200,155,93,${isAnswered ? '0.6' : '0.22'})`,
-                    color: isAnswered ? '#fff7eb' : 'rgba(200,155,93,0.8)',
+                    backgroundColor: `rgba(195,154,82,${isAnswered ? '0.68' : '0.22'})`,
+                    color: isAnswered ? '#fff9f0' : 'rgba(154,116,72,0.86)',
                   }}
                   title={`#${i + 1} ${locale === 'en' ? q.textEn : q.text}`}
                 >
@@ -375,9 +374,9 @@ export default function AssessmentPage() {
             })}
           </div>
           <div className="flex justify-center gap-3 text-[10px] text-[var(--psy-muted)]">
-            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(200,155,93,0.6)' }} /> {t.legendAnswered}</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(200,155,93,0.25)' }} /> {t.legendUnanswered}</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded bg-white ring-1 ring-white" /> {t.legendCurrent}</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(195,154,82,0.68)' }} /> {t.legendAnswered}</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(195,154,82,0.25)' }} /> {t.legendUnanswered}</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded bg-[var(--psy-surface-strong)] ring-1 ring-[var(--psy-accent-strong)]" /> {t.legendCurrent}</span>
           </div>
         </div>
         </>

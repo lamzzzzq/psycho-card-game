@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameCard, GameAction, isPersonalityCard } from '@/types';
@@ -64,6 +64,27 @@ export function DiscardPile({
 }: DiscardPileProps) {
   const t = STRINGS[locale].game;
   const [open, setOpen] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  const openHistory = () => {
+    setNow(Date.now());
+    setOpen(true);
+  };
 
   // Pair each card in discardPile with its matching 'discard' action.
   // Pile and discard-actions share the same index order (oldest → newest).
@@ -86,7 +107,7 @@ export function DiscardPile({
       <div className="relative flex flex-col items-center">
       <button
         type="button"
-        onClick={() => canOpen && setOpen(true)}
+        onClick={() => canOpen && openHistory()}
         disabled={!canOpen}
         className={`relative flex flex-col items-center gap-2 ${
           canOpen ? 'cursor-pointer hover:scale-105 active:scale-95 transition-transform' : ''
@@ -108,15 +129,16 @@ export function DiscardPile({
               <TarotCard {...tarotProps(topCard, locale, revealTags)} width={72} />
             </div>
             <div className="hidden sm:block">
-              <TarotCard {...tarotProps(topCard, locale, revealTags)} width={96} />
+              <TarotCard {...tarotProps(topCard, locale, revealTags)} width={128} />
             </div>
             {canOpen && (
               <div
                 className="absolute -right-1 -top-1 rounded-full border px-1.5 py-0.5 text-[9px] font-bold"
                 style={{
-                  backgroundColor: 'rgba(12,20,29,0.95)',
-                  borderColor: 'rgba(200,155,93,0.24)',
-                  color: 'var(--psy-ink-soft)',
+                  backgroundColor: '#fdf8f1',
+                  borderColor: 'rgba(154,116,72,0.32)',
+                  color: 'var(--psy-accent-strong)',
+                  boxShadow: '0 6px 14px rgba(96,72,38,0.18)',
                 }}
               >
                 {t.viewWord}
@@ -124,7 +146,7 @@ export function DiscardPile({
             )}
           </div>
         ) : (
-          <div className="flex aspect-[4/7] w-[72px] items-center justify-center rounded-[1.1rem] border border-dashed sm:w-24 sm:rounded-[1.25rem]" style={{ borderColor: 'rgba(200,155,93,0.14)' }}>
+          <div className="flex aspect-[4/7] w-[72px] items-center justify-center rounded-[1.1rem] border border-dashed bg-[var(--psy-card-content)] sm:w-32 sm:rounded-[1.35rem]" style={{ borderColor: 'rgba(154,116,72,0.24)' }}>
             <span className="psy-serif text-[11px] text-[var(--psy-muted)] sm:text-xs">{t.discardPileName}</span>
           </div>
         )}
@@ -141,7 +163,17 @@ export function DiscardPile({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-[rgba(58,48,32,0.42)] p-4 backdrop-blur-sm"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 80,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              backgroundColor: 'rgba(58,48,32,0.42)',
+            }}
             onClick={() => setOpen(false)}
           >
             <motion.div
@@ -159,7 +191,7 @@ export function DiscardPile({
                 </h3>
                 <button
                   onClick={() => setOpen(false)}
-                  className="px-2 py-1 text-sm text-[var(--psy-ink-soft)] hover:text-white"
+                  className="px-2 py-1 text-sm text-[var(--psy-ink-soft)] hover:text-[var(--psy-danger)]"
                   aria-label={t.close}
                 >
                   ✕
@@ -179,8 +211,9 @@ export function DiscardPile({
                           key={`${originalIndex}-${entry.card.id}`}
                           className="flex items-center gap-3 rounded-xl border p-2"
                           style={{
-                            borderColor: 'rgba(200,155,93,0.12)',
-                            background: 'linear-gradient(180deg, rgba(19,30,43,0.78), rgba(13,22,33,0.88))',
+                            borderColor: 'rgba(154,116,72,0.16)',
+                            background: 'linear-gradient(180deg, #fdf8f1, #f8f1e4)',
+                            boxShadow: '0 8px 18px rgba(96,72,38,0.1)',
                           }}
                         >
                           <span className="w-6 text-right font-mono text-[11px] text-[var(--psy-muted)]">
@@ -198,7 +231,7 @@ export function DiscardPile({
                             </div>
                             {ts > 0 && (
                               <div className="text-[10px] text-[var(--psy-muted)]">
-                                {formatRelative(ts, Date.now(), t.ago)} ·{' '}
+                                {formatRelative(ts, now, t.ago)} ·{' '}
                                 {new Date(ts).toLocaleTimeString(locale === 'en' ? 'en-US' : 'zh-CN', {
                                   hour12: false,
                                 })}

@@ -29,17 +29,17 @@ export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProp
         disabled={!canDraw}
         // 尺寸與棄牌堆的塔羅卡完全一致（寬 72/96 + TarotCard 的 4/7 比例），
         // 兩堆並排時大小不再不齊（用戶反饋）。
-        className={`psy-etched relative flex aspect-[4/7] w-[72px] items-center justify-center rounded-[1.1rem] border transition sm:w-24 sm:rounded-[1.25rem] ${
+        className={`psy-etched relative flex aspect-[4/7] w-[72px] items-center justify-center rounded-[1.1rem] border transition sm:w-32 sm:rounded-[1.35rem] ${
           canDraw ? 'cursor-pointer' : 'cursor-default opacity-60'
         }`}
         style={{
-          borderColor: canDraw ? 'rgba(214,170,98,0.85)' : 'rgba(200,155,93,0.16)',
+          borderColor: canDraw ? 'rgba(154,116,72,0.72)' : 'rgba(154,116,72,0.2)',
           background: canDraw
-            ? 'linear-gradient(180deg, rgba(30,52,70,0.98), rgba(15,28,40,0.98))'
-            : 'linear-gradient(180deg, rgba(20,29,40,0.88), rgba(12,18,25,0.88))',
+            ? 'linear-gradient(180deg, #eaddc4, #d6c39f)'
+            : 'linear-gradient(180deg, #f8f1e4, #eaddc4)',
           boxShadow: canDraw
-            ? 'inset 0 0 0 1px rgba(214,170,98,0.35), 0 0 26px rgba(200,155,93,0.42), 0 18px 34px rgba(0,0,0,0.3)'
-            : 'inset 0 0 0 1px rgba(255,255,255,0.04), 0 18px 34px rgba(0,0,0,0.3)',
+            ? 'inset 0 0 0 1px rgba(255,250,240,0.5), 0 0 24px rgba(195,154,82,0.36), 0 18px 30px rgba(96,72,38,0.2)'
+            : 'inset 0 0 0 1px rgba(255,250,240,0.46), 0 14px 24px rgba(96,72,38,0.14)',
         }}
       >
         <div className="text-center">
@@ -53,14 +53,14 @@ export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProp
               animate={{ opacity: [0.55, 1, 0.55] }}
               transition={{ repeat: Infinity, duration: 1.5 }}
               className="absolute inset-0 rounded-[1rem] border-2 sm:rounded-[1.25rem]"
-              style={{ borderColor: 'rgba(214,170,98,0.6)' }}
+              style={{ borderColor: 'rgba(154,116,72,0.56)' }}
             />
             {/* 外圈扩散光环 */}
             <motion.div
               animate={{ opacity: [0.5, 0, 0.5], scale: [1, 1.12, 1] }}
               transition={{ repeat: Infinity, duration: 1.8, ease: 'easeOut' }}
               className="pointer-events-none absolute -inset-1 rounded-[1.25rem] border sm:rounded-[1.4rem]"
-              style={{ borderColor: 'rgba(200,155,93,0.5)' }}
+              style={{ borderColor: 'rgba(195,154,82,0.48)' }}
             />
           </>
         )}

@@ -117,7 +117,8 @@ export const STRINGS = {
       confirmExit: '確認退出',
       // Banners / toasts
       hostOfflinePaused: '⚠ 房主短暫離線 — 操作已暫停，3 分鐘內未回則房間解散',
-      idleYourTurn: '⏰ 請注意：現在是你的回合',
+      idleYourTurnEyebrow: 'Action needed',
+      idleYourTurn: '請選擇行動，倒數將自動處理',
       stolenToast: '⚡ 本輪已被搶 — 別人先碰到了',
       // Game over
       youWin: '你贏了！',
@@ -256,7 +257,8 @@ export const STRINGS = {
       popHuFail: '💥 食胡失敗',
       popPongDupe: '💥 重複碰',
       popPongFail: '💥 碰失敗',
-      yourTurnBanner: '輪到你了！',
+      yourTurnEyebrow: 'Your turn',
+      yourTurnBanner: '輪到你了',
       // ScoreBoard
       scoreBoard: '計分板',
       roundOf: '輪',
@@ -490,7 +492,8 @@ export const STRINGS = {
       confirmExit: 'Leave Game',
       // Banners / toasts
       hostOfflinePaused: '⚠ Host briefly offline — actions paused; room dissolves if they don’t return within 3 min',
-      idleYourTurn: '⏰ Heads up: it’s your turn',
+      idleYourTurnEyebrow: 'Action needed',
+      idleYourTurn: 'Choose an action before auto-play',
       stolenToast: '⚡ Claimed first — someone ponged before you',
       // Game over
       youWin: 'You win!',
@@ -629,7 +632,8 @@ export const STRINGS = {
       popHuFail: '💥 Win failed',
       popPongDupe: '💥 Duplicate pong',
       popPongFail: '💥 Pong failed',
-      yourTurnBanner: 'Your turn!',
+      yourTurnEyebrow: 'Your turn',
+      yourTurnBanner: 'Your turn',
       // ScoreBoard
       scoreBoard: 'Scoreboard',
       roundOf: 'Round',

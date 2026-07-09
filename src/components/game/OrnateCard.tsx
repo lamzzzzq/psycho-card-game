@@ -8,11 +8,11 @@ import { useState, useId } from 'react';
 import { Dimension } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 
-const GOLD = '#c9a45c';
-const GOLD_SOFT = '#9c7c44';
-const GOLD_DIM = 'rgba(201,164,92,0.45)';
-const GOLD_BRIGHT = '#f0d695'; // 点缀(星/菱)用更亮的金，小图也看得清
-const GREEN = 'rgba(143,199,135,0.85)';
+const GOLD = '#9a7448';
+const GOLD_SOFT = '#b9904f';
+const GOLD_DIM = 'rgba(154,116,72,0.42)';
+const GOLD_BRIGHT = '#c39a52'; // 点缀(星/菱)用更深的暖金，小图也看得清
+const GREEN = 'rgba(111,143,85,0.82)';
 
 const M = 18;            // 内容内缩（≈4.5%，对齐现版）
 const R = 400 - M;      // 382
@@ -80,13 +80,13 @@ export function OrnateCard({
           <svg viewBox="0 0 400 700" width="100%" height="100%" style={{ display: 'block' }}>
             <defs>
               <linearGradient id={bgDnId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#19293c" /><stop offset="1" stopColor="#0d1825" />
+                <stop offset="0" stopColor="#eaddc4" /><stop offset="1" stopColor="#d7c49e" />
               </linearGradient>
             </defs>
             <rect x="3" y="3" width="394" height="694" rx="42" fill={`url(#${bgDnId})`} />
             <rect x="7" y="7" width="386" height="686" rx="38" fill="none" stroke={GOLD} strokeWidth="2" />
             <rect x="15" y="15" width="370" height="670" rx="30" fill="none" stroke={GOLD_SOFT} strokeWidth="1" opacity="0.8" />
-            <text x="200" y="372" textAnchor="middle" fontSize="64" fill={GOLD} opacity="0.55">◈</text>
+            <text x="200" y="372" textAnchor="middle" fontSize="64" fill={GOLD} opacity="0.72">◈</text>
           </svg>
         </div>
       </div>
@@ -98,27 +98,27 @@ export function OrnateCard({
       <div
         onClick={onClick}
         className={`relative w-full select-none ${onClick ? 'cursor-pointer transition-transform hover:-translate-y-1' : ''}`}
-        style={{ aspectRatio: '4 / 7', filter: 'drop-shadow(0 14px 30px rgba(0,0,0,0.4))', opacity: isDummy ? 0.97 : 1 }}
+        style={{ aspectRatio: '4 / 7', filter: 'drop-shadow(0 16px 28px rgba(96,72,38,0.24))', opacity: isDummy ? 0.98 : 1 }}
       >
         <svg viewBox="0 0 400 700" width="100%" height="100%" style={{ display: 'block' }}>
           <defs>
             <clipPath id={archId}><path d={ARCH} /></clipPath>
             <linearGradient id={bgId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#16243a" /><stop offset="0.6" stopColor="#0e1a28" /><stop offset="1" stopColor="#0a131e" />
+              <stop offset="0" stopColor="#eadfc8" /><stop offset="0.58" stopColor="#e1d1b2" /><stop offset="1" stopColor="#d5be95" />
             </linearGradient>
             <linearGradient id={phId} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#1c2c44" /><stop offset="1" stopColor="#0f1c2b" />
+              <stop offset="0" stopColor="#fdf8f1" /><stop offset="1" stopColor="#f5ecdd" />
             </linearGradient>
             {/* 顶部柔光聚光：3 段平滑衰减，不再是一坨 */}
             <radialGradient id={glowId} cx="50%" cy="15%" r="52%">
-              <stop offset="0" stopColor="#ecd9a0" stopOpacity="0.15" />
-              <stop offset="0.55" stopColor="#ecd9a0" stopOpacity="0.04" />
+              <stop offset="0" stopColor="#fffaf0" stopOpacity="0.78" />
+              <stop offset="0.55" stopColor="#f5dfad" stopOpacity="0.28" />
               <stop offset="1" stopColor="#ecd9a0" stopOpacity="0" />
             </radialGradient>
-            {/* 暗角 vignette：四周压暗、聚焦中心，给柔光加层次/高级感 */}
+            {/* 暖纸暗角：四周轻压、聚焦中心，避免回到旧深色牌面。 */}
             <radialGradient id={vigId} cx="50%" cy="40%" r="64%">
-              <stop offset="0.5" stopColor="#060d16" stopOpacity="0" />
-              <stop offset="1" stopColor="#060d16" stopOpacity="0.38" />
+              <stop offset="0.55" stopColor="#7b5d33" stopOpacity="0" />
+              <stop offset="1" stopColor="#7b5d33" stopOpacity="0.16" />
             </radialGradient>
           </defs>
 
@@ -148,6 +148,7 @@ export function OrnateCard({
                     <circle key={`dot${i}-${j}`} cx={PX + Math.sin(a) * r} cy={PY + Math.cos(a) * r} r="2.4" fill={GOLD_BRIGHT} opacity="0.55" />
                   ));
                 })}
+                <rect x={M} y="20" width={R - M} height="400" fill="#fdf8f1" opacity="0.54" />
                 <rect x={M} y="20" width={R - M} height="400" fill={`url(#${glowId})`} />
                 <rect x={M} y="20" width={R - M} height="400" fill={`url(#${vigId})`} />
               </g>
@@ -160,7 +161,6 @@ export function OrnateCard({
               <g clipPath={`url(#${archId})`}>
                 <rect x={M} y="20" width={R - M} height="400" fill={`url(#${phId})`} />
                 {showImg && (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <image href={imageSrc} x={M} y="20" width={R - M} height="400" preserveAspectRatio="xMidYMid slice" onError={() => setImgError(true)} />
                 )}
               </g>
@@ -194,7 +194,7 @@ export function OrnateCard({
           <line x1="216" y1="432" x2="344" y2="432" stroke={GOLD_DIM} strokeWidth="1.2" />
 
           {/* 底部文字框 + 括号角 + 顶部小菱 */}
-          <rect x={M} y="448" width={R - M} height="226" rx="12" fill="none" stroke={GOLD_SOFT} strokeWidth="1.5" />
+          <rect x={M} y="448" width={R - M} height="226" rx="12" fill="#fdf8f1" opacity="0.92" stroke={GOLD_SOFT} strokeWidth="1.5" />
           {/* 四角括号：内缩 ~10px，与底框边线留出间距，不重叠 */}
           <path d={`M${M + 10},474 V462 a4,4 0 0 1 4,-4 H${M + 26}`} fill="none" stroke={GOLD} strokeWidth="2" />
           <path d={`M${R - 10},474 V462 a4,4 0 0 0 -4,-4 H${R - 26}`} fill="none" stroke={GOLD} strokeWidth="2" />
@@ -242,8 +242,8 @@ export function OrnateCard({
                 className="psy-serif inline-flex items-center rounded-full font-bold uppercase leading-none whitespace-nowrap"
                 style={{
                   padding: '2.6cqw 6cqw', fontSize: `${dimFont}cqw`, letterSpacing: '0.06em',
-                  background: meta.colorHex, color: '#0a0a0a',
-                  border: '1.5px solid rgba(0,0,0,0.4)', boxShadow: '0 0.5cqw 1.6cqw rgba(0,0,0,0.55)',
+                  background: meta.colorHex, color: '#2a1c06',
+                  border: '1.5px solid rgba(154,116,72,0.45)', boxShadow: '0 0.5cqw 1.6cqw rgba(96,72,38,0.24)',
                 }}
               >
                 {dimLabel}

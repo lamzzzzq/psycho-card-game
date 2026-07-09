@@ -39,7 +39,7 @@ export default function Home() {
     // 移动端：内容从顶部流动 + 底部留白给 sticky CTA 栏；桌面：垂直居中。
     <div className="flex flex-1 flex-col items-center px-5 pt-10 pb-40 sm:px-6 lg:justify-center lg:pb-10">
       {/* 语言切换：覆盖持久化缓存，随时切回中文/英文（不必手动改 ?lang=） */}
-      <div className="psy-serif fixed left-4 top-4 z-40 flex items-center gap-0.5 rounded-full border border-[rgba(200,155,93,0.28)] bg-[rgba(20,31,46,0.85)] p-0.5 text-xs sm:left-8 sm:top-8">
+      <div className="psy-serif fixed left-4 top-4 z-40 flex items-center gap-0.5 rounded-full border border-[var(--psy-border)] bg-[rgba(253,249,240,0.88)] p-0.5 text-xs shadow-[var(--psy-shadow)] backdrop-blur sm:left-8 sm:top-8">
         {(['zh', 'en'] as const).map((l) => (
           <button
             key={l}
@@ -52,12 +52,12 @@ export default function Home() {
       </div>
       <button
         onClick={() => router.push('/tutorial')}
-        className="psy-btn psy-btn-accent psy-serif fixed right-4 top-4 z-40 px-4 py-2 text-sm font-semibold shadow-[0_16px_38px_rgba(0,0,0,0.32)] sm:right-8 sm:top-8"
+        className="psy-btn psy-btn-accent psy-serif fixed right-4 top-4 z-40 px-4 py-2 text-sm font-semibold sm:right-8 sm:top-8"
       >
         {c.tutorial}
       </button>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={false}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-5xl space-y-8 lg:space-y-10"
       >
@@ -102,7 +102,7 @@ export default function Home() {
                   <span>{t.cardEyebrow}</span>
                   <span>No. 0</span>
                 </div>
-                <div className="rounded-[1.7rem] border border-[rgba(200,155,93,0.26)] bg-[linear-gradient(180deg,rgba(20,31,45,0.96),rgba(11,18,28,0.98))] p-6">
+                <div className="rounded-[1.7rem] border border-[var(--psy-border)] bg-[linear-gradient(180deg,var(--psy-card-content),#f8f1e4)] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
                   <div className="mb-6 flex items-center justify-center gap-4 text-[var(--psy-accent)]">
                     <span className="text-xl">☉</span>
                     <span className="text-3xl">◈</span>
@@ -119,7 +119,6 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <div className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(200,155,93,0.18),transparent_68%)]" />
             </div>
           </div>
         </div>
@@ -127,7 +126,7 @@ export default function Home() {
 
       {/* 主行动区：移动端固定底栏（拇指可达），桌面端回归内联网格。
           放在 motion.div 之外，避免 framer transform 祖先让 fixed 失效。 */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[rgba(200,155,93,0.18)] bg-[rgba(11,18,28,0.92)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:static lg:mx-auto lg:mt-10 lg:w-full lg:max-w-5xl lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--psy-border)] bg-[rgba(253,249,240,0.92)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgba(120,90,50,0.1)] backdrop-blur-md lg:static lg:mx-auto lg:mt-10 lg:w-full lg:max-w-5xl lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
         {/* 有報告：聯機 / 單機 / 查看人格報告（重新測評只在報告頁出現，首頁不暴露）。
             無報告：只有一個「開始測評 / 繼續測評」入口，引導先完成測評。 */}
         {hasResults ? (

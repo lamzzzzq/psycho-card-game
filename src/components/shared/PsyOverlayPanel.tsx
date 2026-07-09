@@ -25,8 +25,8 @@ interface PsyOverlayPanelProps {
 }
 
 const VARIANT_BACKDROP: Record<Variant, string> = {
-  centered: 'items-center justify-center bg-black/65 p-4 backdrop-blur-sm',
-  'bottom-sheet': 'items-end bg-black/55 p-3',
+  centered: 'items-center justify-center bg-[rgba(58,48,32,0.42)] p-4 backdrop-blur-sm',
+  'bottom-sheet': 'items-end bg-[rgba(58,48,32,0.34)] p-3 backdrop-blur-sm',
 };
 
 const VARIANT_PANEL: Record<Variant, string> = {
@@ -73,6 +73,15 @@ export function PsyOverlayPanel({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
   if (typeof document === 'undefined') return null;
 
