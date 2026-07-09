@@ -12,6 +12,7 @@ import {
   FeedbackOverlays,
   useYourTurnNotifier,
   YourTurnBanner,
+  TurnNoticeToast,
   turnNudge,
 } from '@/components/game/FeedbackLayer';
 import { FlyingCard } from '@/components/game/FlyingCard';
@@ -626,7 +627,7 @@ export default function PvpGamePage() {
       <div className="mb-1 flex shrink-0 items-center justify-between sm:mb-2">
         <button
           onClick={() => setExitConfirmOpen(true)}
-          className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] px-3 py-1 text-[10px] text-[var(--psy-muted)] transition hover:border-[rgba(220,80,80,0.4)] hover:text-[var(--psy-danger)] sm:text-[11px]"
+          className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-1 text-[10px] text-[var(--psy-muted)] shadow-[0_8px_18px_rgba(96,72,38,0.1)] transition hover:border-[rgba(220,80,80,0.4)] hover:text-[var(--psy-danger)] sm:text-[11px]"
         >
           {t.leaveGame}
         </button>
@@ -693,22 +694,22 @@ export default function PvpGamePage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
-          className="fixed top-16 left-1/2 -translate-x-1/2 z-[70] max-w-[92vw] rounded-xl border border-amber-400/60 bg-amber-500/95 px-5 py-2.5 text-xs font-bold text-white shadow-2xl sm:text-sm"
+          className="psy-panel fixed left-1/2 top-16 z-[70] max-w-[92vw] -translate-x-1/2 rounded-xl border border-[rgba(200,155,93,0.5)] bg-[var(--psy-card-content)] px-5 py-2.5 text-xs font-semibold text-[var(--psy-accent-strong)] shadow-[0_16px_36px_rgba(96,72,38,0.22)] sm:text-sm"
         >
           {t.hostOfflinePaused}
         </motion.div>
       )}
 
-      {/* 30s idle reminder — fires once if my turn idles past 30s */}
+      {/* 30s idle reminder — 与单机一致用 psy 风 TurnNoticeToast（原 amber 与设计系统不统一） */}
       {idleReminderVisible && (
         <motion.div
           initial={{ opacity: 0, y: -10, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed top-28 left-1/2 -translate-x-1/2 z-[60] max-w-[90vw] rounded-xl border border-amber-400/60 bg-amber-500/90 px-5 py-2.5 text-xs font-bold text-white shadow-2xl sm:top-32 sm:px-6 sm:py-3 sm:text-sm"
+          className="fixed left-1/2 top-28 z-[60] w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 sm:top-32"
         >
-          {t.idleYourTurn}
+          <TurnNoticeToast eyebrow={t.idleYourTurnEyebrow} title={t.idleYourTurn} icon="⏰" />
         </motion.div>
       )}
 
@@ -724,57 +725,69 @@ export default function PvpGamePage() {
         </motion.div>
       )}
 
-      {/* Opponents — 列数随对手数自适应并居中：4 人满宽 3 列；3 人 2 列居中；2 人单列居中，
-          避免固定 grid-cols-3 在少人时把卡片挤到左侧、右侧留空。 */}
-      <div className={`mb-1 grid shrink-0 gap-2 sm:mb-4 sm:h-[6.5rem] sm:gap-3 mx-auto ${
-        opponentPlayers.length === 1
-          ? 'grid-cols-1 max-w-[7.5rem] sm:max-w-[13rem]'
-          : opponentPlayers.length === 2
-          ? 'grid-cols-2 max-w-[15rem] sm:max-w-[26rem]'
-          : 'grid-cols-3 w-full'
-      }`}>
-        {opponentPlayers.map(opp => (
-          <OpponentHand
-            key={opp.id}
-            player={opp}
-            isCurrentTurn={currentPlayer?.id === opp.id}
-            isTentativeOffline={offlinePlayerIds.includes(opp.id)}
-            locale={locale}
-          />
-        ))}
-      </div>
-
-      {/* Center: Draw + Discard + Log */}
-      <div className="my-1 flex shrink-0 items-center justify-center gap-3 sm:my-4 sm:grid sm:h-[11rem] sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
-        <div className="flex items-center gap-3 sm:col-start-2 sm:gap-6">
-          <div
-            ref={drawPileRef}
-            onMouseEnter={() => handleDrawPileHover(true)}
-            onMouseLeave={() => handleDrawPileHover(false)}
-          >
-            <DrawPile count={gameState.drawPileCount} canDraw={canDraw} onDraw={handleDraw} locale={locale} />
-          </div>
-          <div ref={discardPileRef}>
-            <DiscardPile
-              topCard={gameState.discardPile.length > 0 ? gameState.discardPile[gameState.discardPile.length - 1] : null}
-              count={gameState.discardPile.length}
-              discardPile={gameState.discardPile}
-              actions={gameState.actionLog as any}
-              players={gameState.players}
-              highlight={isDiscarding}
-              revealTags={revealDifficulty === 'open'}
+      {/* 牌桌面板：对手 + 回合chip + 中央（对齐单机结构） */}
+      <div className="shrink-0 rounded-[1.7rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,rgba(253,248,241,0.76),rgba(234,221,196,0.42))] p-2 shadow-[0_18px_40px_rgba(96,72,38,0.12)] sm:rounded-[2rem] sm:p-3">
+        {/* Opponents — 列数随对手数自适应：4 人满宽 3 列；3 人 2 列居中；2 人单列居中 */}
+        <div className={`grid gap-2 sm:h-[6.5rem] sm:gap-3 mx-auto ${
+          opponentPlayers.length === 1
+            ? 'grid-cols-1 max-w-[7.5rem] sm:max-w-[13rem]'
+            : opponentPlayers.length === 2
+            ? 'grid-cols-2 max-w-[15rem] sm:max-w-[26rem]'
+            : 'grid-cols-3 w-full'
+        }`}>
+          {opponentPlayers.map(opp => (
+            <OpponentHand
+              key={opp.id}
+              player={opp}
+              isCurrentTurn={currentPlayer?.id === opp.id}
+              isTentativeOffline={offlinePlayerIds.includes(opp.id)}
               locale={locale}
             />
-          </div>
+          ))}
         </div>
-        <div className="hidden md:block md:col-start-3 md:justify-self-end w-52">
-          <GameLog actions={gameState.actionLog as any} players={allPlayers} locale={locale} />
+
+        {/* 回合数（桌面）chip：轮次 + 当前回合归属 */}
+        <div className="mt-3 hidden justify-center md:flex">
+          <span className="psy-serif rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-4 py-1 text-sm text-[var(--psy-ink-soft)] shadow-[0_8px_18px_rgba(96,72,38,0.08)]">
+            {locale === 'en' ? `${t.roundUnit} ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''}` : `第 ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''} 輪`}
+            {isMyTurn
+              ? <span className="ml-2 font-medium text-[var(--psy-accent)]">· {t.yourTurnNow}</span>
+              : currentPlayer && <span className="ml-2 text-[var(--psy-muted)]">· {currentPlayer.name}{t.turnOf}</span>}
+          </span>
+        </div>
+
+        {/* Center: Draw/Discard 面板 + Log（2 栏，对齐单机） */}
+        <div className="mt-3 grid items-center gap-3 sm:mt-4 md:grid-cols-[minmax(22rem,1fr)_minmax(15rem,0.48fr)] md:gap-[4%]">
+          <div className="flex items-center justify-center gap-[clamp(1rem,4vw,4rem)] rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] px-[clamp(1rem,4vw,4rem)] py-3">
+            <div
+              ref={drawPileRef}
+              onMouseEnter={() => handleDrawPileHover(true)}
+              onMouseLeave={() => handleDrawPileHover(false)}
+            >
+              <DrawPile count={gameState.drawPileCount} canDraw={canDraw} onDraw={handleDraw} locale={locale} />
+            </div>
+            <div ref={discardPileRef}>
+              <DiscardPile
+                topCard={gameState.discardPile.length > 0 ? gameState.discardPile[gameState.discardPile.length - 1] : null}
+                count={gameState.discardPile.length}
+                discardPile={gameState.discardPile}
+                actions={gameState.actionLog as any}
+                players={gameState.players}
+                highlight={isDiscarding}
+                revealTags={revealDifficulty === 'open'}
+                locale={locale}
+              />
+            </div>
+          </div>
+          <div className="hidden w-full md:block md:justify-self-stretch">
+            <GameLog actions={gameState.actionLog as any} players={allPlayers} locale={locale} />
+          </div>
         </div>
       </div>
 
-      {/* My player area */}
+      {/* My player area（面板包裹，对齐单机） */}
       {mePlayer && (
-        <div className="flex flex-1 flex-col space-y-2 sm:space-y-3">
+        <div className="mt-2 flex flex-1 flex-col space-y-2 rounded-[1.7rem] border border-[rgba(154,116,72,0.14)] bg-[rgba(253,248,241,0.56)] p-2 shadow-[0_18px_40px_rgba(96,72,38,0.1)] sm:mt-3 sm:space-y-3 sm:rounded-[2rem] sm:p-3">
           {/* 罰停橫幅 / 搶牌窗 / 查看 / 碰意圖面板已全部移入手牌上方的懸浮層
               （見下方 Hand + Declared 前的錨點），不再插進文檔流把手牌往下推。 */}
           {/* Big Five scores */}
@@ -800,8 +813,8 @@ export default function PvpGamePage() {
                     key={d}
                     className="flex items-center gap-1 rounded-full px-2 py-0.5"
                     style={{
-                      backgroundColor: isDone ? 'rgba(200,155,93,0.2)' : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${isDone ? 'rgba(200,155,93,0.45)' : 'rgba(200,155,93,0.14)'}`,
+                      backgroundColor: isDone ? 'rgba(195,154,82,0.18)' : '#fdf8f1',
+                      border: `1px solid ${isDone ? 'rgba(154,116,72,0.45)' : 'rgba(154,116,72,0.16)'}`,
                     }}
                   >
                     <span className="text-[9px]" style={{ color: isDone ? 'var(--psy-accent)' : 'var(--psy-muted)' }}>
@@ -816,7 +829,7 @@ export default function PvpGamePage() {
                   </div>
                 );
               })}
-              <div className="rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2 py-0.5">
+              <div className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2 py-0.5">
                 <span className="text-[9px] text-[var(--psy-muted)]">{t.done} </span>
                 <span className="text-[10px] font-medium text-[var(--psy-success)]">{mePlayer.declaredSets.length}/5</span>
               </div>
@@ -824,24 +837,29 @@ export default function PvpGamePage() {
           )}
 
           <div className="flex shrink-0 flex-col gap-1.5 sm:hidden">
-            <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
-              <span className="psy-serif shrink-0 text-[var(--psy-accent)]">{locale === 'en' ? `${t.roundUnit} ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''}` : `第 ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''} 輪`}</span>
-              <span className="flex min-w-0 items-center gap-0.5">
-                {isMyTurn ? (
-                  <span className="truncate">{t.yourTurnShort}</span>
-                ) : (
-                  <>
-                    <span className="max-w-[6ch] truncate">{currentPlayer?.name}</span>
-                    {t.turnSuffix && <span className="shrink-0">{t.turnSuffix}</span>}
-                  </>
-                )}
-              </span>
-              <span className="shrink-0">{t.archiveCount} {mePlayer.declaredSets.length}/5</span>
+            {/* 与单机对齐：回合信息行 + 工具按钮合并成一行（左信息撑开、右按钮） */}
+            <div className="flex items-center gap-1.5">
+              <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
+                <span className="psy-serif shrink-0 text-[var(--psy-accent)]">{locale === 'en' ? `${t.roundUnit} ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''}` : `第 ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''} 輪`}</span>
+                <span className="flex min-w-0 items-center gap-0.5">
+                  {isMyTurn ? (
+                    <span className="truncate">{t.yourTurnShort}</span>
+                  ) : (
+                    <>
+                      <span className="max-w-[6ch] truncate">{currentPlayer?.name}</span>
+                      {t.turnSuffix && <span className="shrink-0">{t.turnSuffix}</span>}
+                    </>
+                  )}
+                </span>
+                <span className="ml-auto shrink-0">{t.archiveCount} {mePlayer.declaredSets.length}/5</span>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2 py-1 text-[10px]">{t.persona}</button>
+                <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2 py-1 text-[10px]">{t.archive}</button>
+                <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2 py-1 text-[10px]">{t.log}</button>
+              </div>
             </div>
-            {/* 5 維目標常駐迷你條：字母 + 目標張數，已歸檔顯示 ✓ 並轉金。
-                只顯示目標 + 是否歸檔，不洩露手上已有幾張。*/}
             {targets && (
-              /* 与单机一致的两行目标条：上=维度全称，下=已歸/未歸，固定两行不怕挤 */
               <div className="grid grid-cols-5 gap-1" aria-label={locale === 'en' ? 'Archive progress' : '歸檔進度'}>
                 {DIMENSIONS.map((d) => {
                   const isDone = declaredDims.has(d);
@@ -857,11 +875,6 @@ export default function PvpGamePage() {
                 })}
               </div>
             )}
-            <div className="flex items-center justify-end gap-1">
-              <button onClick={() => setMobileSheet('persona')} style={{ borderRadius: '0.7rem' }} className="psy-btn psy-btn-ghost px-3 py-1 text-[11px]">{t.persona}</button>
-              <button onClick={() => setMobileSheet('declared')} style={{ borderRadius: '0.7rem' }} className="psy-btn psy-btn-ghost px-3 py-1 text-[11px]">{t.archive}</button>
-              <button onClick={() => setMobileSheet('log')} style={{ borderRadius: '0.7rem' }} className="psy-btn psy-btn-ghost px-3 py-1 text-[11px]">{t.log}</button>
-            </div>
           </div>
 
           {/* ── 懸浮操作層 ─────────────────────────────────────────────
@@ -1004,15 +1017,15 @@ export default function PvpGamePage() {
                       style={{
                         // 维度不带专属色：选中 = 实心 primary(金)，未选 = 中性。
                         borderColor: pongIntent.dimension === d
-                          ? 'rgba(200,155,93,0.7)'
+                          ? '#c39a52'
                           : isDeclared
                           ? 'rgba(220,106,79,0.35)'
                           : 'rgba(200,155,93,0.18)',
                         backgroundColor: pongIntent.dimension === d
-                          ? '#bb8e49'
+                          ? '#c39a52'
                           : isDeclared
                           ? 'rgba(220,106,79,0.06)'
-                          : 'rgba(255,255,255,0.02)',
+                          : '#fdf8f1',
                         color: pongIntent.dimension === d
                           ? '#fff7ea'
                           : isDeclared
@@ -1175,18 +1188,7 @@ export default function PvpGamePage() {
             </div>
           </div>
 
-          {/* Round info */}
-          <div className="hidden text-center text-xs text-[var(--psy-muted)] sm:block">
-            {locale === 'en'
-              ? `${t.roundWord} ${gameState.currentRound}${gameState.totalRounds > 0 ? ` / ${gameState.totalRounds}` : ''}`
-              : `第 ${gameState.currentRound}${gameState.totalRounds > 0 ? ` / ${gameState.totalRounds}` : ''} 輪`}
-            {!isMyTurn && (
-              <span className="ml-2 text-[var(--psy-muted)]">— {currentPlayer?.name}{t.turnOf}</span>
-            )}
-            {isMyTurn && (
-              <span className="ml-2 font-medium text-[var(--psy-accent)] animate-pulse">— {t.yourTurnNow}</span>
-            )}
-          </div>
+          {/* 回合信息已上移到牌桌上方 chip（对齐单机），此处不再重复。 */}
         </div>
       )}
       {mePlayer && targets && (
