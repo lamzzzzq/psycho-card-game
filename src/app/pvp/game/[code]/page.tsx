@@ -233,7 +233,7 @@ export default function PvpGamePage() {
     (gameState.phase === 'drawing' || gameState.phase === 'discarding');
   const yourTurnKey = useYourTurnNotifier(gameState?.currentPlayerIndex, myIsCurrent);
 
-  // Recurring 30-second idle reminder. Deps narrowed to ONLY myIsCurrent —
+  // Recurring 60-second idle reminder. Deps narrowed to ONLY myIsCurrent —
   // any other dep (phase / actionLog / gameState) gets bumped by realtime
   // state pushes and would prematurely reset the 30s clock. The interval
   // tears down naturally when myIsCurrent flips false (turn ends).
@@ -248,7 +248,7 @@ export default function PvpGamePage() {
       turnNudge(shakeControls); // 屏幕震动 + 设备震动，提醒该你了
       if (hideTimer) window.clearTimeout(hideTimer);
       hideTimer = window.setTimeout(() => setIdleReminderVisible(false), 3000);
-    }, 30_000);
+    }, 60_000);
     return () => {
       window.clearInterval(interval);
       if (hideTimer) window.clearTimeout(hideTimer);

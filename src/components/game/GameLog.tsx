@@ -5,12 +5,13 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GameAction, Player, isDummyCard, isPersonalityCard } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
-import { STRINGS, type Locale } from '@/lib/i18n';
+import { STRINGS, playerLabel, type Locale } from '@/lib/i18n';
 
 interface GameLogProps {
   actions: GameAction[];
   players: Player[];
   locale?: Locale;
+  overlayZIndex?: number;
 }
 
 interface ActionLabel {
@@ -75,7 +76,7 @@ function getActionLabel(action: GameAction, locale: Locale): ActionLabel {
   };
 }
 
-export function GameLog({ actions, players, locale = 'zh' }: GameLogProps) {
+export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80 }: GameLogProps) {
   const tg = STRINGS[locale].game;
   const [open, setOpen] = useState(false);
   const recentActions = actions.slice(-3).reverse();
@@ -125,7 +126,7 @@ export function GameLog({ actions, players, locale = 'zh' }: GameLogProps) {
                   <span className="text-[var(--psy-ink-soft)]">{player.avatar}</span>
                   <div className="min-w-0">
                     <div className="psy-serif text-[11px] font-semibold text-[var(--psy-ink)] truncate">
-                      {player.name}
+                      {playerLabel(player, locale)}
                       <span className="ml-1 text-[9px] font-normal text-[var(--psy-muted)]">{tg.logRoundPrefix}{action.round}{tg.logRoundSuffix}</span>
                     </div>
                     <div
@@ -170,6 +171,7 @@ export function GameLog({ actions, players, locale = 'zh' }: GameLogProps) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-[rgba(58,48,32,0.42)] p-4 backdrop-blur-sm"
+            style={{ position: 'fixed', inset: 0, zIndex: overlayZIndex, display: 'flex', overflow: 'hidden' }}
             onClick={() => setOpen(false)}
           >
             <motion.div
@@ -214,7 +216,7 @@ export function GameLog({ actions, players, locale = 'zh' }: GameLogProps) {
                         >
                           <span className="text-base">{player.avatar}</span>
                           <div className="min-w-0 flex-1">
-                            <div className="psy-serif text-sm text-[var(--psy-ink)]">{player.name}</div>
+                            <div className="psy-serif text-sm text-[var(--psy-ink)]">{playerLabel(player, locale)}</div>
                             <div className="mt-1 text-xs text-[var(--psy-muted)]">{tg.roundWord} {action.round}</div>
                           </div>
                           <div className="min-w-0 flex-[1.4] text-sm">

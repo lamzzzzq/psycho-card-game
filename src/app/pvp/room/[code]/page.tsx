@@ -32,7 +32,16 @@ export default function RoomWaitPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [starting, setStarting] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [settings, setSettings] = useState<RoomSettings>({ maxPlayers: 3, totalRounds: 5 });
+
+  const handleCopyCode = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch { /* 剪贴板不可用时静默：用户仍可手动读码 */ }
+  }, [code]);
 
   useEffect(() => {
     if (!player) { router.replace('/pvp'); return; }
@@ -148,14 +157,6 @@ export default function RoomWaitPage() {
     return () => { sub.unsubscribe(); };
   }, [room?.id]);
 
-  const handleSettingsChange = useCallback((newSettings: RoomSettings) => {
-    setSettings(newSettings);
-    sendMessage({ type: 'settings-changed', settings: newSettings });
-    if (room) {
-      supabase.from('rooms').update({ settings: newSettings }).eq('id', room.id);
-    }
-  }, [room, sendMessage]);
-
   const handleKick = useCallback(async (playerId: string) => {
     if (!room) return;
     await kickPlayer(room.id, playerId);
@@ -225,10 +226,24 @@ export default function RoomWaitPage() {
       >
         <div className="psy-panel psy-etched relative space-y-3 rounded-[2rem] px-8 py-10 text-center">
           <p className="psy-eyebrow">ROOM CODE</p>
-          <div className="psy-serif text-7xl font-medium tracking-[0.32em] text-[var(--psy-accent)] tabular-nums sm:text-8xl">
-            {code}
+          <div className="flex items-center justify-center gap-3">
+            <div className="psy-serif text-7xl font-medium tracking-[0.32em] text-[var(--psy-accent)] tabular-nums sm:text-8xl">
+              {code}
+            </div>
+            <button
+              onClick={handleCopyCode}
+              aria-label={t.copyCode}
+              title={copied ? t.copiedCode : t.copyCode}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgba(154,116,72,0.28)] bg-[var(--psy-card-content)] text-[var(--psy-accent)] shadow-[0_8px_18px_rgba(96,72,38,0.1)] transition hover:border-[var(--psy-accent)] hover:bg-[var(--psy-accent-soft)]"
+            >
+              {copied ? (
+                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg>
+              )}
+            </button>
           </div>
-          <p className="text-sm text-[var(--psy-muted)]">{t.shareHint}</p>
+          <p className="text-sm text-[var(--psy-muted)]">{copied ? t.copiedCode : t.shareHint}</p>
           <div className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(200,155,93,0.18),transparent_68%)]" />
         </div>
 
@@ -321,41 +336,20 @@ export default function RoomWaitPage() {
           </div>
         </section>
 
-        {isHost && (
-          <section className="psy-panel psy-etched space-y-5 rounded-[1.6rem] p-6">
-            <p className="psy-eyebrow text-[10px]">{t.roomSettings}</p>
-
-            <div className="space-y-2">
-              <p className="text-xs text-[var(--psy-muted)]">{t.maxPlayers}</p>
-              <div className="grid grid-cols-3 gap-2">
-                {[2, 3, 4].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => handleSettingsChange({ ...settings, maxPlayers: n })}
-                    className={`psy-tile psy-serif text-sm ${settings.maxPlayers === n ? 'is-active' : ''}`}
-                  >
-                    {n}{t.playerUnit}
-                  </button>
-                ))}
-              </div>
+        {/* 房间设置在创建时已确定，等待室仅只读展示（不可再改），所有玩家可见。 */}
+        <section className="psy-panel psy-etched space-y-4 rounded-[1.6rem] p-6">
+          <p className="psy-eyebrow text-[10px]">{t.roomSettings}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-[1.2rem] border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-4 py-3 text-center">
+              <p className="text-[11px] text-[var(--psy-muted)]">{t.maxPlayers}</p>
+              <p className="psy-serif mt-1 text-lg text-[var(--psy-ink)] tabular-nums">{settings.maxPlayers}{t.playerUnit}</p>
             </div>
-
-            <div className="space-y-2">
-              <p className="text-xs text-[var(--psy-muted)]">{t.rounds}</p>
-              <div className="grid grid-cols-4 gap-2">
-                {[0, 3, 5, 10].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => handleSettingsChange({ ...settings, totalRounds: n })}
-                    className={`psy-tile psy-serif text-sm ${settings.totalRounds === n ? 'is-active' : ''}`}
-                  >
-                    {n === 0 ? '∞' : n}
-                  </button>
-                ))}
-              </div>
+            <div className="rounded-[1.2rem] border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-4 py-3 text-center">
+              <p className="text-[11px] text-[var(--psy-muted)]">{t.rounds}</p>
+              <p className="psy-serif mt-1 text-lg text-[var(--psy-ink)] tabular-nums">{settings.totalRounds === 0 ? '∞' : settings.totalRounds}</p>
             </div>
-          </section>
-        )}
+          </div>
+        </section>
 
         <div className="space-y-3">
           {isHost ? (
@@ -364,7 +358,7 @@ export default function RoomWaitPage() {
               disabled={!canStart || starting}
               className="psy-btn psy-btn-accent psy-serif w-full py-4 text-lg font-semibold"
             >
-              {starting ? t.starting : canStart ? t.startGame : `${t.waitingPlayersPrefix}${players.length}${t.waitingPlayersSuffix}`}
+              {starting ? t.starting : canStart ? t.startGame : `${t.waitingPlayersPrefix}${players.length}/${maxPlayers}${t.waitingPlayersSuffix}`}
             </button>
           ) : (
             <div className="psy-serif animate-pulse rounded-[1.4rem] border border-dashed border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] py-4 text-center text-sm text-[var(--psy-muted)]">

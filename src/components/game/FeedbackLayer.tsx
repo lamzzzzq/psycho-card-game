@@ -24,12 +24,6 @@ export function turnNudge(shakeControls: AnimationControls) {
   }
 }
 
-// 语义反馈色：游玩界面里维度已不带色，故颜色专用于语义 —— 成功绿/失败红/提示黄。
-const FB_SUCCESS = '#22c55e'; // 绿 — 碰成功 / 胡牌
-const FB_HU = '#22c55e';      // 胡牌也归为成功(绿)
-const FB_FAIL = '#ef4444';    // 红 — 失败
-const FB_NOTICE = '#facc15';  // 黄 — 提示/警告(轮到你、被抢等)
-
 interface Pop {
   id: number;
   text: string;
@@ -173,17 +167,25 @@ export function TurnNoticeToast({
   eyebrow,
   title,
   icon = '⏰',
+  tone = 'neutral',
 }: {
   eyebrow: string;
   title: string;
   icon?: string;
+  tone?: 'neutral' | 'success' | 'danger';
 }) {
+  const styles = tone === 'success'
+    ? 'border-[rgba(111,143,85,0.55)] bg-[linear-gradient(180deg,#fbfdf8,#e8f1e1)] shadow-[0_18px_42px_rgba(83,111,66,0.2)]'
+    : tone === 'danger'
+    ? 'border-[rgba(190,83,62,0.5)] bg-[linear-gradient(180deg,#fffaf5,#f8e3d8)] shadow-[0_18px_42px_rgba(150,74,54,0.18)]'
+    : 'border-[rgba(154,116,72,0.28)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] shadow-[0_18px_42px_rgba(96,72,38,0.2)]';
+  const accent = tone === 'success' ? 'text-[var(--psy-success)]' : tone === 'danger' ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-accent-strong)]';
   return (
-    <div className="psy-etched rounded-[1.35rem] border border-[rgba(154,116,72,0.28)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] px-5 py-3 text-center shadow-[0_18px_42px_rgba(96,72,38,0.2)] sm:px-7 sm:py-4">
-      <div className="psy-serif text-[10px] uppercase tracking-[0.28em] text-[var(--psy-accent-strong)]">
+    <div className={`psy-etched rounded-[1.35rem] border px-5 py-3 text-center sm:px-7 sm:py-4 ${styles}`}>
+      <div className={`psy-serif text-[10px] uppercase tracking-[0.28em] ${accent}`}>
         {eyebrow}
       </div>
-      <div className="mt-1 flex items-center justify-center gap-2 text-base font-bold text-[var(--psy-ink)] sm:text-2xl">
+      <div className={`mt-1 flex items-center justify-center gap-2 text-base font-bold sm:text-2xl ${tone === 'success' ? 'text-[var(--psy-success)]' : tone === 'danger' ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-ink)]'}`}>
         <span aria-hidden>{icon}</span>
         <span>{title}</span>
       </div>
@@ -225,34 +227,22 @@ export function FeedbackOverlays({
         initial={{ opacity: 0 }}
         className="pointer-events-none fixed inset-0 z-[60] bg-white"
       />
-      <div className="pointer-events-none fixed top-20 left-1/2 z-[70] flex -translate-x-1/2 flex-col items-center gap-2">
+      <div className="pointer-events-none fixed left-1/2 top-20 z-[70] w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2">
         <AnimatePresence>
-          {pops.map((pop) => (
+          {pops.slice(0, 1).map((pop) => (
             <motion.div
               key={pop.id}
               initial={{ opacity: 0, y: 24, scale: 0.8 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -24, scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 400, damping: 24 }}
-              className="rounded-full px-5 py-2 text-sm font-bold shadow-2xl backdrop-blur"
-              style={{
-                // 固定语义色，不再用维度色（避免红色既=神经质维度又=成功/失败）
-                backgroundColor:
-                  pop.kind === 'hu'
-                    ? FB_HU
-                    : pop.kind === 'pong'
-                    ? FB_SUCCESS
-                    : pop.kind === 'your-turn'
-                    ? FB_NOTICE
-                    : FB_FAIL,
-                color:
-                  pop.kind === 'hu-fail' || pop.kind === 'pong-fail'
-                    ? '#fff'
-                    : '#0c1622',
-              }}
             >
-              <span className="mr-1 opacity-70">{pop.playerName}</span>
-              {pop.text}
+              <TurnNoticeToast
+                eyebrow={pop.playerName}
+                title={pop.text}
+                icon={pop.kind === 'hu' || pop.kind === 'pong' ? '✦' : '×'}
+                tone={pop.kind === 'hu' || pop.kind === 'pong' ? 'success' : 'danger'}
+              />
             </motion.div>
           ))}
         </AnimatePresence>

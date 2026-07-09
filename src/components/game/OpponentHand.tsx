@@ -7,7 +7,7 @@ import { Player } from '@/types';
 import { TarotCard } from './TarotCard';
 import { cardToTarotProps } from './cardToTarotProps';
 import { DeclaredArea } from './DeclaredArea';
-import { STRINGS, type Locale } from '@/lib/i18n';
+import { STRINGS, playerLabel, type Locale } from '@/lib/i18n';
 
 interface OpponentHandProps {
   player: Player;
@@ -69,23 +69,34 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
   return (
     <motion.div
       animate={bounceControls}
-      className={`psy-panel psy-etched flex flex-col gap-2 rounded-[1rem] px-2.5 py-2 sm:rounded-[1.25rem] sm:px-3 sm:py-2.5 transition ${
-        isCurrentTurn ? 'ring-1 ring-[rgba(200,155,93,0.42)]' : ''
+      className={`psy-panel psy-etched relative flex flex-col gap-2 overflow-hidden rounded-[1rem] px-2.5 py-2 sm:rounded-[1.25rem] sm:px-3 sm:py-2.5 transition ${
+        isCurrentTurn ? 'border-[rgba(195,154,82,0.9)] bg-[rgba(255,249,234,0.94)] ring-4 ring-[rgba(195,154,82,0.24)] shadow-[0_12px_28px_rgba(154,116,72,0.22)]' : ''
       }`}
     >
+      {isCurrentTurn && !isPenalized && !hasLeft && !isTentativeOffline && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-20 rounded-[1rem] sm:rounded-[1.25rem]"
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 3.6, ease: 'linear' }}
+          style={{
+            padding: 2,
+            background: 'conic-gradient(from 0deg, transparent 0deg 258deg, rgba(195,154,82,0.18) 274deg, #c39a52 300deg, #f3dc9b 326deg, rgba(195,154,82,0.18) 342deg, transparent 360deg)',
+            WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+            WebkitMaskComposite: 'xor',
+          }}
+        />
+      )}
       {/* Header: avatar + name + count */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="text-base shrink-0">{player.avatar}</span>
           <div className="min-w-0">
             <div className="psy-serif truncate text-[11px] font-medium text-[var(--psy-ink)] sm:text-xs">
-              {player.name}
+              {playerLabel(player, locale)}
             </div>
             <div className="truncate text-[9px] text-[var(--psy-muted)] sm:text-[10px]">
               {player.hand.length} {t.cardsUnit}
-              {!isPenalized && !hasLeft && !isTentativeOffline && isCurrentTurn && (
-                <span className="ml-1 text-[var(--psy-accent)]">· {t.thinking}</span>
-              )}
               {player.revealedHand && <span className="ml-1 text-[var(--psy-accent)]">· {t.archivePublic}</span>}
               {hasLeft && <span className="ml-1 text-[var(--psy-danger)]">· {t.leftGame}</span>}
               {!hasLeft && isTentativeOffline && (
@@ -94,6 +105,12 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
             </div>
           </div>
         </div>
+
+        {isCurrentTurn && !isPenalized && !hasLeft && !isTentativeOffline && (
+          <span className="shrink-0 rounded-full border border-[rgba(195,154,82,0.55)] bg-[var(--psy-accent)] px-2 py-0.5 text-[9px] font-semibold text-white shadow-[0_4px_10px_rgba(154,116,72,0.24)]">
+            {locale === 'en' ? 'Playing' : '出牌中'}
+          </span>
+        )}
 
         {/* Card-back stack visual */}
         <div className="relative h-4 shrink-0 sm:h-5" style={{ width: stackWidth }}>
@@ -161,7 +178,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
       )}
 
       {/* Archive */}
-      <DeclaredArea declaredSets={player.declaredSets} compact title={`${player.name}${t.archiveOf}`} locale={locale} />
+      <DeclaredArea declaredSets={player.declaredSets} compact title={`${playerLabel(player, locale)}${t.archiveOf}`} locale={locale} />
 
       {/* Reveal trigger — opens modal */}
       {(showCards || hasRevealedSubset) && (
@@ -190,6 +207,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
               className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-[rgba(58,48,32,0.42)] p-4 backdrop-blur-sm"
+              style={{ position: 'fixed', inset: 0, zIndex: 80, display: 'flex', overflow: 'hidden' }}
               onClick={() => setOpenModal(false)}
             >
               <motion.div
@@ -207,7 +225,7 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
                   <h3 className="psy-serif text-sm font-bold text-[var(--psy-ink)]">
                     {modalTitle}
                     <span className="ml-2 text-xs font-normal text-[var(--psy-muted)]">
-                      {player.avatar} {player.name} · {t.totalCards} {modalCards.length} {t.cardsUnit}
+                      {player.avatar} {playerLabel(player, locale)} · {t.totalCards} {modalCards.length} {t.cardsUnit}
                     </span>
                   </h3>
                   <button

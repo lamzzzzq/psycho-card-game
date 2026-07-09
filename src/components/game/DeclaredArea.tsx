@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DeclaredSet, PersonalityCard } from '@/types';
+import { DeclaredSet, Dimension, DIMENSIONS, PersonalityCard } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 import { TarotCard } from './TarotCard';
 import { cardToTarotProps } from './cardToTarotProps';
@@ -13,17 +13,29 @@ interface DeclaredAreaProps {
   compact?: boolean;
   title?: string;
   locale?: Locale;
+  /** When present, the desktop card becomes a combined target/result panel. */
+  targets?: Partial<Record<Dimension, number>>;
+  /** Nested mobile sheets need their detail overlay above the sheet itself. */
+  overlayZIndex?: number;
 }
 
-export function DeclaredArea({ declaredSets, compact = false, title, locale = 'zh' }: DeclaredAreaProps) {
+export function DeclaredArea({
+  declaredSets,
+  compact = false,
+  title,
+  locale = 'zh',
+  targets,
+  overlayZIndex,
+}: DeclaredAreaProps) {
   const t = STRINGS[locale].game;
   const dimName = (d: PersonalityCard['dimension']) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name);
   const resolvedTitle = title ?? t.archiveRecord;
   const [open, setOpen] = useState(false);
   const [detailCard, setDetailCard] = useState<PersonalityCard | null>(null);
+  const isProgressView = targets !== undefined;
 
   const modalNode = (
-    <PsyOverlayPanel open={open} onClose={() => setOpen(false)} title={resolvedTitle} variant="centered">
+    <PsyOverlayPanel open={open} onClose={() => setOpen(false)} title={resolvedTitle} variant="centered" zIndex={overlayZIndex}>
       {declaredSets.length === 0 ? (
         <div className="rounded-xl border border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] px-4 py-8 text-center text-sm text-[var(--psy-muted)]">
           {t.noArchiveDone}
@@ -71,7 +83,7 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
       title={t.cardDetail}
       variant="centered"
       panelClassName="max-w-xl"
-      zIndex={92}
+      zIndex={(overlayZIndex ?? 82) + 2}
     >
       {detailCard && (
         <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-center">
@@ -102,6 +114,42 @@ export function DeclaredArea({ declaredSets, compact = false, title, locale = 'z
       )}
     </PsyOverlayPanel>
   );
+
+  if (isProgressView) {
+    return (
+      <>
+        <section className="psy-panel psy-etched w-[13rem] rounded-[1.2rem] p-3" aria-label={locale === 'en' ? 'Archive progress' : '歸檔進度'}>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h3 className="psy-serif text-sm text-[var(--psy-accent)]">{locale === 'en' ? 'Archive progress' : '歸檔進度'}</h3>
+            {declaredSets.length > 0 && <span className="text-[10px] text-[var(--psy-muted)]">{t.viewWord}</span>}
+          </div>
+          <div className="space-y-1.5">
+            {DIMENSIONS.map((dimension) => {
+              const declared = declaredSets.find((set) => set.dimension === dimension);
+              const target = targets[dimension] ?? 0;
+              const isDone = !!declared;
+              const content = (
+                <>
+                  <span className="psy-serif text-[11px] text-[var(--psy-ink)]">{dimName(dimension)}</span>
+                  <span className="text-right text-[10px] leading-4">
+                    <span className="block text-[var(--psy-muted)]">{locale === 'en' ? `Need ${target}` : `需要 ${target} 張`}</span>
+                    <span className={isDone ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-ink-soft)]'}>{isDone ? (locale === 'en' ? 'Archived' : '已歸檔') : (locale === 'en' ? 'Not archived' : '未歸檔')}</span>
+                  </span>
+                </>
+              );
+              return isDone ? (
+                <button key={dimension} type="button" onClick={() => setOpen(true)} className="flex w-full items-center justify-between rounded-lg border border-[rgba(111,143,85,0.3)] bg-[rgba(111,143,85,0.08)] px-2.5 py-1.5 text-left transition hover:-translate-y-px hover:border-[rgba(111,143,85,0.55)]" aria-label={`${t.viewWord}: ${dimName(dimension)}`}>{content}</button>
+              ) : (
+                <div key={dimension} className="flex items-center justify-between rounded-lg border border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] px-2.5 py-1.5">{content}</div>
+              );
+            })}
+          </div>
+        </section>
+        {modalNode}
+        {detailNode}
+      </>
+    );
+  }
 
   if (compact) {
     return (

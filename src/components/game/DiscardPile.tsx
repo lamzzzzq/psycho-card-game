@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameCard, GameAction, isPersonalityCard } from '@/types';
 import { TarotCard } from './TarotCard';
-import { STRINGS, type Locale } from '@/lib/i18n';
+import { STRINGS, playerLabel, type Locale } from '@/lib/i18n';
+import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
 
 // 弃牌也用塔罗卡面（有图+文字），与手牌一致。
 // revealTags：open(明牌)难度下，弃牌显示人格 tag（所有人都知道打出牌的维度）。
@@ -64,6 +65,7 @@ export function DiscardPile({
 }: DiscardPileProps) {
   const t = STRINGS[locale].game;
   const [open, setOpen] = useState(false);
+  const [detailCard, setDetailCard] = useState<GameCard | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -114,17 +116,15 @@ export function DiscardPile({
         }`}
         aria-label={t.viewDiscardPile}
       >
-        {/* 脉冲光环（出牌引导）：套在卡面外圈 */}
-        {highlight && (
-          <motion.div
-            animate={{ opacity: [0.5, 0, 0.5], scale: [1, 1.12, 1] }}
-            transition={{ repeat: Infinity, duration: 1.8, ease: 'easeOut' }}
-            className="pointer-events-none absolute -inset-1 top-0 h-[130px] rounded-[1.25rem] border sm:h-[172px] sm:rounded-[1.4rem]"
-            style={{ borderColor: 'rgba(200,155,93,0.6)', boxShadow: '0 0 22px rgba(200,155,93,0.4)' }}
-          />
-        )}
         {topCard ? (
           <div className="relative">
+            {highlight && (
+              <motion.div
+                animate={{ boxShadow: ['0 0 0 0 rgba(195,154,82,0)', '0 0 0 4px rgba(195,154,82,0.28), 0 0 22px rgba(195,154,82,0.22)', '0 0 0 0 rgba(195,154,82,0)'] }}
+                transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+                className="pointer-events-none absolute inset-0 rounded-[1.1rem] sm:rounded-[1.35rem]"
+              />
+            )}
             <div className="sm:hidden">
               <TarotCard {...tarotProps(topCard, locale, revealTags)} width={72} />
             </div>
@@ -146,7 +146,14 @@ export function DiscardPile({
             )}
           </div>
         ) : (
-          <div className="flex aspect-[4/7] w-[72px] items-center justify-center rounded-[1.1rem] border border-dashed bg-[var(--psy-card-content)] sm:w-32 sm:rounded-[1.35rem]" style={{ borderColor: 'rgba(154,116,72,0.24)' }}>
+          <div className="relative flex aspect-[4/7] w-[72px] items-center justify-center rounded-[1.1rem] border border-dashed bg-[var(--psy-card-content)] sm:w-32 sm:rounded-[1.35rem]" style={{ borderColor: 'rgba(154,116,72,0.24)' }}>
+            {highlight && (
+              <motion.div
+                animate={{ boxShadow: ['0 0 0 0 rgba(195,154,82,0)', '0 0 0 4px rgba(195,154,82,0.28), 0 0 22px rgba(195,154,82,0.22)', '0 0 0 0 rgba(195,154,82,0)'] }}
+                transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+                className="pointer-events-none absolute inset-0 rounded-[1.1rem] sm:rounded-[1.35rem]"
+              />
+            )}
             <span className="psy-serif text-[11px] text-[var(--psy-muted)] sm:text-xs">{t.discardPileName}</span>
           </div>
         )}
@@ -219,14 +226,19 @@ export function DiscardPile({
                           <span className="w-6 text-right font-mono text-[11px] text-[var(--psy-muted)]">
                             #{originalIndex + 1}
                           </span>
-                          <div className="flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setDetailCard(entry.card)}
+                            className="flex-shrink-0 rounded-xl transition hover:-translate-y-1 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--psy-accent)]"
+                            aria-label={`${t.cardDetail}: ${entry.card.text}`}
+                          >
                             <TarotCard {...tarotProps(entry.card, locale, revealTags)} width={84} />
-                          </div>
+                          </button>
                           <div className="flex-1 min-w-0 ml-2 space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="text-lg">{entry.player?.avatar ?? '🧑'}</span>
                               <span className="psy-serif truncate text-sm font-medium text-[var(--psy-ink)]">
-                                {entry.player?.name ?? t.unknownPlayer}
+                                {entry.player ? playerLabel(entry.player, locale) : t.unknownPlayer}
                               </span>
                             </div>
                             {ts > 0 && (
@@ -249,6 +261,30 @@ export function DiscardPile({
         )}
       </AnimatePresence>,
       document.body)}
+
+      <PsyOverlayPanel
+        open={detailCard !== null}
+        onClose={() => setDetailCard(null)}
+        title={t.cardDetail}
+        variant="centered"
+        zIndex={92}
+        locale={locale}
+      >
+        {detailCard && (
+          <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-center">
+            <div className="flex justify-center">
+              <TarotCard {...tarotProps(detailCard, locale, true)} width={200} />
+            </div>
+            <div className="space-y-3">
+              <p className="psy-eyebrow text-[10px]">{t.personaDesc}</p>
+              <p className="psy-serif text-xl leading-9 text-[var(--psy-ink)]">{detailCard.text}</p>
+              {!isPersonalityCard(detailCard) && detailCard.definition && (
+                <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">{locale === 'en' ? (detailCard.definitionEn ?? detailCard.definition) : detailCard.definition}</p>
+              )}
+            </div>
+          </div>
+        )}
+      </PsyOverlayPanel>
     </>
   );
 }

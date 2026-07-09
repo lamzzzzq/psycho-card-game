@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { GameCard, Dimension, Player, isPersonalityCard } from '@/types';
+import { GameCard, Dimension, DIMENSIONS, Player, isPersonalityCard } from '@/types';
 import { getTargetCounts } from '@/lib/scoring';
-import { getDeclaredDimensions } from '@/lib/game-logic';
 import { TarotCard } from './TarotCard';
 import { cardToTarotProps } from './cardToTarotProps';
 import { STRINGS, type Locale } from '@/lib/i18n';
@@ -17,6 +16,8 @@ interface PongPanelProps {
   onClaim: (dimension: Dimension, handCardIds: number[]) => void;
   onSkip: () => void;
   onResolveAI: () => void;
+  /** Solo play waits for a decision; PVP can retain a timed claim window. */
+  autoAdvance?: boolean;
   locale?: Locale;
 }
 
@@ -28,43 +29,36 @@ export function PongPanel({
   onClaim,
   onSkip,
   onResolveAI,
+  autoAdvance = true,
   locale = 'zh',
 }: PongPanelProps) {
   const t = STRINGS[locale].game;
   const targets = getTargetCounts(player.bigFiveScores);
-  const declaredDims = getDeclaredDimensions(player);
   // 倒計時初值分兩檔：能歸檔 20s（要看牌思考+選牌，5s 根本來不及——用戶反饋）；
   // 無法歸檔只有「暫不歸檔」一個選項，5s 快速放行避免拖慢節奏。
   const [countdown, setCountdown] = useState(() => {
     if (!isPersonalityCard(pendingCard)) return 5;
     const dim = pendingCard.dimension;
     const sameCount = player.hand.filter((c) => isPersonalityCard(c) && c.dimension === dim).length;
-    const claimable = declaredDims.has(dim) || sameCount + 1 >= targets[dim];
-    return claimable ? 20 : 5;
+    return sameCount + 1 >= targets[dim] ? 20 : 5;
   });
 
-  // Auto-skip after countdown
+  // Solo play is deliberately player-paced. A network claim window can still
+  // use its countdown so an abandoned room does not block the table.
   useEffect(() => {
+    if (!autoAdvance) return;
     if (countdown <= 0) {
       onResolveAI();
       return;
     }
     const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
-  }, [countdown, onResolveAI]);
+  }, [autoAdvance, countdown, onResolveAI]);
 
   // Only personality cards can be claimed
   if (!isPersonalityCard(pendingCard)) return null;
 
   const pendingDim = pendingCard.dimension;
-  const handCardsOfDim = player.hand.filter(
-    (c) => isPersonalityCard(c) && c.dimension === pendingDim
-  );
-  const totalWithPending = handCardsOfDim.length + 1;
-  const isAlreadyDeclared = declaredDims.has(pendingDim);
-  // 已歸檔維度也允許玩家點（強 trap）；點了 commit → engine 判 fail + 罰停。
-  // 不要 gate sameInHand 閾值 — 玩家自己判斷，錯就喫罰。
-  const canClaimThisDim = isAlreadyDeclared || totalWithPending >= targets[pendingDim];
 
   return (
     <motion.div
@@ -72,58 +66,53 @@ export function PongPanel({
       animate={{ opacity: 1, scale: 1 }}
       className="psy-panel psy-etched shrink-0 rounded-[1.3rem] p-3 space-y-3 sm:rounded-[1.6rem] sm:p-5 sm:space-y-4"
     >
-      <div className="flex items-center justify-between">
-        <h3 className="psy-serif text-sm font-semibold tracking-[0.04em] text-[var(--psy-accent)] sm:text-base">
-          {t.pongPanelTitle}
-        </h3>
-        <div className="hidden text-right sm:block">
-          <div className="text-xs text-[var(--psy-muted)]">
-            {discardedByName} {t.pongClueDiscarded}
-          </div>
-          <div className="mt-1 max-w-[16rem] line-clamp-1 text-[11px] text-[var(--psy-ink-soft)]">
-            {pendingCard.text}
-          </div>
-        </div>
-        <span className={`font-mono text-sm font-medium tabular-nums ${countdown <= 2 ? 'animate-pulse text-[var(--psy-danger)]' : 'text-[var(--psy-accent)]'}`}>
-          {countdown}s
-        </span>
+      <div className="hidden items-center justify-end sm:flex">
+        {autoAdvance && (
+          <span className={`font-mono text-sm font-medium tabular-nums ${countdown <= 2 ? 'animate-pulse text-[var(--psy-danger)]' : 'text-[var(--psy-accent)]'}`}>
+            {countdown}s
+          </span>
+        )}
       </div>
 
       {/* Show the pending discard card */}
-      <div className="flex items-center gap-3 sm:gap-4">
-        <div className="flex flex-col items-center gap-1">
-          <span className="psy-serif text-[10px] uppercase tracking-[0.18em] text-[var(--psy-muted)]">{t.pongSampleLabel}</span>
+      <div className="flex items-center gap-4 sm:gap-6">
+        <div className="flex flex-col items-center">
           <div className="rounded-xl p-1" style={{ backgroundColor: 'rgba(200, 155, 93, 0.08)', boxShadow: 'inset 0 0 0 1px rgba(200,155,93,0.18)' }}>
-            <TarotCard {...cardToTarotProps(pendingCard, locale)} width={56} />
+            <TarotCard {...cardToTarotProps(pendingCard, locale)} width={108} />
           </div>
         </div>
 
-        <div className="flex-1 space-y-1 text-[11px] text-[var(--psy-ink-soft)] sm:text-xs">
-          {/* 不洩露「已歸檔」資訊（強 trap）：已歸檔維度與正常可碰維度顯示完全
-              相同的引導，玩家自行判斷。碰了若重複/混維度，由引擎判失敗 + 罰停。 */}
-          {canClaimThisDim ? (
-            <div className="space-y-2">
-              <p className="text-[var(--psy-ink)]">
-                {t.pongCanClaim}
-              </p>
-              <ul className="list-disc pl-4 space-y-0.5 text-[var(--psy-ink-soft)] marker:text-[var(--psy-accent)] sm:space-y-1">
-                <li>{t.pongTip1}</li>
-                <li>{t.pongTip2}</li>
-                <li>{t.pongTip3}</li>
-              </ul>
-            </div>
-          ) : (
-            <p className="text-[var(--psy-muted)]">
-              {t.pongCannotClaim}
-            </p>
-          )}
+        <div className="flex-1 space-y-3 text-[11px] text-[var(--psy-ink-soft)] sm:text-xs">
+          <div>
+            <p className="psy-serif text-base text-[var(--psy-ink)] sm:text-lg">{discardedByName} {t.pongClueDiscarded}</p>
+            <p className="mt-1 text-[var(--psy-ink-soft)]">{pendingCard.text}</p>
+          </div>
+          <div className="rounded-xl border border-[rgba(154,116,72,0.16)] bg-[rgba(253,248,241,0.78)] px-3 py-2">
+            <p className="font-medium text-[var(--psy-ink)]">{t.pongCanClaim}</p>
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 marker:text-[var(--psy-accent)] sm:space-y-1">
+              <li>{t.pongTip1}</li>
+              <li>{t.pongTip2}</li>
+              <li>{t.pongTip3}</li>
+            </ul>
+          </div>
         </div>
+      </div>
+
+      {/* The usual mobile progress rail is behind this panel. Keep all five
+          target values visible while the player judges this discard. */}
+      <div className="grid grid-cols-5 gap-1 sm:hidden">
+        {DIMENSIONS.map((dimension) => (
+          <div key={dimension} className="rounded-md border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-1 py-1 text-center text-[9px] tabular-nums text-[var(--psy-ink-soft)]">
+            <span className="font-semibold">{dimension}</span>{' '}
+            <span>{targets[dimension]}{locale === 'en' ? '' : '張'}</span>
+          </div>
+        ))}
       </div>
 
       {/* Actions */}
       <div className="flex items-center justify-between">
         <div className="text-xs text-[var(--psy-ink-soft)]">
-          {canClaimThisDim && selectedCardIds.length > 0 && (
+          {selectedCardIds.length > 0 && (
             <>{t.selectedPrefix} <span className="font-medium text-[var(--psy-accent-strong)]">{selectedCardIds.length}</span> {t.pongSelectedCandidates}</>
           )}
         </div>
@@ -139,22 +128,9 @@ export function PongPanel({
           >
             {t.pongSkip}
           </button>
-          {canClaimThisDim && (
-            <button
-              onClick={() => onClaim(pendingDim, selectedCardIds)}
-              // 截胡碰需选 target-1 张手牌(+那张弃牌=target)。target=1 时正解是「0 张手牌」，
-              // 故仅在 target>1 时禁用空选；否则 target=1 维度永远无法碰、还会吃罚停。
-              disabled={selectedCardIds.length === 0 && targets[pendingDim] > 1}
-              className="psy-btn psy-btn-accent px-3 py-1.5 text-[11px] font-bold disabled:cursor-not-allowed disabled:opacity-30 sm:px-4 sm:py-2 sm:text-xs"
-              title={
-                selectedCardIds.length === 0 && targets[pendingDim] > 1
-                  ? t.pongSelectFirst
-                  : undefined
-              }
-            >
-              {t.archiveJudge}
-            </button>
-          )}
+          <button onClick={() => onClaim(pendingDim, selectedCardIds)} className="psy-btn psy-btn-accent px-3 py-1.5 text-[11px] font-bold sm:px-4 sm:py-2 sm:text-xs">
+            {t.archiveJudge}
+          </button>
         </div>
       </div>
     </motion.div>

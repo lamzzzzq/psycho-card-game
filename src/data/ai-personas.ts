@@ -3,21 +3,24 @@ import { AIPersona } from '@/types';
 export const AI_PERSONAS: AIPersona[] = [
   {
     id: 'ai-1',
-    name: 'Brian',
+    name: '大雄',
+    nameEn: 'Tai Hung',
     avatar: '🧑‍🎓',
     description: '樂觀的大學生，做事憑直覺',
     difficulty: 'easy',
   },
   {
     id: 'ai-2',
-    name: 'Prof. Chen',
+    name: '陳教授',
+    nameEn: 'Prof. Chan',
     avatar: '👩‍🏫',
     description: '精明的心理學教授，善於分析',
     difficulty: 'medium',
   },
   {
     id: 'ai-3',
-    name: 'Lin',
+    name: '老林',
+    nameEn: 'Lam',
     avatar: '🧓',
     description: '經驗豐富的老手，洞察人心',
     difficulty: 'hard',

@@ -14,9 +14,9 @@ import {
 } from '@/components/game/FeedbackLayer';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
-import { useLocaleStore, STRINGS } from '@/lib/i18n';
+import { useLocaleStore, STRINGS, playerLabel } from '@/lib/i18n';
 import { DIMENSION_META } from '@/data/dimensions';
-import { DIMENSIONS, Dimension } from '@/types';
+import { DIMENSIONS, Dimension, GameCard } from '@/types';
 import { getTargetCounts } from '@/lib/scoring';
 import { getDeclaredDimensions } from '@/lib/game-logic';
 import { PlayerHand } from '@/components/game/PlayerHand';
@@ -34,9 +34,10 @@ import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
 
 interface FlyingAnim {
   id: number;
+  cardId: number;
+  card: GameCard;
   from: { x: number; y: number };
   to: { x: number; y: number };
-  text: string;
 }
 
 export default function GamePage() {
@@ -64,8 +65,6 @@ export default function GamePage() {
   const revealDifficulty = game?.settings?.revealDifficulty ?? 'hidden';
   const viewCap = revealDifficulty === 'half' ? 4 : 2;
   const [aiRunning, setAiRunning] = useState(false);
-  const [timer, setTimer] = useState(30);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Card selection state (for pong)
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
@@ -77,8 +76,6 @@ export default function GamePage() {
   const [viewUsedThisTurn, setViewUsedThisTurn] = useState(false);
   const [discardPickId, setDiscardPickId] = useState<number | null>(null);
 
-  // Result feedback banner
-  const [resultBanner, setResultBanner] = useState<{ success: boolean; message: string } | null>(null);
   // Exit-confirmation modal
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   // Pong intent — when user clicks the main-area 「碰」 button, this opens
@@ -88,6 +85,7 @@ export default function GamePage() {
     type: 'self' | 'other';
     dimension: Dimension;
   } | null>(null);
+  const [selfPongDimensionChosen, setSelfPongDimensionChosen] = useState(false);
 
   // Arrow state — 存「取点函数」而非静态坐标，ArrowOverlay 每帧重算 → 跟随滚动。
   type Pt = { x: number; y: number };
@@ -97,7 +95,6 @@ export default function GamePage() {
 
   // 单人 idle 提醒：本回合超过一定时间未行动时，弹「輪到你」toast + 屏幕震动。
   const [idleReminderVisible, setIdleReminderVisible] = useState(false);
-  const lastNudgeRef = useRef<number | null>(null);
 
   // Flying card animations
   const [flyingCards, setFlyingCards] = useState<FlyingAnim[]>([]);
@@ -141,6 +138,7 @@ export default function GamePage() {
   useEffect(() => {
     setPongIntent(null);
     setSelectedCardIds([]);
+    setSelfPongDimensionChosen(false);
   }, [game?.currentPlayerIndex, game?.phase]);
 
   // Reset view-cards state on turn change. half 模式：已看的牌保留（不清 viewedCardIds）。
@@ -151,59 +149,27 @@ export default function GamePage() {
     setViewUsedThisTurn(false);
   }, [game?.currentPlayerIndex, game?.currentRound, revealDifficulty]);
 
-  useEffect(() => {
-    if (isHumanActive) {
-      setTimer(30);
-      timerRef.current = setInterval(() => {
-        setTimer((t) => {
-          if (t <= 1) {
-            clearInterval(timerRef.current!);
-            const g = useGameStore.getState().game;
-            if (!g) return 0;
-            if (g.phase === 'drawing') {
-              useGameStore.getState().playerDraw();
-            } else if (g.phase === 'discarding') {
-              // Normal discard (with drawnCard) OR post-pong forced discard
-              // (drawnCard=null, pick from hand only — bug #7).
-              const human = g.players[0];
-              const allCards = g.drawnCard
-                ? [...human.hand, g.drawnCard]
-                : [...human.hand];
-              if (allCards.length > 0) {
-                const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
-                useGameStore.getState().playerDiscard(randomCard.id);
-              }
-            }
-            return 0;
-          }
-          return t - 1;
-        });
-      }, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
-      setArrowFrom(null);
-      setArrowTo(null);
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isHumanActive, game?.phase, game?.currentRound]);
-
-  // idle 提醒：本回合还剩 15s / 6s 仍未行动时，震动 + 弹 toast（每个阈值只触发一次）。
+  // Solo play never advances automatically. The reminder repeats every 30s
+  // while the player is deciding; any action resets the interval.
   useEffect(() => {
     if (!isHumanActive) {
-      lastNudgeRef.current = null;
       setIdleReminderVisible(false);
+      setArrowFrom(null);
+      setArrowTo(null);
       return;
     }
-    if ((timer === 15 || timer === 6) && lastNudgeRef.current !== timer) {
-      lastNudgeRef.current = timer;
+    let hideTimer: number | null = null;
+    const interval = window.setInterval(() => {
       turnNudge(shakeControls);
       setIdleReminderVisible(true);
-      const h = window.setTimeout(() => setIdleReminderVisible(false), 2500);
-      return () => window.clearTimeout(h);
-    }
-  }, [timer, isHumanActive, shakeControls]);
+      if (hideTimer) window.clearTimeout(hideTimer);
+      hideTimer = window.setTimeout(() => setIdleReminderVisible(false), 2500);
+    }, 30_000);
+    return () => {
+      window.clearInterval(interval);
+      if (hideTimer) window.clearTimeout(hideTimer);
+    };
+  }, [isHumanActive, game?.actionLog.length, shakeControls]);
 
   // Redirect if no game
   useEffect(() => {
@@ -264,11 +230,6 @@ export default function GamePage() {
     return () => window.clearTimeout(timer);
   }, [game?.phase, game?.discardedByIndex, game?.pendingDiscard?.id, game?.claimResponses.length, aiRunning, resolvePongWindow, game]);
 
-  const showBanner = (success: boolean, message: string) => {
-    setResultBanner({ success, message });
-    setTimeout(() => setResultBanner(null), 3000);
-  };
-
   // Draw pile hover — 取点函数读 ref.current，每帧实时算，滚动时箭头跟着动。
   const handleDrawPileHover = useCallback((hovering: boolean) => {
     if (!drawPileRef.current || !handAreaRef.current) return;
@@ -321,10 +282,14 @@ export default function GamePage() {
         const id = flyIdRef.current++;
         setFlyingCards((prev) => [...prev, {
           id,
+          cardId,
+          card,
           from: { x: fr.left + fr.width / 2, y: fr.top + fr.height / 2 },
           to: { x: toRect.left + toRect.width / 2, y: toRect.top + toRect.height / 2 },
-          text: card.text,
         }]);
+        setArrowFrom(null);
+        setArrowTo(null);
+        return;
       }
     }
     playerDiscard(cardId);
@@ -332,9 +297,10 @@ export default function GamePage() {
     setArrowTo(null);
   }, [playerDiscard]);
 
-  const removeFlyingCard = useCallback((id: number) => {
+  const removeFlyingCard = useCallback((id: number, cardId: number) => {
     setFlyingCards((prev) => prev.filter((f) => f.id !== id));
-  }, []);
+    playerDiscard(cardId);
+  }, [playerDiscard]);
 
   const handleToggleSelect = useCallback((cardId: number) => {
     setSelectedCardIds((prev) =>
@@ -344,54 +310,23 @@ export default function GamePage() {
 
   // Hu (胡) handler
   const handleHu = useCallback(() => {
-    const beforeGame = useGameStore.getState().game;
     playerHu();
-    const afterGame = useGameStore.getState().game;
-    if (beforeGame && afterGame) {
-      const lastAction = afterGame.actionLog[afterGame.actionLog.length - 1];
-      if (lastAction?.type === 'hu-success') {
-        showBanner(true, tg.toastHuWin);
-      } else if (lastAction?.type === 'hu-fail') {
-        showBanner(false, tg.toastHuFail);
-      }
-    }
-  }, [playerHu, tg]);
+  }, [playerHu]);
 
   // Self-pong (自摸碰) commit handler
   const handleSelfPongCommit = useCallback(() => {
     if (!pongIntent || pongIntent.type !== 'self') return;
-    const beforeGame = useGameStore.getState().game;
     playerSelfPong(pongIntent.dimension, selectedCardIds);
-    const afterGame = useGameStore.getState().game;
     setSelectedCardIds([]);
     setPongIntent(null);
-    if (beforeGame && afterGame) {
-      const lastAction = afterGame.actionLog[afterGame.actionLog.length - 1];
-      if (lastAction?.type === 'pong-success') {
-        showBanner(true, `${tg.toastSelfPongPrefix}${dimName(pongIntent.dimension)}${tg.toastDoneSuffix}`);
-      } else if (lastAction?.type === 'pong-fail') {
-        showBanner(false, tg.toastSelfPongFail);
-      }
-    }
-  }, [playerSelfPong, pongIntent, selectedCardIds, tg, dimName]);
+    setSelfPongDimensionChosen(false);
+  }, [playerSelfPong, pongIntent, selectedCardIds]);
 
   // Pong (碰) handler
   const handlePong = useCallback((dimension: Dimension, handCardIds: number[]) => {
-    const beforeGame = useGameStore.getState().game;
     playerPong(dimension, handCardIds);
-    const afterGame = useGameStore.getState().game;
     setSelectedCardIds([]);
-    if (beforeGame && afterGame) {
-      const lastAction = afterGame.actionLog[afterGame.actionLog.length - 1];
-      if (lastAction?.type === 'pong-success') {
-        showBanner(true, `${tg.toastPongPrefix}${dimName(dimension)}${tg.toastDoneSuffix}`);
-      } else if (lastAction?.type === 'pong-fail') {
-        showBanner(false, lastAction.failReason === 'already-declared'
-          ? tg.toastPongDupe
-          : tg.toastPongFail);
-      }
-    }
-  }, [playerPong, tg, dimName]);
+  }, [playerPong]);
 
   const handleSkipPong = useCallback(async () => {
     setSelectedCardIds([]);
@@ -492,7 +427,7 @@ export default function GamePage() {
       : 0;
 
   return (
-    <motion.div animate={shakeControls} className="mx-auto flex min-h-[100dvh] w-full max-w-[min(96vw,112rem)] flex-col px-3 py-3 sm:px-4 sm:py-4">
+    <motion.div animate={shakeControls} className="mx-auto flex min-h-[100dvh] w-full max-w-[min(96vw,112rem)] flex-col px-3 py-3 [overflow-anchor:none] sm:px-4 sm:py-4">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
       <YourTurnBanner bannerKey={yourTurnKey} locale={locale} />
       <ArrowOverlay from={arrowFrom} to={arrowTo} color={arrowColor} />
@@ -510,19 +445,9 @@ export default function GamePage() {
         </motion.div>
       )}
 
-      {/* Result banner */}
-      {resultBanner && (
-        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl text-sm font-bold shadow-2xl animate-bounce ${
-          resultBanner.success
-            ? 'bg-emerald-500/90 text-white border border-emerald-400'
-            : 'bg-red-500/90 text-white border border-red-400'
-        }`}>
-          {resultBanner.success ? '✅' : '❌'} {resultBanner.message}
-        </div>
-      )}
 
       {flyingCards.map((f) => (
-        <FlyingCard key={f.id} from={f.from} to={f.to} text={f.text} onComplete={() => removeFlyingCard(f.id)} />
+        <FlyingCard key={f.id} from={f.from} to={f.to} card={f.card} locale={locale} onComplete={() => removeFlyingCard(f.id, f.cardId)} />
       ))}
 
       {/* Top bar: exit button */}
@@ -586,19 +511,16 @@ export default function GamePage() {
           ))}
         </div>
 
+        {/* 回合数（桌面）：中央行两栏布局无处放轮次，这里补一枚居中 chip；移动端已在下方信息行显示，故 md 才顯示。 */}
+        <div className="mt-3 hidden justify-center md:flex">
+          <span className="psy-serif rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-4 py-1 text-sm text-[var(--psy-ink-soft)] shadow-[0_8px_18px_rgba(96,72,38,0.08)]">
+            {locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}
+          </span>
+        </div>
+
         {/* Center: Draw pile + Discard pile + Game log */}
-        <div className="mt-3 grid items-center gap-3 sm:mt-4 sm:min-h-[11rem] sm:grid-cols-[minmax(12rem,26%)_minmax(18rem,34%)_minmax(12rem,26%)] sm:justify-between sm:gap-[2%]">
-          <div className="hidden min-w-0 self-stretch rounded-[1.35rem] border border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] p-3 md:flex md:items-center md:justify-center">
-            <div className="text-center">
-              <div className="psy-serif text-[11px] uppercase tracking-[0.26em] text-[var(--psy-muted)]">
-                {locale === 'en' ? `${tg.roundWord} ${game.currentRound}` : `第 ${game.currentRound} 輪`}
-              </div>
-              <div className="mt-2 text-xs leading-6 text-[var(--psy-ink-soft)]">
-                {tg.doneLabel} {humanPlayer.declaredSets.length}/5 · {timer}s
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center justify-center gap-[clamp(1rem,3vw,3rem)] rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] px-[clamp(1rem,3vw,3rem)] py-3">
+        <div className="mt-3 grid items-center gap-3 sm:mt-4 md:grid-cols-[minmax(22rem,1fr)_minmax(15rem,0.48fr)] md:gap-[4%]">
+          <div className="flex items-center justify-center gap-[clamp(1rem,4vw,4rem)] rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] px-[clamp(1rem,4vw,4rem)] py-3">
             <div
               ref={drawPileRef}
               onMouseEnter={() => handleDrawPileHover(true)}
@@ -628,72 +550,32 @@ export default function GamePage() {
       <div className="mt-2 flex flex-1 flex-col space-y-2 rounded-[1.7rem] border border-[rgba(154,116,72,0.14)] bg-[rgba(253,248,241,0.56)] p-2 shadow-[0_18px_40px_rgba(96,72,38,0.1)] sm:mt-3 sm:space-y-3 sm:rounded-[2rem] sm:p-3">
         {/* 罰停橫幅 / 碰窗 / 查看 / 碰意圖面板已全部移入手牌上方的懸浮層
             （見下方 Hand + Declared 區），不再插進文檔流把手牌往下推。 */}
-        {/* Targets */}
-        <div className="hidden shrink-0 items-center justify-center gap-1.5 flex-wrap sm:flex">
-          {DIMENSIONS.map((d) => {
-            const target = targets[d];
-            const isDone = declaredDims.has(d);
-            return (
-              <div
-                key={d}
-                className="flex items-center gap-1 rounded-full px-2 py-0.5"
-                style={{
-                  backgroundColor: isDone ? 'rgba(195,154,82,0.18)' : '#fdf8f1',
-                  border: `1px solid ${isDone ? 'rgba(154,116,72,0.45)' : 'rgba(154,116,72,0.16)'}`,
-                }}
-              >
-                <span className="text-[9px]" style={{ color: isDone ? 'var(--psy-accent)' : 'var(--psy-muted)' }}>
-                  {dimName(d)}
-                </span>
-                <span
-                  className="text-[10px] font-medium"
-                  style={{ color: isDone ? 'var(--psy-accent)' : 'var(--psy-ink-soft)' }}
-                >
-                  {isDone ? '✓' : (locale === 'en' ? `${target} ${tg.cardsUnit}` : `${target}張`)}
-                </span>
-              </div>
-            );
-          })}
-          <div className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2 py-0.5">
-            <span className="text-[9px] text-[var(--psy-muted)]">{tg.done} </span>
-            <span className="text-[10px] font-medium text-[var(--psy-success)]">{humanPlayer.declaredSets.length}/5</span>
-          </div>
-        </div>
-
         <div className="flex shrink-0 flex-col gap-1.5 sm:hidden">
-          <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
-            <span className="psy-serif text-[var(--psy-accent)]">{locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}</span>
-            <span className="truncate">{tg.doneLabel} {humanPlayer.declaredSets.length}/5</span>
-            <span className={`font-mono tabular-nums ${timer <= 5 ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-accent)]'}`}>{timer}s</span>
+          {/* Round + tools only. Target/result are combined at the hand area. */}
+          <div className="flex items-center gap-1.5">
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
+              <span className="psy-serif shrink-0 text-[var(--psy-accent)]">{locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}</span>
+              <span className="truncate">{tg.doneLabel} {humanPlayer.declaredSets.length}/5</span>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2 py-1 text-[10px]">{tg.persona}</button>
+              <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2 py-1 text-[10px]">{tg.archive}</button>
+              <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2 py-1 text-[10px]">{tg.log}</button>
+            </div>
           </div>
-          {/* 5 維目標常駐迷你條：維度全稱 + 目標張數，已歸檔顯示 ✓ 並轉金。
-              只顯示目標 + 是否歸檔，不洩露手上已有幾張（保留靠記憶推理的核心）。*/}
-          <div className="flex flex-wrap items-center justify-center gap-1">
-            <span className="shrink-0 pr-0.5 text-[9px] text-[var(--psy-muted)]">{tg.targetPrefix}</span>
-            {/* 維度用全稱（開放性/Openness）而非 OCEAN 縮寫——單字母不可讀
-                （用戶反饋）。全稱較長，flex-wrap 允許換行。 */}
-            {DIMENSIONS.map((d) => {
-              const isDone = declaredDims.has(d);
+          <div className="grid grid-cols-5 gap-1" aria-label={locale === 'en' ? 'Archive progress' : '歸檔進度'}>
+            {DIMENSIONS.map((dimension) => {
+              const done = declaredDims.has(dimension);
               return (
-                <span
-                  key={d}
-                  className="flex items-center justify-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold tabular-nums"
-                  style={{
-                    backgroundColor: isDone ? 'rgba(195,154,82,0.18)' : '#fdf8f1',
-                    border: `1px solid ${isDone ? 'rgba(154,116,72,0.45)' : 'rgba(154,116,72,0.16)'}`,
-                    color: isDone ? 'var(--psy-accent)' : 'var(--psy-ink-soft)',
-                  }}
+                <div
+                  key={dimension}
+                  className={`min-w-0 rounded-md border px-1 py-1 text-center text-[9px] tabular-nums ${done ? 'border-[rgba(111,143,85,0.34)] bg-[rgba(111,143,85,0.1)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] text-[var(--psy-ink-soft)]'}`}
                 >
-                  <span className="opacity-80">{dimName(d)}</span>
-                  <span>{isDone ? '✓' : targets[d]}</span>
-                </span>
+                  <span className="font-semibold">{dimension}</span>{' '}
+                  <span>{done ? (locale === 'en' ? 'Done' : '已歸') : (locale === 'en' ? 'Open' : '未歸')}</span>
+                </div>
               );
             })}
-          </div>
-          <div className="flex items-center justify-end gap-1">
-            <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{tg.persona}</button>
-            <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{tg.archive}</button>
-            <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2.5 py-1 text-[10px]">{tg.log}</button>
           </div>
         </div>
 
@@ -708,7 +590,7 @@ export default function GamePage() {
 
         {/* Penalty banner — lockout 時顯示紅色"罰停"，own-turn 解凍輪顯示提示 */}
         {humanFrozenLockout && (
-          <div className="psy-panel flex items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
+          <div className="fixed left-1/2 top-3 z-[78] flex w-[min(54rem,calc(100vw-2rem))] -translate-x-1/2 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.5)] bg-[var(--psy-card-content)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] shadow-[0_14px_30px_rgba(96,72,38,0.2)] sm:text-sm">
             <span>⛔</span>
             <span className="hidden sm:inline">{tg.penaltyLockoutFull}</span>
             <span className="sm:hidden">{tg.penaltyLockoutShort}</span>
@@ -731,11 +613,12 @@ export default function GamePage() {
             <PongPanel
               pendingCard={game.pendingDiscard}
               player={humanPlayer}
-              discardedByName={game.players[game.discardedByIndex]?.name ?? ''}
+              discardedByName={(() => { const p = game.players[game.discardedByIndex]; return p ? playerLabel(p, locale) : ''; })()}
               selectedCardIds={selectedCardIds}
               onClaim={handlePong}
               onSkip={handleSkipPong}
               onResolveAI={handleResolvePongAI}
+              autoAdvance={false}
               locale={locale}
             />
           )}
@@ -791,33 +674,33 @@ export default function GamePage() {
                   return (
                   <button
                     key={d}
+                    disabled={isDeclared}
                     onClick={() => {
                       setPongIntent({ type: 'self', dimension: d });
                       setSelectedCardIds([]);
+                      setSelfPongDimensionChosen(true);
                     }}
-                    className="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition"
-                    title={isDeclared ? tg.declaredWarn : undefined}
+                    className="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition disabled:cursor-not-allowed"
                     style={{
-                      borderColor: pongIntent.dimension === d
+                      borderColor: isDeclared
+                        ? 'rgba(154,116,72,0.12)'
+                        : selfPongDimensionChosen && pongIntent.dimension === d
                         ? '#c39a52'
-                        : isDeclared
-                        ? 'rgba(220,106,79,0.35)'
                         : 'rgba(200,155,93,0.18)',
-                      backgroundColor: pongIntent.dimension === d
+                      backgroundColor: isDeclared
+                        ? 'rgba(154,116,72,0.06)'
+                        : selfPongDimensionChosen && pongIntent.dimension === d
                         ? '#c39a52'
-                        : isDeclared
-                        ? 'rgba(220,106,79,0.06)'
                         : '#fdf8f1',
-                      color: pongIntent.dimension === d
+                      color: isDeclared
+                        ? 'rgba(96,72,38,0.34)'
+                        : selfPongDimensionChosen && pongIntent.dimension === d
                         ? '#fff7ea'
-                        : isDeclared
-                        ? 'rgba(220,106,79,0.65)'
                         : 'var(--psy-ink-soft)',
-                      textDecoration: isDeclared ? 'line-through' : undefined,
-                      opacity: isDeclared && pongIntent.dimension !== d ? 0.6 : 1,
+                      opacity: isDeclared ? 0.6 : 1,
                     }}
                   >
-                    {dimName(d)}{isDeclared ? ' ⚠️' : ''}
+                    {dimName(d)}
                   </button>
                   );
                 })}
@@ -825,7 +708,7 @@ export default function GamePage() {
             )}
             <div className="flex justify-center gap-2">
               <button
-                onClick={() => { setPongIntent(null); setSelectedCardIds([]); }}
+                onClick={() => { setPongIntent(null); setSelectedCardIds([]); setSelfPongDimensionChosen(false); }}
                 className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
               >
                 {tg.cancel}
@@ -839,7 +722,7 @@ export default function GamePage() {
                     setPongIntent(null);
                   }
                 }}
-                disabled={selectedCardIds.length !== pongIntentRequiredSelectCount}
+                    disabled={(pongIntent.type === 'self' && !selfPongDimensionChosen) || selectedCardIds.length !== pongIntentRequiredSelectCount}
                 className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:opacity-40"
               >
                 {pongIntent.type === 'self' ? tg.selfArchive : tg.archiveJudge}
@@ -885,6 +768,7 @@ export default function GamePage() {
                     selfPongCandidates[0];
                   setPongIntent({ type: 'self', dimension: defaultDim });
                   setSelectedCardIds([]);
+                  setSelfPongDimensionChosen(selfPongCandidates.length === 1);
                 }}
                 disabled={
                   humanFrozen ||
@@ -953,7 +837,7 @@ export default function GamePage() {
                 className="psy-btn psy-btn-accent px-6 py-2 text-sm font-medium"
               >
                 {game.players[game.currentPlayerIndex].avatar}{' '}
-                {game.players[game.currentPlayerIndex].name}{tg.turnOf} — {tg.clickToRun}
+                {playerLabel(game.players[game.currentPlayerIndex], locale)}{tg.turnOf} — {tg.clickToRun}
               </button>
             )}
           </>
@@ -963,7 +847,11 @@ export default function GamePage() {
         {/* Hand + Declared cards */}
         <div className="flex flex-1 items-start justify-center gap-3 sm:gap-4">
           <div className="hidden flex-shrink-0 sm:block">
-            <DeclaredArea declaredSets={humanPlayer.declaredSets} locale={locale} />
+            <DeclaredArea
+              declaredSets={humanPlayer.declaredSets}
+              locale={locale}
+              targets={targets}
+            />
           </div>
           <div ref={handAreaRef} className="flex-1 min-w-0 overflow-visible">
             <PlayerHand
@@ -977,6 +865,7 @@ export default function GamePage() {
               discardPickId={discardPickId}
               onDiscardPickChange={setDiscardPickId}
               showDiscardControls={false}
+              flyingCardId={flyingCards[0]?.cardId ?? null}
               viewMode={viewMode}
               pickedViewIds={pickedViewIds}
               onTogglePickView={(cardId) =>
@@ -1004,18 +893,8 @@ export default function GamePage() {
                 {tg.pongDoneDiscard}
               </p>
             )}
-            <span className={`text-sm font-mono font-bold ${timer <= 5 ? 'text-red-300 animate-pulse' : timer <= 10 ? 'text-[var(--psy-accent)]' : 'text-[var(--psy-muted)]'}`}>
-              {timer}s
-            </span>
           </div>
         )}
-
-        {/* Round info */}
-        <div className="hidden text-center text-xs text-[var(--psy-muted)] sm:block">
-          {locale === 'en'
-            ? `${tg.roundWord} ${game.currentRound}${game.settings.totalRounds > 0 ? ` / ${game.settings.totalRounds}` : ''}`
-            : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? ` / ${game.settings.totalRounds}` : ''} 輪`}
-        </div>
       </div>
 
       <MobileGameSheet
@@ -1044,7 +923,7 @@ export default function GamePage() {
         onClose={() => setMobileSheet(null)}
         locale={locale}
       >
-        {humanPlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={humanPlayer.declaredSets} locale={locale} /> : <p className="text-sm text-[var(--psy-muted)]">{tg.noArchiveYet}</p>}
+        {humanPlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={humanPlayer.declaredSets} locale={locale} overlayZIndex={96} /> : <p className="text-sm text-[var(--psy-muted)]">{tg.noArchiveYet}</p>}
       </MobileGameSheet>
       <MobileGameSheet
         title={tg.sheetLogTitle}
@@ -1052,7 +931,7 @@ export default function GamePage() {
         onClose={() => setMobileSheet(null)}
         locale={locale}
       >
-        <GameLog actions={game.actionLog} players={game.players} locale={locale} />
+        <GameLog actions={game.actionLog} players={game.players} locale={locale} overlayZIndex={96} />
       </MobileGameSheet>
 
       {/* Game Over */}
@@ -1070,7 +949,7 @@ export default function GamePage() {
           }}
           onBackToLobby={() => {
             resetGame();
-            router.push('/lobby');
+            router.push('/');
           }}
           locale={locale}
         />

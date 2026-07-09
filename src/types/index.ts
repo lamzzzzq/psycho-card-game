@@ -72,6 +72,7 @@ export type AIDifficulty = 'easy' | 'medium' | 'hard';
 export interface AIPersona {
   id: PlayerId;
   name: string;
+  nameEn: string;
   avatar: string;
   description: string;
   difficulty: AIDifficulty;
@@ -86,6 +87,7 @@ export interface DeclaredSet {
 export interface Player {
   id: PlayerId;
   name: string;
+  nameEn?: string;              // AI 单机对手的英文名（粤语拼音）；PVP 玩家用自填昵称，无此字段
   avatar: string;
   hand: GameCard[];
   isHuman: boolean;

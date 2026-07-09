@@ -135,7 +135,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '聯機 · 退出與輪轉',
-        body: '聯機房 2–4 人，任何人點「退出對局」即從該桌退出 —— 不接管，剩下的玩家繼續打到分勝負。\n• 退出者的座位永久跳過（看到「🚪 已退出對局」徽章）；\n• 僅剩 1 人即自動宣告該玩家勝利；\n• 你的回合超過 30 秒未操作會彈「請注意：現在是你的回合」提醒，每 30 秒重複一次直到你出牌。',
+        body: '聯機房 2–4 人，任何人點「退出對局」即從該桌退出 —— 不接管，剩下的玩家繼續打到分勝負。\n• 退出者的座位永久跳過（看到「🚪 已退出對局」徽章）；\n• 僅剩 1 人即自動宣告該玩家勝利；\n• 你的回合超過 60 秒未操作會彈「請注意：現在是你的回合」提醒，每 60 秒重複一次直到你出牌。',
         hint: '同學號同時進入兩個活動房間會被拒絕 —— 防止兩個客戶端共享同一座位。',
       },
       {
@@ -439,7 +439,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Online · Leaving & Rotation',
-        body: 'An online room holds 2–4 players; anyone can tap "Leave" to exit the table — no takeover, the remaining players keep playing until a winner is decided.\n• The leaver’s seat is permanently skipped (you see a "🚪 Left the game" badge);\n• When only 1 player remains, that player is automatically declared the winner;\n• If your turn goes more than 30 seconds without action, a "Heads up: it’s your turn" reminder pops, repeating every 30 seconds until you discard.',
+        body: 'An online room holds 2–4 players; anyone can tap "Leave" to exit the table — no takeover, the remaining players keep playing until a winner is decided.\n• The leaver’s seat is permanently skipped (you see a "🚪 Left the game" badge);\n• When only 1 player remains, that player is automatically declared the winner;\n• If your turn goes more than 60 seconds without action, a "Heads up: it’s your turn" reminder pops, repeating every 60 seconds until you discard.',
         hint: 'The same student ID entering two active rooms at once is rejected — preventing two clients from sharing one seat.',
       },
       {

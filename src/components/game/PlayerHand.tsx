@@ -22,6 +22,8 @@ interface PlayerHandProps {
   discardPickId?: number | null;
   onDiscardPickChange?: (cardId: number | null) => void;
   showDiscardControls?: boolean;
+  /** Keeps the source slot stable while its card clone is flying away. */
+  flyingCardId?: number | null;
   // True when "view 2 cards" mode is active (user picking cards). In this
   // mode, clicking a card adds/removes it from the picked set.
   viewMode?: boolean;
@@ -43,6 +45,7 @@ export function PlayerHand({
   discardPickId: controlledDiscardPickId,
   onDiscardPickChange,
   showDiscardControls = true,
+  flyingCardId = null,
   viewMode = false,
   pickedViewIds = [],
   onTogglePickView,
@@ -135,7 +138,9 @@ export function PlayerHand({
           半公開檔的 /4 打架（用戶實測截圖裏兩行提示同屏、數字矛盾）。 */}
 
       {/* Mobile keeps a stable 4-column hand; desktop uses the available table width. */}
-      <div className="mx-auto grid w-full grid-cols-4 gap-x-2 gap-y-3 sm:[grid-template-columns:repeat(auto-fit,minmax(clamp(6.5rem,7.2vw,9rem),1fr))]">
+      {/* Reserve a stable hand well for the entire round. A discarded card may
+          reflow horizontally, but it must never collapse the table vertically. */}
+      <div className="mx-auto grid min-h-[26rem] w-full grid-cols-4 content-start gap-x-2 gap-y-3 sm:min-h-[22rem] sm:[grid-template-columns:repeat(auto-fill,minmax(6.5rem,9rem))] sm:gap-x-3">
         <AnimatePresence>
           {rawCards.map((card) => {
             const isSelected =
@@ -155,7 +160,7 @@ export function PlayerHand({
                 animate={{ opacity: 1, y: isSelected ? -12 : 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.4 } }}
                 transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className="group relative w-full"
+                className={`group relative w-full ${flyingCardId === card.id ? 'pointer-events-none opacity-0' : ''}`}
                 onMouseEnter={(e) => { if (isDiscarding) onCardHover(e.currentTarget as HTMLElement); }}
                 onMouseLeave={() => { if (isDiscarding) onCardHover(null); }}
               >

@@ -97,7 +97,15 @@ export function PsyOverlayPanel({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
           className={`fixed inset-0 flex ${VARIANT_BACKDROP[variant]} ${hideClass}`}
-          style={{ zIndex: z }}
+          // Portal to body is not sufficient when an animated page creates a
+          // stacking context. Pin the backdrop to the viewport explicitly.
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: z,
+            display: 'flex',
+            overflow: 'hidden',
+          }}
           onClick={onClose}
         >
           <motion.div

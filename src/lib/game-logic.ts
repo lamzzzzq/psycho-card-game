@@ -22,10 +22,11 @@ function createPlayer(
   avatar: string,
   hand: GameCard[],
   isHuman: boolean,
-  bigFiveScores: BigFiveScores
+  bigFiveScores: BigFiveScores,
+  nameEn?: string
 ): Player {
   return {
-    id, name, avatar, hand, isHuman, bigFiveScores,
+    id, name, nameEn, avatar, hand, isHuman, bigFiveScores,
     declaredSets: [],
     skipNextTurn: false,
     revealedHand: false,
@@ -43,9 +44,9 @@ export function initializeGame(
   const { hands, remaining } = dealCardsVariable(deck, allScores);
 
   const players: Player[] = [
-    createPlayer('human', '你', '🧑', hands[0], true, humanScores),
+    createPlayer('human', '你', '🧑', hands[0], true, humanScores, 'You'),
     ...AI_PERSONAS.map((persona, i) =>
-      createPlayer(persona.id as PlayerId, persona.name, persona.avatar, hands[i + 1], false, aiScoresList[i])
+      createPlayer(persona.id as PlayerId, persona.name, persona.avatar, hands[i + 1], false, aiScoresList[i], persona.nameEn)
     ),
   ];
 

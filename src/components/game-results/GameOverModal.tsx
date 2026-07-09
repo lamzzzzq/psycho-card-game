@@ -24,17 +24,17 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby, locale = 'z
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-[90] overflow-y-auto bg-[linear-gradient(180deg,#f2e7cf_0%,#faf5e9_42%,#e9d8b4_100%)] px-4 py-10"
     >
       <motion.div
-        initial={{ scale: 0.8, y: 30 }}
-        animate={{ scale: 1, y: 0 }}
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        className="psy-panel psy-etched w-full max-w-md space-y-6 rounded-[1.6rem] p-6"
+        className="mx-auto w-full max-w-6xl space-y-8"
       >
         <div className="space-y-2 text-center">
-          <div className="text-4xl">{isHumanWinner ? '🏆' : '😤'}</div>
-          <h2 className="psy-serif text-2xl text-[var(--psy-ink)]">
+          <div className="text-5xl">{isHumanWinner ? '🏆' : '😤'}</div>
+          <h2 className="psy-serif text-4xl text-[var(--psy-ink)] sm:text-5xl">
             {isHumanWinner ? tg.youWin : `${winner.name} ${tg.winShort}`}
           </h2>
           <p className="text-sm text-[var(--psy-muted)]">
@@ -44,7 +44,7 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby, locale = 'z
           </p>
         </div>
 
-        <div className="space-y-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {ranked.map((player, i) => {
             const declaredCount = player.declaredSets.length;
             const medals = ['🥇', '🥈', '🥉', ''];
@@ -52,7 +52,7 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby, locale = 'z
             return (
               <div
                 key={player.id}
-                className="space-y-2 rounded-[1.2rem] border p-3"
+                className="space-y-4 rounded-[1.35rem] border bg-[var(--psy-card-content)] p-5 shadow-[0_16px_30px_rgba(96,72,38,0.12)]"
                 style={{
                   borderColor: isFirst ? 'var(--psy-border-strong)' : 'rgba(200,155,93,0.14)',
                   background: isFirst ? 'var(--psy-accent-soft)' : 'rgba(255,255,255,0.02)',
@@ -83,12 +83,12 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby, locale = 'z
           })}
         </div>
 
-        <div className="flex gap-3">
+        <div className="mx-auto flex w-full max-w-lg gap-3">
           <button onClick={onPlayAgain} className="psy-btn psy-btn-accent flex-1 py-3 font-medium">
             {tg.playAgain}
           </button>
           <button onClick={onBackToLobby} className="psy-btn psy-btn-ghost px-6 py-3 text-sm">
-            {tg.returnLobby}
+            {locale === 'en' ? 'Home' : '返回主頁'}
           </button>
         </div>
       </motion.div>

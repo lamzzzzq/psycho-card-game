@@ -14,6 +14,11 @@ export function isLocale(v: unknown): v is Locale {
   return v === 'zh' || v === 'en';
 }
 
+/** 玩家显示名：en locale 且有 nameEn（单机 AI）时用英文名，否则回退 name（PVP 昵称/中文名）。 */
+export function playerLabel(p: { name: string; nameEn?: string }, locale: Locale): string {
+  return locale === 'en' && p.nameEn ? p.nameEn : p.name;
+}
+
 interface LocaleState {
   locale: Locale;
   setLocale: (l: Locale) => void;
@@ -185,8 +190,8 @@ export const STRINGS = {
       selfPongUsed: '本回合自摸碰已用，下回合再來',
       selfPongHint: '自摸碰 · 你自己判斷維度和張數',
       // Pong-intent panel
-      pongIntentSelf: '🎯 自摸碰',
-      pongIntentOther: '🎯 碰對方棄牌',
+      pongIntentSelf: '自摸歸檔',
+      pongIntentOther: '歸檔對方棄牌',
       pongSelectPrompt: '請精確選擇',
       pongSelectSelfSuffix: '同維度牌（含剛抽到的）',
       pongSelectOtherPrefixA: '同維度手牌（連同棄牌共湊 ',
@@ -252,10 +257,10 @@ export const STRINGS = {
       ago: '前',
       // FeedbackLayer pops
       playerWord: '玩家',
-      popPong: '碰！+',
+      popPong: '歸檔成功 · ',
       popHu: '🏆 食胡！',
       popHuFail: '💥 食胡失敗',
-      popPongDupe: '💥 重複碰',
+      popPongDupe: '碰失敗',
       popPongFail: '💥 碰失敗',
       yourTurnEyebrow: 'Your turn',
       yourTurnBanner: '輪到你了',
@@ -372,6 +377,8 @@ export const STRINGS = {
       loadingRoom: '加載房間…',
       backLobby: '返回大廳',
       shareHint: '分享給朋友，一起加入這局心理博弈。',
+      copyCode: '複製房間碼',
+      copiedCode: '已複製房間碼 ✓',
       playersLabel: '玩家',
       leaveRoom: '離開房間',
       unknownPlayer: '未知玩家',
@@ -388,7 +395,7 @@ export const STRINGS = {
       starting: '啓動中…',
       startGame: '開始遊戲',
       waitingPlayersPrefix: '等待玩家（',
-      waitingPlayersSuffix: '/2）',
+      waitingPlayersSuffix: '）',
       waitingHost: '等待房主開始遊戲…',
       dissolveRoom: '解散房間',
     },
@@ -558,8 +565,8 @@ export const STRINGS = {
       selfPongUsed: 'Self-pong used this turn, try next turn',
       selfPongHint: 'Self-pong · you decide the dimension and count',
       // Pong-intent panel
-      pongIntentSelf: '🎯 Self-Pong',
-      pongIntentOther: '🎯 Pong Discard',
+      pongIntentSelf: 'Self archive',
+      pongIntentOther: 'Archive discard',
       pongSelectPrompt: 'Select exactly',
       pongSelectSelfSuffix: 'cards of this dimension (incl. the one just drawn)',
       pongSelectOtherPrefixA: 'hand cards of this dimension (with the discard, totaling ',
@@ -625,10 +632,10 @@ export const STRINGS = {
       ago: 'ago',
       // FeedbackLayer pops
       playerWord: 'Player',
-      popPong: 'Pong! +',
+      popPong: 'Archive complete · ',
       popHu: '🏆 Win!',
       popHuFail: '💥 Win failed',
-      popPongDupe: '💥 Duplicate pong',
+      popPongDupe: 'Pong failed',
       popPongFail: '💥 Pong failed',
       yourTurnEyebrow: 'Your turn',
       yourTurnBanner: 'Your turn',
@@ -745,6 +752,8 @@ export const STRINGS = {
       loadingRoom: 'Loading room…',
       backLobby: 'Back to Lobby',
       shareHint: 'Share with friends to join this game of minds together.',
+      copyCode: 'Copy room code',
+      copiedCode: 'Room code copied ✓',
       playersLabel: 'Players',
       leaveRoom: 'Leave Room',
       unknownPlayer: 'Unknown player',
@@ -761,7 +770,7 @@ export const STRINGS = {
       starting: 'Starting…',
       startGame: 'Start Game',
       waitingPlayersPrefix: 'Waiting for players (',
-      waitingPlayersSuffix: '/2)',
+      waitingPlayersSuffix: ')',
       waitingHost: 'Waiting for the host to start…',
       dissolveRoom: 'Dissolve Room',
     },

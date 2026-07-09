@@ -134,8 +134,8 @@
 "i18n","game","game.selfPongFrozen","罰停中，本輪無法自摸碰","Penalized — cannot self-pong this turn",""
 "i18n","game","game.selfPongUsed","本回合自摸碰已用，下回合再來","Self-pong used this turn, try next turn",""
 "i18n","game","game.selfPongHint","自摸碰 · 你自己判斷維度和張數","Self-pong · you decide the dimension and count",""
-"i18n","game","game.pongIntentSelf","🎯 自摸碰","🎯 Self-Pong",""
-"i18n","game","game.pongIntentOther","🎯 碰對方棄牌","🎯 Pong Discard",""
+"i18n","game","game.pongIntentSelf","自摸歸檔","Self archive",""
+"i18n","game","game.pongIntentOther","歸檔對方棄牌","Archive discard",""
 "i18n","game","game.pongSelectPrompt","請精確選擇","Select exactly",""
 "i18n","game","game.pongSelectSelfSuffix","同維度牌（含剛抽到的）","cards of this dimension (incl. the one just drawn)","⚠ 片段：运行时与数字/其它词拼接成整句，勿单独翻译"
 "i18n","game","game.pongSelectOtherPrefixA","同維度手牌（連同棄牌共湊 ","hand cards of this dimension (with the discard, totaling ",""
@@ -192,10 +192,10 @@
 "i18n","game","game.newDraw","新抽","NEW",""
 "i18n","game","game.ago","前","ago",""
 "i18n","game","game.playerWord","玩家","Player","⚠ 片段：运行时与数字/其它词拼接成整句，勿单独翻译"
-"i18n","game","game.popPong","碰！+","Pong! +",""
+"i18n","game","game.popPong","歸檔成功 · ","Archive complete · ",""
 "i18n","game","game.popHu","🏆 食胡！","🏆 Win!",""
 "i18n","game","game.popHuFail","💥 食胡失敗","💥 Win failed",""
-"i18n","game","game.popPongDupe","💥 重複碰","💥 Duplicate pong",""
+"i18n","game","game.popPongDupe","碰失敗","Pong failed",""
 "i18n","game","game.popPongFail","💥 碰失敗","💥 Pong failed",""
 "i18n","game","game.yourTurnEyebrow","Your turn","Your turn",""
 "i18n","game","game.yourTurnBanner","輪到你了","Your turn",""
@@ -269,7 +269,7 @@
 "i18n","pvpLobby","pvpLobby.rounds","遊戲輪數","Rounds",""
 "i18n","pvpLobby","pvpLobby.revealLabel","揭示難度","Reveal difficulty",""
 "i18n","pvpLobby","pvpLobby.revealOpenName","明牌","Open",""
-"i18n","pvpLobby","pvpLobby.revealOpenSub","全場公開人格","All tags public",""
+"i18n","pvpLobby","pvpLobby.revealOpenSub","全場公開人格（預設）","All tags public (default)",""
 "i18n","pvpLobby","pvpLobby.revealHalfName","半公開","Half",""
 "i18n","pvpLobby","pvpLobby.revealHalfSub","每回合看 4 張·永久","View 4/turn · kept",""
 "i18n","pvpLobby","pvpLobby.revealHiddenName","隱藏","Hidden",""
@@ -299,6 +299,8 @@
 "i18n","pvpRoom","pvpRoom.loadingRoom","加載房間…","Loading room…",""
 "i18n","pvpRoom","pvpRoom.backLobby","返回大廳","Back to Lobby",""
 "i18n","pvpRoom","pvpRoom.shareHint","分享給朋友，一起加入這局心理博弈。","Share with friends to join this game of minds together.",""
+"i18n","pvpRoom","pvpRoom.copyCode","複製房間碼","Copy room code",""
+"i18n","pvpRoom","pvpRoom.copiedCode","已複製房間碼 ✓","Room code copied ✓",""
 "i18n","pvpRoom","pvpRoom.playersLabel","玩家","Players",""
 "i18n","pvpRoom","pvpRoom.leaveRoom","離開房間","Leave Room",""
 "i18n","pvpRoom","pvpRoom.unknownPlayer","未知玩家","Unknown player",""
@@ -323,8 +325,6 @@
 "i18n","results","results.startAssess","開始測評","Start Assessment",""
 "i18n","results","results.title","你的人格畫像","Your Personality Portrait",""
 "i18n","results","results.intro","這張人格圖譜既是你的心理輪廓，也是後續牌局中需要完成的維度目標。","This profile is both your psychological portrait and the dimension goals you will aim to complete in the game.",""
-"i18n","results","results.readHint","解讀提示","How to read it",""
-"i18n","results","results.readBody","分數越高，意味着你在對應維度中越容易積累目標張數；分數越低，則該維度更剋制，也更需要謹慎判斷。","Higher scores mean you accumulate target cards more easily in that dimension; lower scores mean it is more restrained and needs more careful judgement.",""
 "i18n","results","results.pvp","聯機對戰","Play Online",""
 "i18n","results","results.single","單機對戰","Play Solo",""
 "i18n","results","results.reassess","重新測評","Retake Assessment",""
@@ -506,11 +506,11 @@
 "i18n(页面模块)","lobby","lobby.roundOptions[3].desc","直到有人胡","until someone wins",""
 "i18n(页面模块)","lobby","lobby.revealLabel","看牌難度","Reveal difficulty",""
 "i18n(页面模块)","lobby","lobby.revealOptions[0].label","明牌","Open",""
-"i18n(页面模块)","lobby","lobby.revealOptions[0].desc","全場人格公開","All tags public",""
+"i18n(页面模块)","lobby","lobby.revealOptions[0].desc","全場人格公開（預設）","All tags public (default)",""
 "i18n(页面模块)","lobby","lobby.revealOptions[1].label","半公開","Half",""
 "i18n(页面模块)","lobby","lobby.revealOptions[1].desc","每回合看 4 張·保留","View 4/turn · kept",""
 "i18n(页面模块)","lobby","lobby.revealOptions[2].label","隱藏","Hidden",""
-"i18n(页面模块)","lobby","lobby.revealOptions[2].desc","每回合看 2 張（預設）","View 2/turn (default)",""
+"i18n(页面模块)","lobby","lobby.revealOptions[2].desc","每回合看 2 張","View 2/turn",""
 "i18n(页面模块)","lobby","lobby.opponentsLabel","對手檔案","opponents",""
 "i18n(页面模块)","lobby","lobby.start","開始對戰","Start Match",""
 "i18n(页面模块)","tutorial","tutorial.eyebrow","Tutorial","Tutorial",""
@@ -553,7 +553,7 @@
 "i18n(页面模块)","tutorial","tutorial.pvpFlow[3].title","創建房間 / 加入房間","Create / Join a Room",""
 "i18n(页面模块)","tutorial","tutorial.pvpFlow[3].body","房主創建房間後拿到房間碼並等待其他玩家；非房主輸入房間碼加入。4 個真實玩家坐齊後才適合開始。","The host creates a room, gets a room code, and waits for others; non-hosts enter the room code to join. It is best to start once 4 real players are seated.",""
 "i18n(页面模块)","tutorial","tutorial.pvpFlow[4].title","開始遊戲","Start the Game",""
-"i18n(页面模块)","tutorial","tutorial.pvpFlow[4].body","房主負責點開始。進入牌桌後，所有人的手牌維度默認不公開，只能靠描述、記憶和每回合查看能力判斷。","The host taps start. Once at the table, everyone’s hand dimensions are hidden by default — you rely on descriptions, memory, and your per-turn view ability to judge.",""
+"i18n(页面模块)","tutorial","tutorial.pvpFlow[4].body","房主負責點開始。進入牌桌後，所有人的手牌與棄牌默認直接顯示人格 tag（明牌）——房主也可改為半公開或隱藏，那時就得靠描述、記憶和每回合查看能力判斷。","The host taps start. Once at the table, every hand and discard shows its personality tag by default (Open) — the host can switch to Half or Hidden, where you rely on descriptions, memory, and your per-turn view ability to judge.",""
 "i18n(页面模块)","tutorial","tutorial.soloFlow[0].title","進入單機對戰","Enter Single Player",""
 "i18n(页面模块)","tutorial","tutorial.soloFlow[0].body","從首頁點「單機對戰」。如果沒有測評結果，會先去測評；如果已經測評，直接進入單機設置大廳。","Tap ""Single Player"" on the home page. If you have no assessment result, you go to the assessment first; if already assessed, you go straight to the single-player setup lobby.",""
 "i18n(页面模块)","tutorial","tutorial.soloFlow[1].title","選擇 AI 難度","Choose AI Difficulty",""
@@ -605,13 +605,13 @@ All players see a ""⛔ Frozen"" badge under your avatar.",""
 "i18n(页面模块)","tutorial","tutorial.steps[6].hint","一次誤判 ≈ 損失下一個出牌回合，務必想清楚再下手。罰停期間也不能宣告食胡。","One misjudgement ≈ losing your next discard turn, so think carefully before acting. You also cannot declare a Win while frozen.",""
 "i18n(页面模块)","tutorial","tutorial.steps[7].title","揭示難度與查看","Reveal Difficulty & Viewing",""
 "i18n(页面模块)","tutorial","tutorial.steps[7].body","聯機開房時，房主可選「揭示難度」，決定人格 tag 何時可見：
-• 明牌：全場公開——自己手牌 + 所有棄牌都直接顯示人格，無需查看。
+• 明牌（預設）：全場公開——自己手牌 + 所有棄牌都直接顯示人格，無需查看。
 • 半公開：每回合可查看手上 4 張，看過的永久顯示（直到打出）；棄牌不顯示，需自行判斷。
-• 隱藏（預設）：每回合可看 2 張，一輪後自動重置；棄牌不顯示。
+• 隱藏：每回合可看 2 張，一輪後自動重置；棄牌不顯示。
 用得好的玩家會優先看自己最不確定的牌，避免歸檔時混入錯誤。","When creating an online room, the host picks a ""Reveal difficulty"" that decides when personality tags are visible:
-• Open: fully public — your hand + all discards show their tags, no viewing needed.
+• Open (default): fully public — your hand + all discards show their tags, no viewing needed.
 • Half: each turn you may view 4 of your hand cards, and they stay revealed for good (until played); discards stay hidden — judge them yourself.
-• Hidden (default): view 2 per turn, reset after one round; discards stay hidden.
+• Hidden: view 2 per turn, reset after one round; discards stay hidden.
 Good players prioritise their least-certain cards to avoid mixing errors when declaring.",""
 "i18n(页面模块)","tutorial","tutorial.steps[8].title","知識牌（檔案註記）","Knowledge Cards",""
 "i18n(页面模块)","tutorial","tutorial.steps[8].body","牌堆裏有一類無人格歸屬的「檔案註記 / 知識牌」 —— 內容是心理學課程概念（術語 + 定義）。它們不能用於歸檔，但也不會""穿幫""成錯誤維度。
@@ -625,10 +625,10 @@ Uses:
 "i18n(页面模块)","tutorial","tutorial.steps[9].body","聯機房 2–4 人，任何人點「退出對局」即從該桌退出 —— 不接管，剩下的玩家繼續打到分勝負。
 • 退出者的座位永久跳過（看到「🚪 已退出對局」徽章）；
 • 僅剩 1 人即自動宣告該玩家勝利；
-• 你的回合超過 30 秒未操作會彈「請注意：現在是你的回合」提醒，每 30 秒重複一次直到你出牌。","An online room holds 2–4 players; anyone can tap ""Leave"" to exit the table — no takeover, the remaining players keep playing until a winner is decided.
+• 你的回合超過 60 秒未操作會彈「請注意：現在是你的回合」提醒，每 60 秒重複一次直到你出牌。","An online room holds 2–4 players; anyone can tap ""Leave"" to exit the table — no takeover, the remaining players keep playing until a winner is decided.
 • The leaver’s seat is permanently skipped (you see a ""🚪 Left the game"" badge);
 • When only 1 player remains, that player is automatically declared the winner;
-• If your turn goes more than 30 seconds without action, a ""Heads up: it’s your turn"" reminder pops, repeating every 30 seconds until you discard.",""
+• If your turn goes more than 60 seconds without action, a ""Heads up: it’s your turn"" reminder pops, repeating every 60 seconds until you discard.",""
 "i18n(页面模块)","tutorial","tutorial.steps[9].hint","同學號同時進入兩個活動房間會被拒絕 —— 防止兩個客戶端共享同一座位。","The same student ID entering two active rooms at once is rejected — preventing two clients from sharing one seat.",""
 "i18n(页面模块)","tutorial","tutorial.steps[10].title","勝負與結算","Winning & Scoring",""
 "i18n(页面模块)","tutorial","tutorial.steps[10].body","第一個完成全部 5 維度歸檔的玩家直接獲勝。若打滿約定輪數仍無人胡，則按排名結算：先比已歸檔維度數（多者勝），同數再比剩餘手牌（少者勝）。","The first player to declare all 5 dimensions wins outright. If the agreed rounds run out with no Win, ranking decides it: compare declared dimension counts first (more wins), then on a tie compare remaining hand cards (fewer wins).",""
@@ -669,7 +669,7 @@ Uses:
 "i18n(页面模块)","tutorial","tutorial.pongStep1","第一步 · 選擇要歸檔的人格維度","Step 1 · Choose the dimension to declare",""
 "i18n(页面模块)","tutorial","tutorial.pongStep2","⟨动态句·见代码⟩","⟨动态句·见代码⟩",""
 "i18n(页面模块)","tutorial","tutorial.penaltyDemo","罰停一回合演示：本輪不能參與別人棄牌的判讀窗口，下次輪到你時自動跳過。","Frozen-for-one-turn demo: you cannot join others’ read windows this round, and your next turn is auto-skipped.",""
-"i18n(页面模块)","tutorial","tutorial.claimWho","小明棄出了一張線索牌","Xiao Ming discarded a clue card",""
+"i18n(页面模块)","tutorial","tutorial.claimWho","Brian棄出了一張線索牌","Brian discarded a clue card",""
 "i18n(页面模块)","tutorial","tutorial.claimCardBodyA","從下方手牌選 ","From your hand below pick ",""
 "i18n(页面模块)","tutorial","tutorial.claimCardBodyMid","⟨动态句·见代码⟩","⟨动态句·见代码⟩",""
 "i18n(页面模块)","tutorial","tutorial.claimCardBodyB","⟨动态句·见代码⟩","⟨动态句·见代码⟩",""
@@ -753,9 +753,9 @@ Uses:
 "i18n(页面模块)","tutorial","tutorial.shotRounds[1]","10輪","10 rds",""
 "i18n(页面模块)","tutorial","tutorial.shotRounds[2]","15輪","15 rds",""
 "i18n(页面模块)","tutorial","tutorial.shotRounds[3]","無限","Unlimited",""
-"i18n(页面模块)","tutorial","tutorial.shotAiOpponents[0]","小明","Xiao Ming",""
-"i18n(页面模块)","tutorial","tutorial.shotAiOpponents[1]","林教授","Prof. Lin",""
-"i18n(页面模块)","tutorial","tutorial.shotAiOpponents[2]","老陳","Old Chen",""
+"i18n(页面模块)","tutorial","tutorial.shotAiOpponents[0]","Brian","Brian",""
+"i18n(页面模块)","tutorial","tutorial.shotAiOpponents[1]","Prof. Chen","Prof. Chen",""
+"i18n(页面模块)","tutorial","tutorial.shotAiOpponents[2]","Lin","Lin",""
 "i18n(页面模块)","tutorial","tutorial.shotAiOpponentLabel","AI 對手","AI opponent",""
 "未i18n(硬编码)","results","literal.1","Final Persona Spread","Final Persona Spread",""
 "未i18n(硬编码)","FeedbackLayer.tsx","literal.2","Your Turn","Your Turn",""
