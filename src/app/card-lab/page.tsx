@@ -75,6 +75,14 @@ export default function CardLabPage() {
               ))}
             </div>
           </div>
+          <div>
+            <p className="mb-2 text-xs text-[var(--psy-accent)]">③ 对调版全 20 张（定义在拱区·术语在底框，{width}px）</p>
+            <div className="flex flex-wrap gap-4">
+              {KNOWLEDGE_CARDS.map((k, i) => (
+                <TarotCard key={i} text={k.termZh} textEn={k.term} description={locale === 'en' ? k.definition : k.definitionZh} isDummy swapKnowledge locale={locale} width={width} />
+              ))}
+            </div>
+          </div>
         </section>
 
         {/* 已生成卡牌画廊：全 50 题，imageSrc=/cards/{id}.webp，缺图自动回退 ◈。随生随看。 */}
