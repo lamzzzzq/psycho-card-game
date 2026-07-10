@@ -551,29 +551,28 @@ export default function GamePage() {
         {/* 罰停橫幅 / 碰窗 / 查看 / 碰意圖面板已全部移入手牌上方的懸浮層
             （見下方 Hand + Declared 區），不再插進文檔流把手牌往下推。 */}
         <div className="flex shrink-0 flex-col gap-1.5 sm:hidden">
-          {/* Round + tools only. Target/result are combined at the hand area. */}
+          {/* 回合信息 + 記錄 合并一行（人格/歸檔入口已移除：下方 5 维 pill 即人格展示，点击=展开归档）。 */}
           <div className="flex items-center gap-1.5">
-            <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
-              <span className="psy-serif shrink-0 text-[var(--psy-accent)]">{locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}</span>
-              <span className="truncate">{tg.doneLabel} {humanPlayer.declaredSets.length}/5</span>
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-3 py-1.5 text-xs text-[var(--psy-ink-soft)]">
+              <span className="psy-serif shrink-0 font-semibold text-[var(--psy-accent-strong)]">{locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}</span>
+              <span className="ml-auto truncate font-medium">{tg.doneLabel} {humanPlayer.declaredSets.length}/5</span>
             </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2 py-1 text-[10px]">{tg.persona}</button>
-              <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2 py-1 text-[10px]">{tg.archive}</button>
-              <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2 py-1 text-[10px]">{tg.log}</button>
-            </div>
+            <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost shrink-0 px-3 py-1.5 text-xs">{tg.log}</button>
           </div>
-          <div className="grid grid-cols-5 gap-1" aria-label={locale === 'en' ? 'Archive progress' : '歸檔進度'}>
+          {/* 5 维人格 pill：点击展开归档（模态居中）；实底加深、字加大，替代原独立人格/归档入口。 */}
+          <div className="grid grid-cols-5 gap-1.5" aria-label={locale === 'en' ? 'Archive progress' : '歸檔進度'}>
             {DIMENSIONS.map((dimension) => {
               const done = declaredDims.has(dimension);
               return (
-                <div
+                <button
                   key={dimension}
-                  className={`flex min-w-0 flex-col items-center gap-0.5 rounded-md border px-0.5 py-1 text-center ${done ? 'border-[rgba(111,143,85,0.34)] bg-[rgba(111,143,85,0.1)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] text-[var(--psy-ink-soft)]'}`}
+                  type="button"
+                  onClick={() => setMobileSheet('declared')}
+                  className={`flex min-w-0 flex-col items-center gap-0.5 rounded-lg border px-0.5 py-1.5 text-center transition active:scale-95 ${done ? 'border-[rgba(111,143,85,0.5)] bg-[rgba(111,143,85,0.18)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.3)] bg-[#f0e6d2] text-[var(--psy-ink)]'}`}
                 >
-                  <span className="text-[10px] font-semibold leading-tight">{locale === 'en' ? dimension : dimName(dimension)}</span>
-                  <span className="text-[8px] leading-none opacity-80">{done ? (locale === 'en' ? 'Done' : '已歸') : (locale === 'en' ? 'Open' : '未歸')}</span>
-                </div>
+                  <span className="text-[11px] font-bold leading-tight">{locale === 'en' ? dimension : dimName(dimension)}</span>
+                  <span className="text-[9px] font-medium leading-none opacity-90">{done ? (locale === 'en' ? 'Archived' : '已歸') : (locale === 'en' ? 'Open' : '未歸')}</span>
+                </button>
               );
             })}
           </div>
@@ -922,6 +921,7 @@ export default function GamePage() {
         open={mobileSheet === 'declared'}
         onClose={() => setMobileSheet(null)}
         locale={locale}
+        variant="centered"
       >
         {humanPlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={humanPlayer.declaredSets} locale={locale} overlayZIndex={98} expanded /> : <p className="text-sm text-[var(--psy-muted)]">{tg.noArchiveYet}</p>}
       </MobileGameSheet>

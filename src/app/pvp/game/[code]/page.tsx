@@ -727,13 +727,14 @@ export default function PvpGamePage() {
 
       {/* 牌桌面板：对手 + 回合chip + 中央（对齐单机结构） */}
       <div className="shrink-0 rounded-[1.7rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,rgba(253,248,241,0.76),rgba(234,221,196,0.42))] p-2 shadow-[0_18px_40px_rgba(96,72,38,0.12)] sm:rounded-[2rem] sm:p-3">
-        {/* Opponents — 列数随对手数自适应：4 人满宽 3 列；3 人 2 列居中；2 人单列居中 */}
-        <div className={`grid gap-2 sm:h-[6.5rem] sm:gap-3 mx-auto ${
+        {/* Opponents — 移动端始终占满屏宽按人数均分（1→50%居中 / 2→各50% / 3→各33%），
+            不留空以腾出手牌+归档空间；桌面(sm+)才收窄居中避免卡片过大。 */}
+        <div className={`grid gap-2 sm:h-[6.5rem] sm:gap-3 sm:mx-auto ${
           opponentPlayers.length === 1
-            ? 'grid-cols-1 max-w-[7.5rem] sm:max-w-[13rem]'
+            ? 'mx-auto w-1/2 grid-cols-1 sm:w-auto sm:max-w-[13rem]'
             : opponentPlayers.length === 2
-            ? 'grid-cols-2 max-w-[15rem] sm:max-w-[26rem]'
-            : 'grid-cols-3 w-full'
+            ? 'w-full grid-cols-2 sm:max-w-[26rem]'
+            : 'w-full grid-cols-3'
         }`}>
           {opponentPlayers.map(opp => (
             <OpponentHand
@@ -837,13 +838,13 @@ export default function PvpGamePage() {
           )}
 
           <div className="flex shrink-0 flex-col gap-1.5 sm:hidden">
-            {/* 与单机对齐：回合信息行 + 工具按钮合并成一行（左信息撑开、右按钮） */}
+            {/* 回合信息 + 記錄 合并一行（人格/歸檔入口已移除：下方 5 维 pill 本身即人格展示，点击=展开归档）。 */}
             <div className="flex items-center gap-1.5">
-              <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2.5 py-1 text-[10px] text-[var(--psy-ink-soft)]">
-                <span className="psy-serif shrink-0 text-[var(--psy-accent)]">{locale === 'en' ? `${t.roundUnit} ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''}` : `第 ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''} 輪`}</span>
+              <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-3 py-1.5 text-xs text-[var(--psy-ink-soft)]">
+                <span className="psy-serif shrink-0 font-semibold text-[var(--psy-accent-strong)]">{locale === 'en' ? `${t.roundUnit} ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''}` : `第 ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''} 輪`}</span>
                 <span className="flex min-w-0 items-center gap-0.5">
                   {isMyTurn ? (
-                    <span className="truncate">{t.yourTurnShort}</span>
+                    <span className="truncate font-medium text-[var(--psy-accent)]">{t.yourTurnShort}</span>
                   ) : (
                     <>
                       <span className="max-w-[6ch] truncate">{currentPlayer?.name}</span>
@@ -851,26 +852,25 @@ export default function PvpGamePage() {
                     </>
                   )}
                 </span>
-                <span className="ml-auto shrink-0">{t.archiveCount} {mePlayer.declaredSets.length}/5</span>
+                <span className="ml-auto shrink-0 font-medium">{t.archiveCount} {mePlayer.declaredSets.length}/5</span>
               </div>
-              <div className="flex shrink-0 items-center gap-1">
-                <button onClick={() => setMobileSheet('persona')} className="psy-btn psy-btn-ghost px-2 py-1 text-[10px]">{t.persona}</button>
-                <button onClick={() => setMobileSheet('declared')} className="psy-btn psy-btn-ghost px-2 py-1 text-[10px]">{t.archive}</button>
-                <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost px-2 py-1 text-[10px]">{t.log}</button>
-              </div>
+              <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost shrink-0 px-3 py-1.5 text-xs">{t.log}</button>
             </div>
+            {/* 5 维人格 pill：点击展开该玩家归档（模态居中）；实底加深、字加大，替代原独立人格/归档入口。 */}
             {targets && (
-              <div className="grid grid-cols-5 gap-1" aria-label={locale === 'en' ? 'Archive progress' : '歸檔進度'}>
+              <div className="grid grid-cols-5 gap-1.5" aria-label={locale === 'en' ? 'Archive progress' : '歸檔進度'}>
                 {DIMENSIONS.map((d) => {
                   const isDone = declaredDims.has(d);
                   return (
-                    <div
+                    <button
                       key={d}
-                      className={`flex min-w-0 flex-col items-center gap-0.5 rounded-md border px-0.5 py-1 text-center ${isDone ? 'border-[rgba(111,143,85,0.34)] bg-[rgba(111,143,85,0.1)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] text-[var(--psy-ink-soft)]'}`}
+                      type="button"
+                      onClick={() => setMobileSheet('declared')}
+                      className={`flex min-w-0 flex-col items-center gap-0.5 rounded-lg border px-0.5 py-1.5 text-center transition active:scale-95 ${isDone ? 'border-[rgba(111,143,85,0.5)] bg-[rgba(111,143,85,0.18)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.3)] bg-[#f0e6d2] text-[var(--psy-ink)]'}`}
                     >
-                      <span className="text-[10px] font-semibold leading-tight">{locale === 'en' ? d : dimName(d)}</span>
-                      <span className="text-[8px] leading-none opacity-80">{isDone ? (locale === 'en' ? 'Done' : '已歸') : (locale === 'en' ? 'Open' : '未歸')}</span>
-                    </div>
+                      <span className="text-[11px] font-bold leading-tight">{locale === 'en' ? d : dimName(d)}</span>
+                      <span className="text-[9px] font-medium leading-none opacity-90">{isDone ? (locale === 'en' ? 'Archived' : '已歸') : (locale === 'en' ? 'Open' : '未歸')}</span>
+                    </button>
                   );
                 })}
               </div>
@@ -1217,6 +1217,7 @@ export default function PvpGamePage() {
             title={t.sheetDeclaredTitle}
             open={mobileSheet === 'declared'}
             onClose={() => setMobileSheet(null)}
+            variant="centered"
           >
             {mePlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={mePlayer.declaredSets} locale={locale} overlayZIndex={98} expanded /> : <p className="text-sm text-[var(--psy-muted)]">{t.noArchiveYet}</p>}
           </MobileGameSheet>

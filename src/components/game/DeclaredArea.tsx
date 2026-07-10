@@ -194,7 +194,7 @@ export function DeclaredArea({
             <div className="psy-serif shrink-0 text-[10px] text-[var(--psy-muted)]">{t.archiveWord}</div>
             <div className="min-w-0 flex-1">
               {declaredSets.length === 0 ? (
-                <div className="truncate text-[10px] text-[var(--psy-muted)]">{t.noPublicArchive}</div>
+                <div className="text-[10px] text-[var(--psy-muted)]">{t.noPublicArchive}</div>
               ) : (
                 <div className="flex flex-wrap items-center gap-1.5">
                   {declaredSets.map((set) => {
