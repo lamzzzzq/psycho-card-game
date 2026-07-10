@@ -310,10 +310,10 @@ export default function PvpGamePage() {
         <div className="text-center space-y-4 max-w-sm">
           {slowLoad ? (
             <>
-              <div className="text-amber-300 text-sm">{t.hostOfflineNoResume}</div>
+              <div className="text-sm text-[var(--psy-accent-strong)]">{t.hostOfflineNoResume}</div>
               <button
                 onClick={handleAbandonRoom}
-                className="px-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-400 text-white text-sm font-bold transition-colors"
+                className="psy-btn psy-btn-danger px-5 py-2.5 text-sm font-bold"
               >
                 {t.leaveRoomReturnLobby}
               </button>
@@ -676,11 +676,13 @@ export default function PvpGamePage() {
 
       {/* Result banner */}
       {resultBanner && (
-        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl text-sm font-bold shadow-2xl animate-bounce ${
-          resultBanner.success
-            ? 'bg-emerald-500/90 text-white border border-emerald-400'
-            : 'bg-red-500/90 text-white border border-red-400'
-        }`}>
+        <div className="psy-panel fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-xl border px-6 py-3 text-sm font-semibold shadow-[0_16px_36px_rgba(96,72,38,0.24)]"
+          style={{
+            borderColor: resultBanner.success ? 'rgba(111,143,85,0.5)' : 'rgba(201,96,63,0.5)',
+            background: 'var(--psy-card-content)',
+            color: resultBanner.success ? 'var(--psy-success)' : 'var(--psy-danger)',
+          }}
+        >
           {resultBanner.success ? '✅' : '❌'} {resultBanner.message}
         </div>
       )}
@@ -718,7 +720,7 @@ export default function PvpGamePage() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed top-40 left-1/2 -translate-x-1/2 z-[65] max-w-[90vw] rounded-xl border border-[rgba(200,155,93,0.5)] bg-[rgba(40,30,18,0.95)] px-5 py-2.5 text-xs font-bold text-[var(--psy-ink)] shadow-2xl sm:top-44 sm:px-6 sm:py-3 sm:text-sm"
+          className="psy-panel fixed left-1/2 top-40 z-[65] max-w-[90vw] -translate-x-1/2 rounded-xl border border-[rgba(200,155,93,0.5)] bg-[var(--psy-card-content)] px-5 py-2.5 text-xs font-semibold text-[var(--psy-accent-strong)] shadow-[0_16px_36px_rgba(96,72,38,0.22)] sm:top-44 sm:px-6 sm:py-3 sm:text-sm"
         >
           {t.stolenToast}
         </motion.div>
@@ -756,9 +758,9 @@ export default function PvpGamePage() {
           </span>
         </div>
 
-        {/* Center: Draw/Discard 面板 + Log（2 栏，对齐单机） */}
-        <div className="mt-3 grid items-center gap-3 sm:mt-4 md:grid-cols-[minmax(22rem,1fr)_minmax(15rem,0.48fr)] md:gap-[4%]">
-          <div className="flex items-center justify-center gap-[clamp(1rem,4vw,4rem)] rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] px-[clamp(1rem,4vw,4rem)] py-3">
+        {/* Center: 抽牌 + 弃牌 + 行动记录 统一 block（对齐单机，记录归入牌堆区） */}
+        <div className="mt-3 grid items-center gap-3 rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] p-3 sm:mt-4 sm:p-4 md:grid-cols-[minmax(22rem,1fr)_minmax(15rem,0.48fr)] md:gap-[4%]">
+          <div className="flex items-center justify-center gap-[clamp(1rem,4vw,4rem)] px-[clamp(0.5rem,3vw,2.5rem)]">
             <div
               ref={drawPileRef}
               onMouseEnter={() => handleDrawPileHover(true)}
@@ -851,7 +853,7 @@ export default function PvpGamePage() {
                     </>
                   )}
                 </span>
-                <span className="ml-auto shrink-0 font-medium">{t.archiveCount} {mePlayer.declaredSets.length}/5</span>
+                <span className="ml-auto shrink-0 font-medium">{t.doneLabel} {mePlayer.declaredSets.length}/5</span>
               </div>
               <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost shrink-0 px-3 py-1.5 text-xs">{t.log}</button>
             </div>
@@ -887,7 +889,7 @@ export default function PvpGamePage() {
 
           {/* Penalty banner — 真正 lockout 時顯示"罰停"，own-turn 解凍輪換成提示 */}
           {meFrozenLockout && (
-            <div className="psy-panel flex items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.45)] bg-[rgba(220,106,79,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] sm:text-sm">
+            <div className="psy-panel flex items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.5)] bg-[var(--psy-card-content)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] shadow-[0_14px_30px_rgba(96,72,38,0.2)] sm:text-sm">
               <span>⛔</span>
               <span className="hidden sm:inline">{t.penaltyLockoutFull}</span>
               <span className="sm:hidden">{t.penaltyLockoutShort}</span>
@@ -996,9 +998,9 @@ export default function PvpGamePage() {
                   {dimName(pongIntent.dimension)}
                 </span>{' '}
                 · {t.pongSelectPrompt}{' '}
-                <span className="text-white font-bold">{pongIntentRequiredSelectCount}</span> {t.cardsUnit}
+                <span className="font-bold text-[var(--psy-accent-strong)]">{pongIntentRequiredSelectCount}</span> {t.cardsUnit}
                 {pongIntent.type === 'self' ? t.pongSelectSelfSuffix : t.pongSelectOtherPrefixA + pongIntentTarget + t.pongSelectOtherPrefixB}
-                {locale === 'en' ? ' (' : '（'}{t.selectedPrefix} <span className="text-white font-bold">{selectedCardIds.length}</span>{locale === 'en' ? ')' : '）'}
+                {locale === 'en' ? ' (' : '（'}{t.selectedPrefix} <span className="font-bold text-[var(--psy-accent-strong)]">{selectedCardIds.length}</span>{locale === 'en' ? ')' : '）'}
               </p>
               {pongIntent.type === 'self' && selfPongCandidates.length > 1 && (
                 <div className="flex flex-wrap justify-center gap-1.5">
@@ -1105,11 +1107,11 @@ export default function PvpGamePage() {
                 className="psy-btn psy-btn-ghost px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm"
                 title={t.viewCardsTitle}
               >
-                🔍 {locale === 'en' ? `View ${viewCap}` : `查看 ${viewCap} 張`}（{viewUsedThisTurn ? '0' : '1'}/1）
+                🔍 {locale === 'en' ? `View ${viewCap}` : `查看 ${viewCap} 張`}
               </button>
             )}
             {viewUsedThisTurn && !viewMode && (
-              <span className="text-xs text-[var(--psy-muted)]">{t.viewUsed}</span>
+              <span className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2 text-xs text-[var(--psy-muted)]">{t.viewUsed}</span>
             )}
             {!meFrozen && (
               <button
