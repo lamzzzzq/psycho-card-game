@@ -80,9 +80,6 @@ export default function AssessmentPage() {
           className="psy-panel psy-etched w-full max-w-md space-y-6 rounded-[1.7rem] p-8 text-center"
         >
           <div className="space-y-3">
-            <p className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-ink-soft)]">
-              {t.eyebrow}
-            </p>
             <h1 className="psy-serif text-2xl text-[var(--psy-ink)]">{t.gateTitle}</h1>
             <p className="mx-auto max-w-sm text-sm leading-7 text-[var(--psy-ink-soft)]">
               {t.gateHint}
@@ -223,9 +220,6 @@ export default function AssessmentPage() {
         className="w-full max-w-3xl space-y-8"
       >
         <div className="space-y-4 text-center">
-          <p className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-ink-soft)]">
-            {t.eyebrow}
-          </p>
           <h1 className="psy-serif text-3xl text-[var(--psy-ink)] md:text-4xl">
             {t.title}
           </h1>

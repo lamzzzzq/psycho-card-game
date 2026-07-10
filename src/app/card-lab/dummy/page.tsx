@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { TarotCard } from '@/components/game/TarotCard';
 import { KNOWLEDGE_CARDS } from '@/data/dummy-cards';
 
-const SAMPLES = KNOWLEDGE_CARDS.slice(0, 6);
+const SAMPLES = KNOWLEDGE_CARDS;
 
 export default function DummySwapPage() {
   const [width, setWidth] = useState(200);
