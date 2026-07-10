@@ -163,15 +163,22 @@ export function DeclaredArea({
                 <>
                   <span className="psy-serif text-[11px] text-[var(--psy-ink)]">{dimName(dimension)}</span>
                   <span className="text-right text-[10px] leading-4">
-                    <span className="block text-[var(--psy-muted)]">{locale === 'en' ? `Need ${target}` : `需要 ${target} 張`}</span>
+                    <span className="block text-[var(--psy-muted)]">{locale === 'en' ? `Target ${target}` : `目標 ${target} 張`}</span>
                     <span className={isDone ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-ink-soft)]'}>{isDone ? (locale === 'en' ? 'Archived' : '已歸檔') : (locale === 'en' ? 'Not archived' : '未歸檔')}</span>
                   </span>
                 </>
               );
-              return isDone ? (
-                <button key={dimension} type="button" onClick={() => setOpen(true)} className="flex w-full items-center justify-between rounded-lg border border-[rgba(111,143,85,0.3)] bg-[rgba(111,143,85,0.08)] px-2.5 py-1.5 text-left transition hover:-translate-y-px hover:border-[rgba(111,143,85,0.55)]" aria-label={`${t.viewWord}: ${dimName(dimension)}`}>{content}</button>
-              ) : (
-                <div key={dimension} className="flex items-center justify-between rounded-lg border border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] px-2.5 py-1.5">{content}</div>
+              // 全部维度都可点击 → 打开归档模态（用户要求：不只已归档项可点）
+              return (
+                <button
+                  key={dimension}
+                  type="button"
+                  onClick={() => setOpen(true)}
+                  className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-1.5 text-left transition hover:-translate-y-px ${isDone ? 'border-[rgba(111,143,85,0.3)] bg-[rgba(111,143,85,0.08)] hover:border-[rgba(111,143,85,0.55)]' : 'border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] hover:border-[rgba(154,116,72,0.4)]'}`}
+                  aria-label={`${t.viewWord}: ${dimName(dimension)}`}
+                >
+                  {content}
+                </button>
               );
             })}
           </div>

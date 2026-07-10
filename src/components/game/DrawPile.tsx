@@ -44,7 +44,7 @@ export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProp
       >
         <div className="text-center">
           <div className="mb-0.5 text-xl text-[var(--psy-ink)] sm:mb-1 sm:text-2xl">◈</div>
-          <div className="psy-serif text-[10px] tracking-[0.18em] text-[var(--psy-ink-soft)] sm:text-[11px] sm:tracking-[0.2em]">DRAW</div>
+          <div className={`psy-serif text-[var(--psy-ink-soft)] ${locale === 'en' ? 'text-[10px] tracking-[0.18em] sm:text-[11px] sm:tracking-[0.2em]' : 'text-xs tracking-[0.24em] sm:text-sm'}`}>{locale === 'en' ? 'DRAW' : '抽牌'}</div>
         </div>
         {canDraw && (
           <>
@@ -65,6 +65,18 @@ export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProp
           </>
         )}
       </motion.button>
+      {/* 轮到抽牌：手指 👇 悬在牌堆正上方、上下浮动指向牌堆，引导点击（老板要求的指向动效） */}
+      {canDraw && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 select-none text-2xl sm:text-3xl"
+          style={{ top: '-1.6rem', filter: 'drop-shadow(0 3px 5px rgba(96,72,38,0.35))' }}
+          animate={{ y: [-8, 4, -8] }}
+          transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut' }}
+        >
+          👇
+        </motion.div>
+      )}
       <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">{tg.remainingPrefix} {count} {tg.cardsUnit}</span>
     </div>
   );
