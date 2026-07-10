@@ -64,9 +64,6 @@ export default function Home() {
         <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-5 sm:space-y-6">
             <div className="space-y-3">
-              <p className="psy-serif text-[10px] uppercase tracking-[0.42em] text-[var(--psy-ink-soft)] sm:text-xs">
-                {t.eyebrow}
-              </p>
               <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">
                 {t.title}
               </h1>

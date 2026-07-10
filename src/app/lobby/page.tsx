@@ -86,10 +86,8 @@ export default function LobbyPage() {
       >
         <div className="psy-panel psy-etched rounded-[1.6rem] px-4 py-6 sm:rounded-[2rem] sm:px-10 sm:py-10">
           <div className="mx-auto max-w-3xl space-y-6 sm:space-y-8">
-            <div className="text-center space-y-2 sm:space-y-3">
-              <div className="psy-serif text-[11px] tracking-[0.28em] text-[var(--psy-accent)]">BATTLE CHAMBER</div>
+            <div className="text-center">
               <h1 className="psy-serif text-3xl text-[var(--psy-ink)] sm:text-5xl">{s.title}</h1>
-              <p className="text-xs text-[var(--psy-muted)] sm:text-sm">{s.subtitle}</p>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
@@ -162,15 +160,15 @@ export default function LobbyPage() {
                   {AI_PERSONAS.map((p) => (
                     <div
                       key={p.id}
-                      className="psy-panel psy-etched rounded-2xl p-2.5 text-center sm:rounded-[1.4rem] sm:p-4 lg:text-left"
+                      className="psy-panel psy-etched rounded-2xl px-3 py-4 text-center sm:rounded-[1.4rem] sm:p-4 lg:text-left"
                     >
-                      <div className="flex flex-col items-center gap-2 sm:gap-3 lg:flex-row lg:items-start">
+                      <div className="flex flex-col items-center gap-2.5 sm:gap-3 lg:flex-row lg:items-start">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[var(--psy-accent-soft)] text-xl sm:h-12 sm:w-12 sm:text-2xl">
                           {p.avatar}
                         </div>
                         <div className="space-y-1">
-                          <div className="psy-serif text-sm text-[var(--psy-ink)] sm:text-lg">{p.name}</div>
-                          <div className="hidden text-xs leading-5 text-[var(--psy-muted)] sm:block">{p.description}</div>
+                          <div className="psy-serif text-sm text-[var(--psy-ink)] sm:text-lg">{loc === 'en' ? p.nameEn : p.name}</div>
+                          <div className="hidden text-xs leading-5 text-[var(--psy-muted)] sm:block">{loc === 'en' ? p.descriptionEn : p.description}</div>
                         </div>
                       </div>
                     </div>

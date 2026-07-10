@@ -23,6 +23,8 @@ interface TarotCardProps {
   fluid?: boolean;
   /** 知识牌(dummy)的一句话定义；提供时走「术语标题 + 定义正文」纯文字版式，无图窗。 */
   description?: string;
+  /** 仅 card-lab 预览：对调知识牌的术语标题与定义正文位置。 */
+  swapKnowledge?: boolean;
 }
 
 const GOLD = '#9a7448';
@@ -61,6 +63,7 @@ export function TarotCard({
   width = 200,
   fluid = false,
   description,
+  swapKnowledge = false,
 }: TarotCardProps) {
   const [imgError, setImgError] = useState(false);
 
@@ -71,7 +74,7 @@ export function TarotCard({
       <OrnateCard
         text={text} textEn={textEn} dimension={dimension} imageSrc={imageSrc}
         selected={selected} revealedDimension={revealedDimension} isDummy={isDummy}
-        locale={locale} faceDown={faceDown} onClick={onClick} width={width} fluid={fluid} description={description}
+        locale={locale} faceDown={faceDown} onClick={onClick} width={width} fluid={fluid} description={description} swapKnowledge={swapKnowledge}
       />
     );
   }

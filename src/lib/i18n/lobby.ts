@@ -27,8 +27,8 @@ export const LOBBY_T = {
     revealLabel: '看牌難度',
     revealOptions: [
       { label: '明牌', desc: '全場人格公開（預設）' },
-      { label: '半公開', desc: '每回合看 4 張·保留' },
-      { label: '隱藏', desc: '每回合看 2 張' },
+      { label: '半公開', desc: '每回合查看 4 張並保留' },
+      { label: '隱藏', desc: '每回合查看 2 張但不保留' },
     ],
     opponentsLabel: '對手檔案',
     start: '開始對戰',
@@ -59,8 +59,8 @@ export const LOBBY_T = {
     revealLabel: 'Reveal difficulty',
     revealOptions: [
       { label: 'Open', desc: 'All tags public (default)' },
-      { label: 'Half', desc: 'View 4/turn · kept' },
-      { label: 'Hidden', desc: 'View 2/turn' },
+      { label: 'Half', desc: 'View 4 cards each turn, kept revealed' },
+      { label: 'Hidden', desc: 'View 2 cards each turn, not kept' },
     ],
     opponentsLabel: 'opponents',
     start: 'Start Match',

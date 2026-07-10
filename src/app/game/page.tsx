@@ -25,7 +25,6 @@ import { DrawPile } from '@/components/game/DrawPile';
 import { DiscardPile } from '@/components/game/DiscardPile';
 import { GameLog } from '@/components/game/GameLog';
 import { GameOverModal } from '@/components/game-results/GameOverModal';
-import { ArrowOverlay } from '@/components/game/ArrowOverlay';
 import { FlyingCard } from '@/components/game/FlyingCard';
 import { PongPanel } from '@/components/game/PongPanel';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
@@ -195,9 +194,11 @@ export default function GamePage() {
     if (game.phase === 'game-over' || game.phase === 'claim-window') return;
     if (game.currentPlayerIndex === 0) return;
 
+    // 模拟思考：AI 出牌前随机停顿 8–15 秒，避免节奏过快（原 280ms 几乎瞬发）。
+    const thinkDelay = 8000 + Math.random() * 7000;
     const timer = window.setTimeout(() => {
       void runOneAITurn();
-    }, 280);
+    }, thinkDelay);
 
     return () => window.clearTimeout(timer);
   }, [game?.currentPlayerIndex, game?.phase, game?.actionLog.length, aiRunning, runOneAITurn, game]);
@@ -430,7 +431,7 @@ export default function GamePage() {
     <motion.div animate={shakeControls} className="mx-auto flex min-h-[100dvh] w-full max-w-[min(96vw,112rem)] flex-col px-3 py-3 [overflow-anchor:none] sm:px-4 sm:py-4">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
       <YourTurnBanner bannerKey={yourTurnKey} locale={locale} />
-      <ArrowOverlay from={arrowFrom} to={arrowTo} color={arrowColor} />
+      {/* 引导箭头线已移除（用户反馈：抽/出/弃牌处的虚线都不要） */}
 
       {/* idle 提醒 toast：本回合久未行动时弹出（配合震动） */}
       {idleReminderVisible && (

@@ -175,9 +175,7 @@ export default function StatsPage() {
           >
             {s.back}
           </button>
-          <p className="psy-eyebrow">DECK ARCHIVES</p>
           <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">{s.title}</h1>
-          <p className="text-base leading-7 text-[var(--psy-ink-soft)]">{s.subtitle}</p>
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <span className="psy-chip">{s.participantsChip(summary.length)}</span>
             <span className="psy-chip">{s.sessionsChip(sessionCount)}</span>

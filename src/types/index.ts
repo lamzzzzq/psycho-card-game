@@ -75,6 +75,7 @@ export interface AIPersona {
   nameEn: string;
   avatar: string;
   description: string;
+  descriptionEn: string;
   difficulty: AIDifficulty;
 }
 

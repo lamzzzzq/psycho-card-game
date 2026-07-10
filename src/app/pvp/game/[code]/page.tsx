@@ -33,7 +33,6 @@ import { GameLog } from '@/components/game/GameLog';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
 import { TarotCard } from '@/components/game/TarotCard';
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
-import { ArrowOverlay } from '@/components/game/ArrowOverlay';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
 
 // Convert SerializedPlayer → Player (for reusing single-player components)
@@ -618,7 +617,7 @@ export default function PvpGamePage() {
     <motion.div animate={shakeControls} className="mx-auto flex min-h-[100dvh] max-w-6xl w-full flex-col px-3 py-3 sm:px-4 sm:py-4">
       <FeedbackOverlays flashControls={flashControls} pops={pops} />
       <YourTurnBanner bannerKey={yourTurnKey} locale={locale} />
-      <ArrowOverlay from={arrowFrom} to={arrowTo} color="#c89b5d" />
+      {/* 引导箭头线已移除（用户反馈：抽/出/弃牌处的虚线都不要） */}
       {flyingCards.map((f) => (
         <FlyingCard key={f.id} from={f.from} to={f.to} text={f.text} onComplete={() => removeFlyingCard(f.id)} />
       ))}

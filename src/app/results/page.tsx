@@ -54,16 +54,10 @@ export default function ResultsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-5xl space-y-8"
       >
-        <div className="text-center space-y-3">
-          <p className="psy-serif text-xs uppercase tracking-[0.42em] text-[var(--psy-ink-soft)]">
-            Final Persona Spread
-          </p>
+        <div className="text-center">
           <h1 className="psy-serif text-4xl text-[var(--psy-ink)]">
             {t.title}
           </h1>
-          <p className="mx-auto max-w-2xl text-sm leading-7 text-[var(--psy-ink-soft)]">
-            {t.intro}
-          </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">

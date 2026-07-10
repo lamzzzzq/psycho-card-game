@@ -46,11 +46,14 @@ interface OrnateCardProps {
   width?: number;
   fluid?: boolean;
   description?: string;
+  /** 仅 card-lab 预览：对调知识牌的术语标题与定义正文位置。 */
+  swapKnowledge?: boolean;
 }
 
 export function OrnateCard({
   text, textEn, imageSrc, selected = false, revealedDimension = null,
   isDummy = false, locale = 'zh', faceDown = false, onClick, width = 200, fluid = false, description,
+  swapKnowledge = false,
 }: OrnateCardProps) {
   const [imgError, setImgError] = useState(false);
   // 每张卡唯一的 SVG defs id（避免多卡同页 id 重复——技术上无效 DOM、且会妨碍日后 per-card 渐变/裁切）。
@@ -206,27 +209,27 @@ export function OrnateCard({
           {selected && <rect x="5" y="5" width="390" height="690" rx="40" fill="none" stroke={GREEN} strokeWidth="5" />}
         </svg>
 
-        {/* 知识牌术语：拱区居中大字（按长度自适应） */}
+        {/* 知识牌拱区（上半）：默认=术语大字；swapKnowledge=定义正文（对调预览用） */}
         {isKnowledge && (
           <div className="psy-serif absolute flex items-center justify-center text-center" style={{ left: '11%', right: '11%', top: '7%', height: '50%' }}>
-            <p className="font-semibold" style={{ color: 'var(--psy-ink)', fontSize: `${termFont}cqw`, lineHeight: 1.3, paddingBottom: '1.5cqw', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-              {renderLabel(label, locale)}
+            <p className={swapKnowledge ? '' : 'font-semibold'} style={{ color: swapKnowledge ? 'var(--psy-ink-soft)' : 'var(--psy-ink)', fontSize: `${swapKnowledge ? defFont : termFont}cqw`, lineHeight: swapKnowledge ? 1.32 : 1.3, paddingBottom: '1.5cqw', display: '-webkit-box', WebkitLineClamp: swapKnowledge ? 6 : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              {swapKnowledge ? description : renderLabel(label, locale)}
             </p>
           </div>
         )}
 
-        {/* 底框文字：人格陈述 / 知识定义（按长度自适应字号/行数，最长也不裁切） */}
+        {/* 底框文字（下半）：人格陈述 / 知识定义；swapKnowledge 时知识牌改放术语标题 */}
         <div className="psy-serif absolute flex items-center justify-center text-center" style={{ left: '9%', right: '9%', top: '64.5%', height: '30%' }}>
           <p
-            className={isKnowledge ? '' : 'font-semibold leading-snug'}
+            className={isKnowledge && !swapKnowledge ? '' : 'font-semibold leading-snug'}
             style={{
-              color: isKnowledge ? 'var(--psy-ink-soft)' : 'var(--psy-ink)',
-              fontSize: isKnowledge ? `${defFont}cqw` : (locale === 'en' ? '9.5cqw' : '10.5cqw'),
-              lineHeight: isKnowledge ? 1.32 : 1.25,
-              display: '-webkit-box', WebkitLineClamp: isKnowledge ? defClamp : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              color: isKnowledge && !swapKnowledge ? 'var(--psy-ink-soft)' : 'var(--psy-ink)',
+              fontSize: isKnowledge ? `${swapKnowledge ? termFont : defFont}cqw` : (locale === 'en' ? '9.5cqw' : '10.5cqw'),
+              lineHeight: isKnowledge && !swapKnowledge ? 1.32 : 1.25,
+              display: '-webkit-box', WebkitLineClamp: isKnowledge ? (swapKnowledge ? 4 : defClamp) : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
             }}
           >
-            {isKnowledge ? description : renderLabel(label, locale)}
+            {isKnowledge ? (swapKnowledge ? renderLabel(label, locale) : description) : renderLabel(label, locale)}
           </p>
         </div>
 
