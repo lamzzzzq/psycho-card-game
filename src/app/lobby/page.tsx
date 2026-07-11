@@ -72,18 +72,19 @@ export default function LobbyPage() {
 
   return (
     // 移动端：内容顶部对齐 + 底部留白给 sticky CTA；桌面端垂直居中。
-    <div className="flex flex-1 flex-col items-center px-4 pt-8 pb-28 sm:px-6 lg:justify-center lg:pb-8">
-      <button
-        onClick={() => router.push('/')}
-        className="psy-btn psy-btn-ghost psy-serif fixed left-4 top-4 z-40 px-3.5 py-2 text-sm font-medium sm:left-8 sm:top-8"
-      >
-        {s.backHome}
-      </button>
+    <div className="flex flex-1 flex-col items-center px-4 pt-6 pb-28 sm:px-6 sm:pt-8 lg:justify-center lg:pb-8">
       <motion.div
         initial={false}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-5xl"
       >
+        {/* 返回主页：与卡片左对齐、放容器内（原 fixed 在三端相对卡片位置不一致——移动贴边、桌面远离居中卡片）。 */}
+        <button
+          onClick={() => router.push('/')}
+          className="psy-btn psy-btn-ghost psy-serif mb-3 px-3.5 py-2 text-sm font-medium sm:mb-4"
+        >
+          {s.backHome}
+        </button>
         <div className="psy-panel psy-etched rounded-[1.6rem] px-4 py-6 sm:rounded-[2rem] sm:px-10 sm:py-10">
           <div className="mx-auto max-w-3xl space-y-6 sm:space-y-8">
             <div className="text-center">
@@ -105,7 +106,7 @@ export default function LobbyPage() {
                           className={`psy-tile ${active ? 'is-active' : ''}`}
                         >
                           <div className="psy-serif text-base text-[var(--psy-ink)] sm:text-lg">{opt.label}</div>
-                          <div className="mt-1 text-[11px] leading-tight text-[var(--psy-muted)] sm:mt-2 sm:text-xs">{opt.desc}</div>
+                          <div className="mt-1 text-[11px] leading-tight text-[var(--psy-muted)] [word-break:keep-all] sm:mt-2 sm:text-xs">{opt.desc}</div>
                         </button>
                       );
                     })}
@@ -125,7 +126,7 @@ export default function LobbyPage() {
                           className={`psy-tile ${active ? 'is-active' : ''}`}
                         >
                           <div className="psy-serif text-base text-[var(--psy-ink)] sm:text-lg">{r.label}</div>
-                          <div className="mt-1 text-[11px] leading-tight text-[var(--psy-muted)] sm:mt-2 sm:text-xs">{r.desc}</div>
+                          <div className="mt-1 text-[11px] leading-tight text-[var(--psy-muted)] [word-break:keep-all] sm:mt-2 sm:text-xs">{r.desc}</div>
                         </button>
                       );
                     })}
@@ -145,7 +146,7 @@ export default function LobbyPage() {
                           className={`psy-tile ${active ? 'is-active' : ''}`}
                         >
                           <div className="psy-serif text-base text-[var(--psy-ink)] sm:text-lg">{opt.label}</div>
-                          <div className="mt-1 text-[11px] leading-tight text-[var(--psy-muted)] sm:mt-2 sm:text-xs">{opt.desc}</div>
+                          <div className="mt-1 text-[11px] leading-tight text-[var(--psy-muted)] [word-break:keep-all] sm:mt-2 sm:text-xs">{opt.desc}</div>
                         </button>
                       );
                     })}
