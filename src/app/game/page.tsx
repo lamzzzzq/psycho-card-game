@@ -556,7 +556,12 @@ export default function GamePage() {
           <div className="flex items-center gap-1.5">
             <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-3 py-1.5 text-xs text-[var(--psy-ink-soft)]">
               <span className="psy-serif shrink-0 font-semibold text-[var(--psy-accent-strong)]">{locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}</span>
-              <span className="ml-auto truncate font-medium">{tg.doneLabel} {humanPlayer.declaredSets.length}/5</span>
+              {/* 弃牌阶段（未选牌）时把「先圈定要弃的牌」提示放这里——动作行窄屏空胶囊已隐藏。 */}
+              {isHumanTurn && isDiscarding && !viewMode && !pongIntent && discardPickId === null ? (
+                <span className="ml-auto truncate font-medium text-[var(--psy-accent)]">{tg.pickDiscard}</span>
+              ) : (
+                <span className="ml-auto truncate font-medium">{tg.doneLabel} {humanPlayer.declaredSets.length}/5</span>
+              )}
             </div>
             <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost shrink-0 px-3 py-1.5 text-xs">{tg.log}</button>
           </div>
@@ -803,8 +808,10 @@ export default function GamePage() {
             )}
 
             {isHumanTurn && isDiscarding && !viewMode && !pongIntent && (
-              <div className="flex min-w-0 items-center gap-2 rounded-full border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-3 py-1.5">
-                <span className="hidden max-w-[15rem] truncate text-xs text-[var(--psy-muted)] lg:inline">
+              // 仅提示无按钮(discardPickId===null)时：窄屏(<sm)隐藏空胶囊——提示改在下方回合行显示；
+              // sm+ 正常显示带文字的 pill。有取消/提交按钮时始终显示。
+              <div className={`min-w-0 items-center gap-2 rounded-full border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-3 py-1.5 ${discardPickId === null ? 'hidden sm:flex' : 'flex'}`}>
+                <span className="hidden max-w-[15rem] truncate text-xs text-[var(--psy-muted)] sm:inline">
                   {discardPickId === null ? tg.pickDiscard : tg.confirmDiscardHint}
                 </span>
                 {discardPickId !== null && (
