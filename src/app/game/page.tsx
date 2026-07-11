@@ -698,6 +698,7 @@ export default function GamePage() {
                         ? '#fff7ea'
                         : 'var(--psy-ink-soft)',
                       opacity: isDeclared ? 0.6 : 1,
+                      textDecoration: isDeclared ? 'line-through' : undefined,
                     }}
                   >
                     {dimName(d)}

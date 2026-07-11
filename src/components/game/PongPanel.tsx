@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { GameCard, Dimension, DIMENSIONS, Player, isPersonalityCard } from '@/types';
 import { getTargetCounts } from '@/lib/scoring';
+import { DIMENSION_META } from '@/data/dimensions';
 import { TarotCard } from './TarotCard';
 import { cardToTarotProps } from './cardToTarotProps';
 import { STRINGS, type Locale } from '@/lib/i18n';
@@ -34,6 +35,9 @@ export function PongPanel({
 }: PongPanelProps) {
   const t = STRINGS[locale].game;
   const targets = getTargetCounts(player.bigFiveScores);
+  // 已归档维度：目标行里划线花掉（用户反馈：已碰过的维度应实时划线提示）。
+  const declaredDims = new Set(player.declaredSets.map((s) => s.dimension));
+  const dimName = (d: Dimension) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name);
   // 倒計時初值分兩檔：能歸檔 20s（要看牌思考+選牌，5s 根本來不及——用戶反饋）；
   // 無法歸檔只有「暫不歸檔」一個選項，5s 快速放行避免拖慢節奏。
   const [countdown, setCountdown] = useState(() => {
@@ -98,15 +102,20 @@ export function PongPanel({
         </div>
       </div>
 
-      {/* The usual mobile progress rail is behind this panel. Keep all five
-          target values visible while the player judges this discard. */}
-      <div className="grid grid-cols-5 gap-1 sm:hidden">
-        {DIMENSIONS.map((dimension) => (
-          <div key={dimension} className="rounded-md border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-1 py-1 text-center text-[9px] tabular-nums text-[var(--psy-ink-soft)]">
-            <span className="font-semibold">{dimension}</span>{' '}
-            <span>{targets[dimension]}{locale === 'en' ? '' : '張'}</span>
-          </div>
-        ))}
+      {/* 五维目标行：全端显示（原 sm:hidden 只在移动端）。已归档维度划线花掉。 */}
+      <div className="grid grid-cols-5 gap-1 sm:gap-1.5">
+        {DIMENSIONS.map((dimension) => {
+          const done = declaredDims.has(dimension);
+          return (
+            <div
+              key={dimension}
+              className={`flex min-w-0 flex-col items-center gap-0.5 rounded-md border px-1 py-1 text-center tabular-nums sm:py-1.5 ${done ? 'border-[rgba(154,116,72,0.1)] bg-[rgba(154,116,72,0.04)] text-[var(--psy-muted)] line-through' : 'border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] text-[var(--psy-ink-soft)]'}`}
+            >
+              <span className="text-[9px] font-semibold leading-tight sm:text-[11px]">{locale === 'en' ? dimension : dimName(dimension)}</span>
+              <span className="text-[8px] leading-none opacity-90 sm:text-[10px]">{locale === 'en' ? `${targets[dimension]}` : `目標 ${targets[dimension]} 張`}</span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Actions */}
