@@ -19,9 +19,23 @@ const notoSerifSc = Noto_Serif_SC({
   weight: ["400", "500", "600", "700"],
 });
 
+const SITE_TITLE = "人格麻將 Personalities Mahjong";
+const SITE_DESC = "基於人格測評的心理學卡牌遊戲";
+
 export const metadata: Metadata = {
-  title: "PsychoCardGame - 心理卡牌對戰",
-  description: "基於 Big Five 人格測評的心理學卡牌遊戲",
+  title: SITE_TITLE,
+  description: SITE_DESC,
+  // 分享到微信/社交平台的预览卡片（标题+描述），与浏览器标签一致。
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: SITE_TITLE,
+    description: SITE_DESC,
+  },
 };
 
 // 缺 viewport meta 时手机会按桌面宽度(~980px)缩放 → 显示不全 + 可左右平移。
