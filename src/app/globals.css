@@ -82,17 +82,10 @@ body > * {
   backdrop-filter: blur(10px);
 }
 
+/* psy-etched 的内框（inset 8px 第二层边框）已移除——用户反馈双框太厚重、线太多。
+   保留 class 以免大量调用点报错；现仅作定位容器，不再画内框。 */
 .psy-etched {
   position: relative;
-}
-
-.psy-etched::after {
-  content: "";
-  position: absolute;
-  inset: 8px;
-  border: 1px solid rgba(150, 118, 78, 0.14);
-  border-radius: inherit;
-  pointer-events: none;
 }
 
 .psy-serif {
