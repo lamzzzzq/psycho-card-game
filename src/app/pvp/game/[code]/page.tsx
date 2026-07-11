@@ -1227,7 +1227,7 @@ export default function PvpGamePage() {
             open={mobileSheet === 'log'}
             onClose={() => setMobileSheet(null)}
           >
-            <GameLog actions={gameState.actionLog as any} players={allPlayers} locale={locale} />
+            <GameLog actions={gameState.actionLog as any} players={allPlayers} locale={locale} inline />
           </MobileGameSheet>
         </>
       )}

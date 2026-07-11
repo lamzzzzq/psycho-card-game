@@ -12,6 +12,8 @@ interface GameLogProps {
   players: Player[];
   locale?: Locale;
   overlayZIndex?: number;
+  /** 移动 sheet 里直接内联渲染完整列表（一步到位，不再套「最近3条摘要卡 + 查看全部」两步）。 */
+  inline?: boolean;
 }
 
 interface ActionLabel {
@@ -76,12 +78,51 @@ function getActionLabel(action: GameAction, locale: Locale): ActionLabel {
   };
 }
 
-export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80 }: GameLogProps) {
+export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80, inline = false }: GameLogProps) {
   const tg = STRINGS[locale].game;
   const [open, setOpen] = useState(false);
   const recentActions = actions.slice(-3).reverse();
   const allActions = [...actions].reverse();
   const getPlayer = (id: string) => players.find((p) => p.id === id);
+
+  // 完整列表单行（摘要卡的 modal 与 inline 模式共用）。
+  const renderFullRow = (action: GameAction, i: number) => {
+    const player = getPlayer(action.playerId);
+    if (!player) return null;
+    const label = getActionLabel(action, locale);
+    return (
+      <div
+        key={`${action.timestamp}-${action.type}-full-${i}`}
+        className="flex gap-2 rounded-xl border px-3 py-2.5 text-sm"
+        style={{ borderColor: 'rgba(154,116,72,0.14)', background: 'linear-gradient(180deg, #fdf8f1, #f8f1e4)', boxShadow: '0 8px 18px rgba(96,72,38,0.08)', color: 'var(--psy-ink-soft)' }}
+      >
+        <span className="text-base">{player.avatar}</span>
+        <div className="min-w-0 flex-1">
+          <div className="psy-serif text-sm text-[var(--psy-ink)]">{playerLabel(player, locale)}</div>
+          <div className="mt-1 text-xs text-[var(--psy-muted)]">{tg.roundWord} {action.round}</div>
+        </div>
+        <div className="min-w-0 flex-[1.4] text-sm">
+          <div
+            className={label.tone === 'success' ? 'font-medium text-[var(--psy-success)]' : label.tone === 'danger' ? 'text-[var(--psy-danger)]' : label.tone === 'muted' ? 'text-[var(--psy-muted)]' : ''}
+            style={label.tone === 'dimension' ? { color: 'var(--psy-accent)' } : undefined}
+          >
+            {label.prefix}
+            {label.badge && <span className="ml-1.5 text-xs font-semibold text-[var(--psy-success)]">{label.badge}</span>}
+          </div>
+          {label.detail && <div className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--psy-muted)]">{label.detail}</div>}
+        </div>
+      </div>
+    );
+  };
+
+  // 移动 sheet：一步直达完整列表，无摘要卡、无二级弹窗。
+  if (inline) {
+    return allActions.length === 0 ? (
+      <p className="py-8 text-center text-sm text-[var(--psy-muted)]">{tg.logNoActions}</p>
+    ) : (
+      <div className="space-y-2">{allActions.map(renderFullRow)}</div>
+    );
+  }
 
   useEffect(() => {
     if (!open) return;

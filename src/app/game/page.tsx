@@ -829,15 +829,17 @@ export default function GamePage() {
               </div>
             )}
 
-            {/* AI turn button */}
+            {/* AI 回合：自动执行（8-15s 思考延迟已在 effect 内），此处仅弱提示「思考中…」。
+                仍保留 onClick 作为万一自动流程卡死时的隐藏兜底，但不再显示「點擊執行」。 */}
             {!isHumanTurn && game.phase !== 'game-over' && game.phase !== 'claim-window' && (
               <button
                 onClick={runOneAITurn}
                 disabled={aiRunning}
-                className="psy-btn psy-btn-accent px-6 py-2 text-sm font-medium"
+                className="flex items-center gap-1.5 rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-4 py-2 text-sm text-[var(--psy-muted)]"
               >
-                {game.players[game.currentPlayerIndex].avatar}{' '}
-                {playerLabel(game.players[game.currentPlayerIndex], locale)}{tg.turnOf} — {tg.clickToRun}
+                <span>{game.players[game.currentPlayerIndex].avatar}</span>
+                <span className="psy-serif text-[var(--psy-ink-soft)]">{playerLabel(game.players[game.currentPlayerIndex], locale)}{tg.turnOf}</span>
+                <span className="animate-pulse">{locale === 'en' ? 'thinking…' : '思考中…'}</span>
               </button>
             )}
           </>
@@ -932,7 +934,7 @@ export default function GamePage() {
         onClose={() => setMobileSheet(null)}
         locale={locale}
       >
-        <GameLog actions={game.actionLog} players={game.players} locale={locale} overlayZIndex={96} />
+        <GameLog actions={game.actionLog} players={game.players} locale={locale} overlayZIndex={96} inline />
       </MobileGameSheet>
 
       {/* Game Over */}

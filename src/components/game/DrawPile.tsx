@@ -65,16 +65,16 @@ export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProp
           </>
         )}
       </motion.button>
-      {/* 轮到抽牌：手指 👇 悬在牌堆正上方、上下浮动指向牌堆，引导点击（老板要求的指向动效） */}
+      {/* 轮到抽牌：手指 👆 在「剩餘 X 張」处上下浮动、指回牌堆（老板要求）。黄色调浅：降饱和+提亮。 */}
       {canDraw && (
         <motion.div
           aria-hidden
           className="pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 select-none text-2xl sm:text-3xl"
-          style={{ top: '-1.6rem', filter: 'drop-shadow(0 3px 5px rgba(96,72,38,0.35))' }}
-          animate={{ y: [-8, 4, -8] }}
+          style={{ bottom: '-0.4rem', filter: 'saturate(0.5) brightness(1.15) drop-shadow(0 2px 4px rgba(96,72,38,0.25))' }}
+          animate={{ y: [4, -6, 4] }}
           transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut' }}
         >
-          👇
+          👆
         </motion.div>
       )}
       <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">{tg.remainingPrefix} {count} {tg.cardsUnit}</span>
