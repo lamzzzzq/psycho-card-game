@@ -572,7 +572,7 @@ export default function GamePage() {
                   className={`flex min-w-0 flex-col items-center gap-0.5 rounded-lg border px-0.5 py-1.5 text-center transition active:scale-95 ${done ? 'border-[rgba(111,143,85,0.5)] bg-[rgba(111,143,85,0.18)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.3)] bg-[#f0e6d2] text-[var(--psy-ink)]'}`}
                 >
                   <span className="text-[11px] font-bold leading-tight">{locale === 'en' ? dimension : dimName(dimension)}</span>
-                  <span className="text-[9px] font-medium leading-none opacity-90">{done ? (locale === 'en' ? 'Archived' : '已歸') : (locale === 'en' ? 'Open' : '未歸')}</span>
+                  <span className="text-[8px] font-medium leading-tight opacity-90">{locale === 'en' ? `${targets[dimension]} · ${done ? 'Done' : 'Open'}` : `目標${targets[dimension]}張 ${done ? '已歸檔' : '未歸檔'}`}</span>
                 </button>
               );
             })}

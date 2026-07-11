@@ -870,7 +870,7 @@ export default function PvpGamePage() {
                       className={`flex min-w-0 flex-col items-center gap-0.5 rounded-lg border px-0.5 py-1.5 text-center transition active:scale-95 ${isDone ? 'border-[rgba(111,143,85,0.5)] bg-[rgba(111,143,85,0.18)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.3)] bg-[#f0e6d2] text-[var(--psy-ink)]'}`}
                     >
                       <span className="text-[11px] font-bold leading-tight">{locale === 'en' ? d : dimName(d)}</span>
-                      <span className="text-[9px] font-medium leading-none opacity-90">{isDone ? (locale === 'en' ? 'Archived' : '已歸') : (locale === 'en' ? 'Open' : '未歸')}</span>
+                      <span className="text-[8px] font-medium leading-tight opacity-90">{locale === 'en' ? `${targets[d]} · ${isDone ? 'Done' : 'Open'}` : `目標${targets[d]}張 ${isDone ? '已歸檔' : '未歸檔'}`}</span>
                     </button>
                   );
                 })}
@@ -934,13 +934,30 @@ export default function PvpGamePage() {
                 {/* 不洩露「已歸檔」資訊（強 trap）：所有維度顯示相同引導，玩家自行
                     判斷。碰了若重複歸檔/混維度，由引擎判失敗 + 罰停（提示「重複碰」）。 */}
                 <div className="text-xs text-[var(--psy-ink-soft)]">
-                  <ul className="list-disc pl-4 space-y-1 marker:text-orange-400">
+                  <ul className="list-disc space-y-1 pl-4 marker:text-[var(--psy-accent)]">
                     <li>{t.claimHint1}</li>
                     <li>{t.claimHint2}</li>
                     <li>{t.claimHint3}</li>
                   </ul>
                 </div>
               </div>
+              {/* 五维目标行（对齐单机 PongPanel）：目标张数 + 已归档维度划线花掉。 */}
+              {targets && (
+                <div className="grid grid-cols-5 gap-1 sm:gap-1.5">
+                  {DIMENSIONS.map((d) => {
+                    const done = declaredDims.has(d);
+                    return (
+                      <div
+                        key={d}
+                        className={`flex min-w-0 flex-col items-center gap-0.5 rounded-md border px-1 py-1 text-center tabular-nums sm:py-1.5 ${done ? 'border-[rgba(154,116,72,0.1)] bg-[rgba(154,116,72,0.04)] text-[var(--psy-muted)] line-through' : 'border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] text-[var(--psy-ink-soft)]'}`}
+                      >
+                        <span className="text-[9px] font-semibold leading-tight sm:text-[11px]">{locale === 'en' ? d : dimName(d)}</span>
+                        <span className="text-[8px] leading-none opacity-90 sm:text-[10px]">{locale === 'en' ? `${targets[d]}` : `目標 ${targets[d]} 張`}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               {claimSubmitted ? (
                 <div className="psy-serif animate-pulse py-1.5 text-center text-xs text-[var(--psy-muted)]">
                   {t.submittedWaiting}

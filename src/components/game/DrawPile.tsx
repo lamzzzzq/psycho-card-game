@@ -69,8 +69,8 @@ export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProp
       {canDraw && (
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 select-none text-2xl sm:text-3xl"
-          style={{ bottom: '-0.4rem', filter: 'saturate(0.5) brightness(1.15) drop-shadow(0 2px 4px rgba(96,72,38,0.25))' }}
+          className="pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 select-none text-3xl sm:text-4xl"
+          style={{ bottom: '0.9rem', filter: 'saturate(0.5) brightness(1.15) drop-shadow(0 2px 4px rgba(96,72,38,0.25))' }}
           animate={{ y: [4, -6, 4] }}
           transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut' }}
         >
