@@ -123,7 +123,7 @@ export const STRINGS = {
       // Banners / toasts
       hostOfflinePaused: '⚠ 房主短暫離線 — 操作已暫停，3 分鐘內未回則房間解散',
       idleYourTurnEyebrow: 'Action needed',
-      idleYourTurn: '請選擇行動，倒數將自動處理',
+      idleYourTurn: '現在是你的回合，請選擇行動',
       stolenToast: '⚡ 本輪已被搶 — 別人先碰到了',
       // Game over
       youWin: '你贏了！',
@@ -498,7 +498,7 @@ export const STRINGS = {
       // Banners / toasts
       hostOfflinePaused: '⚠ Host briefly offline — actions paused; room dissolves if they don’t return within 3 min',
       idleYourTurnEyebrow: 'Action needed',
-      idleYourTurn: 'Choose an action before auto-play',
+      idleYourTurn: 'Your turn — choose an action',
       stolenToast: '⚡ Claimed first — someone ponged before you',
       // Game over
       youWin: 'You win!',

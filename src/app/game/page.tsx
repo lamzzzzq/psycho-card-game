@@ -520,7 +520,7 @@ export default function GamePage() {
         </div>
 
         {/* Center: 抽牌 + 弃牌 + 行动记录 统一在一个 block 内（记录归入牌堆区，用户反馈） */}
-        <div className="mt-3 grid items-center gap-3 rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] p-3 sm:mt-4 sm:p-4 md:grid-cols-[minmax(22rem,1fr)_minmax(15rem,0.48fr)] md:gap-[4%]">
+        <div className="mt-3 grid items-center gap-3 rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] p-3 sm:mt-4 sm:grid-cols-[minmax(19rem,1fr)_minmax(12rem,0.5fr)] sm:gap-[4%] sm:p-4">
           <div className="flex items-center justify-center gap-[clamp(1rem,4vw,4rem)] px-[clamp(0.5rem,3vw,2.5rem)]">
             <div
               ref={drawPileRef}
@@ -541,7 +541,7 @@ export default function GamePage() {
               />
             </div>
           </div>
-          <div className="hidden w-full md:block md:justify-self-stretch">
+          <div className="hidden w-full sm:block sm:justify-self-stretch">
             <GameLog actions={game.actionLog} players={game.players} locale={locale} />
           </div>
         </div>
