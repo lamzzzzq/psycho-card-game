@@ -1387,8 +1387,8 @@ function StartFlowGuide({ s, onEnterSandbox }: { s: TutStrings; onEnterSandbox: 
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[13rem_1fr]">
-        {/* 移动端：横向滚动 chips；lg：纵向步骤列表 */}
-        <div className="psy-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:space-y-2 lg:overflow-visible lg:px-0 lg:pb-0">
+        {/* lg：纵向步骤列表（不占纵向空间）。窄屏改用卡片底部的點式頁碼，省空間留給內容。 */}
+        <div className="hidden lg:flex lg:flex-col lg:space-y-2">
           {steps.map((step, i) => (
             <button
               key={step.title}
@@ -1428,21 +1428,37 @@ function StartFlowGuide({ s, onEnterSandbox }: { s: TutStrings; onEnterSandbox: 
             </div>
             <FlowScreenshot mode={mode} index={index} s={s} />
           </div>
-          <div className="mt-5 flex justify-end gap-2">
-            <button
-              onClick={() => setIndex(Math.max(0, index - 1))}
-              disabled={index === 0}
-              className="psy-btn psy-btn-ghost px-4 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {s.prevStep}
-            </button>
-            <button
-              onClick={() => setIndex(Math.min(steps.length - 1, index + 1))}
-              disabled={index === steps.length - 1}
-              className="psy-btn psy-btn-accent px-4 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {s.nextStep}
-            </button>
+          <div className="mt-5 flex items-center justify-between gap-2">
+            {/* 窄屏點式頁碼：取代佔高的步驟膠囊行，點選跳步。lg 有側欄步驟列表故隱藏。 */}
+            <div className="flex items-center gap-1.5 lg:hidden">
+              {steps.map((step, i) => (
+                <button
+                  key={step.title}
+                  onClick={() => setIndex(i)}
+                  aria-label={`${i + 1} ${step.title}`}
+                  aria-current={i === index ? 'step' : undefined}
+                  className={`h-2 rounded-full transition-all ${
+                    i === index ? 'w-5 bg-[var(--psy-accent)]' : 'w-2 bg-[rgba(154,116,72,0.3)] hover:bg-[rgba(154,116,72,0.5)]'
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIndex(Math.max(0, index - 1))}
+                disabled={index === 0}
+                className="psy-btn psy-btn-ghost px-4 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {s.prevStep}
+              </button>
+              <button
+                onClick={() => setIndex(Math.min(steps.length - 1, index + 1))}
+                disabled={index === steps.length - 1}
+                className="psy-btn psy-btn-accent px-4 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {s.nextStep}
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
