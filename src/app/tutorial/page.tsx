@@ -1180,116 +1180,149 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
   }
 }
 
+// 流程示意的一行「設置選項」（標籤 + 若干膠囊，active 高亮）。房間/大廳設置面板共用。
+function ShotRow({ label, options, active }: { label: string; options: readonly string[]; active: number }) {
+  return (
+    <div>
+      <div className="mb-1 text-[9px] text-[var(--psy-muted)]">{label}</div>
+      <div className="flex gap-1.5">
+        {options.map((o, i) => (
+          <div
+            key={o}
+            className={`flex-1 rounded-lg border px-1 py-1 text-center text-[10px] ${
+              i === active
+                ? 'border-[rgba(154,116,72,0.4)] bg-[rgba(195,154,82,0.2)] text-[var(--psy-ink)]'
+                : 'border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] text-[var(--psy-muted)]'
+            }`}
+          >
+            {o}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: number; s: TutStrings }) {
   const frameTitle = mode === 'pvp' ? s.shotPvpTitle : s.shotSoloTitle;
 
-  const homeChoice = (
+  // ① 首頁：首次進入只有「開始測評」一個入口。
+  const home = (
     <div className="space-y-3">
-      <div className="psy-serif text-sm text-[var(--psy-ink)]">{s.shotProductName}</div>
-      <div className="grid gap-2">
-        <div className={`${mode === 'pvp' ? 'bg-[rgba(195,154,82,0.22)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-full border border-[rgba(154,116,72,0.24)] px-4 py-2 text-center text-sm`}>
-          {s.shotPvp}
-        </div>
-        <div className={`${mode === 'solo' ? 'bg-[rgba(195,154,82,0.22)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-full border border-[rgba(154,116,72,0.24)] px-4 py-2 text-center text-sm`}>
-          {s.shotSolo}
-        </div>
+      <div className="psy-serif text-base text-[var(--psy-ink)]">{s.shotProductName}</div>
+      <div className="h-1.5 w-16 rounded-full bg-[rgba(195,154,82,0.4)]" />
+      <div className="rounded-full bg-[rgba(200,155,93,0.32)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">
+        {s.shotStartAssessBtn}
       </div>
+      <div className="text-center text-[9px] text-[var(--psy-muted)]">{s.shotHomeHint}</div>
     </div>
   );
 
-  const identityForm = (
+  // ② 輸入學號：答題前只輸入一次。
+  const studentId = (
     <div className="space-y-3">
-      <div className="psy-serif text-sm text-[var(--psy-ink)]">{s.shotPlayerInfo}</div>
-      <div className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2">
-        <div className="text-[9px] text-[var(--psy-muted)]">{s.shotStudentId}</div>
-        <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{s.shotEnterStudentId}</div>
+      <div className="psy-serif text-center text-sm text-[var(--psy-ink)]">{s.shotStudentIdTitle}</div>
+      <div className="rounded-xl border border-[rgba(200,155,93,0.4)] bg-[var(--psy-card-content)] px-3 py-3 text-center text-xs text-[var(--psy-muted)]">
+        {s.shotStudentIdPlaceholder}
       </div>
-      <div className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2">
-        <div className="text-[9px] text-[var(--psy-muted)]">{s.shotConfirmStudentId}</div>
-        <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{s.shotReenterStudentId}</div>
+      <div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">
+        {s.shotStartAssessBtn}
+      </div>
+      <div className="text-center text-[9px] text-[var(--psy-muted)]">{s.shotStudentIdOnce}</div>
+    </div>
+  );
+
+  // ③ 人格畫像：五維條 + 聯機/單機/重測入口。
+  const portrait = (
+    <div className="space-y-2.5">
+      <div className="psy-serif text-center text-sm text-[var(--psy-ink)]">{s.shotPortraitTitle}</div>
+      <div className="space-y-1.5">
+        {DIMENSIONS.map((d) => (
+          <div key={d} className="flex items-center gap-2">
+            <span className="w-3 text-[9px] font-bold" style={{ color: DIMENSION_META[d].colorHex }}>{d}</span>
+            <div className="h-1.5 flex-1 rounded-full bg-[rgba(154,116,72,0.14)]">
+              <div className="h-full rounded-full" style={{ width: '60%', background: DIMENSION_META[d].colorHex }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-1.5 pt-1">
+        <div className={`${mode === 'pvp' ? 'bg-[rgba(195,154,82,0.3)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-lg border border-[rgba(154,116,72,0.2)] px-1 py-1.5 text-center text-[10px]`}>{s.shotPvp}</div>
+        <div className={`${mode === 'solo' ? 'bg-[rgba(195,154,82,0.3)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-lg border border-[rgba(154,116,72,0.2)] px-1 py-1.5 text-center text-[10px]`}>{s.shotSolo}</div>
+        <div className="rounded-lg border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-1 py-1.5 text-center text-[10px] text-[var(--psy-muted)]">{s.shotRetest}</div>
       </div>
     </div>
   );
 
-  const assessmentCheck = (
-    <div className="grid gap-2">
-      <div className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-3 py-2">
-        <div className="text-xs font-semibold text-emerald-300">{s.shotAssessedTrue}</div>
-        <div className="mt-1 text-[10px] leading-5 text-[var(--psy-ink-soft)]">{s.shotAssessedTrueBody}</div>
+  // ④-pvp 聯機房間設置：學號帶入(鎖) + 創建/加入 + 人數/輪數/揭示難度。
+  const roomSetup = (
+    <div className="space-y-2.5">
+      <div className="flex items-center justify-between rounded-lg border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-1.5">
+        <span className="text-[10px] text-[var(--psy-muted)]">{s.shotStudentId}</span>
+        <span className="text-[10px] text-[var(--psy-ink-soft)]">178023995 🔒</span>
       </div>
-      <div className="rounded-xl border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.08)] px-3 py-2">
-        <div className="text-xs font-semibold text-[var(--psy-accent)]">{s.shotAssessedFalse}</div>
-        <div className="mt-1 text-[10px] leading-5 text-[var(--psy-ink-soft)]">{s.shotAssessedFalseBody}</div>
+      <div className="grid grid-cols-2 gap-1.5">
+        <div className="rounded-lg bg-[rgba(60,45,25,0.85)] px-2 py-1.5 text-center text-[10px] font-semibold text-[#f5ecdc]">{s.shotCreateRoom}</div>
+        <div className="rounded-lg border border-[rgba(154,116,72,0.2)] px-2 py-1.5 text-center text-[10px] text-[var(--psy-muted)]">{s.shotJoinRoom}</div>
       </div>
+      <ShotRow label={s.shotMaxPlayersLabel} options={s.shotMaxPlayers} active={1} />
+      <ShotRow label={s.shotRoundsLabel} options={s.shotRounds} active={1} />
+      <ShotRow label={s.shotRevealLabel} options={s.shotReveals} active={0} />
     </div>
   );
 
-  const roomPanel = (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <div className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] p-3">
-        <div className="psy-serif text-xs text-[var(--psy-ink)]">{s.shotCreateRoom}</div>
-        <div className="mt-2 rounded-lg bg-[rgba(200,155,93,0.12)] px-3 py-2 text-center text-sm text-[var(--psy-accent)]">{s.shotRoomCode('4821')}</div>
-      </div>
-      <div className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] p-3">
-        <div className="psy-serif text-xs text-[var(--psy-ink)]">{s.shotJoinRoom}</div>
-        <div className="mt-2 rounded-lg border border-[rgba(200,155,93,0.2)] px-3 py-2 text-center text-xs text-[var(--psy-muted)]">{s.shotEnter4Code}</div>
-      </div>
-    </div>
-  );
-
+  // ⑤-pvp 開始對戰：座位（房主 + 玩家）+ 開始按鈕。
   const startGame = (
     <div className="space-y-3">
       <div className="grid grid-cols-4 gap-2">
-        {[s.shotYou, '11', '12', '13'].map((name, i) => (
-          <div key={name} className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2 py-3 text-center">
-            <div className="text-xs text-[var(--psy-ink)]">{name}</div>
-            <div className="mt-1 text-[9px] text-[var(--psy-muted)]">{i === 0 ? s.shotHost : s.shotReady}</div>
+        {[s.shotYou, 'P2', 'P3', 'P4'].map((name, i) => (
+          <div key={name} className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-1 py-3 text-center">
+            <div className="text-[11px] text-[var(--psy-ink)]">{name}</div>
+            {i === 0 && <div className="mt-1 text-[9px] text-[var(--psy-muted)]">{s.shotHost}</div>}
           </div>
         ))}
       </div>
-      <div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">{s.shotStartGame}</div>
-    </div>
-  );
-
-  const soloSetup = (
-    <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-2">
-        {s.shotDifficulties.map((label, i) => (
-          <div key={label} className={`${i === Math.min(index, 2) ? 'bg-[rgba(195,154,82,0.2)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-xl border border-[rgba(154,116,72,0.18)] px-2 py-3 text-center text-xs`}>
-            {label}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-4 gap-2">
-        {s.shotRounds.map((label, i) => (
-          <div key={label} className={`${i === 1 ? 'bg-[rgba(195,154,82,0.18)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-xl border border-[rgba(154,116,72,0.16)] px-2 py-2 text-center text-[10px]`}>
-            {label}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const soloOpponents = (
-    <div className="grid grid-cols-3 gap-2">
-      {s.shotAiOpponents.map((name) => (
-        <div key={name} className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2 py-4 text-center">
-          <div className="text-sm text-[var(--psy-ink)]">{name}</div>
-          <div className="mt-2 text-[9px] leading-4 text-[var(--psy-muted)]">{s.shotAiOpponentLabel}</div>
-        </div>
-      ))}
-    </div>
-  );
-
-  const soloStart = (
-    <div className="space-y-3">
-      {soloSetup}
       <div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">{s.shotStartMatch}</div>
     </div>
   );
 
-  const pvpFrames = [homeChoice, identityForm, assessmentCheck, roomPanel, startGame];
-  const soloFrames = [homeChoice, assessmentCheck, soloSetup, soloOpponents, soloStart];
+  // ④-solo 對戰大廳：AI 難度 / 輪數 / 看牌難度 + 對手檔案。
+  const soloLobby = (
+    <div className="space-y-2.5">
+      <ShotRow label={s.shotAiDifficultyLabel} options={s.shotDifficulties} active={0} />
+      <ShotRow label={s.shotRoundsLabel} options={s.shotRounds} active={1} />
+      <ShotRow label={s.shotRevealLabel} options={s.shotReveals} active={0} />
+      <div>
+        <div className="mb-1 text-[9px] text-[var(--psy-muted)]">{s.shotOpponentLabel}</div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {s.shotAiOpponents.map((name) => (
+            <div key={name} className="rounded-lg border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-1 py-2 text-center text-[10px] text-[var(--psy-ink-soft)]">
+              {name}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ⑤-solo 開始對戰：你 + 3 AI + 開始按鈕。
+  const soloStart = (
+    <div className="space-y-3">
+      <div className="grid grid-cols-4 gap-2">
+        {[s.shotYou, ...s.shotAiOpponents].map((name, i) => (
+          <div key={name} className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-1 py-3 text-center">
+            <div className="text-[11px] text-[var(--psy-ink)]">{name}</div>
+            <div className="mt-1 text-[9px] text-[var(--psy-muted)]">{i === 0 ? s.shotHost : s.shotAiOpponentLabel}</div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">{s.shotStartMatch}</div>
+    </div>
+  );
+
+  // 前 3 幀（測評 → 學號 → 畫像）聯機/單機共用，之後分岔。
+  const pvpFrames = [home, studentId, portrait, roomSetup, startGame];
+  const soloFrames = [home, studentId, portrait, soloLobby, soloStart];
   const frame = mode === 'pvp' ? pvpFrames[index] : soloFrames[index];
 
   return (
@@ -1305,7 +1338,7 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
   );
 }
 
-function StartFlowGuide({ s }: { s: TutStrings }) {
+function StartFlowGuide({ s, onEnterSandbox }: { s: TutStrings; onEnterSandbox: () => void }) {
   const [mode, setMode] = useState<'pvp' | 'solo'>('pvp');
   const [index, setIndex] = useState(0);
   const steps = mode === 'pvp' ? s.pvpFlow : s.soloFlow;
@@ -1407,6 +1440,20 @@ function StartFlowGuide({ s }: { s: TutStrings }) {
           </div>
         </motion.div>
       </div>
+
+      {/* 合併後的沙盒 CTA：先看完流程，再進沙盒打一回合。 */}
+      <div className="mt-5 flex flex-col gap-3 rounded-[1.2rem] border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.06)] p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="psy-serif text-sm font-semibold text-[var(--psy-ink)]">{s.sandboxCtaLead}</p>
+          <p className="mt-1 text-xs leading-5 text-[var(--psy-ink-soft)]">{s.ctaBody}</p>
+        </div>
+        <button
+          onClick={onEnterSandbox}
+          className="psy-btn psy-btn-accent psy-serif shrink-0 px-6 py-3 text-sm font-semibold"
+        >
+          {s.ctaButton}
+        </button>
+      </div>
     </div>
   );
 }
@@ -1479,23 +1526,8 @@ export default function TutorialPage() {
 
         {mode === 'list' && (
           <>
-            {/* 主 CTA */}
-            <div className="psy-panel psy-etched rounded-[1.6rem] p-6 text-center sm:p-7">
-              <h2 className="psy-serif text-2xl text-[var(--psy-ink)] sm:text-3xl">
-                {s.ctaTitle}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--psy-ink-soft)]">
-                {s.ctaBody}
-              </p>
-              <button
-                onClick={() => setMode('sandbox')}
-                className="psy-btn psy-btn-accent psy-serif mt-4 px-7 py-3 text-base font-semibold"
-              >
-                {s.ctaButton}
-              </button>
-            </div>
-
-            <StartFlowGuide s={s} />
+            {/* 先看流程（StartFlowGuide），沙盒 CTA 已合併到它的底部。 */}
+            <StartFlowGuide s={s} onEnterSandbox={() => setMode('sandbox')} />
 
             {/* 概念卡片 */}
             <div>

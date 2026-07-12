@@ -43,52 +43,55 @@ export const TUTORIAL_T = {
     prevStep: '上一步',
     nextStep: '下一步',
 
-    // ── PVP_FLOW ──
+    // ── PVP_FLOW ──（前 3 步與單機共用：測評 → 學號 → 畫像，之後才分岔）
     pvpFlow: [
       {
+        title: '開始測評',
+        body: '首次進入時，首頁只有一個「開始測評」入口。先完成人格測評，測評分數會決定你之後每個維度要湊幾張牌。',
+      },
+      {
+        title: '輸入學號',
+        body: '答題前輸入一次學號即可，用於記錄你的測評結果、方便課堂統計。請固定用同一台設備、同一個瀏覽器，不要清除緩存。',
+        note: '學號全程只輸入這一次，之後聯機 / 單機都會自動帶入，無需再填。',
+      },
+      {
+        title: '查看人格畫像',
+        body: '答完題進入「你的人格畫像」：五維雷達圖 + 各維度得分。這一頁底部就是「聯機對戰 / 單機對戰 / 重新測評」的入口。',
+        note: '測評分數會轉成每個維度的目標張數，所以每個人的胡牌路線都不同。',
+      },
+      {
         title: '進入聯機對戰',
-        body: '從首頁點「聯機對戰」。這裏不是直接進牌桌，而是先進入聯機大廳。',
+        body: '在畫像頁點「聯機對戰」。學號已從測評帶入，選好頭像與人格牌堆後，創建或加入房間，並設定最多玩家數、遊戲輪數、揭示難度。',
       },
       {
-        title: '填寫身份信息',
-        body: '只輸入學號，並再次輸入學號確認。學號用於防止同一個人同時佔兩個活動房間的座位。',
-      },
-      {
-        title: '檢查是否完成測評',
-        body: '已測評：系統會用你的五維分數生成本局目標張數。未測評：會先引導去測評，否則你的目標張數沒有依據。',
-        note: '測評結果會影響每個維度需要歸檔幾張，所以不同玩家的胡牌路線不同。',
-      },
-      {
-        title: '創建房間 / 加入房間',
-        body: '房主創建房間後拿到房間碼並等待其他玩家；非房主輸入房間碼加入。4 個真實玩家坐齊後才適合開始。',
-      },
-      {
-        title: '開始遊戲',
-        body: '房主負責點開始。進入牌桌後，所有人的手牌與棄牌默認直接顯示人格 tag（明牌）——房主也可改為半公開或隱藏，那時就得靠描述、記憶和每回合查看能力判斷。',
+        title: '開始對戰',
+        body: '房主創建房間後拿到房間碼，分享給同學加入；人齊後房主點「開始對戰」進入牌桌。默認明牌（全場人格公開），房主也可改半公開或隱藏。',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
-    // ── SOLO_FLOW ──
+    // ── SOLO_FLOW ──（前 3 步與聯機共用）
     soloFlow: [
       {
+        title: '開始測評',
+        body: '首次進入時，首頁只有一個「開始測評」入口。先完成人格測評，測評分數會決定你之後每個維度要湊幾張牌。',
+      },
+      {
+        title: '輸入學號',
+        body: '答題前輸入一次學號即可，用於記錄你的測評結果、方便課堂統計。請固定用同一台設備、同一個瀏覽器，不要清除緩存。',
+        note: '學號全程只輸入這一次，之後聯機 / 單機都會自動帶入，無需再填。',
+      },
+      {
+        title: '查看人格畫像',
+        body: '答完題進入「你的人格畫像」：五維雷達圖 + 各維度得分。這一頁底部就是「聯機對戰 / 單機對戰 / 重新測評」的入口。',
+        note: '測評分數會轉成每個維度的目標張數，所以每個人的胡牌路線都不同。',
+      },
+      {
         title: '進入單機對戰',
-        body: '從首頁點「單機對戰」。如果沒有測評結果，會先去測評；如果已經測評，直接進入單機設置大廳。',
+        body: '在畫像頁點「單機對戰」進入對戰大廳。設定 AI 難度（簡單 / 中等 / 困難）、遊戲輪數、看牌難度，並查看三名 AI 對手檔案（大雄 / 陳教授 / 老林）。',
       },
       {
-        title: '選擇 AI 難度',
-        body: '簡單偏隨機，中等會做基礎歸檔判斷，困難會更積極推測你的牌。',
-      },
-      {
-        title: '選擇輪數',
-        body: '5 / 10 / 15 / 無限都可以。無限會一直打到有人食胡或牌局自然結束。',
-      },
-      {
-        title: '確認對手陣容',
-        body: '單機固定是你 + 3 個 AI。AI 會按自己的策略抽牌、棄牌、碰牌和食胡。',
-      },
-      {
-        title: '開始遊戲',
-        body: '進入牌桌後流程和聯機一致：抽牌、查看、歸檔、棄牌、響應別人棄牌。',
+        title: '開始對戰',
+        body: '設定好後點「開始對戰」直接進入牌桌。單機固定是你 + 3 個 AI，流程與聯機一致：抽牌、查看、歸檔、棄牌、響應別人棄牌。',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -284,28 +287,33 @@ export const TUTORIAL_T = {
     shotProductName: '人格麻將',
     shotPvp: '聯機對戰',
     shotSolo: '單機對戰',
-    shotPlayerInfo: '玩家信息',
     shotStudentId: '學號',
-    shotEnterStudentId: '請輸入學號',
-    shotConfirmStudentId: '確認學號',
-    shotReenterStudentId: '再次輸入學號確認',
-    shotAssessedTrue: '已完成測評',
-    shotAssessedTrueBody: '直接生成本局目標張數。',
-    shotAssessedFalse: '未完成測評',
-    shotAssessedFalseBody: '先去答題，再回到大廳。',
+    shotStartAssessBtn: '開始測評',
+    shotHomeHint: '首次進入只有這一個入口',
+    shotStudentIdTitle: '輸入學號',
+    shotStudentIdPlaceholder: '例如 17094905G',
+    shotStudentIdOnce: '全程只輸入這一次',
+    shotPortraitTitle: '你的人格畫像',
+    shotRetest: '重新測評',
+    shotMaxPlayersLabel: '最多玩家',
+    shotMaxPlayers: ['2 人', '3 人', '4 人'] as readonly string[],
+    shotRevealLabel: '揭示難度',
+    shotReveals: ['明牌', '半公開', '隱藏'] as readonly string[],
+    shotAiDifficultyLabel: 'AI 難度',
+    shotRoundsLabel: '遊戲輪數',
+    shotOpponentLabel: '對手檔案',
     shotCreateRoom: '創建房間',
-    shotRoomCode: (code: string) => `房間碼 ${code}`,
     shotJoinRoom: '加入房間',
-    shotEnter4Code: '輸入 4 位房間碼',
     shotHost: '房主',
-    shotReady: '已就緒',
     shotStartGame: '開始遊戲',
     shotStartMatch: '開始對戰',
     shotYou: '你',
     shotDifficulties: ['簡單', '中等', '困難'] as readonly string[],
     shotRounds: ['5輪', '10輪', '15輪', '無限'] as readonly string[],
-    shotAiOpponents: ['Brian', 'Prof. Chen', 'Lin'] as readonly string[],
+    shotAiOpponents: ['大雄', '陳教授', '老林'] as readonly string[],
     shotAiOpponentLabel: 'AI 對手',
+    // 合併後的沙盒 CTA（流程指南底部）
+    sandboxCtaLead: '流程看明白了？進沙盒親手打一回合',
   },
   en: {
     // ── Header / footer ──
@@ -347,52 +355,55 @@ export const TUTORIAL_T = {
     prevStep: 'Previous',
     nextStep: 'Next',
 
-    // ── PVP_FLOW ──
+    // ── PVP_FLOW ──（first 3 steps shared with solo: assess → ID → profile）
     pvpFlow: [
       {
+        title: 'Start the Assessment',
+        body: 'On your first visit the home page has just one entry: "Start Assessment". Complete the personality assessment first — your scores decide how many cards each dimension will need later.',
+      },
+      {
+        title: 'Enter Your Student ID',
+        body: 'Before the questions, enter your student ID once. It records your assessment result for class statistics. Stick to the same device and browser, and do not clear your cache.',
+        note: 'The student ID is entered only this once — online and single-player both carry it over automatically, no need to type it again.',
+      },
+      {
+        title: 'View Your Personality Profile',
+        body: 'After the questions you reach "Your Personality Profile": a five-dimension radar chart plus per-dimension scores. The bottom of this page is where "Online Match / Single Player / Retest" live.',
+        note: 'Your scores turn into each dimension’s target count, so every player has a different path to a Win.',
+      },
+      {
         title: 'Enter Online Match',
-        body: 'Tap "Online Match" on the home page. This does not take you straight to the table — it opens the online lobby first.',
+        body: 'Tap "Online Match" on the profile page. Your student ID is carried over from the assessment; pick an avatar and personality deck, then create or join a room and set max players, rounds, and reveal difficulty.',
       },
       {
-        title: 'Fill in Your Identity',
-        body: 'Just enter your student ID, then re-enter it to confirm. The student ID prevents one person from occupying two active rooms at once.',
-      },
-      {
-        title: 'Check Whether You Have Been Assessed',
-        body: 'Assessed: the system uses your five-dimension scores to generate this game’s target counts. Not assessed: you are guided to the assessment first, otherwise your target counts have no basis.',
-        note: 'Your assessment result determines how many cards each dimension needs to declare, so different players have different paths to a Win.',
-      },
-      {
-        title: 'Create / Join a Room',
-        body: 'The host creates a room, gets a room code, and waits for others; non-hosts enter the room code to join. It is best to start once 4 real players are seated.',
-      },
-      {
-        title: 'Start the Game',
-        body: 'The host taps start. Once at the table, every hand and discard shows its personality tag by default (Open) — the host can switch to Half or Hidden, where you rely on descriptions, memory, and your per-turn view ability to judge.',
+        title: 'Start the Match',
+        body: 'The host creates a room, gets a room code, and shares it for others to join; once everyone is in, the host taps "Start Match" to enter the table. Open by default (all personalities public) — the host can switch to Half or Hidden.',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
-    // ── SOLO_FLOW ──
+    // ── SOLO_FLOW ──（first 3 steps shared with online）
     soloFlow: [
       {
+        title: 'Start the Assessment',
+        body: 'On your first visit the home page has just one entry: "Start Assessment". Complete the personality assessment first — your scores decide how many cards each dimension will need later.',
+      },
+      {
+        title: 'Enter Your Student ID',
+        body: 'Before the questions, enter your student ID once. It records your assessment result for class statistics. Stick to the same device and browser, and do not clear your cache.',
+        note: 'The student ID is entered only this once — online and single-player both carry it over automatically, no need to type it again.',
+      },
+      {
+        title: 'View Your Personality Profile',
+        body: 'After the questions you reach "Your Personality Profile": a five-dimension radar chart plus per-dimension scores. The bottom of this page is where "Online Match / Single Player / Retest" live.',
+        note: 'Your scores turn into each dimension’s target count, so every player has a different path to a Win.',
+      },
+      {
         title: 'Enter Single Player',
-        body: 'Tap "Single Player" on the home page. If you have no assessment result, you go to the assessment first; if already assessed, you go straight to the single-player setup lobby.',
+        body: 'Tap "Single Player" on the profile page to open the battle lobby. Set the AI difficulty (Easy / Medium / Hard), rounds, and view difficulty, and check the three AI opponent profiles (Brian / Prof. Chen / Lin).',
       },
       {
-        title: 'Choose AI Difficulty',
-        body: 'Easy is more random, Medium makes basic declaration judgements, and Hard guesses your cards more aggressively.',
-      },
-      {
-        title: 'Choose the Number of Rounds',
-        body: '5 / 10 / 15 / Unlimited all work. Unlimited keeps going until someone Wins or the game ends naturally.',
-      },
-      {
-        title: 'Confirm the Opponents',
-        body: 'Single player is always you + 3 AI opponents. The AI draws, discards, Pongs, and Wins by its own strategy.',
-      },
-      {
-        title: 'Start the Game',
-        body: 'Once at the table the flow matches online play: draw, view, declare, discard, and respond to others’ discards.',
+        title: 'Start the Match',
+        body: 'Once set, tap "Start Match" to go straight to the table. Single player is always you + 3 AI, and the flow matches online play: draw, view, declare, discard, and respond to others’ discards.',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -588,21 +599,24 @@ export const TUTORIAL_T = {
     shotProductName: 'Personalities Mahjong',
     shotPvp: 'Online Match',
     shotSolo: 'Single Player',
-    shotPlayerInfo: 'Player Info',
     shotStudentId: 'Student ID',
-    shotEnterStudentId: 'Enter your student ID',
-    shotConfirmStudentId: 'Confirm Student ID',
-    shotReenterStudentId: 'Re-enter your student ID',
-    shotAssessedTrue: 'Assessment completed',
-    shotAssessedTrueBody: 'Generate this game’s target counts directly.',
-    shotAssessedFalse: 'Assessment not completed',
-    shotAssessedFalseBody: 'Take the test first, then return to the lobby.',
+    shotStartAssessBtn: 'Start Assessment',
+    shotHomeHint: 'The only entry on first visit',
+    shotStudentIdTitle: 'Enter Student ID',
+    shotStudentIdPlaceholder: 'e.g. 17094905G',
+    shotStudentIdOnce: 'Entered only once, ever',
+    shotPortraitTitle: 'Your Personality Profile',
+    shotRetest: 'Retest',
+    shotMaxPlayersLabel: 'Max Players',
+    shotMaxPlayers: ['2P', '3P', '4P'] as readonly string[],
+    shotRevealLabel: 'Reveal',
+    shotReveals: ['Open', 'Half', 'Hidden'] as readonly string[],
+    shotAiDifficultyLabel: 'AI Difficulty',
+    shotRoundsLabel: 'Rounds',
+    shotOpponentLabel: 'Opponents',
     shotCreateRoom: 'Create Room',
-    shotRoomCode: (code: string) => `Room code ${code}`,
     shotJoinRoom: 'Join Room',
-    shotEnter4Code: 'Enter the 4-digit room code',
     shotHost: 'Host',
-    shotReady: 'Ready',
     shotStartGame: 'Start Game',
     shotStartMatch: 'Start Match',
     shotYou: 'You',
@@ -610,5 +624,7 @@ export const TUTORIAL_T = {
     shotRounds: ['5 rds', '10 rds', '15 rds', 'Unlimited'] as readonly string[],
     shotAiOpponents: ['Brian', 'Prof. Chen', 'Lin'] as readonly string[],
     shotAiOpponentLabel: 'AI opponent',
+    // Merged sandbox CTA (bottom of the flow guide)
+    sandboxCtaLead: 'Got the flow? Play a hands-on round in the sandbox',
   },
 } as const;
