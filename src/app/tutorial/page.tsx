@@ -593,8 +593,18 @@ function InteractiveSandbox({
               className="flex cursor-pointer flex-col items-center gap-1.5"
             >
               <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">{s.drawPileClick}</span>
-              <div className="tut-spotlight rounded-[0.55rem]">
+              <div className="relative tut-spotlight rounded-[0.55rem]">
                 <TarotCard faceDown text="" width={73} />
+                {/* 手指 👆 在牌堆下部上下浮動、指回牌堆（與正式對局 DrawPile 一致）。黃色調淺：降飽和+提亮。 */}
+                <motion.div
+                  aria-hidden
+                  className="pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 select-none text-3xl sm:text-4xl"
+                  style={{ bottom: '0.9rem', filter: 'saturate(0.5) brightness(1.15) drop-shadow(0 2px 4px rgba(96,72,38,0.25))' }}
+                  animate={{ y: [4, -6, 4] }}
+                  transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut' }}
+                >
+                  👆
+                </motion.div>
               </div>
             </button>
           </div>
