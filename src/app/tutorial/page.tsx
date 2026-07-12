@@ -460,8 +460,8 @@ function InteractiveSandbox({
       )}
     </AnimatePresence>
 
-    {/* 聚焦遮罩：壓暗頁面外圍，沙盒抬到遮罩之上保持明亮（配合卡片聚焦調暗）*/}
-    <div className="fixed inset-0 z-[35] bg-[rgba(58,48,32,0.34)] pointer-events-none" />
+    {/* 原「聚焦遮罩」已移除：棕色半透 (58,48,32,.34) 疊在暖米背景上會發髒（橄欖灰）。
+        lightmode 下不壓暗頁面，聚焦交給面板陰影 + 卡片級 opacity 淡化即可。*/}
     <motion.div
       key="sandbox"
       initial={{ opacity: 0, y: 16 }}
@@ -689,6 +689,18 @@ function InteractiveSandbox({
           </motion.div>
         )}
 
+        {/* 棄牌確認：選了一張後出現「取消 / 棄牌」——放在手牌上方，與正式對局的動作行一致 */}
+        {state.scene === 'discard-confirm' && (
+          <div className="flex justify-center gap-2">
+            <button onClick={() => dispatch({ type: 'cancel-discard' })} className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs">
+              {s.btnCancel}
+            </button>
+            <button onClick={() => dispatch({ type: 'confirm-discard' })} className="psy-btn psy-btn-accent tut-spotlight px-4 py-1.5 text-xs font-bold">
+              {s.btnDiscard}
+            </button>
+          </div>
+        )}
+
         {/* 截胡碰第一步：選人格維度（教學步——只開放正確維度，引導點擊；
             與自摸碰第一步同構，讓「碰=先選維度再選牌」的肌肉記憶一致） */}
         {state.scene === 'claim-dimension' && state.claimDim && (
@@ -808,18 +820,6 @@ function InteractiveSandbox({
 
         {/* 手牌下方按鈕排：恆佔一行高度，按鈕出現/消失時面板底部不再忽高忽低 */}
         <div className="flex min-h-[46px] flex-col justify-center">
-
-        {/* 棄牌確認：選了一張後出現「棄牌」按鈕 */}
-        {state.scene === 'discard-confirm' && (
-          <div className="flex justify-center gap-2">
-            <button onClick={() => dispatch({ type: 'cancel-discard' })} className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs">
-              {s.btnCancel}
-            </button>
-            <button onClick={() => dispatch({ type: 'confirm-discard' })} className="psy-btn psy-btn-accent tut-spotlight px-4 py-1.5 text-xs font-bold">
-              {s.btnDiscard}
-            </button>
-          </div>
-        )}
 
         {/* 回合結束 → 進入截胡演示 */}
         {state.scene === 'turn-done' && (
@@ -1204,8 +1204,6 @@ function ShotRow({ label, options, active }: { label: string; options: readonly 
 }
 
 function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: number; s: TutStrings }) {
-  const frameTitle = mode === 'pvp' ? s.shotPvpTitle : s.shotSoloTitle;
-
   // ① 首頁：首次進入只有「開始測評」一個入口。
   const home = (
     <div className="space-y-3">
@@ -1259,7 +1257,7 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
     <div className="space-y-2.5">
       <div className="flex items-center justify-between rounded-lg border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-1.5">
         <span className="text-[10px] text-[var(--psy-muted)]">{s.shotStudentId}</span>
-        <span className="text-[10px] text-[var(--psy-ink-soft)]">178023995 🔒</span>
+        <span className="text-[10px] text-[var(--psy-ink-soft)]">17094905G 🔒</span>
       </div>
       <div className="grid grid-cols-2 gap-1.5">
         <div className="rounded-lg bg-[rgba(60,45,25,0.85)] px-2 py-1.5 text-center text-[10px] font-semibold text-[#f5ecdc]">{s.shotCreateRoom}</div>
@@ -1327,10 +1325,6 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
 
   return (
     <div className="rounded-[1.2rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,var(--psy-card),#efe4cf)] p-3 shadow-[0_14px_28px_rgba(96,72,38,0.12)]">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="psy-serif text-[10px] text-[var(--psy-accent)]">{frameTitle}</span>
-        <span className="rounded-full border border-[rgba(200,155,93,0.18)] px-2 py-0.5 text-[9px] text-[var(--psy-muted)]">{s.shotStaticBadge}</span>
-      </div>
       <div className="min-h-[12rem] rounded-[1rem] border border-[rgba(154,116,72,0.14)] bg-[linear-gradient(180deg,var(--psy-card-content),#f8f1e4)] p-4 shadow-[inset_0_0_0_1px_rgba(255,250,240,0.62)]">
         {frame}
       </div>
