@@ -848,6 +848,8 @@ function InteractiveSandbox({
       {successToast && (
         <motion.div
           key={successToast}
+          role="status"
+          aria-live="polite"
           initial={{ opacity: 0, y: -16, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10 }}
@@ -880,7 +882,7 @@ function InteractiveSandbox({
         {/* 旁白框：min-h 鎖一行高度（有無旁白欄高都不變，貼底欄不再上下彈）；
             mode="wait" 讓舊句完全退場後新句再進——默認 sync 模式會新舊同屏疊放
             ~220ms，欄高瞬間翻倍、舊句一閃而過（錄屏裏的「一閃一閃」）。 */}
-        <div className="min-h-[40px]">
+        <div className="min-h-[40px]" role="status" aria-live="polite">
           <AnimatePresence mode="wait">
             {state.feedback && (
               <motion.p
