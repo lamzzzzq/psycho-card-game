@@ -52,7 +52,7 @@
 | 25 | Openness | + | I have excellent ideas. | 我常有絕佳的點子。 |
 | 26 | Extraversion | − | I have little to say. | 我沒什麼話說。 |
 | 27 | Agreeableness | + | I have a soft heart. | 我有顆柔軟的心。 |
-| 28 | Conscientiousness | − | I often forget to put things back in their proper place. | 我常忘記物歸原處。 |
+| 28 | Conscientiousness | − | I often forget to put things back in the right place. | 我常忘記物歸原處。 |
 | 29 | Neuroticism | + | I get upset easily. | 我容易感到悶悶不樂。 |
 | 30 | Openness | − | I do not have a good imagination. | 我想像力欠佳。 |
 | 31 | Extraversion | + | I talk to a lot of different people at parties. | 在聚會中我會跟許多不同的人說話。 |
