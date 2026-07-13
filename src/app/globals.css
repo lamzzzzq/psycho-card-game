@@ -41,7 +41,9 @@ body {
 }
 
 body {
-  background: var(--psy-page-bg);
+  /* 纯色兜底；页面渐变移到 ::before 全页覆盖 —— body/canvas 背景传播会把渐变按视口高铺，
+     内容超高时视口底边会露出纯色形成接缝，故不在 body 上放渐变。 */
+  background: var(--psy-bg);
   color: var(--psy-ink);
   isolation: isolate;
   position: relative;
@@ -49,20 +51,20 @@ body {
 
 body::before {
   content: "";
-  position: fixed;
+  /* absolute 覆盖整页高度（非 fixed / 非 canvas 传播）→ 渐变按整页铺满，页面超高时视口底边不再有接缝。 */
+  position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   background:
-    linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.16)),
     repeating-linear-gradient(
       90deg,
       transparent 0,
       transparent 54px,
-      rgba(120, 90, 50, 0.018) 55px,
+      rgba(120, 90, 50, 0.02) 55px,
       transparent 56px
-    );
-  opacity: 0.42;
+    ),
+    var(--psy-page-bg);
 }
 
 body > * {

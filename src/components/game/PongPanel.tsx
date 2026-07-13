@@ -19,6 +19,8 @@ interface PongPanelProps {
   onResolveAI: () => void;
   /** Solo play waits for a decision; PVP can retain a timed claim window. */
   autoAdvance?: boolean;
+  /** 明牌难度下弃牌堆公开人格 → 判读窗口里这张弃牌也应显示维度 tag。 */
+  revealPendingDimension?: boolean;
   locale?: Locale;
 }
 
@@ -31,6 +33,7 @@ export function PongPanel({
   onSkip,
   onResolveAI,
   autoAdvance = true,
+  revealPendingDimension = false,
   locale = 'zh',
 }: PongPanelProps) {
   const t = STRINGS[locale].game;
@@ -82,7 +85,7 @@ export function PongPanel({
       <div className="flex items-center gap-4 sm:gap-6">
         <div className="flex flex-col items-center">
           <div className="rounded-xl p-1" style={{ backgroundColor: 'rgba(200, 155, 93, 0.08)', boxShadow: 'inset 0 0 0 1px rgba(200,155,93,0.18)' }}>
-            <TarotCard {...cardToTarotProps(pendingCard, locale)} width={108} />
+            <TarotCard {...cardToTarotProps(pendingCard, locale)} width={108} revealedDimension={revealPendingDimension ? pendingDim : null} />
           </div>
         </div>
 

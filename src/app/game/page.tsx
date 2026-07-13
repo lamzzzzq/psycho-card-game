@@ -624,6 +624,7 @@ export default function GamePage() {
               onSkip={handleSkipPong}
               onResolveAI={handleResolvePongAI}
               autoAdvance={false}
+              revealPendingDimension={revealDifficulty === 'open'}
               locale={locale}
             />
           )}
