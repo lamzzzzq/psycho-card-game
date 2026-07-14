@@ -1,0 +1,33 @@
+name: Supabase Keep-Alive
+
+# 防止 Supabase 免费项目「7 天闲置自动暂停」：每天查一次数据库，保持项目活跃，
+# 免去每次课前手动登入 resume。用的是公开 anon key（已内嵌前端 bundle、非机密，
+# 数据由 RLS 保护），所以直接内联，无需配置 GitHub Secret。
+#
+# 注意：若仓库连续 60 天无提交，GitHub 会自动停用定时 workflow —— 届时项目会再次
+# 可能被暂停；正常开发期间不受影响。长期休眠可改用外部 uptime 监控或升 Pro（不暂停）。
+
+on:
+  schedule:
+    - cron: '0 6 * * *'      # 每天 UTC 06:00 跑一次（远低于 7 天阈值，容忍 GitHub cron 偶发延迟）
+  workflow_dispatch: {}       # 也可在 Actions 页手动触发
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST (keeps project awake)
+        env:
+          SUPABASE_URL: https://msyrowizejzgxedmnjne.supabase.co
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zeXJvd2l6ZWp6Z3hlZG1uam5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjIyMzksImV4cCI6MjA5MDU5ODIzOX0.UAnLihvsMbQpZNH8Y23dlg5dKqNAFMR369-2vLw1RJw
+        run: |
+          HTTP=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/game_participants?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "Supabase responded HTTP $HTTP"
+          if [ "$HTTP" != "200" ] && [ "$HTTP" != "206" ]; then
+            echo "::error::Unexpected status $HTTP (project may be paused or key invalid)"
+            exit 1
+          fi
+          echo "Keep-alive OK."
