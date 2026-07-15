@@ -43,20 +43,20 @@ export default function ResultsPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center px-6 py-8">
-      <button
-        onClick={() => router.push('/')}
-        className="psy-btn psy-btn-ghost psy-serif fixed left-4 top-4 z-40 px-3 py-1.5 text-xs sm:left-8 sm:top-8"
-      >
-        ← {t.backHome}
-      </button>
+    <div className="flex flex-1 flex-col items-center px-6 py-10">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-5xl space-y-8"
       >
-        <div className="text-center">
-          <h1 className="psy-serif text-4xl text-[var(--psy-ink)]">
+        <div className="space-y-3">
+          <button
+            onClick={() => router.push('/')}
+            className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
+          >
+            ← {t.backHome}
+          </button>
+          <h1 className="psy-serif text-4xl leading-none text-[var(--psy-ink)] sm:text-5xl">
             {t.title}
           </h1>
         </div>

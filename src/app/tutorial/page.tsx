@@ -1509,8 +1509,13 @@ export default function TutorialPage() {
             手牌第二行被指引欄蓋住」的元兇之一——沙盒裏收成一行小標題。 */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
+            {/* 「Big Five」用 nowrap 包裹，避免在窄屏被拆成「Big / Five」两行 */}
             <h1 className={`psy-serif text-[var(--psy-ink)] ${mode === 'sandbox' ? 'text-xl sm:text-2xl' : 'text-3xl sm:text-5xl'}`}>
-              {s.title}
+              {s.title.split('Big Five').flatMap((part, i) =>
+                i === 0
+                  ? [part]
+                  : [<span key={i} className="whitespace-nowrap">Big Five</span>, part]
+              )}
             </h1>
           </div>
           <div className="flex items-center gap-2">

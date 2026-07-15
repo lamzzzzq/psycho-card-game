@@ -96,18 +96,19 @@ export default function LobbyPage() {
         {/* 对手档案：结构上对应联机的「玩家信息」面板（先给上下文，再设置参数） */}
         <section className="psy-panel psy-etched space-y-4 rounded-[1.6rem] p-6">
           <p className="psy-eyebrow text-[10px]">{s.opponentsLabel}</p>
-          <div className="grid gap-2 sm:grid-cols-3">
+          {/* 对手档案：纯展示、不可点击（扁平非交互卡，头像左+名字/简介右，三端统一横向） */}
+          <div className="grid gap-2.5 sm:grid-cols-3">
             {AI_PERSONAS.map((persona) => (
               <div
                 key={persona.id}
-                className="psy-tile flex items-center gap-3 px-3 py-3 text-left sm:flex-col sm:items-start sm:gap-2"
+                className="flex items-center gap-3 rounded-[1.1rem] border border-[var(--psy-border)] bg-[var(--psy-card-content)] px-3 py-3 text-left"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[var(--psy-accent-soft)] text-xl">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[var(--psy-accent-soft)] text-2xl">
                   {persona.avatar}
                 </div>
                 <div className="min-w-0">
                   <div className="psy-serif text-sm text-[var(--psy-ink)]">{loc === 'en' ? persona.nameEn : persona.name}</div>
-                  <div className="mt-0.5 text-[10px] leading-snug text-[var(--psy-muted)]">{loc === 'en' ? persona.descriptionEn : persona.description}</div>
+                  <div className="mt-0.5 text-[11px] leading-snug text-[var(--psy-muted)]">{loc === 'en' ? persona.descriptionEn : persona.description}</div>
                 </div>
               </div>
             ))}
