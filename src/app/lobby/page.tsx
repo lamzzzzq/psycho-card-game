@@ -178,7 +178,7 @@ export default function LobbyPage() {
                   className={`psy-tile flex flex-col items-start gap-0.5 px-3 py-2.5 text-left ${revealDifficulty === opt.value ? 'is-active' : ''}`}
                 >
                   <span className="psy-serif text-sm text-[var(--psy-ink)]">{opt.label}</span>
-                  <span className="text-[10px] leading-4 text-[var(--psy-muted)]">{opt.desc}</span>
+                  <span className="text-[10px] leading-4 text-[var(--psy-muted)] [word-break:keep-all]">{opt.desc}</span>
                 </button>
               ))}
             </div>

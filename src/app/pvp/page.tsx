@@ -483,7 +483,7 @@ export default function PvpLobbyPage() {
                     className={`psy-tile flex flex-col items-start gap-0.5 px-3 py-2.5 text-left ${difficulty === d.id ? 'is-active' : ''}`}
                   >
                     <span className="psy-serif text-sm text-[var(--psy-ink)]">{d.name}</span>
-                    <span className="text-[10px] leading-4 text-[var(--psy-muted)]">{d.sub}</span>
+                    <span className="text-[10px] leading-4 text-[var(--psy-muted)] [word-break:keep-all]">{d.sub}</span>
                   </button>
                 ))}
               </div>
