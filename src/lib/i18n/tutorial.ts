@@ -6,7 +6,7 @@ export const TUTORIAL_T = {
   zh: {
     // ── 頁眉 / 頁腳 ──
     eyebrow: 'Tutorial',
-    title: '人格麻將 · 教學',
+    title: '人格麻將 · Big Five · 教學',
     rulesHardcopy: '規則 Hardcopy',
     backHome: '返回首頁',
 
@@ -319,7 +319,7 @@ export const TUTORIAL_T = {
   en: {
     // ── Header / footer ──
     eyebrow: 'Tutorial',
-    title: 'Personalities Mahjong · Tutorial',
+    title: 'Personalities Mahjong · Big Five · Tutorial',
     rulesHardcopy: 'Rules Hardcopy',
     backHome: 'Back to Home',
 

@@ -1509,11 +1509,6 @@ export default function TutorialPage() {
             手牌第二行被指引欄蓋住」的元兇之一——沙盒裏收成一行小標題。 */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            {mode !== 'sandbox' && (
-              <p className="psy-serif text-[11px] uppercase tracking-[0.42em] text-[var(--psy-ink-soft)] sm:text-xs">
-                {s.eyebrow}
-              </p>
-            )}
             <h1 className={`psy-serif text-[var(--psy-ink)] ${mode === 'sandbox' ? 'text-xl sm:text-2xl' : 'text-3xl sm:text-5xl'}`}>
               {s.title}
             </h1>
