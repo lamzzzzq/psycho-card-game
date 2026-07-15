@@ -535,7 +535,7 @@ function InteractiveSandbox({
             把它的結構補成第三個影子即可。 */}
         <div className="grid">
           {/* 影子 A：自摸碰步 = 橫幅 + 選維度面板（僅複製佔位結構，不可交互） */}
-          <div aria-hidden className="invisible pointer-events-none col-start-1 row-start-1 space-y-3">
+          <div aria-hidden className="hidden pointer-events-none col-start-1 row-start-1 space-y-3 sm:block sm:invisible">
             <div className="rounded-xl py-1.5 text-center">
               <span className="psy-serif text-base font-black tracking-[0.18em]">{s.opSelfPong}</span>
             </div>
@@ -552,7 +552,7 @@ function InteractiveSandbox({
             </div>
           </div>
           {/* 影子 B：食胡步 = 橫幅 + 食胡卡面板 */}
-          <div aria-hidden className="invisible pointer-events-none col-start-1 row-start-1 space-y-3">
+          <div aria-hidden className="hidden pointer-events-none col-start-1 row-start-1 space-y-3 sm:block sm:invisible">
             <div className="rounded-xl py-1.5 text-center">
               <span className="psy-serif text-base font-black tracking-[0.18em]">{s.opHu}</span>
             </div>
@@ -651,15 +651,11 @@ function InteractiveSandbox({
         )}
 
         {/* 看牌模式对照：把「看 4 张永久保留 / 看 2 张不保留」两条规则常驻显示在看牌步，
-            让两种模式都出现在 UI 里（当前示範用隱藏·看 2 張，高亮那条）。*/}
+            让两种模式都出现在 UI 里（当前示範用隱藏·看 2 張，高亮那条）。紧凑两行、不换行。*/}
         {(state.scene === 'viewing' || state.scene === 'view-picking') && (
-          <div className="mx-auto mt-2 flex max-w-md flex-col gap-1.5 sm:flex-row sm:justify-center">
-            <span className="rounded-full border border-[var(--psy-border)] bg-[var(--psy-card-content)] px-3 py-1 text-center text-[11px] text-[var(--psy-muted)]">
-              {s.revealHalfNote}
-            </span>
-            <span className="rounded-full border border-[rgba(200,155,93,0.4)] bg-[rgba(200,155,93,0.1)] px-3 py-1 text-center text-[11px] font-medium text-[var(--psy-accent)]">
-              {s.revealHiddenNote}
-            </span>
+          <div className="mx-auto mt-2 flex w-fit max-w-full flex-col gap-1 rounded-xl border border-[var(--psy-border)] bg-[var(--psy-card-content)] px-4 py-2 text-[11px] leading-tight">
+            <span className="whitespace-nowrap text-[var(--psy-muted)]">{s.revealHalfNote}</span>
+            <span className="whitespace-nowrap font-medium text-[var(--psy-accent)]">{s.revealHiddenNote}</span>
           </div>
         )}
 
