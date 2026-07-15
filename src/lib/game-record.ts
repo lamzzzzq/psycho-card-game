@@ -82,10 +82,40 @@ function writePending(items: SaveGameSessionInput[]) {
 }
 
 function bufferForRetry(input: SaveGameSessionInput) {
-  const items = readPending();
+  // 同 sessionId 的舊條目替換掉（pagehide 可能反覆觸發），避免重複行
+  const items = readPending().filter((it) => it.sessionId !== input.sessionId);
   items.push(input);
   // 上限 10 局，老的丟掉避免無限增長
   writePending(items.slice(-10));
+}
+
+function removePending(sessionId: string) {
+  const items = readPending();
+  const next = items.filter((it) => it.sessionId !== sessionId);
+  if (next.length !== items.length) writePending(next);
+}
+
+/**
+ * 同步把一局寫入重傳緩衝（不碰網絡）。給 pagehide/beforeunload 用——
+ * 頁面卸載時 async 網絡請求活不到返回，先落 localStorage，下次啓動
+ * retryPendingSaves() 補傳。調用方必須傳入穩定 sessionId（重複調用去重）。
+ */
+export function bufferPendingSave(input: SaveGameSessionInput & { sessionId: string }) {
+  bufferForRetry(input);
+}
+
+/**
+ * 清掉緩衝裏某局的「中斷快照」（winner=null 且 startedAt 匹配）。
+ * host 掉線前 pagehide 存過中斷快照，但之後成功恢復（對局繼續/正常打完）
+ * 時必須調這個，否則下次啓動會把「已復活的局」當中斷局補傳，造成
+ * 同一局既有完整記錄又有中斷記錄。
+ */
+export function removePendingInterrupted(startedAt: number) {
+  const items = readPending();
+  const next = items.filter(
+    (it) => !(it.startedAt === startedAt && it.finalState.winner == null)
+  );
+  if (next.length !== items.length) writePending(next);
 }
 
 // 暫存存檔的最長重試時效。超過這個時間還沒傳上去的，丟棄不再補傳——
@@ -99,17 +129,61 @@ const MAX_RETRY_AGE_MS = 24 * 60 * 60 * 1000;
  * Call once on app startup (e.g. PVP lobby mount).
  * 過期（> MAX_RETRY_AGE_MS）的暫存存檔直接丟棄，不補傳。
  */
+// usePvpStore 的 zustand persist key（見該文件 persist name）。這裏直接讀
+// localStorage 而不 import store——避免循環依賴，也不受 rehydrate 時序影響。
+const PVP_STORE_KEY = 'psycho-card-pvp';
+
+// 補傳前先撤「其實還活着的局」的中斷快照：host 崩潰後 pagehide/hidden 落過
+// winner=null 快照，但 rawGameState 也持久化着、對局可以復活。若用戶重開後
+// 先落在大廳（retryPendingSaves 掛載點），不撤就會把活局誤傳成中斷局，之後
+// 打完又存一條完整行——同一局兩條記錄且 append-only 表刪不掉。
+function dropLiveGameSnapshot() {
+  try {
+    const raw = localStorage.getItem(PVP_STORE_KEY);
+    if (!raw) return;
+    const st = JSON.parse(raw)?.state;
+    const g = st?.isHost ? st?.rawGameState : null;
+    if (!g || g.phase === 'game-over') return;
+    const startedAt: number | undefined = g.gameStartedAt ?? g.actionLog?.[0]?.timestamp;
+    if (startedAt != null) removePendingInterrupted(startedAt);
+  } catch {}
+}
+
+let retryInFlight = false;
 export async function retryPendingSaves(): Promise<void> {
-  const items = readPending();
-  if (items.length === 0) return;
-  const now = Date.now();
-  const remaining: SaveGameSessionInput[] = [];
-  for (const item of items) {
-    if (now - item.startedAt > MAX_RETRY_AGE_MS) continue; // 過期，丟棄
-    const id = await saveOnce(item, SAVE_TIMEOUT_MS);
-    if (!id) remaining.push(item);
+  // 多個頁面掛載點（大廳/遊戲頁）可能同時觸發——串行化，避免同一條目雙發。
+  if (retryInFlight) return;
+  retryInFlight = true;
+  try {
+    dropLiveGameSnapshot();
+    const items = readPending();
+    if (items.length === 0) return;
+    // 舊版緩衝條目可能沒有 sessionId → 補一個並寫回，逐條移除才有錨點。
+    let mutated = false;
+    for (const it of items) {
+      if (!it.sessionId) {
+        it.sessionId =
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `${it.startedAt}-${it.roomCode ?? 'x'}`;
+        mutated = true;
+      }
+    }
+    if (mutated) writePending(items);
+    const now = Date.now();
+    for (const item of items) {
+      if (now - item.startedAt > MAX_RETRY_AGE_MS) {
+        removePending(item.sessionId!); // 過期，丟棄
+        continue;
+      }
+      const id = await saveOnce(item, SAVE_TIMEOUT_MS);
+      // 逐條成功逐條移除（而不是最後批量覆寫）：期間若有新對局結束寫入
+      // 緩衝，批量覆寫會把它沖掉。
+      if (id) removePending(item.sessionId!);
+    }
+  } finally {
+    retryInFlight = false;
   }
-  writePending(remaining);
 }
 
 /**
@@ -125,16 +199,35 @@ export async function saveGameSession(input: SaveGameSessionInput): Promise<stri
         ? crypto.randomUUID()
         : `${input.startedAt}-${input.roomCode ?? 'x'}`;
   }
+  // 先落緩衝、成功再移除（而非失敗才緩衝）：終局後 host 立刻關頁面的話，
+  // in-flight 網絡請求會死掉——緩衝先行保證下次啓動必能補傳。同 sessionId
+  // 重傳在 saveInner 裏被 23505 + participants 檢查去重，不會產生重複行。
+  bufferForRetry(input);
   const id = await saveOnce(input, SAVE_TIMEOUT_MS);
-  if (!id) {
-    console.warn('[game-record] save timed out or failed — buffered to localStorage for retry');
-    bufferForRetry(input);
+  if (id) {
+    removePending(input.sessionId);
+  } else {
+    console.warn('[game-record] save timed out or failed — kept in localStorage for retry');
   }
   return id;
 }
 
+// 按 sessionId 合流的在途寫入：saveGameSession 的 5s 超時只是「不等了」，
+// 底層 saveInner 仍在跑；若此時 retryPendingSaves 對同一 sessionId 再發一次，
+// 兩個 writer 會撞 saveInner 的 23505→查 participants 為空→都補寫 的 TOCTOU
+// 窗口，寫出重複行。合流後同一局同一時刻只有一個 saveInner，後來者等它的結果。
+const inFlightSaves = new Map<string, Promise<string | null>>();
+
 async function saveOnce(input: SaveGameSessionInput, timeoutMs: number): Promise<string | null> {
-  const work = saveInner(input);
+  const sid = input.sessionId;
+  let work = sid ? inFlightSaves.get(sid) : undefined;
+  if (!work) {
+    work = saveInner(input);
+    if (sid) {
+      inFlightSaves.set(sid, work);
+      void work.finally(() => inFlightSaves.delete(sid));
+    }
+  }
   const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
   return Promise.race([work, timeout]);
 }
