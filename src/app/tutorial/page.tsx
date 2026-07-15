@@ -1265,7 +1265,7 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
       {/* 迷你五維雷達（示意）：替代原橫條，更直觀——也與流程說明「五維雷達圖」一致。
           原本重複的「聯機/單機/重新測評」按鈕排已移除（正式頁底部才有）。*/}
       <div className="flex justify-center py-0.5">
-        <svg viewBox="0 0 100 100" className="h-24 w-24" aria-hidden>
+        <svg viewBox="0 0 100 100" className="h-44 w-44" aria-hidden>
           <polygon points="50,16 82.3,39.5 70,77.5 30,77.5 17.7,39.5" fill="none" stroke="rgba(154,116,72,0.22)" strokeWidth="1" />
           <polygon points="50,33 66.2,44.8 60,63.75 40,63.75 33.85,44.8" fill="none" stroke="rgba(154,116,72,0.16)" strokeWidth="0.8" />
           {([[50, 16], [82.3, 39.5], [70, 77.5], [30, 77.5], [17.7, 39.5]] as const).map(([x, y], i) => (
@@ -1352,7 +1352,7 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
   const frame = mode === 'pvp' ? pvpFrames[index] : soloFrames[index];
 
   return (
-    <div className="rounded-[1.2rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,var(--psy-card),#efe4cf)] p-3 shadow-[0_14px_28px_rgba(96,72,38,0.12)]">
+    <div className="mx-auto w-full max-w-md rounded-[1.2rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,var(--psy-card),#efe4cf)] p-3 shadow-[0_14px_28px_rgba(96,72,38,0.12)]">
       <div className="min-h-[12rem] rounded-[1rem] border border-[rgba(154,116,72,0.14)] bg-[linear-gradient(180deg,var(--psy-card-content),#f8f1e4)] p-4 shadow-[inset_0_0_0_1px_rgba(255,250,240,0.62)]">
         {frame}
       </div>
