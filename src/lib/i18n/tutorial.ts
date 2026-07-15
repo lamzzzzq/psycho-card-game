@@ -51,7 +51,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '輸入學號',
-        body: '答題前輸入一次學號即可，用於記錄你的測評結果、方便課堂統計。請固定用同一台設備、同一個瀏覽器，不要清除緩存。',
+        body: '答題前輸入一次學號即可，用於記錄你的測評結果、方便課堂統計。',
         note: '學號全程只輸入這一次，之後聯機 / 單機都會自動帶入，無需再填。',
       },
       {
@@ -61,11 +61,11 @@ export const TUTORIAL_T = {
       },
       {
         title: '進入聯機對戰',
-        body: '在畫像頁點「聯機對戰」。學號已從測評帶入，選好頭像與人格牌堆後，創建或加入房間，並設定最多玩家數、遊戲輪數、揭示難度。',
+        body: '在畫像頁點「聯機對戰」。學號已從測評帶入，創建或加入房間，並設定最多玩家數、遊戲輪數、揭示難度。',
       },
       {
         title: '開始對戰',
-        body: '房主創建房間後拿到房間碼，分享給同學加入；人齊後房主點「開始對戰」進入牌桌。默認明牌（全場人格公開），房主也可改半公開或隱藏。',
+        body: '房主創建房間後拿到房間碼，分享給其他玩家加入；人齊後房主點「開始對戰」進入牌桌。默認明牌（全場人格公開），房主也可改半公開或隱藏。',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -77,7 +77,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '輸入學號',
-        body: '答題前輸入一次學號即可，用於記錄你的測評結果、方便課堂統計。請固定用同一台設備、同一個瀏覽器，不要清除緩存。',
+        body: '答題前輸入一次學號即可，用於記錄你的測評結果、方便課堂統計。',
         note: '學號全程只輸入這一次，之後聯機 / 單機都會自動帶入，無需再填。',
       },
       {
@@ -87,7 +87,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '進入單機對戰',
-        body: '在畫像頁點「單機對戰」進入對戰大廳。設定 AI 難度（簡單 / 中等 / 困難）、遊戲輪數、看牌難度，並查看三名 AI 對手檔案（大雄 / 陳教授 / 老林）。',
+        body: '在畫像頁點「單機對戰」進入對戰大廳。設定 AI 難度、遊戲輪數、看牌難度，並查看三名 AI 對手檔案。',
       },
       {
         title: '開始對戰',
@@ -103,7 +103,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '牌桌',
-        body: '單機固定 4 人（你 + 3 個 AI）；聯機 1 到 3 名玩家。牌堆會依人數縮放。牌分兩類：帶顏色標記的「人格描述牌」（屬於某一維度），以及無維度歸屬的「檔案註記 / 知識牌」（中立，可棄可觀察對手風格）。',
+        body: '單機固定 4 人（你 + 3 個 AI）；聯機 1 到 3 名玩家。牌堆會依人數縮放。牌分兩類：帶顏色標記的「人格描述牌」（屬於某一維度），以及無維度歸屬的「知識牌」（中立，可棄可觀察對手風格）。',
         hint: '初始手牌張數 = 5 個維度目標張數之和 − 1。少的那張要靠「碰」或「食胡」補齊。',
       },
       {
@@ -133,8 +133,8 @@ export const TUTORIAL_T = {
         body: '聯機開房時，房主可選「揭示難度」，決定人格 tag 何時可見：\n• 明牌（預設）：全場公開——自己手牌 + 所有棄牌都直接顯示人格，無需查看。\n• 半公開：每回合可查看手上 4 張，看過的永久顯示（直到打出）；棄牌不顯示，需自行判斷。\n• 隱藏：每回合可看 2 張，一輪後自動重置；棄牌不顯示。\n用得好的玩家會優先看自己最不確定的牌，避免歸檔時混入錯誤。',
       },
       {
-        title: '知識牌（檔案註記）',
-        body: '牌堆裏有一類無人格歸屬的「檔案註記 / 知識牌」 —— 內容是心理學課程概念（術語 + 定義）。它們不能用於歸檔，但也不會"穿幫"成錯誤維度。\n用途：\n• 抽到就丟，騰出手牌空間；\n• 也是觀察對手心理風格的趣味設計（看對手怎麼挑這些中性牌可以暴露偏好）。',
+        title: '知識牌',
+        body: '牌堆裏有一類無人格歸屬的「知識牌」 —— 內容是心理學課程概念（術語 + 定義）。它們不能用於歸檔，但也不會"穿幫"成錯誤維度。\n用途：\n• 抽到就丟，騰出手牌空間；\n• 也是觀察對手心理風格的趣味設計（看對手怎麼挑這些中性牌可以暴露偏好）。',
       },
       {
         title: '聯機 · 退出與輪轉',
@@ -152,7 +152,7 @@ export const TUTORIAL_T = {
 
     // ── 沙盒：頭部 ──
     sandboxLabel: '交互式沙盒',
-    sandboxReset: '重置',
+    sandboxReset: '重新開始',
     sandboxExit: '退出沙盒',
 
     // ── 沙盒：牌桌標籤 ──
@@ -181,7 +181,7 @@ export const TUTORIAL_T = {
 
     // ── 沙盒：開局介紹遮罩 ──
     introTitle: '開局先看「目標張數」',
-    introBody: '每個維度上的數字 = 你要湊夠多少張該維度的牌，才能把它「碰」下來公開鎖定。數字由你的測評分數決定，每維不同、數字越大越難湊。下面是本局示範的目標：',
+    introBody: '開局第一件事，先看「目標張數」。每個維度都有一個指定張數，你要湊到那個數量，才能把這組牌「碰」下來、公開鎖定。張數是根據你的測評分數決定的，每個維度不一樣，數字愈大就愈難湊。下面是這局示範的目標：',
     introBtn: '開始教學',
 
     // ── 沙盒：目標板 + 操作橫幅 ──
@@ -204,7 +204,7 @@ export const TUTORIAL_T = {
     penaltyDemo: '罰停一回合演示：本輪不能參與別人棄牌的判讀窗口，下次輪到你時自動跳過。',
 
     // ── 沙盒：截胡窗口卡片 ──
-    claimWho: 'Brian棄出了一張線索牌',
+    claimWho: 'Brian棄出了一張牌',
     claimCardBodyA: '從下方手牌選 ',
     claimCardBodyMid: (name: string) => `2 張「${name}」`,
     claimCardBodyB: (sel: number) => `（高亮的牌），加這張棄牌湊成一組。已選 ${sel}/2。`,
@@ -218,8 +218,8 @@ export const TUTORIAL_T = {
     cardsCountSuffix: (n: number) => `${n} 張`,
 
     // ── 沙盒：caption（按 scene）──
-    captionStart: '這是你的開局：手牌裏有多種人格描述和 1 張檔案註記。你需要先抽牌，再決定要查看、歸檔還是棄牌。',
-    captionViewing: '每回合可查看 2 張手牌的真實維度。先點上方高亮的「查看 2 張」開始。',
+    captionStart: '這是你的開局：手牌裏有多種人格描述和一張知識牌。你需要先抽牌，再決定要查看、歸檔還是棄牌。',
+    captionViewing: '揭示難度不同、每回合能看的張數也不同：半公開每回合看 4 張，隱藏每回合看 2 張（最難）。本示範用最難的「隱藏」——先點上方高亮的「查看 2 張」開始。',
     captionViewPicking: (n: number) =>
       n >= 2
         ? '兩張都看過了！點高亮的「完成查看」繼續。'
@@ -245,7 +245,7 @@ export const TUTORIAL_T = {
     captionDone: '你的回合結束。下一步模擬別人棄牌後的「碰 / 食胡」窗口。',
 
     // ── 沙盒：feedback（reducer 內）──
-    fbDraw: '抽到一張線索牌。現在選擇很多，先演示「查看 2 張牌」。',
+    fbDraw: '抽到一張牌。現在選擇很多，先演示「查看 2 張牌」。',
     fbViewTwo: '本回合查看了 2 張牌：一張盡責性，一張神經質。真實牌局裏只會揭開你選的 2 張。',
     fbViewStart: '點選下方高亮的 2 張牌，揭開它們的真實維度。',
     fbViewPicked: '已揭開一張。再點另一張高亮的牌。',
@@ -255,15 +255,15 @@ export const TUTORIAL_T = {
     fbChooseDim: (name: string, cnt: number) => `已選擇「${name}」。現在從手牌精確選擇 ${cnt} 張「${name}」的牌。`,
     fbPongSuccess: '歸檔成功。4 張進入公開歸檔區，歸檔後必須立即棄 1 張牌。',
     fbPongFailWrongCount: (selected: number, cnt: number) => `選了 ${selected} 張，必須正好 ${cnt} 張`,
-    fbPongFailWrongDim: (name: string) => `選中的牌裏有非「${name}」（檔案註記不算任何維度）`,
+    fbPongFailWrongDim: (name: string) => `選中的牌裏有非「${name}」（知識牌不算任何維度）`,
     fbPongFail: (reason: string) =>
       `自摸碰失敗：${reason}。真實遊戲會罰停一回合（下次輪到你時自動跳過），並公開你剛剛押錯的牌。`,
     fbContinueAfterFail: (name: string, cnt: number) => `試試這次只選 ${cnt} 張「${name}」（高亮的牌）。`,
     fbPickDiscard: '出牌完成。現在切到別人棄牌時，你如何響應「碰 / 食胡」。',
-    fbOpenClaimDim: (name: string) => `對手棄出一張線索牌。截胡碰同樣先選定要歸檔的維度——選高亮的「${name}」。`,
+    fbOpenClaimDim: (name: string) => `對手棄出一張牌。截胡碰同樣先選定要歸檔的維度——選高亮的「${name}」。`,
     captionClaimDim: (name: string) =>
       `別人棄牌後的判讀窗口：和自摸碰一樣，先點高亮的「${name}」選定歸檔維度。`,
-    fbOpenClaim: (name: string) => `對手棄出一張「${name}」線索牌。從手牌選 2 張「${name}」，加這張棄牌湊成一組。`,
+    fbOpenClaim: (name: string) => `對手棄出一張「${name}」牌。從手牌選 2 張「${name}」，加這張棄牌湊成一組。`,
     fbClaimFail: (name: string, picked: number) =>
       `截胡碰需要正好 2 張「${name}」手牌（已選 ${picked}）。真實遊戲選錯會判失敗並罰停一回合。`,
     fbClaimSuccess: '截胡碰成功。你用手裏 2 張同類牌 + 對手棄牌完成了一組公開歸檔。',
@@ -363,7 +363,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Enter Your Student ID',
-        body: 'Before the questions, enter your student ID once. It records your assessment result for class statistics. Stick to the same device and browser, and do not clear your cache.',
+        body: 'Before the questions, enter your student ID once. It records your assessment result for class statistics.',
         note: 'The student ID is entered only this once — online and single-player both carry it over automatically, no need to type it again.',
       },
       {
@@ -373,7 +373,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Enter Online Match',
-        body: 'Tap "Online Match" on the profile page. Your student ID is carried over from the assessment; pick an avatar and personality deck, then create or join a room and set max players, rounds, and reveal difficulty.',
+        body: 'Tap "Online Match" on the profile page. Your student ID is carried over from the assessment; create or join a room and set max players, rounds, and reveal difficulty.',
       },
       {
         title: 'Start the Match',
@@ -389,7 +389,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Enter Your Student ID',
-        body: 'Before the questions, enter your student ID once. It records your assessment result for class statistics. Stick to the same device and browser, and do not clear your cache.',
+        body: 'Before the questions, enter your student ID once. It records your assessment result for class statistics.',
         note: 'The student ID is entered only this once — online and single-player both carry it over automatically, no need to type it again.',
       },
       {
@@ -399,7 +399,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Enter Single Player',
-        body: 'Tap "Single Player" on the profile page to open the battle lobby. Set the AI difficulty (Easy / Medium / Hard), rounds, and view difficulty, and check the three AI opponent profiles (Brian / Prof. Chen / Lin).',
+        body: 'Tap "Single Player" on the profile page to open the battle lobby. Set the AI difficulty, rounds, and view difficulty, and check the three AI opponent profiles.',
       },
       {
         title: 'Start the Match',
@@ -464,7 +464,7 @@ export const TUTORIAL_T = {
 
     // ── Sandbox: header ──
     sandboxLabel: 'Interactive Sandbox',
-    sandboxReset: 'Reset',
+    sandboxReset: 'Restart',
     sandboxExit: 'Exit Sandbox',
 
     // ── Sandbox: table labels ──
@@ -493,7 +493,7 @@ export const TUTORIAL_T = {
 
     // ── Sandbox: intro overlay ──
     introTitle: 'First: the "Targets" board',
-    introBody: 'The number on each dimension = how many cards of that dimension you must collect to lock it in ("Pong"). It comes from your assessment score — different per dimension, and the bigger the number the harder. Here are this demo’s targets:',
+    introBody: 'First thing at the start: check the "Targets" board. Each dimension has a required count — you must collect that many cards to "Pong" the set and lock it in publicly. The count comes from your assessment score, differs per dimension, and the bigger the number the harder. Here are this demo’s targets:',
     introBtn: 'Start the lesson',
 
     // ── Sandbox: target board + operation banner ──
@@ -516,7 +516,7 @@ export const TUTORIAL_T = {
     penaltyDemo: 'Frozen-for-one-turn demo: you cannot join others’ read windows this round, and your next turn is auto-skipped.',
 
     // ── Sandbox: claim window card ──
-    claimWho: 'Brian discarded a clue card',
+    claimWho: 'Brian discarded a card',
     claimCardBodyA: 'From your hand below pick ',
     claimCardBodyMid: (name: string) => `2 "${name}" cards`,
     claimCardBodyB: (sel: number) => ` (highlighted), plus this discard to complete a set. ${sel}/2 selected.`,
@@ -531,7 +531,7 @@ export const TUTORIAL_T = {
 
     // ── Sandbox: captions (by scene) ──
     captionStart: 'This is your opening: your hand has several personality descriptions and 1 Knowledge card. You must draw first, then decide whether to view, declare, or discard.',
-    captionViewing: 'Each turn you may reveal the true dimensions of 2 hand cards. Tap the highlighted "View 2" above to start.',
+    captionViewing: 'The reveal difficulty changes how many you can view per turn: Half lets you view 4, Hidden lets you view 2 (the hardest). This demo uses the hardest — Hidden — so tap the highlighted "View 2" above to start.',
     captionViewPicking: (n: number) =>
       n >= 2
         ? 'You’ve seen both! Tap the highlighted "Done viewing" to continue.'
@@ -557,7 +557,7 @@ export const TUTORIAL_T = {
     captionDone: 'Your turn is over. Next, simulate the "Pong / Win" window after someone else discards.',
 
     // ── Sandbox: feedback (in reducer) ──
-    fbDraw: 'Drew a clue card. There are many options now — first let’s demo "view 2 cards".',
+    fbDraw: 'Drew a card. There are many options now — first let’s demo "view 2 cards".',
     fbViewTwo: 'This turn you viewed 2 cards: one Conscientiousness, one Neuroticism. In a real game only the 2 you pick are revealed.',
     fbViewStart: 'Tap the 2 highlighted cards below to reveal their true dimensions.',
     fbViewPicked: 'One revealed. Now tap the other highlighted card.',
@@ -572,10 +572,10 @@ export const TUTORIAL_T = {
       `Self-draw Pong failed: ${reason}. In a real game you would be frozen for one turn (your next turn auto-skipped) and the cards you wrongly bet would be revealed.`,
     fbContinueAfterFail: (name: string, cnt: number) => `This time try selecting only the ${cnt} "${name}" cards (the highlighted ones).`,
     fbPickDiscard: 'Discard done. Now switching to how you respond with "Pong / Win" when someone else discards.',
-    fbOpenClaimDim: (name: string) => `An opponent discarded a clue card. Like Self-draw Pong, first choose the dimension to declare — pick the highlighted "${name}".`,
+    fbOpenClaimDim: (name: string) => `An opponent discarded a card. Like Self-draw Pong, first choose the dimension to declare — pick the highlighted "${name}".`,
     captionClaimDim: (name: string) =>
       `The read window after a discard: just like Self-draw Pong, first tap the highlighted "${name}" to choose the dimension.`,
-    fbOpenClaim: (name: string) => `An opponent discarded a "${name}" clue card. Pick 2 "${name}" cards from your hand, plus this discard to complete a set.`,
+    fbOpenClaim: (name: string) => `An opponent discarded a "${name}" card. Pick 2 "${name}" cards from your hand, plus this discard to complete a set.`,
     fbClaimFail: (name: string, picked: number) =>
       `Claim Pong needs exactly 2 "${name}" cards in hand (selected ${picked}). In a real game a wrong pick fails and freezes you for one turn.`,
     fbClaimSuccess: 'Claim Pong succeeded. You completed a declaration using 2 same-type cards from your hand + the opponent’s discard.',
