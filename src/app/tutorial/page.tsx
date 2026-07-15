@@ -1262,20 +1262,20 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
   const portrait = (
     <div className="space-y-2.5">
       <div className="psy-serif text-center text-sm text-[var(--psy-ink)]">{s.shotPortraitTitle}</div>
-      <div className="space-y-1.5">
-        {DIMENSIONS.map((d) => (
-          <div key={d} className="flex items-center gap-2">
-            <span className="w-3 text-[9px] font-bold" style={{ color: DIMENSION_META[d].colorHex }}>{d}</span>
-            <div className="h-1.5 flex-1 rounded-full bg-[rgba(154,116,72,0.14)]">
-              <div className="h-full rounded-full" style={{ width: '60%', background: DIMENSION_META[d].colorHex }} />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-3 gap-1.5 pt-1">
-        <div className={`${mode === 'pvp' ? 'bg-[rgba(195,154,82,0.3)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-lg border border-[rgba(154,116,72,0.2)] px-1 py-1.5 text-center text-[10px]`}>{s.shotPvp}</div>
-        <div className={`${mode === 'solo' ? 'bg-[rgba(195,154,82,0.3)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-lg border border-[rgba(154,116,72,0.2)] px-1 py-1.5 text-center text-[10px]`}>{s.shotSolo}</div>
-        <div className="rounded-lg border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-1 py-1.5 text-center text-[10px] text-[var(--psy-muted)]">{s.shotRetest}</div>
+      {/* 迷你五維雷達（示意）：替代原橫條，更直觀——也與流程說明「五維雷達圖」一致。
+          原本重複的「聯機/單機/重新測評」按鈕排已移除（正式頁底部才有）。*/}
+      <div className="flex justify-center py-0.5">
+        <svg viewBox="0 0 100 100" className="h-24 w-24" aria-hidden>
+          <polygon points="50,16 82.3,39.5 70,77.5 30,77.5 17.7,39.5" fill="none" stroke="rgba(154,116,72,0.22)" strokeWidth="1" />
+          <polygon points="50,33 66.2,44.8 60,63.75 40,63.75 33.85,44.8" fill="none" stroke="rgba(154,116,72,0.16)" strokeWidth="0.8" />
+          {([[50, 16], [82.3, 39.5], [70, 77.5], [30, 77.5], [17.7, 39.5]] as const).map(([x, y], i) => (
+            <line key={i} x1="50" y1="50" x2={x} y2={y} stroke="rgba(154,116,72,0.16)" strokeWidth="0.7" />
+          ))}
+          <polygon points="50,26.2 65.5,45 64,69.3 33.6,72.6 32.5,44.3" fill="rgba(195,154,82,0.32)" stroke="#c39a52" strokeWidth="1.6" />
+          {([['O', 50, 26.2], ['C', 65.5, 45], ['E', 64, 69.3], ['A', 33.6, 72.6], ['N', 32.5, 44.3]] as const).map(([d, x, y]) => (
+            <circle key={d} cx={x} cy={y} r="2.1" fill={DIMENSION_META[d as Dimension].colorHex} />
+          ))}
+        </svg>
       </div>
     </div>
   );
