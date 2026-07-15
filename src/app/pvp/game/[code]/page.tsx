@@ -840,7 +840,7 @@ export default function PvpGamePage() {
               />
             </div>
           </div>
-          <div className="hidden w-full sm:block sm:justify-self-stretch">
+          <div className="w-full sm:justify-self-stretch">
             <GameLog actions={gameState.actionLog as any} players={allPlayers} locale={locale} />
           </div>
         </div>
@@ -914,7 +914,6 @@ export default function PvpGamePage() {
                 </span>
                 <span className="ml-auto shrink-0 font-medium">{t.doneLabel} {mePlayer.declaredSets.length}/5</span>
               </div>
-              <button onClick={() => setMobileSheet('log')} className="psy-btn psy-btn-ghost shrink-0 px-3 py-1.5 text-xs">{t.log}</button>
             </div>
             {/* 5 维人格 pill：点击展开该玩家归档（模态居中）；实底加深、字加大，替代原独立人格/归档入口。 */}
             {targets && (
