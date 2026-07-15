@@ -63,7 +63,7 @@ export function TarotCard({
   width = 200,
   fluid = false,
   description,
-  swapKnowledge = false,
+  swapKnowledge = true,
 }: TarotCardProps) {
   const [imgError, setImgError] = useState(false);
 

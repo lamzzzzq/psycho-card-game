@@ -53,7 +53,7 @@ interface OrnateCardProps {
 export function OrnateCard({
   text, textEn, imageSrc, selected = false, revealedDimension = null,
   isDummy = false, locale = 'zh', faceDown = false, onClick, width = 200, fluid = false, description,
-  swapKnowledge = false,
+  swapKnowledge = true,
 }: OrnateCardProps) {
   const [imgError, setImgError] = useState(false);
   // 每张卡唯一的 SVG defs id（避免多卡同页 id 重复——技术上无效 DOM、且会妨碍日后 per-card 渐变/裁切）。
