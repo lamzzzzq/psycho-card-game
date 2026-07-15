@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sans-cn), var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-serif-cn);
 }
@@ -91,7 +91,7 @@ body > * {
 }
 
 .psy-serif {
-  font-family: var(--font-serif-cn), serif;
+  font-family: var(--font-sans-cn), system-ui, -apple-system, sans-serif;
 }
 
 /* 非衬线中文（卡牌文字改用；字体探索方向）。 */
@@ -255,7 +255,7 @@ body > * {
 }
 
 .psy-eyebrow {
-  font-family: var(--font-serif-cn), serif;
+  font-family: var(--font-sans-cn), system-ui, -apple-system, sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.32em;
   text-transform: uppercase;

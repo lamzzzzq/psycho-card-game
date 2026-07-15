@@ -84,6 +84,7 @@ export function TarotCard({
   const isKnowledge = isDummy && !!description;
   // 术语/题面按 locale 取（en → textEn 英文术语）。
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
+  const def = (description ?? '').replace(/[。．.\s]+$/, '');
   // 术语按「最长单词」缩放（用当前语言的术语算）；定义按总长缩放，最长也不裁切。
   const longestWord = Math.max(1, ...label.split(/[\s-]+/).filter(Boolean).map((w) => w.length));
   const termFont = Math.max(7.5, Math.min(13, 118 / longestWord));
@@ -167,7 +168,7 @@ export function TarotCard({
                 display: '-webkit-box', WebkitLineClamp: defClamp, WebkitBoxOrient: 'vertical', overflow: 'hidden',
               }}
             >
-              {description}
+              {renderLabel(def, locale)}
             </p>
           </div>
         ) : (

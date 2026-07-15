@@ -64,6 +64,8 @@ export function OrnateCard({
   const isKnowledge = isDummy && !!description;
   // 术语/题面按 locale 取：en → textEn（英文术语），zh → text（繁中术语）。
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
+  // 定义/句子去掉尾部句号（。太占位、单独换行更浪费）。
+  const def = (description ?? '').replace(/[。．.\s]+$/, '');
 
   // 知识牌字号自适应：术语按「最长单词」缩放（用当前语言的术语算），保证整词放得下、绝不从词中间断。
   const longestWord = Math.max(1, ...label.split(/[\s-]+/).filter(Boolean).map((w) => w.length));
@@ -213,7 +215,7 @@ export function OrnateCard({
         {isKnowledge && (
           <div className="psy-sans absolute flex items-center justify-center text-center" style={{ left: '11%', right: '11%', top: '7%', height: '50%' }}>
             <p className={swapKnowledge ? '' : 'font-semibold'} style={{ color: swapKnowledge ? 'var(--psy-ink-soft)' : 'var(--psy-ink)', fontSize: `${swapKnowledge ? defFont : termFont}cqw`, lineHeight: swapKnowledge ? 1.32 : 1.3, paddingBottom: '1.5cqw', display: '-webkit-box', WebkitLineClamp: swapKnowledge ? 6 : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-              {swapKnowledge ? description : renderLabel(label, locale)}
+              {swapKnowledge ? renderLabel(def, locale) : renderLabel(label, locale)}
             </p>
           </div>
         )}
@@ -229,7 +231,7 @@ export function OrnateCard({
               display: '-webkit-box', WebkitLineClamp: isKnowledge ? (swapKnowledge ? 4 : defClamp) : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
             }}
           >
-            {isKnowledge ? (swapKnowledge ? renderLabel(label, locale) : description) : renderLabel(label, locale)}
+            {isKnowledge ? (swapKnowledge ? renderLabel(label, locale) : renderLabel(def, locale)) : renderLabel(label, locale)}
           </p>
         </div>
 
