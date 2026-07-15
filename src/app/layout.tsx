@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Noto_Serif_SC } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Serif_SC, Noto_Sans_SC } from "next/font/google";
 import "./globals.css";
 import { LocaleSync } from "@/components/shared/LocaleSync";
 
@@ -17,6 +17,13 @@ const notoSerifSc = Noto_Serif_SC({
   variable: "--font-serif-cn",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+});
+
+// 非衬线中文（原型用：card-lab/palette 字体探索）。仅暴露 CSS 变量，不改现状。
+const notoSansSc = Noto_Sans_SC({
+  variable: "--font-sans-cn",
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "900"],
 });
 
 const SITE_TITLE = "人格麻將 Personalities Mahjong";
@@ -54,7 +61,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${geistSans.variable} ${geistMono.variable} ${notoSerifSc.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${notoSerifSc.variable} ${notoSansSc.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[var(--psy-bg)] text-[var(--psy-ink)]">
         <LocaleSync />

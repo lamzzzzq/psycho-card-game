@@ -292,6 +292,34 @@ export default function LightModeScenePage() {
         </div>
       </div>
 
+      {/* ── 字体探索原型（#30）：衬线现状 vs 非衬线 × 粗细 × 大小。仅 UI 文字，卡牌不动 ── */}
+      <div style={{ marginBottom: 28, background: s.panel, border: `1px solid ${s.line}`, borderRadius: 18, padding: '18px 20px', boxShadow: s.panelShadow }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: s.ink }}>字体探索 · Typography</div>
+        <div style={{ fontSize: 12.5, color: s.muted, marginTop: 3, marginBottom: 16 }}>
+          对比「衬线（现状）」与「非衬线」，及加粗 / 加大方向。这里只探索 UI 文字（按钮 / 标签 / 名字 / 张数），卡牌本身不改。
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 14 }}>
+          {([
+            { key: 'serif', label: '① 衬线（现状）', family: 'var(--font-serif-cn), serif', weight: 600, scale: 1 },
+            { key: 'sans', label: '② 非衬线 · 常规', family: 'var(--font-sans-cn), sans-serif', weight: 500, scale: 1 },
+            { key: 'sans-bold', label: '③ 非衬线 · 加粗 + 略大', family: 'var(--font-sans-cn), sans-serif', weight: 700, scale: 1.1 },
+            { key: 'sans-black', label: '④ 非衬线 · 特粗 + 加大', family: 'var(--font-sans-cn), sans-serif', weight: 900, scale: 1.22 },
+          ] as const).map((sp) => (
+            <div key={sp.key} style={{ border: `1px solid ${s.line}`, borderRadius: 12, padding: 14, background: s.panelSoft }}>
+              <div style={{ fontSize: 11, letterSpacing: '0.04em', color: s.gold, fontWeight: 700, marginBottom: 12 }}>{sp.label}</div>
+              <div style={{ fontFamily: sp.family, fontWeight: sp.weight, display: 'flex', flexDirection: 'column', gap: 9, color: s.ink }}>
+                <div style={{ fontSize: 22 * sp.scale, letterSpacing: '0.04em' }}>人格麻將</div>
+                <div style={{ fontSize: 15 * sp.scale }}>陳教授 · 剩餘 15 張</div>
+                <div style={{ fontSize: 13 * sp.scale, color: s.inkSoft }}>棄牌堆 · 抽牌 · 目標張數</div>
+                <div style={{ fontSize: 13 * sp.scale, color: s.inkSoft }}>開放性 · 盡責性 · 神經質</div>
+                <span style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 15px', borderRadius: 999, background: s.panel, border: `1px solid ${s.line}`, fontSize: 13 * sp.scale, color: s.inkSoft, boxShadow: s.panelShadow }}>← 退出對局</span>
+                <div style={{ fontSize: 12 * sp.scale, color: s.muted, lineHeight: 1.5 }}>我總是主動開始談話</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* 玩家面板 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 16, marginBottom: 26 }}>
         <PlayerPanel s={s} emoji="🧑‍🎓" name="Brian" count={12} />
