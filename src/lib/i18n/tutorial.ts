@@ -57,7 +57,7 @@ export const TUTORIAL_T = {
       {
         title: '查看人格畫像',
         body: '答完題進入「你的人格畫像」：五維雷達圖 + 各維度得分。這一頁底部就是「聯機對戰 / 單機對戰 / 重新測評」的入口。',
-        note: '測評分數會轉成各維度目標張數，每個人的胡牌路線都不同。',
+        note: '測評分數決定各維度目標張數，也決定你的起始手牌數（＝五維目標張數之和 − 1）。因此每個人的開局規模與胡牌路線都不同。',
       },
       {
         title: '進入聯機對戰',
@@ -83,7 +83,7 @@ export const TUTORIAL_T = {
       {
         title: '查看人格畫像',
         body: '答完題進入「你的人格畫像」：五維雷達圖 + 各維度得分。這一頁底部就是「聯機對戰 / 單機對戰 / 重新測評」的入口。',
-        note: '測評分數會轉成各維度目標張數，每個人的胡牌路線都不同。',
+        note: '測評分數決定各維度目標張數，也決定你的起始手牌數（＝五維目標張數之和 − 1）。因此每個人的開局規模與胡牌路線都不同。',
       },
       {
         title: '進入單機對戰',
@@ -100,6 +100,7 @@ export const TUTORIAL_T = {
       {
         title: '你的目標',
         body: '5 個人格維度（開放性、盡責性、外向性、宜人性、神經質）全部完成「公開歸檔」，先達成的玩家獲勝。每個維度需要湊多少張，取決於你自己的測評分數 —— 所以每個人的「胡牌路線」都不一樣。',
+        hint: '測評分數不只決定各維度目標張數，也決定你的起始手牌數：起始手牌數 = 五維目標張數之和 − 1。',
       },
       {
         title: '牌桌',
@@ -369,7 +370,7 @@ export const TUTORIAL_T = {
       {
         title: 'View Your Personality Profile',
         body: 'After the questions you reach "Your Personality Profile": a five-dimension radar chart plus per-dimension scores. The bottom of this page is where "Online Match / Single Player / Retest" live.',
-        note: 'Your scores turn into each dimension’s target count, so every player has a different path to a Win.',
+        note: 'Your assessment scores set each dimension’s target count and also your starting hand size (= the sum of the five targets − 1), so every player has a different opening and path to a Win.',
       },
       {
         title: 'Enter Online Match',
@@ -395,7 +396,7 @@ export const TUTORIAL_T = {
       {
         title: 'View Your Personality Profile',
         body: 'After the questions you reach "Your Personality Profile": a five-dimension radar chart plus per-dimension scores. The bottom of this page is where "Online Match / Single Player / Retest" live.',
-        note: 'Your scores turn into each dimension’s target count, so every player has a different path to a Win.',
+        note: 'Your assessment scores set each dimension’s target count and also your starting hand size (= the sum of the five targets − 1), so every player has a different opening and path to a Win.',
       },
       {
         title: 'Enter Single Player',
@@ -412,6 +413,7 @@ export const TUTORIAL_T = {
       {
         title: 'Your Goal',
         body: 'Complete a "Declared" set for all 5 personality dimensions (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism); the first player to do so wins. How many cards each dimension needs comes from your own assessment score — so every player has a different path to a win.',
+        hint: 'Your assessment score sets not only each dimension’s target count but also your starting hand size: starting hand = the sum of the five targets − 1.',
       },
       {
         title: 'The Table',

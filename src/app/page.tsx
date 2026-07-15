@@ -61,62 +61,32 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-5xl space-y-8 lg:space-y-10"
       >
-        <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="space-y-5 sm:space-y-6">
-            <div className="space-y-3">
-              <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">
-                {t.title}
-              </h1>
-              <p className="max-w-xl text-base leading-7 text-[var(--psy-ink-soft)] sm:text-lg sm:leading-8">
-                {t.intro}
-              </p>
-            </div>
-
-            {/* 移动端：紧凑横向行（icon + 文案）；sm+：原竖向卡片。4 张卡 → 2×2 */}
-            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
-              {features.map((item) => (
-                <div
-                  key={item.title}
-                  className="psy-panel psy-etched flex items-center gap-3 rounded-2xl p-3 sm:flex-col sm:items-start sm:gap-0 sm:rounded-[1.4rem] sm:p-4"
-                >
-                  <div className="shrink-0 text-xl text-[var(--psy-accent)] sm:mb-3">{item.glyph}</div>
-                  <div className="min-w-0">
-                    <div className="psy-serif text-sm text-[var(--psy-ink)] sm:text-base">{item.title}</div>
-                    <p className="mt-0.5 text-xs leading-5 text-[var(--psy-ink-soft)] sm:mt-2 sm:text-sm sm:leading-6">
-                      {item.note}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="space-y-5 sm:space-y-6">
+          <div className="space-y-3">
+            <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">
+              {t.title}
+            </h1>
+            <p className="max-w-xl text-base leading-7 text-[var(--psy-ink-soft)] sm:text-lg sm:leading-8">
+              {t.intro}
+            </p>
           </div>
 
-          {/* 装饰牌阵：纯视觉，仅桌面右栏显示（移动端隐藏，避免占满一屏） */}
-          <div className="hidden lg:flex lg:justify-end">
-            <div className="relative w-full max-w-sm">
-              <div className="psy-panel psy-etched rounded-[2rem] p-6">
-                <div className="mb-5 flex items-center justify-between text-[10px] uppercase tracking-[0.35em] text-[var(--psy-muted)]">
-                  <span>{t.cardEyebrow}</span>
-                  <span>No. 0</span>
-                </div>
-                <div className="rounded-[1.7rem] border border-[var(--psy-border)] bg-[linear-gradient(180deg,var(--psy-card-content),#f8f1e4)] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                  <div className="mb-6 flex items-center justify-center gap-4 text-[var(--psy-accent)]">
-                    <span className="text-xl">☉</span>
-                    <span className="text-3xl">◈</span>
-                    <span className="text-xl">☽</span>
-                  </div>
-                  <div className="space-y-4 text-center">
-                    <div>
-                      <p className="psy-serif text-sm tracking-[0.25em] text-[var(--psy-ink-soft)]">{t.cardArcana}</p>
-                      <p className="mt-2 psy-serif text-2xl text-[var(--psy-ink)]">{t.cardTitle}</p>
-                    </div>
-                    <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">
-                      {t.cardBody}
-                    </p>
-                  </div>
+          {/* 移动端：紧凑横向行（icon + 文案）；sm+：原竖向卡片。4 张卡 → 2×2 */}
+          <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+            {features.map((item) => (
+              <div
+                key={item.title}
+                className="psy-panel psy-etched flex items-center gap-3 rounded-2xl p-3 sm:flex-col sm:items-start sm:gap-0 sm:rounded-[1.4rem] sm:p-4"
+              >
+                <div className="shrink-0 text-xl text-[var(--psy-accent)] sm:mb-3">{item.glyph}</div>
+                <div className="min-w-0">
+                  <div className="psy-serif text-sm text-[var(--psy-ink)] sm:text-base">{item.title}</div>
+                  <p className="mt-0.5 text-xs leading-5 text-[var(--psy-ink-soft)] sm:mt-2 sm:text-sm sm:leading-6">
+                    {item.note}
+                  </p>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </motion.div>
