@@ -99,7 +99,7 @@ export default function LobbyPage() {
               <h1 className="psy-serif text-3xl text-[var(--psy-ink)] sm:text-5xl">{s.title}</h1>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="space-y-5 sm:space-y-6">
               <div className="space-y-5 sm:space-y-6">
                 <section className="space-y-2.5 sm:space-y-3">
                   <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">{p.deckHeader}</label>
@@ -187,13 +187,13 @@ export default function LobbyPage() {
               <section className="space-y-2.5 sm:space-y-3">
                 <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">{s.opponentsLabel}</label>
                 {/* 移动端：3 列紧凑（头像+名字，简介隐藏）；sm+：完整卡片 */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-1">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {AI_PERSONAS.map((p) => (
                     <div
                       key={p.id}
-                      className="psy-panel psy-etched rounded-2xl px-3 py-4 text-center sm:rounded-[1.4rem] sm:p-4 lg:text-left"
+                      className="psy-panel psy-etched rounded-2xl px-3 py-4 text-center sm:rounded-[1.4rem] sm:p-4 sm:text-left"
                     >
-                      <div className="flex flex-col items-center gap-2.5 sm:gap-3 lg:flex-row lg:items-start">
+                      <div className="flex flex-col items-center gap-2.5 sm:flex-row sm:items-start sm:gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[var(--psy-accent-soft)] text-xl sm:h-12 sm:w-12 sm:text-2xl">
                           {p.avatar}
                         </div>
