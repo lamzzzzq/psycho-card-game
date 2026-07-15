@@ -38,13 +38,12 @@ export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProp
             ? 'linear-gradient(180deg, #eaddc4, #d6c39f)'
             : 'linear-gradient(180deg, #f8f1e4, #eaddc4)',
           boxShadow: canDraw
-            ? 'inset 0 0 0 1px rgba(255,250,240,0.5), 0 0 24px rgba(195,154,82,0.36), 0 18px 30px rgba(96,72,38,0.2)'
-            : 'inset 0 0 0 1px rgba(255,250,240,0.46), 0 14px 24px rgba(96,72,38,0.14)',
+            ? 'inset 0 0 0 1px rgba(255,250,240,0.5), 0 0 24px rgba(195,154,82,0.36), 0 20px 34px rgba(96,72,38,0.26)'
+            : 'inset 0 0 0 1px rgba(255,250,240,0.5), 0 18px 30px rgba(96,72,38,0.2)',
         }}
       >
         <div className="text-center">
-          <div className="mb-0.5 text-xl text-[var(--psy-ink)] sm:mb-1 sm:text-2xl">◈</div>
-          <div className={`psy-serif text-[var(--psy-ink-soft)] ${locale === 'en' ? 'text-[10px] tracking-[0.18em] sm:text-[11px] sm:tracking-[0.2em]' : 'text-xs tracking-[0.24em] sm:text-sm'}`}>{locale === 'en' ? 'DRAW' : '抽牌'}</div>
+          <div className={`psy-serif text-[var(--psy-ink-soft)] ${locale === 'en' ? 'text-xs tracking-[0.2em] sm:text-sm' : 'text-sm tracking-[0.2em] sm:text-base'}`}>{locale === 'en' ? 'DRAW' : '抽牌'}</div>
         </div>
         {canDraw && (
           <>

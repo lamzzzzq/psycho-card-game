@@ -146,7 +146,7 @@ export function DiscardPile({
             )}
           </div>
         ) : (
-          <div className="relative flex aspect-[4/7] w-[72px] items-center justify-center overflow-hidden rounded-[1.1rem] bg-[var(--psy-card-content)] sm:w-32 sm:rounded-[1.35rem]" style={{ border: '1.5px dashed rgba(154,116,72,0.16)' }}>
+          <div className="relative flex aspect-[4/7] w-[72px] items-center justify-center overflow-hidden rounded-[1.1rem] bg-[var(--psy-card-content)] sm:w-32 sm:rounded-[1.35rem]" style={{ border: '1.5px dashed rgba(154,116,72,0.28)', boxShadow: 'inset 0 0 0 1px rgba(255,250,240,0.5), 0 16px 28px rgba(96,72,38,0.16)' }}>
             {/* 常驻轻呼吸内晕：空态也有生命感，不再是一个死板的空框 */}
             <motion.div
               aria-hidden
@@ -162,7 +162,7 @@ export function DiscardPile({
                 className="pointer-events-none absolute inset-0 rounded-[1.1rem] sm:rounded-[1.35rem]"
               />
             )}
-            <span className="psy-serif relative text-[11px] text-[var(--psy-muted)] sm:text-xs">{t.discardPileName}</span>
+            <span className="psy-serif relative text-sm tracking-[0.2em] text-[var(--psy-muted)] sm:text-base">{t.discardPileName}</span>
           </div>
         )}
         <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">{t.discardedCount} {count} {t.cardsUnit}</span>

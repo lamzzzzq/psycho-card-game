@@ -49,7 +49,7 @@ export function DeckSelectModal({
             <button
               onClick={onClose}
               aria-label={h.deckModalClose}
-              className="psy-btn psy-btn-ghost absolute right-3 top-3 h-8 w-8 rounded-full p-0 text-lg leading-none"
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[var(--psy-card-content)] text-xl leading-none text-[var(--psy-muted)] shadow-[0_2px_8px_rgba(96,72,38,0.12)] transition hover:text-[var(--psy-ink)]"
             >
               ×
             </button>
