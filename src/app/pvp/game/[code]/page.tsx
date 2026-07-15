@@ -817,32 +817,28 @@ export default function PvpGamePage() {
           </span>
         </div>
 
-        {/* Center: 抽牌 + 弃牌 + 行动记录 统一 block（对齐单机，记录归入牌堆区） */}
-        <div className="mt-3 grid items-center gap-3 rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] p-3 sm:mt-4 sm:grid-cols-[minmax(19rem,1fr)_minmax(12rem,0.5fr)] sm:gap-[4%] sm:p-4">
-          <div className="flex items-center justify-center gap-[clamp(1rem,4vw,4rem)] px-[clamp(0.5rem,3vw,2.5rem)]">
-            <div
-              ref={drawPileRef}
-              onMouseEnter={() => handleDrawPileHover(true)}
-              onMouseLeave={() => handleDrawPileHover(false)}
-            >
-              <DrawPile count={gameState.drawPileCount} canDraw={canDraw} onDraw={handleDraw} locale={locale} />
-            </div>
-            <div ref={discardPileRef}>
-              <DiscardPile
-                topCard={gameState.discardPile.length > 0 ? gameState.discardPile[gameState.discardPile.length - 1] : null}
-                count={gameState.discardPile.length}
-                discardPile={gameState.discardPile}
-                actions={gameState.actionLog as any}
-                players={gameState.players}
-                highlight={isDiscarding}
-                revealTags={revealDifficulty === 'open'}
-                locale={locale}
-              />
-            </div>
+        {/* Center: 抽牌 + 弃牌 + 行动记录 三张竖卡并排，同尺寸同风格；mobile/desktop 一致（对齐单机） */}
+        <div className="mt-3 flex items-start justify-center gap-3 rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] p-3 sm:mt-4 sm:gap-6 sm:p-4">
+          <div
+            ref={drawPileRef}
+            onMouseEnter={() => handleDrawPileHover(true)}
+            onMouseLeave={() => handleDrawPileHover(false)}
+          >
+            <DrawPile count={gameState.drawPileCount} canDraw={canDraw} onDraw={handleDraw} locale={locale} />
           </div>
-          <div className="w-full sm:justify-self-stretch">
-            <GameLog actions={gameState.actionLog as any} players={allPlayers} locale={locale} />
+          <div ref={discardPileRef}>
+            <DiscardPile
+              topCard={gameState.discardPile.length > 0 ? gameState.discardPile[gameState.discardPile.length - 1] : null}
+              count={gameState.discardPile.length}
+              discardPile={gameState.discardPile}
+              actions={gameState.actionLog as any}
+              players={gameState.players}
+              highlight={isDiscarding}
+              revealTags={revealDifficulty === 'open'}
+              locale={locale}
+            />
           </div>
+          <GameLog actions={gameState.actionLog as any} players={allPlayers} locale={locale} vertical />
         </div>
       </div>
 

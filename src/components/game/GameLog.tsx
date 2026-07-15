@@ -14,6 +14,8 @@ interface GameLogProps {
   overlayZIndex?: number;
   /** 移动 sheet 里直接内联渲染完整列表（一步到位，不再套「最近3条摘要卡 + 查看全部」两步）。 */
   inline?: boolean;
+  /** 竖卡模式：与抽/弃牌堆同尺寸同风格的竖卡片，三者并排。点开看全部。 */
+  vertical?: boolean;
 }
 
 interface ActionLabel {
@@ -78,7 +80,7 @@ function getActionLabel(action: GameAction, locale: Locale): ActionLabel {
   };
 }
 
-export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80, inline = false }: GameLogProps) {
+export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80, inline = false, vertical = false }: GameLogProps) {
   const tg = STRINGS[locale].game;
   const [open, setOpen] = useState(false);
   const recentActions = actions.slice(-3).reverse();
@@ -135,6 +137,43 @@ export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80, i
 
   return (
     <>
+      {vertical && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label={tg.sheetLogTitle}
+          className="psy-etched flex aspect-[4/7] w-[72px] flex-col overflow-hidden rounded-[1.1rem] p-1.5 text-left transition hover:border-[rgba(200,155,93,0.45)] sm:w-32 sm:rounded-[1.35rem] sm:p-2.5"
+          style={{ background: 'linear-gradient(180deg, #fdf8f1, #f3ead9)', borderColor: 'rgba(154,116,72,0.28)', boxShadow: 'inset 0 0 0 1px rgba(255,250,240,0.46), 0 14px 24px rgba(96,72,38,0.12)' }}
+        >
+          <div className="mb-1 flex items-center justify-between gap-1">
+            <span className="truncate text-[10px] font-semibold text-[var(--psy-ink)] sm:text-xs">{tg.sheetLogTitle}</span>
+            <span className="hidden shrink-0 text-[8px] text-[var(--psy-accent)] sm:inline">{tg.logViewAll}</span>
+          </div>
+          <div className="psy-scroll flex-1 space-y-1 overflow-y-auto pr-0.5">
+            {recentActions.length === 0 ? (
+              <p className="text-[9px] leading-tight text-[var(--psy-muted)] sm:text-[10px]">{tg.logNoActions}</p>
+            ) : (
+              recentActions.map((action, i) => {
+                const player = getPlayer(action.playerId);
+                if (!player) return null;
+                const label = getActionLabel(action, locale);
+                return (
+                  <div key={`${action.timestamp}-v-${i}`} className="text-[9px] leading-tight sm:text-[10px]">
+                    <span className="text-[var(--psy-ink-soft)]">{player.avatar} </span>
+                    <span
+                      className={label.tone === 'success' ? 'text-[var(--psy-success)]' : label.tone === 'danger' ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-ink-soft)]'}
+                      style={label.tone === 'dimension' ? { color: 'var(--psy-accent)' } : undefined}
+                    >
+                      {label.prefix}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </button>
+      )}
+      {!vertical && (
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -199,6 +238,7 @@ export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80, i
           )}
         </div>
       </button>
+      )}
 
       {/* 弹窗必须 portal 到 body：移动端此组件渲染在 MobileGameSheet（有
           transform 动画）内部，fixed 会相对 transformed 祖先定位 → 弹窗被

@@ -519,31 +519,27 @@ export default function GamePage() {
           </span>
         </div>
 
-        {/* Center: 抽牌 + 弃牌 + 行动记录 统一在一个 block 内（记录归入牌堆区，用户反馈） */}
-        <div className="mt-3 grid items-center gap-3 rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] p-3 sm:mt-4 sm:grid-cols-[minmax(19rem,1fr)_minmax(12rem,0.5fr)] sm:gap-[4%] sm:p-4">
-          <div className="flex items-center justify-center gap-[clamp(1rem,4vw,4rem)] px-[clamp(0.5rem,3vw,2.5rem)]">
-            <div
-              ref={drawPileRef}
-              onMouseEnter={() => handleDrawPileHover(true)}
-              onMouseLeave={() => handleDrawPileHover(false)}
-            >
-              <DrawPile count={game.drawPile.length} canDraw={canDraw} onDraw={playerDraw} locale={locale} />
-            </div>
-            <div ref={discardPileRef}>
-              <DiscardPile
-                topCard={topDiscard}
-                count={game.discardPile.length}
-                discardPile={game.discardPile}
-                actions={game.actionLog}
-                players={game.players}
-                highlight={isDiscarding}
-                locale={locale}
-              />
-            </div>
+        {/* Center: 抽牌 + 弃牌 + 行动记录 三张竖卡并排，同尺寸同风格；mobile/desktop 一致（用户反馈） */}
+        <div className="mt-3 flex items-start justify-center gap-3 rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] p-3 sm:mt-4 sm:gap-6 sm:p-4">
+          <div
+            ref={drawPileRef}
+            onMouseEnter={() => handleDrawPileHover(true)}
+            onMouseLeave={() => handleDrawPileHover(false)}
+          >
+            <DrawPile count={game.drawPile.length} canDraw={canDraw} onDraw={playerDraw} locale={locale} />
           </div>
-          <div className="w-full sm:justify-self-stretch">
-            <GameLog actions={game.actionLog} players={game.players} locale={locale} />
+          <div ref={discardPileRef}>
+            <DiscardPile
+              topCard={topDiscard}
+              count={game.discardPile.length}
+              discardPile={game.discardPile}
+              actions={game.actionLog}
+              players={game.players}
+              highlight={isDiscarding}
+              locale={locale}
+            />
           </div>
+          <GameLog actions={game.actionLog} players={game.players} locale={locale} vertical />
         </div>
       </div>
 
