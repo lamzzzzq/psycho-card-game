@@ -148,7 +148,7 @@ export function TarotCard({
           /* 知识牌：纯文字版式 —— 术语标题(大) + 分隔 + 定义正文(放大)，上下铺开，无眉标/无图窗 */
           <div className="relative flex h-full w-full flex-col items-center justify-evenly text-center" style={{ padding: '5cqw 2cqw' }}>
             <p
-              className="psy-serif font-semibold"
+              className="psy-sans font-semibold"
               style={{
                 color: 'var(--psy-ink)', fontSize: `${termFont}cqw`, lineHeight: 1.3, paddingBottom: '1.5cqw',
                 display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
@@ -206,7 +206,7 @@ export function TarotCard({
             style={{ padding: '0 3cqw' }}
           >
             <p
-              className="psy-serif font-semibold leading-snug"
+              className="psy-sans font-semibold leading-snug"
               style={{
                 color: isDummy ? 'var(--psy-muted)' : 'var(--psy-ink)',
                 fontSize: locale === 'en' ? '9.5cqw' : '10.5cqw',
@@ -230,7 +230,7 @@ export function TarotCard({
           return (
             <div className="absolute z-20" style={{ left: '50%', top: '60%', transform: 'translate(-50%,-50%)', maxWidth: '95%' }}>
               <span
-                className="psy-serif inline-flex items-center rounded-full font-bold uppercase leading-none whitespace-nowrap"
+                className="psy-sans inline-flex items-center rounded-full font-bold uppercase leading-none whitespace-nowrap"
                 style={{
                   padding: '2.6cqw 6cqw', fontSize: `${dimFont}cqw`, letterSpacing: '0.06em',
                   background: meta.colorHex, color: '#0a0a0a',

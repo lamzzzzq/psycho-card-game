@@ -94,6 +94,11 @@ body > * {
   font-family: var(--font-serif-cn), serif;
 }
 
+/* 非衬线中文（卡牌文字改用；字体探索方向）。 */
+.psy-sans {
+  font-family: var(--font-sans-cn), system-ui, -apple-system, sans-serif;
+}
+
 .psy-btn {
   border-radius: 999px;
   border: 1px solid var(--psy-border);

@@ -211,7 +211,7 @@ export function OrnateCard({
 
         {/* 知识牌拱区（上半）：默认=术语大字；swapKnowledge=定义正文（对调预览用） */}
         {isKnowledge && (
-          <div className="psy-serif absolute flex items-center justify-center text-center" style={{ left: '11%', right: '11%', top: '7%', height: '50%' }}>
+          <div className="psy-sans absolute flex items-center justify-center text-center" style={{ left: '11%', right: '11%', top: '7%', height: '50%' }}>
             <p className={swapKnowledge ? '' : 'font-semibold'} style={{ color: swapKnowledge ? 'var(--psy-ink-soft)' : 'var(--psy-ink)', fontSize: `${swapKnowledge ? defFont : termFont}cqw`, lineHeight: swapKnowledge ? 1.32 : 1.3, paddingBottom: '1.5cqw', display: '-webkit-box', WebkitLineClamp: swapKnowledge ? 6 : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
               {swapKnowledge ? description : renderLabel(label, locale)}
             </p>
@@ -219,7 +219,7 @@ export function OrnateCard({
         )}
 
         {/* 底框文字（下半）：人格陈述 / 知识定义；swapKnowledge 时知识牌改放术语标题 */}
-        <div className="psy-serif absolute flex items-center justify-center text-center" style={{ left: '9%', right: '9%', top: '64.5%', height: '30%' }}>
+        <div className="psy-sans absolute flex items-center justify-center text-center" style={{ left: '9%', right: '9%', top: '64.5%', height: '30%' }}>
           <p
             className={isKnowledge && !swapKnowledge ? '' : 'font-semibold leading-snug'}
             style={{
@@ -242,7 +242,7 @@ export function OrnateCard({
           return (
             <div className="absolute z-20" style={{ left: '50%', top: '58.5%', transform: 'translate(-50%,-50%)', maxWidth: '95%' }}>
               <span
-                className="psy-serif inline-flex items-center rounded-full font-bold uppercase leading-none whitespace-nowrap"
+                className="psy-sans inline-flex items-center rounded-full font-bold uppercase leading-none whitespace-nowrap"
                 style={{
                   padding: '2.6cqw 6cqw', fontSize: `${dimFont}cqw`, letterSpacing: '0.06em',
                   background: meta.colorHex, color: '#2a1c06',
