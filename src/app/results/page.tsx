@@ -6,6 +6,7 @@ import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
 import { RadarChart } from '@/components/results/RadarChart';
 import { DimensionBar } from '@/components/results/DimensionBar';
+import { BigFiveIntro } from '@/components/results/BigFiveIntro';
 import { DIMENSIONS } from '@/types';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 
@@ -96,6 +97,8 @@ export default function ResultsPage() {
             {t.reassess}
           </button>
         </div>
+
+        <BigFiveIntro locale={locale} />
       </motion.div>
     </div>
   );
