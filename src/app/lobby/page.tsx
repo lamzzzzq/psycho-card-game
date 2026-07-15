@@ -6,8 +6,15 @@ import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useGameStore } from '@/stores/useGameStore';
 import { useHydrated } from '@/stores/useHydration';
-import { useLocaleStore } from '@/lib/i18n';
+import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { LOBBY_T } from '@/lib/i18n/lobby';
+
+// 人格牌堆入口（与联机建房一致）：单机固定用 Big Five 测评分数，另两套即将上线。
+const DECKS = [
+  { id: 'big-five', name: 'Big Five', nameKey: null, subKey: 'deckBigFiveSub', locked: false },
+  { id: 'hexaco', name: 'HEXACO', nameKey: null, subKey: 'deckHexacoSub', locked: true },
+  { id: 'cpai', name: null, nameKey: 'deckCpaiName', subKey: 'deckCpaiSub', locked: true },
+] as const;
 import { AI_PERSONAS } from '@/data/ai-personas';
 import { AIDifficulty, RevealDifficulty } from '@/types';
 
@@ -21,6 +28,7 @@ export default function LobbyPage() {
   const locale = useLocaleStore((st) => st.locale);
   const loc = hydrated ? locale : 'zh';
   const s = LOBBY_T[loc];
+  const p = STRINGS[loc].pvpLobby;
 
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [totalRounds, setTotalRounds] = useState(10);
@@ -93,6 +101,28 @@ export default function LobbyPage() {
 
             <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
               <div className="space-y-5 sm:space-y-6">
+                <section className="space-y-2.5 sm:space-y-3">
+                  <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">{p.deckHeader}</label>
+                  <div className="grid gap-2 sm:grid-cols-3 sm:gap-3">
+                    {DECKS.map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        disabled={d.locked}
+                        aria-pressed={!d.locked}
+                        title={d.locked ? p.comingSoon : ''}
+                        className={`psy-tile flex flex-col items-start gap-1 px-3 py-3 text-left ${!d.locked ? 'is-active' : 'cursor-not-allowed opacity-55'}`}
+                      >
+                        <div className="flex w-full items-center justify-between gap-2">
+                          <span className="psy-serif text-sm text-[var(--psy-ink)]">{d.name ?? p[d.nameKey as 'deckCpaiName']}</span>
+                          {d.locked && <span className="shrink-0 text-[9px] text-[var(--psy-muted)]">🔒 {p.comingSoon}</span>}
+                        </div>
+                        <span className="text-[10px] leading-snug text-[var(--psy-muted)]">{p[d.subKey]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
                 <section className="space-y-2.5 sm:space-y-3">
                   <label className="psy-serif text-sm text-[var(--psy-ink-soft)]">{s.difficultyLabel}</label>
                   <div className="grid grid-cols-3 gap-2 sm:gap-3">
