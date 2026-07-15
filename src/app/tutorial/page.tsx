@@ -287,14 +287,17 @@ function InteractiveSandbox({
   dimName,
   loc,
   resetSignal,
+  onStartedChange,
 }: {
   onComplete: () => void;
   s: TutStrings;
   dimName: DimName;
   loc: Locale;
-  // 頁頭「重置」按鈕的信號（重置/退出已合併進頁頭標題行，省一行面板頭）。
+  // 頁頭「重新開始」按鈕的信號（重新開始/退出已合併進頁頭標題行，省一行面板頭）。
   // 每 +1 觸發一次 reset dispatch。
   resetSignal: number;
+  // 報告是否已超過第一步（抽牌前 scene='start'）→ 父組件據此決定顯不顯示「重新開始」。
+  onStartedChange: (started: boolean) => void;
 }) {
   const reducer = useMemo(() => createReducer(s, dimName), [s, dimName]);
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -306,6 +309,10 @@ function InteractiveSandbox({
       dispatch({ type: 'reset' });
     }
   }, [resetSignal]);
+  // 第一步 scene='start'（抽牌前）→ started=false，隱藏「重新開始」；之後 true。
+  useEffect(() => {
+    onStartedChange(state.scene !== 'start');
+  }, [state.scene, onStartedChange]);
   const N = DIMENSION_META.N;
   const archived = state.chosenDim ? DIMENSION_META[state.chosenDim] : N;
   const claimed = state.claimDim ? DIMENSION_META[state.claimDim] : DIMENSION_META.A;
@@ -1264,7 +1271,7 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
     </div>
   );
 
-  // ④-pvp 聯機房間設置：學號帶入(鎖) + 創建/加入 + 人數/輪數/揭示難度。
+  // ④-pvp 聯機房間設置：學號帶入(鎖) + 創建/加入 + 人數/輪數/看牌難度。
   const roomSetup = (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between rounded-lg border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-1.5">
@@ -1484,8 +1491,10 @@ function StartFlowGuide({ s, onEnterSandbox }: { s: TutStrings; onEnterSandbox: 
 export default function TutorialPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'list' | 'sandbox'>('list');
-  // 沙盒重置信號：頁頭「重置」按鈕 +1，InteractiveSandbox 監聽後 dispatch reset。
+  // 沙盒重置信號：頁頭「重新開始」按鈕 +1，InteractiveSandbox 監聽後 dispatch reset。
   const [sandboxResetSignal, setSandboxResetSignal] = useState(0);
+  // 沙盒是否已開始（scene 超過第一步）：第一步（抽牌前）不顯示「重新開始」，沒東西可重置。
+  const [sandboxStarted, setSandboxStarted] = useState(false);
   const hydrated = useHydrated();
   const locale = useLocaleStore((st) => st.locale);
   const loc: Locale = hydrated ? locale : 'zh';
@@ -1512,14 +1521,17 @@ export default function TutorialPage() {
           <div className="flex items-center gap-2">
             {mode === 'sandbox' ? (
               <>
-                {/* 沙盒模式：重置/退出合併進頁頭（原沙盒面板頭一整行已刪，省縱向空間）。
-                    規則/返回首頁在沙盒裏用不上，退出後仍可達。 */}
-                <button
-                  onClick={() => setSandboxResetSignal((n) => n + 1)}
-                  className="psy-btn flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
-                >
-                  {s.sandboxReset}
-                </button>
+                {/* 沙盒模式：重新開始/退出合併進頁頭（原沙盒面板頭一整行已刪，省縱向空間）。
+                    規則/返回首頁在沙盒裏用不上，退出後仍可達。
+                    第一步（抽牌前）隱藏「重新開始」——還沒東西可重置，顯示奇怪。 */}
+                {sandboxStarted && (
+                  <button
+                    onClick={() => setSandboxResetSignal((n) => n + 1)}
+                    className="psy-btn flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
+                  >
+                    {s.sandboxReset}
+                  </button>
+                )}
                 <button
                   onClick={() => setMode('list')}
                   className="psy-btn psy-btn-ghost flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text-sm"
@@ -1595,7 +1607,7 @@ export default function TutorialPage() {
         )}
 
         <AnimatePresence mode="wait">
-          {mode === 'sandbox' && <InteractiveSandbox onComplete={() => router.push('/')} s={s} dimName={dimName} loc={loc} resetSignal={sandboxResetSignal} />}
+          {mode === 'sandbox' && <InteractiveSandbox onComplete={() => router.push('/')} s={s} dimName={dimName} loc={loc} resetSignal={sandboxResetSignal} onStartedChange={setSandboxStarted} />}
         </AnimatePresence>
       </div>
     </div>

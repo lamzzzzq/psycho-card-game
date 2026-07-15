@@ -343,7 +343,7 @@ export const STRINGS = {
       maxPlayers: '最多玩家數',
       playerUnit: ' 人',
       rounds: '遊戲輪數',
-      revealLabel: '揭示難度',
+      revealLabel: '看牌難度',
       revealOpenName: '明牌',
       revealOpenSub: '全場公開人格（預設）',
       revealHalfName: '半公開',

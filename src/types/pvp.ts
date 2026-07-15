@@ -20,7 +20,7 @@ export interface RoomSettings {
   totalRounds: number; // 0 = unlimited
   maxPlayers: number; // 3-4
   deck?: DeckId; // optional for backward-compat with existing rooms (= 'big-five')
-  difficulty?: RevealDifficulty; // 揭示難度；缺省 = 'hidden'（現狀）
+  difficulty?: RevealDifficulty; // 看牌難度；缺省 = 'hidden'（現狀）
 }
 
 // Room data from DB
@@ -92,7 +92,7 @@ export interface SerializedGameState {
   claimResponses: string[];
   winner: string | null;
   totalRounds: number;
-  revealDifficulty?: RevealDifficulty; // 揭示難度，廣播給所有客戶端一致渲染 tag
+  revealDifficulty?: RevealDifficulty; // 看牌難度，廣播給所有客戶端一致渲染 tag
 }
 
 export interface SerializedPlayer {

@@ -91,13 +91,6 @@ export function RadarChart({ scores, size = 280 }: RadarChartProps) {
             </text>
           );
         })}
-
-        <text x={center} y={center - 3} textAnchor="middle" className="psy-serif text-[12px]" fill="rgba(107,90,63,0.62)">
-          Persona
-        </text>
-        <text x={center} y={center + 14} textAnchor="middle" className="psy-serif text-[18px]" fill="#c39a52">
-          ✦
-        </text>
       </svg>
     </div>
   );

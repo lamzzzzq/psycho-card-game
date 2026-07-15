@@ -236,7 +236,6 @@ export default function PvpLobbyPage() {
           >
             {t.backHome}
           </button>
-          <p className="psy-eyebrow">DUEL CHAMBER</p>
           <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">{t.title}</h1>
           <p className="text-base leading-7 text-[var(--psy-ink-soft)]">
             {t.intro}

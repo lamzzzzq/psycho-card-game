@@ -18,6 +18,7 @@ import {
 import { FlyingCard } from '@/components/game/FlyingCard';
 import { supabase } from '@/lib/supabase';
 import { leaveRoom, leaveAllRooms, updateRoomStatus } from '@/lib/room-api';
+import { retryPendingSaves, removePendingInterrupted } from '@/lib/game-record';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 
@@ -115,6 +116,64 @@ export default function PvpGamePage() {
     const { channel } = usePvpStore.getState();
     if (!channel) subscribeRoom(code, player.id);
   }, [code, player]);
+
+  // Host 硬崩潰保護：頁面卸載 / 切後台的瞬間，把中斷快照同步寫進
+  // localStorage 重傳緩衝（此時 async 網絡存檔活不到返回）。頁面若其實
+  // 沒死（bfcache 回來 / 切回前台），host 重訂閱或回前台時會撤掉快照，
+  // 不會誤傳；真崩了則下次啓動由 retryPendingSaves 補傳成中斷局。
+  useEffect(() => {
+    const buffer = () => {
+      try { usePvpStore.getState().bufferInterruptedSnapshot(); } catch {}
+    };
+    window.addEventListener('pagehide', buffer);
+    window.addEventListener('beforeunload', buffer);
+    return () => {
+      window.removeEventListener('pagehide', buffer);
+      window.removeEventListener('beforeunload', buffer);
+    };
+  }, []);
+
+  // 切後台/回前台的斷線兜底。手機瀏覽器（微信 webview 尤甚）掛起頁面時
+  // 常把 socket 掐死；回前台後 Supabase 的自動重連不保證還在跑。
+  useEffect(() => {
+    const onVis = () => {
+      const st = usePvpStore.getState();
+      if (document.visibilityState === 'hidden') {
+        // 切後台 = 隨時可能被系統殺掉且不觸發 pagehide（iOS 常態）→ 先落快照保險。
+        try { st.bufferInterruptedSnapshot(); } catch {}
+        return;
+      }
+      if (document.visibilityState !== 'visible' || !player || !st.room) return;
+      const ch = st.channel;
+      if (!ch || (ch.state !== 'joined' && ch.state !== 'joining')) {
+        // socket 已死且自動重連放棄了 → 整個重訂閱（成功路徑裏會重新
+        // track presence、host 重廣播狀態 / 非 host 補發 state-request）。
+        st.subscribeRoom(code, player.id);
+        return;
+      }
+      if (st.isHost) {
+        // channel 還活着，切後台時落的保險快照作廢。
+        const raw = st.rawGameState;
+        if (raw && raw.phase !== 'game-over') {
+          const startedAt: number | undefined =
+            raw.gameStartedAt ?? raw.actionLog?.[0]?.timestamp;
+          if (startedAt != null) removePendingInterrupted(startedAt);
+        }
+      } else if (st.myPlayerId) {
+        // 非 host 補發一次 state-request，追平掛起期間可能漏掉的廣播。
+        st.sendMessage({ type: 'state-request', fromPlayerId: st.myPlayerId });
+      }
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [code, player]);
+
+  // 崩潰遺留數據補傳。retryPendingSaves 內部會先撤「活局」的中斷快照
+  // （直接讀持久化 localStorage 判斷，不依賴 store rehydrate 時序）再補傳，
+  // host 帶着可復活的局回來不會被誤傳成中斷局。
+  useEffect(() => {
+    void retryPendingSaves();
+  }, []);
 
   // On mount, verify against the DB that this room is actually still in
   // play. If the room is missing, ended, or just in "waiting" state, the
@@ -351,7 +410,7 @@ export default function PvpGamePage() {
   }
 
   const myId = myPlayerId ?? player?.id;
-  // 揭示難度：open 明牌 / half 半公開(看4張永久) / hidden 隱藏(看2張一輪)
+  // 看牌難度：open 明牌 / half 半公開(看4張永久) / hidden 隱藏(看2張一輪)
   const revealDifficulty = gameState.revealDifficulty ?? 'hidden';
   const viewCap = revealDifficulty === 'half' ? 4 : 2;
   const meSerialized = gameState.players.find(p => p.id === myId);

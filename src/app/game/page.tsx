@@ -194,8 +194,8 @@ export default function GamePage() {
     if (game.phase === 'game-over' || game.phase === 'claim-window') return;
     if (game.currentPlayerIndex === 0) return;
 
-    // 模拟思考：AI 出牌前随机停顿 8–15 秒，避免节奏过快（原 280ms 几乎瞬发）。
-    const thinkDelay = 8000 + Math.random() * 7000;
+    // 模拟思考：AI 出牌前随机停顿 5–8 秒，避免节奏过快（原 280ms 几乎瞬发）。
+    const thinkDelay = 5000 + Math.random() * 3000;
     const timer = window.setTimeout(() => {
       void runOneAITurn();
     }, thinkDelay);
