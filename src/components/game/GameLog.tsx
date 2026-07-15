@@ -142,26 +142,26 @@ export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80, i
           type="button"
           onClick={() => setOpen(true)}
           aria-label={tg.sheetLogTitle}
-          className="psy-etched flex aspect-[4/7] w-[72px] flex-col overflow-hidden rounded-[1.1rem] p-1.5 text-left transition hover:border-[rgba(200,155,93,0.45)] sm:w-32 sm:rounded-[1.35rem] sm:p-2.5"
+          className="psy-etched flex h-[126px] w-[144px] flex-col overflow-hidden rounded-[1.1rem] p-3 text-left transition hover:border-[rgba(200,155,93,0.45)] sm:h-[224px] sm:w-64 sm:rounded-[1.35rem] sm:p-4"
           style={{ background: 'linear-gradient(180deg, #fdf8f1, #f3ead9)', borderColor: 'rgba(154,116,72,0.28)', boxShadow: 'inset 0 0 0 1px rgba(255,250,240,0.46), 0 14px 24px rgba(96,72,38,0.12)' }}
         >
-          <div className="mb-1 flex items-center justify-between gap-1">
-            <span className="truncate text-[10px] font-semibold text-[var(--psy-ink)] sm:text-xs">{tg.sheetLogTitle}</span>
-            <span className="hidden shrink-0 text-[8px] text-[var(--psy-accent)] sm:inline">{tg.logViewAll}</span>
+          <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
+            <span className="truncate text-xs font-semibold text-[var(--psy-ink)] sm:text-base">{tg.sheetLogTitle}</span>
+            <span className="shrink-0 text-[10px] text-[var(--psy-accent)] sm:text-xs">{tg.logViewAll}</span>
           </div>
-          <div className="psy-scroll flex-1 space-y-1 overflow-y-auto pr-0.5">
+          <div className="psy-scroll flex-1 space-y-1.5 overflow-y-auto pr-1 sm:space-y-2.5">
             {recentActions.length === 0 ? (
-              <p className="text-[9px] leading-tight text-[var(--psy-muted)] sm:text-[10px]">{tg.logNoActions}</p>
+              <p className="text-[11px] leading-snug text-[var(--psy-muted)] sm:text-sm">{tg.logNoActions}</p>
             ) : (
               recentActions.map((action, i) => {
                 const player = getPlayer(action.playerId);
                 if (!player) return null;
                 const label = getActionLabel(action, locale);
                 return (
-                  <div key={`${action.timestamp}-v-${i}`} className="text-[9px] leading-tight sm:text-[10px]">
-                    <span className="text-[var(--psy-ink-soft)]">{player.avatar} </span>
+                  <div key={`${action.timestamp}-v-${i}`} className="flex gap-1.5 text-[11px] leading-snug sm:text-sm">
+                    <span className="shrink-0 text-[var(--psy-ink-soft)]">{player.avatar}</span>
                     <span
-                      className={label.tone === 'success' ? 'text-[var(--psy-success)]' : label.tone === 'danger' ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-ink-soft)]'}
+                      className={`min-w-0 flex-1 ${label.tone === 'success' ? 'text-[var(--psy-success)]' : label.tone === 'danger' ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-ink-soft)]'}`}
                       style={label.tone === 'dimension' ? { color: 'var(--psy-accent)' } : undefined}
                     >
                       {label.prefix}
