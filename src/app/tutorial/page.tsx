@@ -650,6 +650,19 @@ function InteractiveSandbox({
           </div>
         )}
 
+        {/* 看牌模式对照：把「看 4 张永久保留 / 看 2 张不保留」两条规则常驻显示在看牌步，
+            让两种模式都出现在 UI 里（当前示範用隱藏·看 2 張，高亮那条）。*/}
+        {(state.scene === 'viewing' || state.scene === 'view-picking') && (
+          <div className="mx-auto mt-2 flex max-w-md flex-col gap-1.5 sm:flex-row sm:justify-center">
+            <span className="rounded-full border border-[var(--psy-border)] bg-[var(--psy-card-content)] px-3 py-1 text-center text-[11px] text-[var(--psy-muted)]">
+              {s.revealHalfNote}
+            </span>
+            <span className="rounded-full border border-[rgba(200,155,93,0.4)] bg-[rgba(200,155,93,0.1)] px-3 py-1 text-center text-[11px] font-medium text-[var(--psy-accent)]">
+              {s.revealHiddenNote}
+            </span>
+          </div>
+        )}
+
         {/* 自摸碰第一步：選人格維度（只開放神經質，引導點擊）*/}
         {state.scene === 'pong-dimension' && (
           <motion.div

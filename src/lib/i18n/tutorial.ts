@@ -169,6 +169,8 @@ export const TUTORIAL_T = {
     btnHu: '食胡',
     btnViewTwo: '查看 2 張',
     btnContinueJudge: '完成查看',
+    revealHalfNote: '半公開 · 每回合看 4 張 · 看過永久保留',
+    revealHiddenNote: '隱藏 · 每回合看 2 張 · 下一輪重置不保留（本示範）',
     btnSelfPong: '自摸碰',
     btnCancel: '取消',
     btnSelfArchive: '確認自摸碰',
@@ -220,7 +222,7 @@ export const TUTORIAL_T = {
 
     // ── 沙盒：caption（按 scene）──
     captionStart: '這是你的開局：手牌裏有多種人格描述和一張知識牌。你需要先抽牌，再決定要查看、歸檔還是棄牌。',
-    captionViewing: '看牌難度不同、每回合能看的張數也不同：半公開每回合看 4 張，隱藏每回合看 2 張（最難）。本示範用最難的「隱藏」——先點上方高亮的「查看 2 張」開始。',
+    captionViewing: '看牌難度不同，每回合能看幾張、看完是否保留也不同：半公開每回合看 4 張，看過的永久保留（直到打出）；隱藏每回合看 2 張（最難），看完下一輪就重置、不保留。本示範用最難的「隱藏」——先點上方高亮的「查看 2 張」開始。',
     captionViewPicking: (n: number) =>
       n >= 2
         ? '兩張都看過了！點高亮的「完成查看」繼續。'
@@ -247,10 +249,10 @@ export const TUTORIAL_T = {
 
     // ── 沙盒：feedback（reducer 內）──
     fbDraw: '抽到一張牌。現在選擇很多，先演示「查看 2 張牌」。',
-    fbViewTwo: '本回合查看了 2 張牌：一張盡責性，一張神經質。真實牌局裏只會揭開你選的 2 張。',
+    fbViewTwo: '本回合查看了 2 張牌：一張盡責性，一張神經質。隱藏模式看過的牌下一輪會重置、不保留；真實牌局裏只會揭開你選的 2 張。',
     fbViewStart: '點選下方高亮的 2 張牌，揭開它們的真實維度。',
     fbViewPicked: '已揭開一張。再點另一張高亮的牌。',
-    fbViewDone: '兩張都看過了。真實牌局裏每回合也只能看 2 張。',
+    fbViewDone: '兩張都看過了。隱藏模式每回合只能看 2 張，而且下一輪就重置、不保留；換成半公開則是每回合看 4 張、看過永久保留。',
     fbFinishView: '現在你知道剛抽到的牌能補齊一組。下一步演示自摸碰。',
     fbOpenPong: '自摸碰要先選定一個人格維度。提示：手牌裏有 4 張「神經質」，選它。',
     fbChooseDim: (name: string, cnt: number) => `已選擇「${name}」。現在從手牌精確選擇 ${cnt} 張「${name}」的牌。`,
@@ -482,6 +484,8 @@ export const TUTORIAL_T = {
     btnHu: 'Win',
     btnViewTwo: 'View 2',
     btnContinueJudge: 'Done viewing',
+    revealHalfNote: 'Half · view 4 per turn · kept for good',
+    revealHiddenNote: 'Hidden · view 2 per turn · resets next round (this demo)',
     btnSelfPong: 'Self-draw Pong',
     btnCancel: 'Cancel',
     btnSelfArchive: 'Confirm Pong',
@@ -533,7 +537,7 @@ export const TUTORIAL_T = {
 
     // ── Sandbox: captions (by scene) ──
     captionStart: 'This is your opening: your hand has several personality descriptions and 1 Knowledge card. You must draw first, then decide whether to view, declare, or discard.',
-    captionViewing: 'The reveal difficulty changes how many you can view per turn: Half lets you view 4, Hidden lets you view 2 (the hardest). This demo uses the hardest — Hidden — so tap the highlighted "View 2" above to start.',
+    captionViewing: 'Reveal difficulty changes how many you can view per turn AND whether they stay revealed: Half lets you view 4 each turn and they stay revealed for good (until played); Hidden lets you view 2 (the hardest) but they reset next round — not kept. This demo uses the hardest — Hidden — so tap the highlighted "View 2" above to start.',
     captionViewPicking: (n: number) =>
       n >= 2
         ? 'You’ve seen both! Tap the highlighted "Done viewing" to continue.'
@@ -560,10 +564,10 @@ export const TUTORIAL_T = {
 
     // ── Sandbox: feedback (in reducer) ──
     fbDraw: 'Drew a card. There are many options now — first let’s demo "view 2 cards".',
-    fbViewTwo: 'This turn you viewed 2 cards: one Conscientiousness, one Neuroticism. In a real game only the 2 you pick are revealed.',
+    fbViewTwo: 'This turn you viewed 2 cards: one Conscientiousness, one Neuroticism. In Hidden mode viewed cards reset next round — not kept; in a real game only the 2 you pick are revealed.',
     fbViewStart: 'Tap the 2 highlighted cards below to reveal their true dimensions.',
     fbViewPicked: 'One revealed. Now tap the other highlighted card.',
-    fbViewDone: 'Both viewed. In a real game you can also only see 2 cards per turn.',
+    fbViewDone: 'Both viewed. In Hidden mode you see only 2 per turn and they reset next round (not kept); in Half mode you’d view 4 per turn and they stay revealed for good.',
     fbFinishView: 'Now you know the just-drawn card can complete a set. Next, a demo of Self-draw Pong.',
     fbOpenPong: 'Self-draw Pong needs you to fix a dimension first. Hint: your hand has 4 "Neuroticism" cards — choose it.',
     fbChooseDim: (name: string, cnt: number) => `Chose "${name}". Now select exactly ${cnt} "${name}" cards from your hand.`,
