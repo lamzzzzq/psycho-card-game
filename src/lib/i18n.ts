@@ -66,6 +66,9 @@ export const STRINGS = {
       continueAssess: '繼續測評',
       reassess: '重新測評',
       report: '查看人格報告',
+      deckModalTitle: '選擇人格牌堆',
+      deckModalSub: '目前提供 Big Five，其餘牌堆即將上線。',
+      deckModalClose: '關閉',
     },
     assessment: {
       eyebrow: 'Persona Reading',
@@ -441,6 +444,9 @@ export const STRINGS = {
       continueAssess: 'Continue',
       reassess: 'Retake Assessment',
       report: 'View Personality Report',
+      deckModalTitle: 'Choose a Personality Deck',
+      deckModalSub: 'Big Five is available now; other decks are coming soon.',
+      deckModalClose: 'Close',
     },
     assessment: {
       eyebrow: 'Persona Reading',

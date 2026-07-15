@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
@@ -8,6 +8,7 @@ import { useHydrated } from '@/stores/useHydration';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { QUESTIONS } from '@/data/questions';
 import { Footer } from '@/components/shared/Footer';
+import { DeckSelectModal } from '@/components/shared/DeckSelectModal';
 
 export default function Home() {
   const router = useRouter();
@@ -22,6 +23,9 @@ export default function Home() {
   const t = STRINGS[loc].home;
   const c = STRINGS[loc].common;
   const features = t.features;
+  // 牌堆选择模态：点「玩法教学」或「开始测评」先弹三牌堆入口（仅 Big Five 可选），
+  // 选后再去对应页面。deckModalFor 记录去向。
+  const [deckModalFor, setDeckModalFor] = useState<'tutorial' | 'assessment' | null>(null);
 
   // 自愈：已完成报告却残留半截答案 = 放弃的重测（unmount 清理可能没触发）。
   // 清掉它，避免主页显示「繼續測評(n/50)」而大厅显示「已完成」的不一致。
@@ -51,7 +55,7 @@ export default function Home() {
         ))}
       </div>
       <button
-        onClick={() => router.push('/tutorial')}
+        onClick={() => setDeckModalFor('tutorial')}
         className="psy-btn psy-btn-accent psy-serif fixed right-4 top-4 z-40 px-4 py-2 text-sm font-semibold sm:right-8 sm:top-8"
       >
         {c.tutorial}
@@ -120,7 +124,7 @@ export default function Home() {
         ) : (
           <div className="mx-auto max-w-md">
             <button
-              onClick={() => router.push('/assessment')}
+              onClick={() => setDeckModalFor('assessment')}
               className="psy-btn psy-btn-accent psy-serif w-full px-6 py-3.5 text-base font-semibold"
             >
               {progress > 0 && progress < QUESTIONS.length
@@ -130,6 +134,13 @@ export default function Home() {
           </div>
         )}
       </div>
+      <DeckSelectModal
+        open={deckModalFor !== null}
+        onClose={() => setDeckModalFor(null)}
+        onSelect={() => router.push(deckModalFor === 'tutorial' ? '/tutorial' : '/assessment')}
+        loc={loc}
+      />
+
       <Footer />
     </div>
   );
