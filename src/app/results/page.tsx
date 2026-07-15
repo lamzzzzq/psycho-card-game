@@ -43,7 +43,7 @@ export default function ResultsPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center px-6 py-10">
+    <div className="flex flex-1 flex-col items-center px-6 py-10 pb-40 lg:pb-10">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -61,7 +61,7 @@ export default function ResultsPage() {
           </h1>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div className="space-y-4">
             <RadarChart scores={bigFiveScores} />
           </div>
@@ -73,8 +73,15 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* 与首页同一套按鈕組：psy-btn 設計系統 + 相同響應式佈局（PVP 整寬主色，其餘並排次按鈕）*/}
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-3 lg:gap-3">
+        <hr className="border-t border-[var(--psy-border)]" />
+
+        <BigFiveIntro locale={locale} />
+      </motion.div>
+
+      {/* 三個入口：移动端常驻底部（sticky 底栏，拇指可达），桌面端静态居中。
+          放在 motion.div 之外——framer transform 祖先会让 position:fixed 失效。 */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--psy-border)] bg-[rgba(253,249,240,0.92)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgba(120,90,50,0.1)] backdrop-blur-md lg:static lg:mt-8 lg:w-full lg:max-w-5xl lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
+        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-2 lg:grid-cols-3 lg:gap-3">
           <button
             onClick={() => router.push('/pvp')}
             className="psy-btn psy-btn-accent psy-serif col-span-2 w-full px-6 py-3.5 text-base font-semibold lg:col-span-1"
@@ -97,9 +104,7 @@ export default function ResultsPage() {
             {t.reassess}
           </button>
         </div>
-
-        <BigFiveIntro locale={locale} />
-      </motion.div>
+      </div>
     </div>
   );
 }
