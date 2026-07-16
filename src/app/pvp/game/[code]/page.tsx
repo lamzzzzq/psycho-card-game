@@ -769,7 +769,7 @@ export default function PvpGamePage() {
           transition={{ duration: 0.2 }}
           className="fixed left-1/2 top-28 z-[60] w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 sm:top-32"
         >
-          <TurnNoticeToast eyebrow={t.idleYourTurnEyebrow} title={t.idleYourTurn} icon="⏰" />
+          <TurnNoticeToast title={t.idleYourTurn} icon="⏰" />
         </motion.div>
       )}
 

@@ -442,7 +442,7 @@ export default function GamePage() {
           transition={{ duration: 0.2 }}
           className="fixed left-1/2 top-24 z-[60] w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 sm:top-28"
         >
-          <TurnNoticeToast eyebrow={tg.idleYourTurnEyebrow} title={tg.idleYourTurn} icon="⏰" />
+          <TurnNoticeToast title={tg.idleYourTurn} icon="⏰" />
         </motion.div>
       )}
 

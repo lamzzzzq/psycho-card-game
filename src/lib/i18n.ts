@@ -283,11 +283,11 @@ export const STRINGS = {
       pongSkip: '暫不歸檔',
       pongSelectFirst: '請先點擊手牌選擇同維度卡',
       // Card.tsx badges
-      archiveNote: '檔案註記',
+      archiveNote: '知識牌',
       knowledgeCard: '知識牌',
       // GameLog action labels
       logDrew: '摸了一張牌',
-      logDiscardedNote: '棄掉了檔案註記',
+      logDiscardedNote: '棄掉了知識牌',
       logDiscardedClue: '棄掉了一張線索牌',
       logDiscardedCard: '棄了一張牌',
       logPenaltyCleared: '✅ 罰停解除',

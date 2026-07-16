@@ -83,7 +83,7 @@ function getActionLabel(action: GameAction, locale: Locale): ActionLabel {
 export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80, inline = false, vertical = false }: GameLogProps) {
   const tg = STRINGS[locale].game;
   const [open, setOpen] = useState(false);
-  const recentActions = actions.slice(-3).reverse();
+  const recentActions = actions.slice(-5).reverse();
   const allActions = [...actions].reverse();
   const getPlayer = (id: string) => players.find((p) => p.id === id);
 
@@ -101,7 +101,7 @@ export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80, i
         <span className="text-base">{player.avatar}</span>
         <div className="min-w-0 flex-1">
           <div className="psy-serif text-sm text-[var(--psy-ink)]">{playerLabel(player, locale)}</div>
-          <div className="mt-1 text-xs text-[var(--psy-muted)]">{tg.roundWord} {action.round}</div>
+          <div className="mt-1 text-xs text-[var(--psy-muted)]">{tg.logRoundPrefix}{action.round}{tg.logRoundSuffix}</div>
         </div>
         <div className="min-w-0 flex-[1.4] text-sm">
           <div
@@ -298,7 +298,7 @@ export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80, i
                           <span className="text-base">{player.avatar}</span>
                           <div className="min-w-0 flex-1">
                             <div className="psy-serif text-sm text-[var(--psy-ink)]">{playerLabel(player, locale)}</div>
-                            <div className="mt-1 text-xs text-[var(--psy-muted)]">{tg.roundWord} {action.round}</div>
+                            <div className="mt-1 text-xs text-[var(--psy-muted)]">{tg.logRoundPrefix}{action.round}{tg.logRoundSuffix}</div>
                           </div>
                           <div className="min-w-0 flex-[1.4] text-sm">
                             <div
