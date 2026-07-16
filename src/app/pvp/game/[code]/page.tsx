@@ -568,7 +568,7 @@ export default function PvpGamePage() {
     return (
       <div className="flex flex-1 items-center justify-center">
         <div className="text-center space-y-6">
-          <div className="text-6xl">{gameState.winner === myId ? '🏆' : '😔'}</div>
+          <div className="text-6xl">{gameState.winner === myId ? '🏆' : '😯'}</div>
           <h1 className="psy-serif text-3xl text-[var(--psy-ink)]">
             {gameState.winner === myId ? t.youWin : `${winner?.name ?? t.opponent} ${t.winSuffix}`}
           </h1>

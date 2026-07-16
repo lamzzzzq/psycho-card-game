@@ -273,7 +273,7 @@ export const STRINGS = {
       roundOf: '輪',
       // PongPanel
       pongPanelTitle: '心理判讀窗口',
-      pongClueDiscarded: '棄出了這張線索牌',
+      pongClueDiscarded: '棄出了這張牌',
       pongSampleLabel: '棄牌樣本',
       pongCanClaim: '你可以嘗試據此完成一組人格歸檔。',
       pongTip1: '只選你判斷爲同一人格描述的手牌',
@@ -289,7 +289,7 @@ export const STRINGS = {
       // GameLog action labels
       logDrew: '摸了一張牌',
       logDiscardedNote: '棄掉了知識牌',
-      logDiscardedClue: '棄掉了一張線索牌',
+      logDiscardedClue: '棄掉了一張牌',
       logDiscardedCard: '棄了一張牌',
       logPenaltyCleared: '✅ 罰停解除',
       logHuSuccess: '食胡！遊戲結束',
@@ -653,7 +653,7 @@ export const STRINGS = {
       roundOf: 'Round',
       // PongPanel
       pongPanelTitle: 'Psychological Read Window',
-      pongClueDiscarded: 'discarded this clue card',
+      pongClueDiscarded: 'discarded this card',
       pongSampleLabel: 'Discard sample',
       pongCanClaim: 'You may try to complete a personality archive from this.',
       pongTip1: 'Pick only the hand cards you judge to share the same personality',
@@ -669,7 +669,7 @@ export const STRINGS = {
       // GameLog action labels
       logDrew: 'drew a card',
       logDiscardedNote: 'discarded a knowledge card',
-      logDiscardedClue: 'discarded a clue card',
+      logDiscardedClue: 'discarded a card',
       logDiscardedCard: 'discarded a card',
       logPenaltyCleared: '✅ Penalty cleared',
       logHuSuccess: 'Win! Game over',

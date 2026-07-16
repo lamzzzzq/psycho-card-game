@@ -33,7 +33,7 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby, locale = 'z
         className="mx-auto w-full max-w-6xl space-y-8"
       >
         <div className="space-y-2 text-center">
-          <div className="text-5xl">{isHumanWinner ? '🏆' : '😤'}</div>
+          <div className="text-5xl">{isHumanWinner ? '🏆' : '😯'}</div>
           <h2 className="psy-serif text-4xl text-[var(--psy-ink)] sm:text-5xl">
             {isHumanWinner ? tg.youWin : `${winner.name} ${tg.winShort}`}
           </h2>
