@@ -302,7 +302,7 @@ export const STRINGS = {
       logPongFailWrong: '牌不對 / 張數不夠',
       logPongFailPenalty: '罰停一回合',
       logSkip: '⛔ 因罰停 · 本回合被自動跳過',
-      logNoActions: '暫無線索流動',
+      logNoActions: '',
       logViewAll: '查看全部',
       logFullTitlePrefix: '行動記錄 · 共 ',
       logFullTitleSuffix: ' 條',
@@ -377,6 +377,7 @@ export const STRINGS = {
       waitingWord: '等待中',
     },
     pvpRoom: {
+      codeLabel: '房間碼',
       roomNotExist: '房間不存在',
       loadFailed: '加載失敗',
       loadingRoom: '加載房間…',
@@ -682,7 +683,7 @@ export const STRINGS = {
       logPongFailWrong: 'wrong cards / not enough',
       logPongFailPenalty: 'frozen for one turn',
       logSkip: '⛔ Penalized · turn auto-skipped',
-      logNoActions: 'No clues flowing yet',
+      logNoActions: '',
       logViewAll: 'View all',
       logFullTitlePrefix: 'Action log · ',
       logFullTitleSuffix: ' total',
@@ -757,6 +758,7 @@ export const STRINGS = {
       waitingWord: 'waiting',
     },
     pvpRoom: {
+      codeLabel: 'Room Code',
       roomNotExist: 'Room not found',
       loadFailed: 'Failed to load',
       loadingRoom: 'Loading room…',

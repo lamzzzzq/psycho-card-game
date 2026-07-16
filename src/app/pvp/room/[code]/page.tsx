@@ -225,7 +225,7 @@ export default function RoomWaitPage() {
         className="w-full max-w-2xl space-y-8"
       >
         <div className="psy-panel psy-etched relative space-y-3 rounded-[2rem] px-4 py-10 text-center sm:px-8">
-          <p className="psy-eyebrow">ROOM CODE</p>
+          <p className="psy-eyebrow">{t.codeLabel}</p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <div className="psy-serif min-w-0 text-6xl font-medium tracking-[0.2em] text-[var(--psy-accent)] tabular-nums sm:text-8xl sm:tracking-[0.32em]">
               {code}
