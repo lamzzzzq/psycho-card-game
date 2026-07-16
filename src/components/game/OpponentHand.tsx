@@ -46,7 +46,6 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
     };
   }, [openModal]);
 
-  const stackWidth = Math.max(20, Math.min(72, (player.hand.length - 1) * 4 + 18));
   const isPenalized = player.skipNextTurn || !!player.frozenUntilOwnDiscard;
   const hasLeft = player.hasLeft === true;
 
@@ -98,31 +97,12 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
           </div>
         </div>
 
-        {/* 「出牌中」文字标签移动端隐藏——卡片已有发光边框(psy-turn-border+ring)指示当前回合，
-            移动端空间紧、不再用文字重复；桌面端保留。 */}
+        {/* 牌背堆叠视觉已移除（用户反馈：吃空间、张数已有数字，冗余）。「出牌中」标签恢复显示。 */}
         {isCurrentTurn && !isPenalized && !hasLeft && !isTentativeOffline && (
-          <span className="hidden shrink-0 rounded-full border border-[rgba(195,154,82,0.55)] bg-[var(--psy-accent)] px-2 py-0.5 text-[9px] font-semibold text-white shadow-[0_4px_10px_rgba(154,116,72,0.24)] sm:inline-block">
+          <span className="shrink-0 rounded-full border border-[rgba(195,154,82,0.55)] bg-[var(--psy-accent)] px-2 py-0.5 text-[9px] font-semibold text-white shadow-[0_4px_10px_rgba(154,116,72,0.24)]">
             {locale === 'en' ? 'Playing' : '出牌中'}
           </span>
         )}
-
-        {/* Card-back stack visual */}
-        <div className="relative h-4 shrink-0 sm:h-5" style={{ width: stackWidth }}>
-          {player.hand.slice(0, 16).map((card, i) => (
-            <div
-              key={card.id}
-              className="absolute top-0 flex h-full w-3 items-center justify-center rounded-[0.3rem] border sm:w-4 sm:rounded-[0.4rem]"
-              style={{
-                left: i * 4,
-                zIndex: i,
-                background: 'linear-gradient(180deg, #eaddc4, #d7c49e)',
-                borderColor: 'rgba(154,116,72,0.28)',
-              }}
-            >
-              <span className="text-[6px] text-[var(--psy-ink-soft)] opacity-70 sm:text-[7px]">◈</span>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Offline badge — overrides penalty if hasLeft is false. Three
@@ -171,10 +151,8 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
         </div>
       )}
 
-      {/* Archive — 移动端隐藏（吃空间、遮住名字/张数，用户反馈根本没法玩）；桌面端保留 */}
-      <div className="hidden sm:block">
-        <DeclaredArea declaredSets={player.declaredSets} compact title={`${playerLabel(player, locale)}${t.archiveOf}`} locale={locale} />
-      </div>
+      {/* Archive — 保留(可点击、已去掉「歸檔」二字省空间)；空则「暫無公開歸檔」，有则显示 chips */}
+      <DeclaredArea declaredSets={player.declaredSets} compact title={`${playerLabel(player, locale)}${t.archiveOf}`} locale={locale} />
 
       {/* Reveal trigger — opens modal */}
       {(showCards || hasRevealedSubset) && (
