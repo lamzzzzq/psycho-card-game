@@ -23,6 +23,9 @@ export default function AssessmentPage() {
   const [dupWarn, setDupWarn] = useState(false); // 学号重复：展示 恢复 / 覆盖 两个选择
   const [restoring, setRestoring] = useState(false);
   const [restoreError, setRestoreError] = useState(false);
+  // 「更換學號」：只强制显示 gate 让用户重输，不清空持久化的旧学号。
+  // 只有在 gate 里真正提交了新学号才 commit——否则（没做任何操作就退出）旧学号登录记录保留。
+  const [changingId, setChangingId] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualScores, setManualInputScores] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
@@ -62,8 +65,8 @@ export default function AssessmentPage() {
     return null;
   }
 
-  // 學號 gate：先收集學號，raw 答案按學號存
-  if (!studentId) {
+  // 學號 gate：先收集學號，raw 答案按學號存。changingId=更換學號時强制重入（旧学号仍在背景保留）。
+  if (!studentId || changingId) {
     const normalized = normalizeStudentId(studentIdInput);
     const idValid = isValidStudentId(studentIdInput);
     return (
@@ -93,6 +96,7 @@ export default function AssessmentPage() {
               // 已提示过重复 → 用户坚持，直接放行
               if (dupWarn) {
                 setStudentId(normalized);
+                setChangingId(false);
                 return;
               }
               // 首次：查重；重复则提示等待二次确认，不重复则直接进入
@@ -103,6 +107,7 @@ export default function AssessmentPage() {
                 setDupWarn(true);
               } else {
                 setStudentId(normalized);
+                setChangingId(false);
               }
             }}
             className="space-y-4"
@@ -139,6 +144,7 @@ export default function AssessmentPage() {
                     setRestoring(false);
                     if (scores) {
                       setStudentId(normalized);
+                      setChangingId(false);
                       setManualScores(scores); // 标记完成 + 写入分数（本地）
                       router.push('/results');
                     } else {
@@ -151,7 +157,7 @@ export default function AssessmentPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setStudentId(normalized)}
+                  onClick={() => { setStudentId(normalized); setChangingId(false); }}
                   className="psy-btn psy-btn-ghost psy-serif w-full py-3 font-semibold"
                 >
                   {t.dupOverwrite}
@@ -236,7 +242,7 @@ export default function AssessmentPage() {
             {t.studentLabel}：
             <span className="ml-1 font-medium text-[var(--psy-ink-soft)]">{studentId}</span>
             <button
-              onClick={() => { setStudentId(''); setStudentIdInput(''); setDupWarn(false); }}
+              onClick={() => { setChangingId(true); setStudentIdInput(''); setDupWarn(false); }}
               className="ml-2 underline decoration-[rgba(150,118,78,0.3)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
             >
               {t.changeStudent}
