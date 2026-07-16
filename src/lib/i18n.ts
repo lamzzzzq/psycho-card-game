@@ -253,7 +253,7 @@ export const STRINGS = {
       unknownPlayer: '未知玩家',
       // PlayerHand
       pickDiscard: '先點擊一張要捨棄的牌',
-      confirmDiscardHint: '點「提交棄牌」確認（再次點擊該牌可取消選中）',
+      confirmDiscardHint: '點「提交棄牌」確認',
       submitDiscard: '提交棄牌',
       selectSameDim: '選出你認爲屬於同一人格線索的牌',
       newDraw: '新抽',
@@ -634,7 +634,7 @@ export const STRINGS = {
       unknownPlayer: 'Unknown player',
       // PlayerHand
       pickDiscard: 'First tap a card to discard',
-      confirmDiscardHint: 'Tap “Discard” to confirm (tap the card again to deselect)',
+      confirmDiscardHint: 'Tap “Discard” to confirm',
       submitDiscard: 'Discard',
       selectSameDim: 'Pick the cards you believe share the same personality clue',
       newDraw: 'NEW',
