@@ -844,7 +844,7 @@ export default function PvpGamePage() {
 
       {/* My player area（面板包裹，对齐单机） */}
       {mePlayer && (
-        <div className="mt-2 flex flex-1 flex-col space-y-2 rounded-[1.7rem] border border-[rgba(154,116,72,0.14)] bg-[rgba(253,248,241,0.56)] p-2 shadow-[0_18px_40px_rgba(96,72,38,0.1)] sm:mt-3 sm:space-y-3 sm:rounded-[2rem] sm:p-3">
+        <div className="mt-2 flex flex-1 flex-col space-y-2 p-1 sm:mt-3 sm:space-y-3 sm:p-1.5">
           {/* 罰停橫幅 / 搶牌窗 / 查看 / 碰意圖面板已全部移入手牌上方的懸浮層
               （見下方 Hand + Declared 前的錨點），不再插進文檔流把手牌往下推。 */}
           {/* Big Five scores */}

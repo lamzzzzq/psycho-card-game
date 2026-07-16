@@ -543,8 +543,9 @@ export default function GamePage() {
         </div>
       </div>
 
-      {/* Human player area */}
-      <div className="mt-2 flex flex-1 flex-col space-y-2 rounded-[1.7rem] border border-[rgba(154,116,72,0.14)] bg-[rgba(253,248,241,0.56)] p-2 shadow-[0_18px_40px_rgba(96,72,38,0.1)] sm:mt-3 sm:space-y-3 sm:rounded-[2rem] sm:p-3">
+      {/* Human player area — 不加背景/边框：flex-1 撑满视口时下半空区会变成可见的空圆角盒
+          （用户反馈）。用透明容器只做布局，空区回到隐形（页面底色）。 */}
+      <div className="mt-2 flex flex-1 flex-col space-y-2 p-1 sm:mt-3 sm:space-y-3 sm:p-1.5">
         {/* 罰停橫幅 / 碰窗 / 查看 / 碰意圖面板已全部移入手牌上方的懸浮層
             （見下方 Hand + Declared 區），不再插進文檔流把手牌往下推。 */}
         <div className="flex shrink-0 flex-col gap-1.5 sm:hidden">
