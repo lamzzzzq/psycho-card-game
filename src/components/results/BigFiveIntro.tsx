@@ -9,7 +9,7 @@ import type { Locale } from '@/lib/i18n';
 export function BigFiveIntro({ locale }: { locale: Locale }) {
   const isEn = locale === 'en';
   return (
-    <section className="w-full max-w-3xl space-y-5 text-left">
+    <section className="w-full space-y-5 text-left">
       <h2 className="psy-serif text-xl text-[var(--psy-ink)] sm:text-2xl">
         {isEn ? 'The Big Five Personality Model (OCEAN)' : '大五人格模型（Big Five Personality Model；OCEAN）'}
       </h2>

@@ -55,7 +55,7 @@ export function DeckSelectModal({
               ×
             </button>
 
-            <div className="space-y-1 pr-6 text-center sm:text-left">
+            <div className="space-y-1 pr-10 text-left">
               <h2 className="psy-serif text-2xl text-[var(--psy-ink)]">{h.deckModalTitle}</h2>
               <p className="text-sm leading-6 text-[var(--psy-ink-soft)]">{h.deckModalSub}</p>
             </div>

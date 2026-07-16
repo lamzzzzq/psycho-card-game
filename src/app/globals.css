@@ -207,7 +207,8 @@ body > * {
   border: 1px solid var(--psy-border);
   background: #f7f0e2;
   padding: 0.7rem 0.75rem;
-  text-align: center;
+  /* 全站 tile 统一左对齐（用户要求）；牌堆/看牌本就 flex items-start，头像用 flex 居中不受影响 */
+  text-align: left;
   /* 凸起：顶部高光斜面 + 底部内阴影立边 + 外投影 */
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.62),
