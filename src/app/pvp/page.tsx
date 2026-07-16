@@ -414,31 +414,7 @@ export default function PvpLobbyPage() {
 
         {tab === 'create' ? (
           <section className="psy-panel psy-etched space-y-5 rounded-[1.6rem] p-6">
-            <div className="space-y-2">
-              <p className="psy-eyebrow text-[10px]">{t.deckHeader}</p>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {DECK_OPTIONS.map((opt) => {
-                  const active = deck === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => !opt.locked && setDeck(opt.id)}
-                      disabled={opt.locked}
-                      className={`psy-tile flex flex-col items-start gap-1 px-3 py-3 text-left transition ${active ? 'is-active' : ''} ${opt.locked ? 'opacity-55 cursor-not-allowed' : ''}`}
-                      title={opt.locked ? t.comingSoon : ''}
-                    >
-                      <div className="flex w-full items-center justify-between">
-                        <span className="psy-serif text-sm text-[var(--psy-ink)]">{opt.name ?? t[opt.nameKey!]}</span>
-                        {opt.locked && (
-                          <span className="text-[9px] text-[var(--psy-muted)]">🔒 {t.comingSoon}</span>
-                        )}
-                      </div>
-                      <span className="text-[10px] leading-snug text-[var(--psy-muted)]">{renderCjk(t[opt.subKey], locale)}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            {/* 人格模型选择已前置到进游戏前的弹窗(DeckSelectModal),此处不再重复选择 */}
 
             <div className="space-y-2">
               <p className="psy-eyebrow text-[10px]">{t.maxPlayers}</p>

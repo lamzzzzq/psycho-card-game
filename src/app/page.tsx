@@ -25,7 +25,7 @@ export default function Home() {
   const features = t.features;
   // 牌堆选择模态：点「玩法教学」或「开始测评」先弹三牌堆入口（仅 Big Five 可选），
   // 选后再去对应页面。deckModalFor 记录去向。
-  const [deckModalFor, setDeckModalFor] = useState<'tutorial' | 'assessment' | 'report' | null>(null);
+  const [deckModalFor, setDeckModalFor] = useState<'tutorial' | 'assessment' | 'report' | 'pvp' | 'solo' | null>(null);
 
   // 自愈：已完成报告却残留半截答案 = 放弃的重测（unmount 清理可能没触发）。
   // 清掉它，避免主页显示「繼續測評(n/50)」而大厅显示「已完成」的不一致。
@@ -103,13 +103,13 @@ export default function Home() {
         {hasResults ? (
           <div className="mx-auto grid max-w-5xl grid-cols-2 gap-2 lg:grid-cols-3 lg:gap-3">
             <button
-              onClick={() => router.push('/pvp')}
+              onClick={() => setDeckModalFor('pvp')}
               className="psy-btn psy-btn-accent psy-serif col-span-2 w-full px-6 py-3.5 text-base font-semibold lg:col-span-1"
             >
               {t.pvp}
             </button>
             <button
-              onClick={() => router.push('/lobby')}
+              onClick={() => setDeckModalFor('solo')}
               className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
             >
               {t.single}
@@ -137,7 +137,13 @@ export default function Home() {
       <DeckSelectModal
         open={deckModalFor !== null}
         onClose={() => setDeckModalFor(null)}
-        onSelect={() => router.push(deckModalFor === 'tutorial' ? '/tutorial' : deckModalFor === 'report' ? '/results' : '/assessment')}
+        onSelect={() => router.push(
+          deckModalFor === 'tutorial' ? '/tutorial'
+          : deckModalFor === 'report' ? '/results'
+          : deckModalFor === 'pvp' ? '/pvp'
+          : deckModalFor === 'solo' ? '/lobby'
+          : '/assessment'
+        )}
         loc={loc}
       />
 

@@ -117,27 +117,7 @@ export default function LobbyPage() {
         </section>
 
         <section className="psy-panel psy-etched space-y-5 rounded-[1.6rem] p-6">
-          <div className="space-y-2">
-            <p className="psy-eyebrow text-[10px]">{p.deckHeader}</p>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {DECKS.map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  disabled={d.locked}
-                  aria-pressed={!d.locked}
-                  title={d.locked ? p.comingSoon : ''}
-                  className={`psy-tile flex flex-col items-start gap-1 px-3 py-3 text-left transition ${!d.locked ? 'is-active' : 'opacity-55 cursor-not-allowed'}`}
-                >
-                  <div className="flex w-full items-center justify-between">
-                    <span className="psy-serif text-sm text-[var(--psy-ink)]">{d.name ?? p[d.nameKey as 'deckCpaiName' | 'deckHexacoName']}</span>
-                    {d.locked && <span className="text-[9px] text-[var(--psy-muted)]">🔒 {p.comingSoon}</span>}
-                  </div>
-                  <span className="text-[10px] leading-snug text-[var(--psy-muted)]">{renderCjk(p[d.subKey], loc)}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* 人格模型选择已前置到进游戏前的弹窗(DeckSelectModal),此处不再重复选择 */}
 
           <div className="space-y-2">
             <p className="psy-eyebrow text-[10px]">{s.difficultyLabel}</p>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
@@ -7,6 +8,7 @@ import { useHydrated } from '@/stores/useHydration';
 import { RadarChart } from '@/components/results/RadarChart';
 import { DimensionBar } from '@/components/results/DimensionBar';
 import { BigFiveIntro } from '@/components/results/BigFiveIntro';
+import { DeckSelectModal } from '@/components/shared/DeckSelectModal';
 import { DIMENSIONS } from '@/types';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 
@@ -17,6 +19,8 @@ export default function ResultsPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = STRINGS[locale].results;
   const { bigFiveScores, startRetake } = useAssessmentStore();
+  // 联机/单机进游戏前先弹「选择人格模型」（老板要求：选择暴露在外、页内不再选）
+  const [deckModalFor, setDeckModalFor] = useState<'pvp' | 'solo' | null>(null);
 
   if (!hydrated) {
     return (
@@ -83,13 +87,13 @@ export default function ResultsPage() {
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--psy-border)] bg-[rgba(253,249,240,0.92)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgba(120,90,50,0.1)] backdrop-blur-md lg:static lg:mt-8 lg:w-full lg:max-w-5xl lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
         <div className="mx-auto grid max-w-5xl grid-cols-2 gap-2 lg:grid-cols-3 lg:gap-3">
           <button
-            onClick={() => router.push('/pvp')}
+            onClick={() => setDeckModalFor('pvp')}
             className="psy-btn psy-btn-accent psy-serif col-span-2 w-full px-6 py-3.5 text-base font-semibold lg:col-span-1"
           >
             {t.pvp}
           </button>
           <button
-            onClick={() => router.push('/lobby')}
+            onClick={() => setDeckModalFor('solo')}
             className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
           >
             {t.single}
@@ -105,6 +109,13 @@ export default function ResultsPage() {
           </button>
         </div>
       </div>
+
+      <DeckSelectModal
+        open={deckModalFor !== null}
+        onClose={() => setDeckModalFor(null)}
+        onSelect={() => router.push(deckModalFor === 'pvp' ? '/pvp' : '/lobby')}
+        loc={locale}
+      />
     </div>
   );
 }
