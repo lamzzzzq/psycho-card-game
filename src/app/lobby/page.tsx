@@ -8,6 +8,7 @@ import { useGameStore } from '@/stores/useGameStore';
 import { useHydrated } from '@/stores/useHydration';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { LOBBY_T } from '@/lib/i18n/lobby';
+import { renderCjk } from '@/lib/renderCjk';
 
 // 人格牌堆入口（与联机建房一致）：单机固定用 Big Five 测评分数，另两套即将上线。
 const DECKS = [
@@ -132,7 +133,7 @@ export default function LobbyPage() {
                     <span className="psy-serif text-sm text-[var(--psy-ink)]">{d.name ?? p[d.nameKey as 'deckCpaiName' | 'deckHexacoName']}</span>
                     {d.locked && <span className="text-[9px] text-[var(--psy-muted)]">🔒 {p.comingSoon}</span>}
                   </div>
-                  <span className="text-[10px] leading-snug text-[var(--psy-muted)]">{p[d.subKey]}</span>
+                  <span className="text-[10px] leading-snug text-[var(--psy-muted)]">{renderCjk(p[d.subKey], loc)}</span>
                 </button>
               ))}
             </div>
@@ -178,7 +179,7 @@ export default function LobbyPage() {
                   className={`psy-tile flex flex-col items-start gap-0.5 px-3 py-2.5 text-left ${revealDifficulty === opt.value ? 'is-active' : ''}`}
                 >
                   <span className="psy-serif text-sm text-[var(--psy-ink)]">{opt.label}</span>
-                  <span className="text-[10px] leading-4 text-[var(--psy-muted)]">{opt.desc}</span>
+                  <span className="text-[10px] leading-4 text-[var(--psy-muted)]">{renderCjk(opt.desc, loc)}</span>
                 </button>
               ))}
             </div>

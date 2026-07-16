@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { STRINGS, type Locale } from '@/lib/i18n';
+import { renderCjk } from '@/lib/renderCjk';
 
 // 三个人格牌堆入口（与 pvp 建房牌堆选择一致）：目前仅 Big Five 可选，其余「即将上线」。
 const DECKS = [
@@ -74,7 +75,7 @@ export function DeckSelectModal({
                       <span className="shrink-0 text-[10px] text-[var(--psy-muted)]">🔒 {p.comingSoon}</span>
                     )}
                   </div>
-                  <span className="text-xs leading-snug text-[var(--psy-muted)]">{p[d.subKey]}</span>
+                  <span className="text-xs leading-snug text-[var(--psy-muted)]">{renderCjk(p[d.subKey], loc)}</span>
                 </button>
               ))}
             </div>

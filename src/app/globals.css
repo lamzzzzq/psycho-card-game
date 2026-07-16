@@ -38,6 +38,20 @@ body {
   /* 兜底：杜绝任何宽于视口的元素造成横向平移（clip 不建立滚动容器，不影响 fixed/sticky）。 */
   overflow-x: clip;
   max-width: 100%;
+  /* 禁止 iOS 横竖屏切换时自动放大字号 */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* iOS Safari 聚焦 font-size < 16px 的输入框会自动放大整页、且不缩回，
+   导致后续跳转的页面都显示放大 + 可左右拖动（通病）。移动端强制所有可聚焦
+   表单控件 ≥16px 根治。:not() 链提高特异性以压过 Tailwind 的 text-xs/text-sm。 */
+@media (max-width: 767px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
 
 body {

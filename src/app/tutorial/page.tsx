@@ -880,7 +880,7 @@ function InteractiveSandbox({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ type: 'spring', stiffness: 320, damping: 20 }}
-          className="psy-serif fixed left-1/2 top-20 z-[70] -translate-x-1/2 whitespace-nowrap rounded-full border border-emerald-600/35 bg-emerald-50 px-6 py-2.5 text-base font-bold text-emerald-700 shadow-[0_12px_34px_rgba(96,72,38,0.18)]"
+          className="psy-serif fixed left-1/2 top-20 z-[70] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full border border-emerald-600/35 bg-emerald-50 px-6 py-2.5 text-center text-base font-bold text-emerald-700 shadow-[0_12px_34px_rgba(96,72,38,0.18)]"
         >
           {successToast}
         </motion.div>
@@ -1500,6 +1500,12 @@ function StartFlowGuide({ s, onEnterSandbox }: { s: TutStrings; onEnterSandbox: 
 export default function TutorialPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'list' | 'sandbox'>('list');
+  // 完成教程後回到 list 視圖並滾到「規則要點」——讓玩家接著看規則（而非跳回首頁）。
+  const rulesRef = useRef<HTMLDivElement>(null);
+  const returnToRules = () => {
+    setMode('list');
+    setTimeout(() => rulesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  };
   // 沙盒重置信號：頁頭「重新開始」按鈕 +1，InteractiveSandbox 監聽後 dispatch reset。
   const [sandboxResetSignal, setSandboxResetSignal] = useState(0);
   // 沙盒是否已開始（scene 超過第一步）：第一步（抽牌前）不顯示「重新開始」，沒東西可重置。
@@ -1573,7 +1579,7 @@ export default function TutorialPage() {
             <StartFlowGuide s={s} onEnterSandbox={() => setMode('sandbox')} />
 
             {/* 概念卡片 */}
-            <div>
+            <div ref={rulesRef} className="scroll-mt-4">
               <p className="psy-eyebrow mb-3 text-[10px]">{s.rulesPointsLabel}</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 {s.steps.map((step, i) => (
@@ -1616,7 +1622,7 @@ export default function TutorialPage() {
         )}
 
         <AnimatePresence mode="wait">
-          {mode === 'sandbox' && <InteractiveSandbox onComplete={() => router.push('/')} s={s} dimName={dimName} loc={loc} resetSignal={sandboxResetSignal} onStartedChange={setSandboxStarted} />}
+          {mode === 'sandbox' && <InteractiveSandbox onComplete={returnToRules} s={s} dimName={dimName} loc={loc} resetSignal={sandboxResetSignal} onStartedChange={setSandboxStarted} />}
         </AnimatePresence>
       </div>
     </div>

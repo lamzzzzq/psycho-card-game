@@ -152,7 +152,7 @@ export default function AssessmentPage() {
                 <button
                   type="button"
                   onClick={() => setStudentId(normalized)}
-                  className="psy-btn psy-btn-ghost w-full py-2.5 text-sm font-medium"
+                  className="psy-btn psy-btn-ghost psy-serif w-full py-3 font-semibold"
                 >
                   {t.dupOverwrite}
                 </button>

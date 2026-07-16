@@ -184,7 +184,7 @@ export const TUTORIAL_T = {
 
     // ── 沙盒：開局介紹遮罩 ──
     introTitle: '開局先看「目標張數」',
-    introBody: '開局第一件事，先看「目標張數」。每個維度都有一個指定張數，你要湊到那個數量，才能把這組牌「碰」下來、公開鎖定。張數是根據你的測評分數決定的，每個維度不一樣，數字愈大就愈難湊。下面是這局示範的目標：',
+    introBody: '每個維度都有一個指定張數，你要湊到那個數量，才能把這組牌「碰」下來、公開鎖定。張數是根據你的測評分數決定的，每個維度不一樣，數字愈大就愈難湊。下面是這局示範的目標：',
     introBtn: '開始教學',
 
     // ── 沙盒：目標板 + 操作橫幅 ──
@@ -227,7 +227,7 @@ export const TUTORIAL_T = {
       n >= 2
         ? '兩張都看過了！點高亮的「完成查看」繼續。'
         : `點選下方高亮的 2 張牌，揭開它們的真實維度（已看 ${n}/2）。`,
-    captionAfterDraw: '看下方「目標張數」：神經質要 4 張，而你手裏正好有 4 張神經質。點高亮的「自摸碰」開始（之後再選維度、再點牌）。',
+    captionAfterDraw: '看上方「目標張數」：神經質要 4 張，而你手裏正好有 4 張神經質。點高亮的「自摸碰」開始（之後再選維度、再點牌）。',
     captionPongDimension: (name: string) =>
       `自摸碰先選定一個維度。目標板上「${name}」需要的張數，正是你手裏有的張數——選高亮的「${name}」。`,
     captionPongPickingDone: (name: string, cnt: number) => `已選滿 ${cnt} 張「${name}」。點高亮的「確認自摸碰」完成歸檔。`,
@@ -499,7 +499,7 @@ export const TUTORIAL_T = {
 
     // ── Sandbox: intro overlay ──
     introTitle: 'First: the "Targets" board',
-    introBody: 'First thing at the start: check the "Targets" board. Each dimension has a required count — you must collect that many cards to "Pong" the set and lock it in publicly. The count comes from your assessment score, differs per dimension, and the bigger the number the harder. Here are this demo’s targets:',
+    introBody: 'Each dimension has a required count — you must collect that many cards to "Pong" the set and lock it in publicly. The count comes from your assessment score, differs per dimension, and the bigger the number the harder. Here are this demo’s targets:',
     introBtn: 'Start the lesson',
 
     // ── Sandbox: target board + operation banner ──
@@ -542,7 +542,7 @@ export const TUTORIAL_T = {
       n >= 2
         ? 'You’ve seen both! Tap the highlighted "Done viewing" to continue.'
         : `Tap the 2 highlighted cards below to reveal their true dimensions (${n}/2 seen).`,
-    captionAfterDraw: 'Look at the "Targets" board below: Neuroticism needs 4, and your hand has exactly 4 Neuroticism. Tap the highlighted "Self-draw Pong" to start (you’ll pick the dimension, then the cards).',
+    captionAfterDraw: 'Look at the "Targets" board above: Neuroticism needs 4, and your hand has exactly 4 Neuroticism. Tap the highlighted "Self-draw Pong" to start (you’ll pick the dimension, then the cards).',
     captionPongDimension: (name: string) =>
       `Self-draw Pong needs a dimension first. The count "${name}" needs on the board is exactly what you hold — choose the highlighted "${name}".`,
     captionPongPickingDone: (name: string, cnt: number) => `${cnt} "${name}" cards selected. Tap the highlighted "Confirm Pong" to declare.`,

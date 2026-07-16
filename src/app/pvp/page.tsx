@@ -19,6 +19,7 @@ import { QUESTIONS } from '@/data/questions';
 import { DEFAULT_AVATAR } from '@/data/avatars';
 import { AvatarPicker } from '@/components/pvp/AvatarPicker';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
+import { renderCjk } from '@/lib/renderCjk';
 
 // name 为 null 时用 t[nameKey]；subtitle 走 t[subKey]（locale 翻译）。
 const DECK_OPTIONS: { id: DeckId; name: string | null; nameKey?: 'deckCpaiName' | 'deckHexacoName'; subKey: 'deckBigFiveSub' | 'deckHexacoSub' | 'deckCpaiSub'; locked: boolean }[] = [
@@ -432,7 +433,7 @@ export default function PvpLobbyPage() {
                           <span className="text-[9px] text-[var(--psy-muted)]">🔒 {t.comingSoon}</span>
                         )}
                       </div>
-                      <span className="text-[10px] leading-snug text-[var(--psy-muted)]">{t[opt.subKey]}</span>
+                      <span className="text-[10px] leading-snug text-[var(--psy-muted)]">{renderCjk(t[opt.subKey], locale)}</span>
                     </button>
                   );
                 })}
@@ -483,7 +484,7 @@ export default function PvpLobbyPage() {
                     className={`psy-tile flex flex-col items-start gap-0.5 px-3 py-2.5 text-left ${difficulty === d.id ? 'is-active' : ''}`}
                   >
                     <span className="psy-serif text-sm text-[var(--psy-ink)]">{d.name}</span>
-                    <span className="text-[10px] leading-4 text-[var(--psy-muted)]">{d.sub}</span>
+                    <span className="text-[10px] leading-4 text-[var(--psy-muted)]">{renderCjk(d.sub, locale)}</span>
                   </button>
                 ))}
               </div>
