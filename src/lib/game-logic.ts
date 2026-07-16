@@ -778,7 +778,12 @@ export function selfPongCard(
   dimension: Dimension,
   cardIds: number[]
 ): GameState {
-  if (state.phase !== 'drawing' && state.phase !== 'discarding') return state;
+  // ⚠️ 只允许在 'discarding' 阶段自摸碰（= 本回合已抽牌 或 刚碰过牌）。
+  // 若允许在 'drawing' 阶段（还没抽牌）自摸碰，则「自摸碰(净0)+强制弃牌(-1)」
+  // 会净掉一张牌：玩家跳过了抽牌却仍弃牌 → 持牌从 T-1 掉到 T-2（bug 报告：
+  // 对方罚停时连续自摸碰、抽少一次牌）。抽牌后自摸(hand+drawnCard)或截胡碰后
+  // 自摸(已+1弃牌)都守恒。
+  if (state.phase !== 'discarding') return state;
   if (state.currentPlayerIndex !== pongerIndex) return state;
 
   const ponger = state.players[pongerIndex];

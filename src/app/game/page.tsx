@@ -762,12 +762,10 @@ export default function GamePage() {
               </button>
             )}
 
-            {/* Self-pong button — visible only on own turn (claim-window
-                pong is handled by the floating PongPanel). Stays enabled
-                regardless of whether the player actually has the cards —
-                we don't want to leak "you can pong dim X" by toggling
-                the button. The player decides; the engine judges. */}
-            {isHumanTurn && game.phase !== 'claim-window' && (
+            {/* Self-pong button — 只在 discarding 阶段（已抽牌/已碰牌）显示：drawing
+                阶段自摸会漏抽一次牌导致掉牌（见 selfPongCard 守卫）。claim-window 的
+                碰由浮层 PongPanel 处理。按钮是否启用不泄露"你能碰维度X"——玩家决定、引擎判。*/}
+            {isHumanTurn && game.phase === 'discarding' && (
               <button
                 onClick={() => {
                   if (humanPlayer.selfPongUsedThisTurn || humanFrozen) return;

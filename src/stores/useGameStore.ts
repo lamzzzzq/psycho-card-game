@@ -85,7 +85,8 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   playerSelfPong: (dimension, cardIds) => {
     const { game } = get();
     if (!game) return;
-    if (game.phase !== 'drawing' && game.phase !== 'discarding') return;
+    // 只在 discarding（已抽牌/已碰牌）阶段自摸碰——drawing 阶段自摸会漏抽一次牌→掉牌。
+    if (game.phase !== 'discarding') return;
     if (game.currentPlayerIndex !== 0) return;
     set({ game: selfPongCard(game, 0, dimension, cardIds) });
   },

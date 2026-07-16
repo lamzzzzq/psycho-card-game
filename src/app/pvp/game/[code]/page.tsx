@@ -847,18 +847,7 @@ export default function PvpGamePage() {
         <div className="mt-2 flex flex-1 flex-col space-y-2 p-1 sm:mt-3 sm:space-y-3 sm:p-1.5">
           {/* 罰停橫幅 / 搶牌窗 / 查看 / 碰意圖面板已全部移入手牌上方的懸浮層
               （見下方 Hand + Declared 前的錨點），不再插進文檔流把手牌往下推。 */}
-          {/* Big Five scores */}
-          <div className="hidden items-center justify-center gap-1.5 flex-wrap sm:flex">
-            {DIMENSIONS.map(d => {
-              const score = mePlayer.bigFiveScores[d];
-              return (
-                <div key={d} className="flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: 'rgba(200,155,93,0.10)', border: '1px solid rgba(200,155,93,0.2)' }}>
-                  <span className="text-[9px] text-[var(--psy-ink-soft)]">{dimName(d)}</span>
-                  <span className="text-[10px] font-bold text-[var(--psy-accent)]">{score.toFixed(1)}</span>
-                </div>
-              );
-            })}
-          </div>
+          {/* Big Five 分数条已移除（桌面端与目标板重复、单机也没有；老板要求）。 */}
 
           {/* Targets */}
           {targets && (
@@ -1192,10 +1181,10 @@ export default function PvpGamePage() {
                 {t.win}
               </button>
             )}
-            {/* Self-pong button — visible only on own turn. Stays
-                enabled regardless of whether the player actually has
-                matching cards; toggling on/off would leak "you have
-                enough N-dim cards". Player decides, engine judges. */}
+            {/* Self-pong button — 只在 discarding 阶段(已抽牌/已碰牌)显示：drawing 阶段
+                自摸会漏抽一次牌导致掉牌(见 selfPongCard 守卫)。与单机一致。
+                enabled 不随是否真有牌切换,避免泄露"你有足够X维牌"。玩家决定、引擎判。*/}
+            {gameState.phase === 'discarding' && (
             <button
               onClick={() => {
                 if (meFrozen || meAlreadySelfPonged) return;
@@ -1223,6 +1212,7 @@ export default function PvpGamePage() {
             >
               {t.selfPong}
             </button>
+            )}
           </>
           )}
           </div>
