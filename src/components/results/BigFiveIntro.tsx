@@ -25,22 +25,21 @@ export function BigFiveIntro({ locale }: { locale: Locale }) {
             energy, and tendency to seek stimulation from social interactions),{' '}
             <strong>Agreeableness</strong> (compassion, cooperation, and concern for others), and{' '}
             <strong>Neuroticism</strong> (emotional sensitivity and tendency to experience negative
-            emotions) (Goldberg, 1999; International Personality Item Pool [IPIP], 2007). In this
-            game, you will first complete a personality assessment to identify your{' '}
-            <strong>Big Five personality profile</strong>. Your assessment results will determine
+            emotions). In this game, you will get to know your{' '}
+            <strong>Big Five personality</strong> better. Your assessment results will determine
             your Mahjong gameplay, creating an interactive learning experience that helps you
             explore your personality profile and deepen your understanding of the Big Five
             personality traits.
           </p>
         ) : (
           <p>
-            大五人格模型（<strong>Big Five Personality Model；OCEAN</strong>）是人格心理學中最廣泛採用的人格理論之一。此模型以五個主要向度描述個體的人格差異：<strong>開放性（Openness）</strong>（好奇、創造力與探索新想法的傾向）、<strong>盡責性（Conscientiousness）</strong>（責任感、組織能力與目標導向行為）、<strong>外向性（Extraversion）</strong>（社交性、活力以及從人際互動中尋求刺激的傾向）、<strong>宜人性（Agreeableness）</strong>（同理心、合作性與關懷他人的傾向）以及<strong>神經質（Neuroticism）</strong>（情緒敏感度以及體驗負面情緒的傾向）（Goldberg, 1999；International Personality Item Pool [IPIP], 2007）。在本遊戲中，你將先完成大五人格測評，了解自己的<strong>大五人格概況</strong>。測評結果將決定你的麻將玩法，打造一場互動式學習體驗，讓你探索自己的人格特質，並加深對大五人格特質的理解。
+            大五人格模型（<strong>Big Five Personality Model；OCEAN</strong>）是人格心理學中最廣泛採用的人格理論之一。此模型以五個主要向度描述個體的人格差異：<strong>開放性（Openness）</strong>（好奇、創造力與探索新想法的傾向）、<strong>盡責性（Conscientiousness）</strong>（責任感、組織能力與目標導向行為）、<strong>外向性（Extraversion）</strong>（社交性、活力以及從人際互動中尋求刺激的傾向）、<strong>宜人性（Agreeableness）</strong>（同理心、合作性與關懷他人的傾向）以及<strong>神經質（Neuroticism）</strong>（情緒敏感度以及體驗負面情緒的傾向）。在本遊戲中，你將更了解你的<strong>大五人格</strong>。測評結果將決定你的麻將玩法，打造一場互動式學習體驗，讓你探索自己的人格特質，並加深對大五人格特質的理解。
           </p>
         )}
       </div>
 
       <div className="space-y-2 border-t border-[var(--psy-border)] pt-5">
-        <p className="psy-serif text-sm text-[var(--psy-ink-soft)]">References</p>
+        <p className="psy-serif text-sm text-[var(--psy-ink-soft)]">{isEn ? 'References' : '參考文獻'}</p>
         <div className="space-y-2 text-[13px] leading-6 text-[var(--psy-muted)]">
           <p>
             Goldberg, L. R. (1999). A broad-bandwidth, public domain, personality inventory

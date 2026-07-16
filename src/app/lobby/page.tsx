@@ -12,7 +12,7 @@ import { LOBBY_T } from '@/lib/i18n/lobby';
 // 人格牌堆入口（与联机建房一致）：单机固定用 Big Five 测评分数，另两套即将上线。
 const DECKS = [
   { id: 'big-five', name: 'Big Five', nameKey: null, subKey: 'deckBigFiveSub', locked: false },
-  { id: 'hexaco', name: 'HEXACO', nameKey: null, subKey: 'deckHexacoSub', locked: true },
+  { id: 'hexaco', name: null, nameKey: 'deckHexacoName', subKey: 'deckHexacoSub', locked: true },
   { id: 'cpai', name: null, nameKey: 'deckCpaiName', subKey: 'deckCpaiSub', locked: true },
 ] as const;
 import { AI_PERSONAS } from '@/data/ai-personas';
@@ -129,7 +129,7 @@ export default function LobbyPage() {
                   className={`psy-tile flex flex-col items-start gap-1 px-3 py-3 text-left transition ${!d.locked ? 'is-active' : 'opacity-55 cursor-not-allowed'}`}
                 >
                   <div className="flex w-full items-center justify-between">
-                    <span className="psy-serif text-sm text-[var(--psy-ink)]">{d.name ?? p[d.nameKey as 'deckCpaiName']}</span>
+                    <span className="psy-serif text-sm text-[var(--psy-ink)]">{d.name ?? p[d.nameKey as 'deckCpaiName' | 'deckHexacoName']}</span>
                     {d.locked && <span className="text-[9px] text-[var(--psy-muted)]">🔒 {p.comingSoon}</span>}
                   </div>
                   <span className="text-[10px] leading-snug text-[var(--psy-muted)]">{p[d.subKey]}</span>
@@ -178,7 +178,7 @@ export default function LobbyPage() {
                   className={`psy-tile flex flex-col items-start gap-0.5 px-3 py-2.5 text-left ${revealDifficulty === opt.value ? 'is-active' : ''}`}
                 >
                   <span className="psy-serif text-sm text-[var(--psy-ink)]">{opt.label}</span>
-                  <span className="text-[10px] leading-4 text-[var(--psy-muted)] [word-break:keep-all]">{opt.desc}</span>
+                  <span className="text-[10px] leading-4 text-[var(--psy-muted)]">{opt.desc}</span>
                 </button>
               ))}
             </div>

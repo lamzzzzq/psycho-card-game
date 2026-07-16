@@ -21,9 +21,9 @@ import { AvatarPicker } from '@/components/pvp/AvatarPicker';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 
 // name 为 null 时用 t[nameKey]；subtitle 走 t[subKey]（locale 翻译）。
-const DECK_OPTIONS: { id: DeckId; name: string | null; nameKey?: 'deckCpaiName'; subKey: 'deckBigFiveSub' | 'deckHexacoSub' | 'deckCpaiSub'; locked: boolean }[] = [
+const DECK_OPTIONS: { id: DeckId; name: string | null; nameKey?: 'deckCpaiName' | 'deckHexacoName'; subKey: 'deckBigFiveSub' | 'deckHexacoSub' | 'deckCpaiSub'; locked: boolean }[] = [
   { id: 'big-five', name: 'Big Five', subKey: 'deckBigFiveSub', locked: false },
-  { id: 'hexaco', name: 'HEXACO', subKey: 'deckHexacoSub', locked: true },
+  { id: 'hexaco', name: null, nameKey: 'deckHexacoName', subKey: 'deckHexacoSub', locked: true },
   { id: 'cpai', name: null, nameKey: 'deckCpaiName', subKey: 'deckCpaiSub', locked: true },
 ];
 
@@ -483,7 +483,7 @@ export default function PvpLobbyPage() {
                     className={`psy-tile flex flex-col items-start gap-0.5 px-3 py-2.5 text-left ${difficulty === d.id ? 'is-active' : ''}`}
                   >
                     <span className="psy-serif text-sm text-[var(--psy-ink)]">{d.name}</span>
-                    <span className="text-[10px] leading-4 text-[var(--psy-muted)] [word-break:keep-all]">{d.sub}</span>
+                    <span className="text-[10px] leading-4 text-[var(--psy-muted)]">{d.sub}</span>
                   </button>
                 ))}
               </div>

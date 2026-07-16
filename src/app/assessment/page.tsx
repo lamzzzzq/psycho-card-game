@@ -67,18 +67,19 @@ export default function AssessmentPage() {
     const normalized = normalizeStudentId(studentIdInput);
     const idValid = isValidStudentId(studentIdInput);
     return (
-      <div className="flex flex-1 items-center justify-center px-6 py-8">
-        <button
-          onClick={() => router.push('/')}
-          className="psy-btn psy-btn-ghost psy-serif fixed left-4 top-4 z-40 px-3 py-1.5 text-xs sm:left-8 sm:top-8"
-        >
-          ← {t.backHome}
-        </button>
-        <motion.div
-          initial={false}
-          animate={{ opacity: 1 }}
-          className="psy-panel psy-etched w-full max-w-md space-y-6 rounded-[1.7rem] p-8 text-center"
-        >
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
+        <div className="w-full max-w-md space-y-3">
+          <button
+            onClick={() => router.push('/')}
+            className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
+          >
+            ← {t.backHome}
+          </button>
+          <motion.div
+            initial={false}
+            animate={{ opacity: 1 }}
+            className="psy-panel psy-etched w-full space-y-6 rounded-[1.7rem] p-8 text-center"
+          >
           <div className="space-y-3">
             <h1 className="psy-serif text-2xl text-[var(--psy-ink)]">{t.gateTitle}</h1>
             <p className="mx-auto max-w-sm text-sm leading-7 text-[var(--psy-ink-soft)]">
@@ -169,7 +170,8 @@ export default function AssessmentPage() {
               </button>
             )}
           </form>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     );
   }
@@ -207,23 +209,23 @@ export default function AssessmentPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
-      <button
-        onClick={() => router.push('/')}
-        className="psy-btn psy-btn-ghost psy-serif fixed left-4 top-4 z-40 px-3 py-1.5 text-xs sm:left-8 sm:top-8"
-      >
-        ← {t.backHome}
-      </button>
+    <div className="flex flex-1 flex-col items-center px-6 py-8">
       <motion.div
         initial={false}
         animate={{ opacity: 1 }}
         className="w-full max-w-3xl space-y-8"
       >
-        <div className="space-y-4 text-center">
-          <h1 className="psy-serif text-3xl text-[var(--psy-ink)] md:text-4xl">
+        <div className="space-y-3">
+          <button
+            onClick={() => router.push('/')}
+            className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
+          >
+            ← {t.backHome}
+          </button>
+          <h1 className="psy-serif text-3xl leading-none text-[var(--psy-ink)] md:text-4xl">
             {t.title}
           </h1>
-          <p className="mx-auto max-w-2xl text-sm leading-7 text-[var(--psy-ink-soft)]">
+          <p className="max-w-2xl text-sm leading-7 text-[var(--psy-ink-soft)]">
             {t.intro}
           </p>
         </div>

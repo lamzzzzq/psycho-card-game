@@ -11,9 +11,9 @@ export const TUTORIAL_T = {
     backHome: '返回首頁',
 
     // ── 主 CTA ──
-    ctaTitle: '先看流程，再進沙盒打一回合',
-    ctaBody: '教學覆蓋：聯機 / 單機開局、答題檢查、房間流程、查看手牌、碰、食胡、失敗懲罰。',
-    ctaButton: '▶ 進入交互沙盒',
+    ctaTitle: '先看流程，再進引導實戰打一局',
+    ctaBody: '系統會帶你一步步學會：開局（單機/聯機）、答題、房間流程、看手牌、碰、胡。',
+    ctaButton: '▶ 進入引導實戰',
 
     // ── 概念卡片區標題 ──
     rulesPointsLabel: '規則要點',
@@ -253,7 +253,7 @@ export const TUTORIAL_T = {
     fbViewStart: '點選下方高亮的 2 張牌，揭開它們的真實維度。',
     fbViewPicked: '已揭開一張。再點另一張高亮的牌。',
     fbViewDone: '兩張都看過了。隱藏模式每回合只能看 2 張，而且下一輪就重置、不保留；換成半公開則是每回合看 4 張、看過永久保留。',
-    fbFinishView: '現在你知道剛抽到的牌能補齊一組。下一步演示自摸碰。',
+    fbFinishView: '你知道剛抽到的牌能補齊一組。現在演示自摸碰。',
     fbOpenPong: '自摸碰要先選定一個人格維度。提示：手牌裏有 4 張「神經質」，選它。',
     fbChooseDim: (name: string, cnt: number) => `已選擇「${name}」。現在從手牌精確選擇 ${cnt} 張「${name}」的牌。`,
     fbPongSuccess: '歸檔成功。4 張進入公開歸檔區，歸檔後必須立即棄 1 張牌。',
@@ -316,7 +316,7 @@ export const TUTORIAL_T = {
     shotAiOpponents: ['大雄', '陳教授', '老林'] as readonly string[],
     shotAiOpponentLabel: 'AI 對手',
     // 合併後的沙盒 CTA（流程指南底部）
-    sandboxCtaLead: '流程看明白了？進沙盒親手打一回合',
+    sandboxCtaLead: '流程看懂了嗎？現在進『引導實戰』，親手打一局',
   },
   en: {
     // ── Header / footer ──
@@ -326,9 +326,9 @@ export const TUTORIAL_T = {
     backHome: 'Back to Home',
 
     // ── Main CTA ──
-    ctaTitle: 'See the flow first, then play a round in the sandbox',
-    ctaBody: 'Covers: online / solo setup, assessment check, room flow, viewing cards, Pong, Win, and failure penalties.',
-    ctaButton: '▶ Enter Interactive Sandbox',
+    ctaTitle: 'See the flow first, then play Guided Practice',
+    ctaBody: 'It walks you through, step by step: setup (solo/online), the quiz, room flow, viewing your hand, Pong, and Win.',
+    ctaButton: '▶ Enter Guided Practice',
 
     // ── Concept cards section title ──
     rulesPointsLabel: 'Key Rules',
@@ -568,7 +568,7 @@ export const TUTORIAL_T = {
     fbViewStart: 'Tap the 2 highlighted cards below to reveal their true dimensions.',
     fbViewPicked: 'One revealed. Now tap the other highlighted card.',
     fbViewDone: 'Both viewed. In Hidden mode you see only 2 per turn and they reset next round (not kept); in Half mode you’d view 4 per turn and they stay revealed for good.',
-    fbFinishView: 'Now you know the just-drawn card can complete a set. Next, a demo of Self-draw Pong.',
+    fbFinishView: 'You know the just-drawn card can complete a set. Now, a demo of Self-draw Pong.',
     fbOpenPong: 'Self-draw Pong needs you to fix a dimension first. Hint: your hand has 4 "Neuroticism" cards — choose it.',
     fbChooseDim: (name: string, cnt: number) => `Chose "${name}". Now select exactly ${cnt} "${name}" cards from your hand.`,
     fbPongSuccess: 'Declared. The 4 cards enter the open declaration area; after declaring you must immediately discard 1 card.',
@@ -631,6 +631,6 @@ export const TUTORIAL_T = {
     shotAiOpponents: ['Brian', 'Prof. Chen', 'Lin'] as readonly string[],
     shotAiOpponentLabel: 'AI opponent',
     // Merged sandbox CTA (bottom of the flow guide)
-    sandboxCtaLead: 'Got the flow? Play a hands-on round in the sandbox',
+    sandboxCtaLead: 'Got the flow? Enter Guided Practice and play a hands-on round',
   },
 } as const;

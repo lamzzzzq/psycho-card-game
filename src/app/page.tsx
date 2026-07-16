@@ -70,7 +70,7 @@ export default function Home() {
             <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">
               {t.title}
             </h1>
-            <p className="max-w-xl text-base leading-7 text-[var(--psy-ink-soft)] [word-break:keep-all] sm:text-lg sm:leading-8">
+            <p className="max-w-xl text-base leading-7 text-[var(--psy-ink-soft)] sm:text-lg sm:leading-8">
               {t.intro}
             </p>
           </div>

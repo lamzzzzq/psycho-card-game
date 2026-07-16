@@ -169,7 +169,7 @@ export function TurnNoticeToast({
   icon = '⏰',
   tone = 'neutral',
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   icon?: string;
   tone?: 'neutral' | 'success' | 'danger';
@@ -182,10 +182,12 @@ export function TurnNoticeToast({
   const accent = tone === 'success' ? 'text-[var(--psy-success)]' : tone === 'danger' ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-accent-strong)]';
   return (
     <div className={`psy-etched rounded-[1.35rem] border px-5 py-3 text-center sm:px-7 sm:py-4 ${styles}`}>
-      <div className={`psy-serif text-[10px] uppercase tracking-[0.28em] ${accent}`}>
-        {eyebrow}
-      </div>
-      <div className={`mt-1 flex items-center justify-center gap-2 text-base font-bold sm:text-2xl ${tone === 'success' ? 'text-[var(--psy-success)]' : tone === 'danger' ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-ink)]'}`}>
+      {eyebrow && (
+        <div className={`psy-serif text-[10px] uppercase tracking-[0.28em] ${accent}`}>
+          {eyebrow}
+        </div>
+      )}
+      <div className={`${eyebrow ? 'mt-1 ' : ''}flex items-center justify-center gap-2 text-base font-bold sm:text-2xl ${tone === 'success' ? 'text-[var(--psy-success)]' : tone === 'danger' ? 'text-[var(--psy-danger)]' : 'text-[var(--psy-ink)]'}`}>
         <span aria-hidden>{icon}</span>
         <span>{title}</span>
       </div>
@@ -206,7 +208,7 @@ export function YourTurnBanner({ bannerKey, locale = 'zh' }: { bannerKey: number
           transition={{ type: 'spring', stiffness: 360, damping: 22 }}
           className="pointer-events-none fixed left-1/2 top-[28%] z-[75] w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 text-center"
         >
-          <TurnNoticeToast eyebrow={t.yourTurnEyebrow} title={t.yourTurnBanner} icon="✦" />
+          <TurnNoticeToast title={t.yourTurnBanner} icon="✦" />
         </motion.div>
       )}
     </AnimatePresence>

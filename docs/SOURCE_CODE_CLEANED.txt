@@ -5135,7 +5135,6 @@ className="psy-btn psy-btn-accent psy-serif w-full px-6 py-3 text-sm font-semibo
 )}
 </AnimatePresence>
 {}
-<div className="fixed inset-0 z-[35] bg-[rgba(58,48,32,0.34)] pointer-events-none" />
 <motion.div
 key="sandbox"
 initial={{ opacity: 0, y: 16 }}
@@ -5255,8 +5254,18 @@ onClick={() => dispatch({ type: 'draw' })}
 className="flex cursor-pointer flex-col items-center gap-1.5"
 >
 <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">{s.drawPileClick}</span>
-<div className="tut-spotlight rounded-[0.55rem]">
+<div className="relative tut-spotlight rounded-[0.55rem]">
 <TarotCard faceDown text="" width={73} />
+{}
+<motion.div
+aria-hidden
+className="pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 select-none text-3xl sm:text-4xl"
+style={{ bottom: '0.9rem', filter: 'saturate(0.5) brightness(1.15) drop-shadow(0 2px 4px rgba(96,72,38,0.25))' }}
+animate={{ y: [4, -6, 4] }}
+transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut' }}
+>
+👆
+</motion.div>
 </div>
 </button>
 </div>
@@ -5346,6 +5355,17 @@ className={`psy-btn psy-btn-accent px-3 py-1 text-[10px] font-bold ${state.selec
 </button>
 </div>
 </motion.div>
+)}
+{}
+{state.scene === 'discard-confirm' && (
+<div className="flex justify-center gap-2">
+<button onClick={() => dispatch({ type: 'cancel-discard' })} className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs">
+{s.btnCancel}
+</button>
+<button onClick={() => dispatch({ type: 'confirm-discard' })} className="psy-btn psy-btn-accent tut-spotlight px-4 py-1.5 text-xs font-bold">
+{s.btnDiscard}
+</button>
+</div>
 )}
 {}
 {state.scene === 'claim-dimension' && state.claimDim && (
@@ -5458,17 +5478,6 @@ className="psy-btn psy-btn-danger tut-spotlight self-start px-5 py-2 text-sm fon
 {}
 <div className="flex min-h-[46px] flex-col justify-center">
 {}
-{state.scene === 'discard-confirm' && (
-<div className="flex justify-center gap-2">
-<button onClick={() => dispatch({ type: 'cancel-discard' })} className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs">
-{s.btnCancel}
-</button>
-<button onClick={() => dispatch({ type: 'confirm-discard' })} className="psy-btn psy-btn-accent tut-spotlight px-4 py-1.5 text-xs font-bold">
-{s.btnDiscard}
-</button>
-</div>
-)}
-{}
 {state.scene === 'turn-done' && (
 <div className="flex justify-center">
 <button onClick={() => dispatch({ type: 'open-claim' })} className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold">
@@ -5492,6 +5501,8 @@ className="psy-btn psy-btn-danger tut-spotlight self-start px-5 py-2 text-sm fon
 {successToast && (
 <motion.div
 key={successToast}
+role="status"
+aria-live="polite"
 initial={{ opacity: 0, y: -16, scale: 0.9 }}
 animate={{ opacity: 1, y: 0, scale: 1 }}
 exit={{ opacity: 0, y: -10 }}
@@ -5520,7 +5531,7 @@ className="text-base font-medium leading-7 text-[var(--psy-ink)] sm:text-lg sm:l
 </motion.p>
 </div>
 {}
-<div className="min-h-[40px]">
+<div className="min-h-[40px]" role="status" aria-live="polite">
 <AnimatePresence mode="wait">
 {state.feedback && (
 <motion.p
@@ -5790,121 +5801,140 @@ default:
 return null;
 }
 }
+function ShotRow({ label, options, active }: { label: string; options: readonly string[]; active: number }) {
+return (
+<div>
+<div className="mb-1 text-[9px] text-[var(--psy-muted)]">{label}</div>
+<div className="flex gap-1.5">
+{options.map((o, i) => (
+<div
+key={o}
+className={`flex-1 rounded-lg border px-1 py-1 text-center text-[10px] ${
+i === active
+? 'border-[rgba(154,116,72,0.4)] bg-[rgba(195,154,82,0.2)] text-[var(--psy-ink)]'
+: 'border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] text-[var(--psy-muted)]'
+}`}
+>
+{o}
+</div>
+))}
+</div>
+</div>
+);
+}
 function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: number; s: TutStrings }) {
-const frameTitle = mode === 'pvp' ? s.shotPvpTitle : s.shotSoloTitle;
-const homeChoice = (
+const home = (
 <div className="space-y-3">
-<div className="psy-serif text-sm text-[var(--psy-ink)]">{s.shotProductName}</div>
-<div className="grid gap-2">
-<div className={`${mode === 'pvp' ? 'bg-[rgba(195,154,82,0.22)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-full border border-[rgba(154,116,72,0.24)] px-4 py-2 text-center text-sm`}>
-{s.shotPvp}
+<div className="psy-serif text-base text-[var(--psy-ink)]">{s.shotProductName}</div>
+<div className="h-1.5 w-16 rounded-full bg-[rgba(195,154,82,0.4)]" />
+<div className="rounded-full bg-[rgba(200,155,93,0.32)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">
+{s.shotStartAssessBtn}
 </div>
-<div className={`${mode === 'solo' ? 'bg-[rgba(195,154,82,0.22)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-full border border-[rgba(154,116,72,0.24)] px-4 py-2 text-center text-sm`}>
-{s.shotSolo}
-</div>
-</div>
+<div className="text-center text-[9px] text-[var(--psy-muted)]">{s.shotHomeHint}</div>
 </div>
 );
-const identityForm = (
+const studentId = (
 <div className="space-y-3">
-<div className="psy-serif text-sm text-[var(--psy-ink)]">{s.shotPlayerInfo}</div>
-<div className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2">
-<div className="text-[9px] text-[var(--psy-muted)]">{s.shotStudentId}</div>
-<div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{s.shotEnterStudentId}</div>
+<div className="psy-serif text-center text-sm text-[var(--psy-ink)]">{s.shotStudentIdTitle}</div>
+<div className="rounded-xl border border-[rgba(200,155,93,0.4)] bg-[var(--psy-card-content)] px-3 py-3 text-center text-xs text-[var(--psy-muted)]">
+{s.shotStudentIdPlaceholder}
 </div>
-<div className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2">
-<div className="text-[9px] text-[var(--psy-muted)]">{s.shotConfirmStudentId}</div>
-<div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{s.shotReenterStudentId}</div>
+<div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">
+{s.shotStartAssessBtn}
+</div>
+<div className="text-center text-[9px] text-[var(--psy-muted)]">{s.shotStudentIdOnce}</div>
+</div>
+);
+const portrait = (
+<div className="space-y-2.5">
+<div className="psy-serif text-center text-sm text-[var(--psy-ink)]">{s.shotPortraitTitle}</div>
+<div className="space-y-1.5">
+{DIMENSIONS.map((d) => (
+<div key={d} className="flex items-center gap-2">
+<span className="w-3 text-[9px] font-bold" style={{ color: DIMENSION_META[d].colorHex }}>{d}</span>
+<div className="h-1.5 flex-1 rounded-full bg-[rgba(154,116,72,0.14)]">
+<div className="h-full rounded-full" style={{ width: '60%', background: DIMENSION_META[d].colorHex }} />
+</div>
+</div>
+))}
+</div>
+<div className="grid grid-cols-3 gap-1.5 pt-1">
+<div className={`${mode === 'pvp' ? 'bg-[rgba(195,154,82,0.3)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-lg border border-[rgba(154,116,72,0.2)] px-1 py-1.5 text-center text-[10px]`}>{s.shotPvp}</div>
+<div className={`${mode === 'solo' ? 'bg-[rgba(195,154,82,0.3)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-lg border border-[rgba(154,116,72,0.2)] px-1 py-1.5 text-center text-[10px]`}>{s.shotSolo}</div>
+<div className="rounded-lg border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-1 py-1.5 text-center text-[10px] text-[var(--psy-muted)]">{s.shotRetest}</div>
 </div>
 </div>
 );
-const assessmentCheck = (
-<div className="grid gap-2">
-<div className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-3 py-2">
-<div className="text-xs font-semibold text-emerald-300">{s.shotAssessedTrue}</div>
-<div className="mt-1 text-[10px] leading-5 text-[var(--psy-ink-soft)]">{s.shotAssessedTrueBody}</div>
+const roomSetup = (
+<div className="space-y-2.5">
+<div className="flex items-center justify-between rounded-lg border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-1.5">
+<span className="text-[10px] text-[var(--psy-muted)]">{s.shotStudentId}</span>
+<span className="text-[10px] text-[var(--psy-ink-soft)]">17094905G 🔒</span>
 </div>
-<div className="rounded-xl border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.08)] px-3 py-2">
-<div className="text-xs font-semibold text-[var(--psy-accent)]">{s.shotAssessedFalse}</div>
-<div className="mt-1 text-[10px] leading-5 text-[var(--psy-ink-soft)]">{s.shotAssessedFalseBody}</div>
+<div className="grid grid-cols-2 gap-1.5">
+<div className="rounded-lg bg-[rgba(60,45,25,0.85)] px-2 py-1.5 text-center text-[10px] font-semibold text-[#f5ecdc]">{s.shotCreateRoom}</div>
+<div className="rounded-lg border border-[rgba(154,116,72,0.2)] px-2 py-1.5 text-center text-[10px] text-[var(--psy-muted)]">{s.shotJoinRoom}</div>
 </div>
-</div>
-);
-const roomPanel = (
-<div className="grid gap-3 sm:grid-cols-2">
-<div className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] p-3">
-<div className="psy-serif text-xs text-[var(--psy-ink)]">{s.shotCreateRoom}</div>
-<div className="mt-2 rounded-lg bg-[rgba(200,155,93,0.12)] px-3 py-2 text-center text-sm text-[var(--psy-accent)]">{s.shotRoomCode('4821')}</div>
-</div>
-<div className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] p-3">
-<div className="psy-serif text-xs text-[var(--psy-ink)]">{s.shotJoinRoom}</div>
-<div className="mt-2 rounded-lg border border-[rgba(200,155,93,0.2)] px-3 py-2 text-center text-xs text-[var(--psy-muted)]">{s.shotEnter4Code}</div>
-</div>
+<ShotRow label={s.shotMaxPlayersLabel} options={s.shotMaxPlayers} active={1} />
+<ShotRow label={s.shotRoundsLabel} options={s.shotRounds} active={1} />
+<ShotRow label={s.shotRevealLabel} options={s.shotReveals} active={0} />
 </div>
 );
 const startGame = (
 <div className="space-y-3">
 <div className="grid grid-cols-4 gap-2">
-{[s.shotYou, '11', '12', '13'].map((name, i) => (
-<div key={name} className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2 py-3 text-center">
-<div className="text-xs text-[var(--psy-ink)]">{name}</div>
-<div className="mt-1 text-[9px] text-[var(--psy-muted)]">{i === 0 ? s.shotHost : s.shotReady}</div>
+{[s.shotYou, 'P2', 'P3', 'P4'].map((name, i) => (
+<div key={name} className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-1 py-3 text-center">
+<div className="text-[11px] text-[var(--psy-ink)]">{name}</div>
+{i === 0 && <div className="mt-1 text-[9px] text-[var(--psy-muted)]">{s.shotHost}</div>}
 </div>
 ))}
 </div>
-<div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">{s.shotStartGame}</div>
+<div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">{s.shotStartMatch}</div>
 </div>
 );
-const soloSetup = (
-<div className="space-y-3">
-<div className="grid grid-cols-3 gap-2">
-{s.shotDifficulties.map((label, i) => (
-<div key={label} className={`${i === Math.min(index, 2) ? 'bg-[rgba(195,154,82,0.2)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-xl border border-[rgba(154,116,72,0.18)] px-2 py-3 text-center text-xs`}>
-{label}
-</div>
-))}
-</div>
-<div className="grid grid-cols-4 gap-2">
-{s.shotRounds.map((label, i) => (
-<div key={label} className={`${i === 1 ? 'bg-[rgba(195,154,82,0.18)] text-[var(--psy-ink)]' : 'bg-[var(--psy-card-content)] text-[var(--psy-muted)]'} rounded-xl border border-[rgba(154,116,72,0.16)] px-2 py-2 text-center text-[10px]`}>
-{label}
-</div>
-))}
-</div>
-</div>
-);
-const soloOpponents = (
-<div className="grid grid-cols-3 gap-2">
+const soloLobby = (
+<div className="space-y-2.5">
+<ShotRow label={s.shotAiDifficultyLabel} options={s.shotDifficulties} active={0} />
+<ShotRow label={s.shotRoundsLabel} options={s.shotRounds} active={1} />
+<ShotRow label={s.shotRevealLabel} options={s.shotReveals} active={0} />
+<div>
+<div className="mb-1 text-[9px] text-[var(--psy-muted)]">{s.shotOpponentLabel}</div>
+<div className="grid grid-cols-3 gap-1.5">
 {s.shotAiOpponents.map((name) => (
-<div key={name} className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2 py-4 text-center">
-<div className="text-sm text-[var(--psy-ink)]">{name}</div>
-<div className="mt-2 text-[9px] leading-4 text-[var(--psy-muted)]">{s.shotAiOpponentLabel}</div>
+<div key={name} className="rounded-lg border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-1 py-2 text-center text-[10px] text-[var(--psy-ink-soft)]">
+{name}
 </div>
 ))}
+</div>
+</div>
 </div>
 );
 const soloStart = (
 <div className="space-y-3">
-{soloSetup}
+<div className="grid grid-cols-4 gap-2">
+{[s.shotYou, ...s.shotAiOpponents].map((name, i) => (
+<div key={name} className="rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-1 py-3 text-center">
+<div className="text-[11px] text-[var(--psy-ink)]">{name}</div>
+<div className="mt-1 text-[9px] text-[var(--psy-muted)]">{i === 0 ? s.shotHost : s.shotAiOpponentLabel}</div>
+</div>
+))}
+</div>
 <div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">{s.shotStartMatch}</div>
 </div>
 );
-const pvpFrames = [homeChoice, identityForm, assessmentCheck, roomPanel, startGame];
-const soloFrames = [homeChoice, assessmentCheck, soloSetup, soloOpponents, soloStart];
+const pvpFrames = [home, studentId, portrait, roomSetup, startGame];
+const soloFrames = [home, studentId, portrait, soloLobby, soloStart];
 const frame = mode === 'pvp' ? pvpFrames[index] : soloFrames[index];
 return (
 <div className="rounded-[1.2rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,var(--psy-card),#efe4cf)] p-3 shadow-[0_14px_28px_rgba(96,72,38,0.12)]">
-<div className="mb-3 flex items-center justify-between">
-<span className="psy-serif text-[10px] text-[var(--psy-accent)]">{frameTitle}</span>
-<span className="rounded-full border border-[rgba(200,155,93,0.18)] px-2 py-0.5 text-[9px] text-[var(--psy-muted)]">{s.shotStaticBadge}</span>
-</div>
 <div className="min-h-[12rem] rounded-[1rem] border border-[rgba(154,116,72,0.14)] bg-[linear-gradient(180deg,var(--psy-card-content),#f8f1e4)] p-4 shadow-[inset_0_0_0_1px_rgba(255,250,240,0.62)]">
 {frame}
 </div>
 </div>
 );
 }
-function StartFlowGuide({ s }: { s: TutStrings }) {
+function StartFlowGuide({ s, onEnterSandbox }: { s: TutStrings; onEnterSandbox: () => void }) {
 const [mode, setMode] = useState<'pvp' | 'solo'>('pvp');
 const [index, setIndex] = useState(0);
 const steps = mode === 'pvp' ? s.pvpFlow : s.soloFlow;
@@ -5945,7 +5975,7 @@ mode === 'solo'
 </div>
 <div className="grid gap-4 lg:grid-cols-[13rem_1fr]">
 {}
-<div className="psy-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:space-y-2 lg:overflow-visible lg:px-0 lg:pb-0">
+<div className="hidden lg:flex lg:flex-col lg:space-y-2">
 {steps.map((step, i) => (
 <button
 key={step.title}
@@ -5984,7 +6014,22 @@ className="rounded-[1.2rem] border border-[rgba(154,116,72,0.18)] bg-[var(--psy-
 </div>
 <FlowScreenshot mode={mode} index={index} s={s} />
 </div>
-<div className="mt-5 flex justify-end gap-2">
+<div className="mt-5 flex items-center justify-between gap-2">
+{}
+<div className="flex items-center gap-1.5 lg:hidden">
+{steps.map((step, i) => (
+<button
+key={step.title}
+onClick={() => setIndex(i)}
+aria-label={`${i + 1} ${step.title}`}
+aria-current={i === index ? 'step' : undefined}
+className={`h-2 rounded-full transition-all ${
+i === index ? 'w-5 bg-[var(--psy-accent)]' : 'w-2 bg-[rgba(154,116,72,0.3)] hover:bg-[rgba(154,116,72,0.5)]'
+}`}
+/>
+))}
+</div>
+<div className="flex gap-2">
 <button
 onClick={() => setIndex(Math.max(0, index - 1))}
 disabled={index === 0}
@@ -6000,7 +6045,21 @@ className="psy-btn psy-btn-accent px-4 py-2 text-xs font-bold disabled:cursor-no
 {s.nextStep}
 </button>
 </div>
+</div>
 </motion.div>
+</div>
+{}
+<div className="mt-5 flex flex-col gap-3 rounded-[1.2rem] border border-[rgba(200,155,93,0.22)] bg-[rgba(200,155,93,0.06)] p-4 sm:flex-row sm:items-center sm:justify-between">
+<div>
+<p className="psy-serif text-sm font-semibold text-[var(--psy-ink)]">{s.sandboxCtaLead}</p>
+<p className="mt-1 text-xs leading-5 text-[var(--psy-ink-soft)]">{s.ctaBody}</p>
+</div>
+<button
+onClick={onEnterSandbox}
+className="psy-btn psy-btn-accent psy-serif shrink-0 px-6 py-3 text-sm font-semibold"
+>
+{s.ctaButton}
+</button>
 </div>
 </div>
 );
@@ -6067,21 +6126,7 @@ className="psy-btn psy-btn-ghost flex-1 px-3.5 py-2 text-xs sm:flex-none sm:text
 {mode === 'list' && (
 <>
 {}
-<div className="psy-panel psy-etched rounded-[1.6rem] p-6 text-center sm:p-7">
-<h2 className="psy-serif text-2xl text-[var(--psy-ink)] sm:text-3xl">
-{s.ctaTitle}
-</h2>
-<p className="mt-2 text-sm leading-6 text-[var(--psy-ink-soft)]">
-{s.ctaBody}
-</p>
-<button
-onClick={() => setMode('sandbox')}
-className="psy-btn psy-btn-accent psy-serif mt-4 px-7 py-3 text-base font-semibold"
->
-{s.ctaButton}
-</button>
-</div>
-<StartFlowGuide s={s} />
+<StartFlowGuide s={s} onEnterSandbox={() => setMode('sandbox')} />
 {}
 <div>
 <p className="psy-eyebrow mb-3 text-[10px]">{s.rulesPointsLabel}</p>
@@ -9241,6 +9286,1968 @@ export const QUESTIONS: Question[] = [
 { id: 49, dimension: 'N', reversed: false, text: '我常感到鬱悶。', textEn: 'I often feel blue.' },
 { id: 50, dimension: 'O', reversed: false, text: '我總是充滿想法。', textEn: 'I am full of ideas.' },
 ];
+import { describe, it, expect } from 'vitest';
+import {
+initializeGame,
+drawCard,
+discardCard,
+attemptHu,
+pongCard,
+skipPong,
+hasWon,
+getDeclaredDimensions,
+} from '../game-logic';
+import {
+makeAIDecision,
+makeAIHuDecision,
+makeAIPongDecision,
+} from '../ai-engine';
+import { generateAIScores } from '../scoring';
+import type { GameState, GameAction, Dimension, Player } from '@/types';
+import { DIMENSIONS, isPersonalityCard } from '@/types';
+const ACTION_HARD_LIMIT = 5000;
+const TOTAL_GAMES = 500;
+interface SmokeResult {
+gamesPlayed: number;
+totalActions: number;
+totalRoundsSum: number;
+winnerCount: number;
+noWinnerCount: number;
+deckExhaustedEndings: number;
+hasWonEndings: number;
+roundLimitEndings: number;
+pongSuccess: number;
+pongFailWrongCards: number;
+pongFailAlreadyDeclared: number;
+huSuccess: number;
+huFail: number;
+skips: number;
+penaltyMarksObserved: number;
+invariantBreaks: string[];
+}
+function rogueChoosePong(p: Player, pendingDim: Dimension): { dimension: Dimension; handCardIds: number[] } {
+const declared = Array.from(getDeclaredDimensions(p));
+if (declared.length > 0 && Math.random() < 0.3) {
+const dim = declared[Math.floor(Math.random() * declared.length)];
+const sameInHand = p.hand.filter(c => isPersonalityCard(c) && c.dimension === dim).map(c => c.id);
+return { dimension: dim, handCardIds: sameInHand.slice(0, Math.min(2, sameInHand.length)) };
+}
+if (Math.random() < 0.6) {
+const all = p.hand.filter(c => isPersonalityCard(c)).map(c => c.id);
+return { dimension: pendingDim, handCardIds: all.slice(0, Math.floor(Math.random() * 4)) };
+}
+const dim = DIMENSIONS[Math.floor(Math.random() * DIMENSIONS.length)];
+const all = p.hand.filter(c => isPersonalityCard(c)).map(c => c.id);
+return { dimension: dim, handCardIds: all.slice(0, Math.floor(Math.random() * 4)) };
+}
+function runOneGame(seed: number, rogueRate = 0.0): { state: GameState; actions: number; breaks: string[] } {
+const humanScores = generateAIScores();
+let state: GameState = initializeGame(humanScores, {
+totalRounds: 10,
+aiDifficulty: 'medium',
+});
+const breaks: string[] = [];
+let actions = 0;
+while (state.phase !== 'game-over' && actions < ACTION_HARD_LIMIT) {
+actions++;
+if (state.phase === 'drawing' || state.phase === 'discarding') {
+const cur = state.players[state.currentPlayerIndex];
+if (cur.skipNextTurn) {
+breaks.push(`game#${seed} action#${actions}: skipNextTurn currentPlayer ${cur.id} (phase=${state.phase})`);
+}
+}
+switch (state.phase) {
+case 'drawing': {
+const cur = state.players[state.currentPlayerIndex];
+const rogueHu = rogueRate > 0 && Math.random() < rogueRate;
+const huDecision = rogueHu
+? { shouldHu: true, thinkingMs: 0 }
+: makeAIHuDecision(cur, state.settings.aiDifficulty);
+if (huDecision.shouldHu) {
+const before = state.players[state.currentPlayerIndex];
+state = attemptHu(state, state.currentPlayerIndex);
+const lastHu = [...state.actionLog].reverse().find(
+a => a.playerId === before.id && (a.type === 'hu-fail' || a.type === 'hu-success')
+);
+if (lastHu?.type === 'hu-fail') {
+const after = state.players.find(p => p.id === before.id)!;
+const stillPenalized = after.skipNextTurn || !!after.frozenUntilOwnDiscard;
+const huFailIdx = state.actionLog.lastIndexOf(lastHu);
+const skippedAfter = state.actionLog
+.slice(huFailIdx + 1)
+.some(a => a.type === 'skip' && a.playerId === before.id);
+if (!stillPenalized && !skippedAfter) {
+breaks.push(`game#${seed}: hu-fail player ${before.id} 未受任何罚停`);
+}
+}
+break;
+}
+state = drawCard(state);
+break;
+}
+case 'ai-turn':
+case 'discarding': {
+const cur = state.players[state.currentPlayerIndex];
+const drawn = state.drawnCard ?? cur.hand[0];
+const decision = makeAIDecision(cur, drawn, state.settings.aiDifficulty, {
+discardPile: state.discardPile,
+actionLog: state.actionLog,
+currentRound: state.currentRound,
+totalRounds: state.settings.totalRounds,
+});
+const handIds = new Set(cur.hand.map(c => c.id));
+const cardId = handIds.has(decision.cardToDiscard.id)
+? decision.cardToDiscard.id
+: (state.drawnCard?.id ?? cur.hand[0]?.id);
+if (cardId == null) {
+breaks.push(`game#${seed} action#${actions}: discarding with no card`);
+state = { ...state, phase: 'game-over' };
+break;
+}
+state = discardCard(state, cardId);
+break;
+}
+case 'claim-window': {
+const playerCount = state.players.length;
+const discardedBy = state.discardedByIndex;
+let handled = false;
+for (let offset = 1; offset < playerCount; offset++) {
+const idx = (discardedBy + offset) % playerCount;
+if (state.phase !== 'claim-window') break;
+const p = state.players[idx];
+if (state.claimResponses.includes(p.id)) continue;
+if (!state.pendingDiscard) break;
+const canPong = !p.skipNextTurn && !p.frozenUntilOwnDiscard && !p.hasLeft;
+const rogue = rogueRate > 0 && canPong && Math.random() < rogueRate;
+if (rogue && isPersonalityCard(state.pendingDiscard)) {
+const choice = rogueChoosePong(p, state.pendingDiscard.dimension);
+state = pongCard(state, idx, choice.dimension, choice.handCardIds);
+handled = true;
+break;
+}
+if (canPong) {
+const decision = makeAIPongDecision(p, state.pendingDiscard, state.settings.aiDifficulty);
+if (decision.shouldPong && decision.dimension && decision.handCardIds) {
+const before = getDeclaredDimensions(p);
+const dim = decision.dimension;
+if (before.has(dim)) {
+breaks.push(`game#${seed}: AI tried to pong already-declared dim ${dim}`);
+}
+state = pongCard(state, idx, dim, decision.handCardIds);
+handled = true;
+break;
+}
+}
+state = skipPong(state, idx);
+handled = true;
+break;
+}
+if (!handled && state.phase === 'claim-window') {
+breaks.push(`game#${seed} action#${actions}: claim-window deadlock`);
+state = { ...state, phase: 'game-over' };
+}
+break;
+}
+}
+const lastLog = state.actionLog[state.actionLog.length - 1];
+if (lastLog?.type === 'pong-success') {
+const ponger = state.players.find(p => p.id === lastLog.playerId);
+if (ponger?.hasLeft) {
+breaks.push(`game#${seed}: hasLeft player ${ponger.id} got pong-success`);
+}
+}
+for (const p of state.players) {
+const dimCounts = new Map<string, number>();
+for (const ds of p.declaredSets) {
+dimCounts.set(ds.dimension, (dimCounts.get(ds.dimension) ?? 0) + 1);
+}
+for (const [dim, count] of dimCounts) {
+if (count > 1) {
+breaks.push(`game#${seed}: player ${p.id} has ${count} declared sets of dim ${dim}`);
+}
+}
+}
+}
+if (actions >= ACTION_HARD_LIMIT) {
+breaks.push(`game#${seed}: hit hard action limit ${ACTION_HARD_LIMIT} without game-over`);
+}
+if (state.winner) {
+const winner = state.players.find(p => p.id === state.winner);
+if (!winner) {
+breaks.push(`game#${seed}: winner id ${state.winner} not in players`);
+} else {
+const allActive = state.players.filter(p => !p.hasLeft);
+const isLastStanding = allActive.length === 1 && allActive[0].id === winner.id;
+const won = hasWon(winner);
+const reachedRoundLimit =
+state.currentRound > state.settings.totalRounds && state.settings.totalRounds > 0;
+const deckExhausted = state.drawPile.length === 0 && state.discardPile.length === 0;
+if (!won && !isLastStanding && !reachedRoundLimit && !deckExhausted) {
+breaks.push(
+`game#${seed}: winner ${winner.id} doesn't hasWon (declared=${winner.declaredSets.length}), not last-standing, round=${state.currentRound}/${state.settings.totalRounds}, draw=${state.drawPile.length} discard=${state.discardPile.length}`
+);
+}
+}
+}
+return { state, actions, breaks };
+}
+function summarize(results: { state: GameState; actions: number; breaks: string[] }[]): SmokeResult {
+const summary: SmokeResult = {
+gamesPlayed: results.length,
+totalActions: 0,
+totalRoundsSum: 0,
+winnerCount: 0,
+noWinnerCount: 0,
+deckExhaustedEndings: 0,
+hasWonEndings: 0,
+roundLimitEndings: 0,
+pongSuccess: 0,
+pongFailWrongCards: 0,
+pongFailAlreadyDeclared: 0,
+huSuccess: 0,
+huFail: 0,
+skips: 0,
+penaltyMarksObserved: 0,
+invariantBreaks: [],
+};
+for (const r of results) {
+summary.totalActions += r.actions;
+summary.totalRoundsSum += r.state.currentRound;
+if (r.state.winner) summary.winnerCount++;
+else summary.noWinnerCount++;
+const winner = r.state.players.find(p => p.id === r.state.winner);
+if (winner && hasWon(winner)) summary.hasWonEndings++;
+else if (
+r.state.currentRound > r.state.settings.totalRounds &&
+r.state.settings.totalRounds > 0
+) summary.roundLimitEndings++;
+else if (r.state.drawPile.length === 0 && r.state.discardPile.length === 0) {
+summary.deckExhaustedEndings++;
+}
+if (r.state.players.some(p => p.frozenUntilOwnDiscard)) summary.penaltyMarksObserved++;
+for (const a of r.state.actionLog as GameAction[]) {
+if (a.type === 'pong-success') summary.pongSuccess++;
+else if (a.type === 'pong-fail') {
+if (a.failReason === 'already-declared') summary.pongFailAlreadyDeclared++;
+else summary.pongFailWrongCards++;
+} else if (a.type === 'hu-success') summary.huSuccess++;
+else if (a.type === 'hu-fail') summary.huFail++;
+else if (a.type === 'skip') summary.skips++;
+}
+summary.invariantBreaks.push(...r.breaks);
+}
+return summary;
+}
+describe('AI smoke — N 局全 AI 自玩，验证核心 spec', () => {
+it(`完成 ${TOTAL_GAMES} 局无死锁 + 无不变量违反 (rogue 25% 强制 stress 罚停/trap)`, () => {
+const start = Date.now();
+const results: ReturnType<typeof runOneGame>[] = [];
+for (let i = 0; i < TOTAL_GAMES; i++) {
+const rogueRate = i % 2 === 0 ? 0 : 0.25;
+results.push(runOneGame(i, rogueRate));
+}
+const elapsed = Date.now() - start;
+const s = summarize(results);
+console.log(
+`\n[AI smoke] ${s.gamesPlayed} 局 / ${elapsed}ms / ${s.totalActions} actions ` +
+`(avg ${(s.totalActions / s.gamesPlayed).toFixed(0)} actions/game, ` +
+`avg round ${(s.totalRoundsSum / s.gamesPlayed).toFixed(1)})\n` +
+`  winner: ${s.winnerCount}/${s.gamesPlayed}  无 winner: ${s.noWinnerCount}\n` +
+`  ending paths: hasWon=${s.hasWonEndings}  roundLimit=${s.roundLimitEndings}  deckExhausted=${s.deckExhaustedEndings}\n` +
+`  pong-success: ${s.pongSuccess}  pong-fail(wrong): ${s.pongFailWrongCards}  pong-fail(already-declared): ${s.pongFailAlreadyDeclared}\n` +
+`  hu-success: ${s.huSuccess}  hu-fail: ${s.huFail}  skip: ${s.skips}\n` +
+`  局中至少一人被罚停 frozen: ${s.penaltyMarksObserved}/${s.gamesPlayed}`
+);
+if (s.invariantBreaks.length > 0) {
+console.error('[AI smoke] invariant breaks:\n' + s.invariantBreaks.slice(0, 20).join('\n'));
+}
+expect(s.invariantBreaks).toEqual([]);
+expect(s.winnerCount).toBeGreaterThan(s.gamesPlayed / 2);
+}, 30_000);
+});
+import { describe, it, expect } from 'vitest';
+import { generatePersonalityCards } from '@/lib/card-engine';
+import { QUESTIONS } from '@/data/questions';
+const qById = new Map(QUESTIONS.map((q) => [q.id, q]));
+describe('personality card image ↔ text correspondence', () => {
+for (const count of [50, 60, 80] as const) {
+it(`deck(${count}): 每张牌的 imageId 都指向「文字/维度完全一致」的真题(1-50)`, () => {
+const deck = generatePersonalityCards(count);
+expect(deck.length).toBe(count);
+for (const c of deck) {
+const imgId = c.imageId ?? c.id;
+expect(imgId, `imageId ${imgId} 必须是真题 1-50`).toBeGreaterThanOrEqual(1);
+expect(imgId).toBeLessThanOrEqual(50);
+const q = qById.get(imgId)!;
+expect(q).toBeDefined();
+expect(c.text).toBe(q.text);
+expect(c.textEn).toBe(q.textEn);
+expect(c.dimension).toBe(q.dimension);
+}
+});
+}
+it('每维度复制张数正确，且复制的是「随机不重复」的同维度真题', () => {
+for (const [count, perDimCopies] of [[60, 2], [80, 6]] as const) {
+const deck = generatePersonalityCards(count);
+const byDim: Record<string, typeof deck> = {};
+for (const c of deck) (byDim[c.dimension] ??= []).push(c);
+for (const d of Object.keys(byDim)) {
+expect(byDim[d].length).toBe(count / 5);
+const copies = byDim[d].filter((c) => c.id >= 5000);
+expect(copies.length).toBe(perDimCopies);
+const imgs = copies.map((c) => c.imageId);
+expect(new Set(imgs).size).toBe(perDimCopies);
+}
+}
+});
+it('复制是随机的（多次生成 80 张，复制集合不应每次都相同）', () => {
+const sig = () => generatePersonalityCards(80).filter((c) => c.id >= 5000).map((c) => c.imageId).sort((a, b) => (a! - b!)).join(',');
+const runs = new Set(Array.from({ length: 8 }, sig));
+expect(runs.size).toBeGreaterThan(1);
+});
+});
+import { describe, it, expect } from 'vitest';
+import {
+deckConfigFor, generatePersonalityCards, generateDummyCards, createShuffledDeck, dealCardsVariable,
+} from '../card-engine';
+import {
+drawCard, discardCard, attemptHu, pongCard, skipPong,
+} from '../game-logic';
+import { makeAIDecision, makeAIHuDecision, makeAIPongDecision } from '../ai-engine';
+import { getInitialHandSize } from '../scoring';
+import { DIMENSIONS, isPersonalityCard, isDummyCard } from '@/types';
+import type { GameState, Player, PlayerId, BigFiveScores, Dimension } from '@/types';
+function band(lo: number, hi: number): BigFiveScores {
+const r = () => Math.round((lo + Math.random() * (hi - lo)) * 10) / 10;
+return { O: r(), C: r(), E: r(), A: r(), N: r() };
+}
+describe('deck composition', () => {
+it('deckConfigFor scales by player count', () => {
+expect(deckConfigFor(2)).toEqual({ personality: 60, dummy: 8 });
+expect(deckConfigFor(3)).toEqual({ personality: 60, dummy: 8 });
+expect(deckConfigFor(4)).toEqual({ personality: 80, dummy: 12 });
+});
+it('createShuffledDeck sizes: 3人=68, 4人=92', () => {
+expect(createShuffledDeck(3).length).toBe(68);
+expect(createShuffledDeck(4).length).toBe(92);
+});
+it('generatePersonalityCards(80) is balanced 16 per dimension with unique ids', () => {
+const cards = generatePersonalityCards(80);
+expect(cards.length).toBe(80);
+const byDim: Record<Dimension, number> = { O: 0, C: 0, E: 0, A: 0, N: 0 };
+for (const c of cards) byDim[c.dimension]++;
+for (const d of DIMENSIONS) expect(byDim[d]).toBe(16);
+expect(new Set(cards.map((c) => c.id)).size).toBe(80);
+});
+it('dummy ids never collide with personality ids', () => {
+const pers = generatePersonalityCards(80);
+const dummy = generateDummyCards(12);
+const persIds = new Set(pers.map((c) => c.id));
+for (const d of dummy) expect(persIds.has(d.id)).toBe(false);
+});
+});
+describe('deal-time safety — 抽牌堆有预留 + 人人有牌 (含极端分数)', () => {
+for (const [players, lo, hi] of [[3, 2, 4], [4, 2, 4], [3, 3, 5], [4, 3, 5], [4, 4.5, 5]] as const) {
+it(`${players}人 分数${lo}~${hi}: 500 次发牌都留有抽牌堆且无人空手`, () => {
+for (let i = 0; i < 500; i++) {
+const scores = Array.from({ length: players }, () => band(lo, hi));
+const deck = createShuffledDeck(players);
+const { hands, remaining } = dealCardsVariable(deck, scores);
+expect(remaining.length).toBeGreaterThanOrEqual(players);
+hands.forEach((h) => expect(h.length).toBeGreaterThan(0));
+expect(hands.reduce((a, h) => a + h.length, 0) + remaining.length).toBe(deck.length);
+}
+});
+}
+for (const [players, lo, hi] of [[3, 2, 4], [4, 2, 4]] as const) {
+it(`${players}人 分数${lo}~${hi}: 500 次发牌每手 dummy ≤ 1`, () => {
+for (let i = 0; i < 500; i++) {
+const scores = Array.from({ length: players }, () => band(lo, hi));
+const deck = createShuffledDeck(players);
+const { hands } = dealCardsVariable(deck, scores);
+hands.forEach((h) =>
+expect(h.filter((c) => c.isDummy).length).toBeLessThanOrEqual(1)
+);
+}
+});
+}
+for (const [players, lo, hi] of [[3, 3, 5], [4, 3, 5], [4, 4.5, 5]] as const) {
+it(`${players}人 分数${lo}~${hi}: 500 次发牌每手 dummy ≤ 2（缺口平摊）`, () => {
+for (let i = 0; i < 500; i++) {
+const scores = Array.from({ length: players }, () => band(lo, hi));
+const deck = createShuffledDeck(players);
+const { hands } = dealCardsVariable(deck, scores);
+hands.forEach((h) =>
+expect(h.filter((c) => c.isDummy).length).toBeLessThanOrEqual(2)
+);
+}
+});
+}
+for (const [players, lo, hi] of [[3, 2, 4], [4, 2, 4]] as const) {
+it(`${players}人 分数${lo}~${hi}: 常规分数下不削减手牌`, () => {
+for (let i = 0; i < 500; i++) {
+const scores = Array.from({ length: players }, () => band(lo, hi));
+const deck = createShuffledDeck(players);
+const { hands } = dealCardsVariable(deck, scores);
+hands.forEach((h, idx) => expect(h.length).toBe(getInitialHandSize(scores[idx])));
+}
+});
+}
+});
+function runFull(players: number, rounds: number, lo: number, hi: number): GameState {
+const scores = Array.from({ length: players }, () => band(lo, hi));
+const deck = createShuffledDeck(players);
+const { hands, remaining } = dealCardsVariable(deck, scores);
+let state: GameState = {
+phase: 'drawing', settings: { totalRounds: rounds, aiDifficulty: 'medium' },
+players: hands.map((hand, i): Player => ({
+id: `p${i}` as PlayerId, name: `P${i}`, avatar: '🤖', hand,
+isHuman: false, bigFiveScores: scores[i], declaredSets: [], skipNextTurn: false, revealedHand: false,
+})),
+drawPile: remaining, discardPile: [], currentPlayerIndex: 0, currentRound: 1,
+actionLog: [], drawnCard: null, pendingDiscard: null, discardedByIndex: -1, claimResponses: [], winner: null,
+};
+let actions = 0;
+while (state.phase !== 'game-over' && actions < 8000) {
+actions++;
+if (state.phase === 'drawing') {
+const cur = state.players[state.currentPlayerIndex];
+state = makeAIHuDecision(cur, 'medium').shouldHu ? attemptHu(state, state.currentPlayerIndex) : drawCard(state);
+} else if (state.phase === 'discarding' || state.phase === 'ai-turn') {
+const cur = state.players[state.currentPlayerIndex];
+const drawn = state.drawnCard ?? cur.hand[0];
+if (!drawn) { state = { ...state, phase: 'game-over' }; continue; }
+const d = makeAIDecision(cur, drawn, 'medium', { discardPile: state.discardPile, actionLog: state.actionLog, currentRound: state.currentRound, totalRounds: rounds });
+const handIds = new Set(cur.hand.map((c) => c.id));
+const cardId = handIds.has(d.cardToDiscard.id) ? d.cardToDiscard.id : (state.drawnCard?.id ?? cur.hand[0]?.id);
+if (cardId == null) { state = { ...state, phase: 'game-over' }; continue; }
+state = discardCard(state, cardId);
+} else if (state.phase === 'claim-window') {
+const pc = state.players.length; const by = state.discardedByIndex; let handled = false;
+for (let off = 1; off < pc; off++) {
+const idx = (by + off) % pc;
+if (state.phase !== 'claim-window' || !state.pendingDiscard) break;
+const p = state.players[idx];
+if (state.claimResponses.includes(p.id)) continue;
+const canPong = !p.skipNextTurn && !p.frozenUntilOwnDiscard && !p.hasLeft;
+if (canPong && isPersonalityCard(state.pendingDiscard)) {
+const dec = makeAIPongDecision(p, state.pendingDiscard, 'medium');
+if (dec.shouldPong && dec.dimension && dec.handCardIds) { state = pongCard(state, idx, dec.dimension, dec.handCardIds); handled = true; break; }
+}
+state = skipPong(state, idx); handled = true; break;
+}
+if (!handled && state.phase === 'claim-window') state = { ...state, phase: 'game-over' };
+}
+}
+return state;
+}
+describe('整局不提前摸空 (零死局)', () => {
+for (const [players, rounds] of [[3, 8], [4, 8], [4, 10]] as const) {
+it(`${players}人 ${rounds}轮: 150 局无「轮次没到就双空」`, () => {
+let prematureExhaust = 0;
+for (let i = 0; i < 150; i++) {
+const s = runFull(players, rounds, 2, 4);
+if (s.drawPile.length === 0 && s.discardPile.length === 0 && s.currentRound <= rounds) prematureExhaust++;
+}
+expect(prematureExhaust).toBe(0);
+});
+}
+});
+import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { test } from 'vitest';
+import { STRINGS } from '@/lib/i18n';
+import { QUESTIONS } from '@/data/questions';
+import { DIMENSION_META } from '@/data/dimensions';
+import { RULES_T } from '@/lib/i18n/rules';
+import { STATS_T } from '@/lib/i18n/stats';
+import { LOBBY_T } from '@/lib/i18n/lobby';
+import { TUTORIAL_T } from '@/lib/i18n/tutorial';
+const MIGRATED_MODULES: { section: string; mod: { zh: unknown; en: unknown } }[] = [
+{ section: 'rules', mod: RULES_T },
+{ section: 'stats', mod: STATS_T },
+{ section: 'lobby', mod: LOBBY_T },
+{ section: 'tutorial', mod: TUTORIAL_T },
+];
+const MIGRATED_FILES = new Set([
+'rules', 'stats', 'lobby', 'tutorial',
+'game(single)', 'GameLog.tsx', 'MockGameScene.tsx', 'Card.tsx', 'DrawPile.tsx', 'PsyOverlayPanel.tsx',
+]);
+type Flat = Record<string, string>;
+interface Row { source: string; section: string; key: string; zh: string; en: string; note: string }
+function flatten(obj: unknown, prefix: string, out: Flat) {
+if (obj === null || obj === undefined) return;
+if (Array.isArray(obj)) {
+obj.forEach((v, i) => flatten(v, `${prefix}[${i}]`, out));
+return;
+}
+if (typeof obj === 'function') {
+out[prefix] = '⟨动态句·见代码⟩';
+return;
+}
+if (typeof obj === 'object') {
+for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+flatten(v, prefix ? `${prefix}.${k}` : k, out);
+}
+return;
+}
+out[prefix] = String(obj);
+}
+function csvCell(v: string): string {
+return `"${v.replace(/"/g, '""')}"`;
+}
+const NOTES: Record<string, string> = {
+'game.declaredPrefix': '拼接计分行「申報 N 組 · 剩餘 M 張」(EN: Declared N sets · left M cards)。例：申報 3 組 · 剩餘 5 張',
+'game.declaredSuffix': '同上行的「組」(sets)，紧跟数字：申報 N [組]',
+'game.remainingPrefix': '同上行的「剩餘」(left)：· 剩餘 M 張',
+'game.cardsUnit': '牌张数量单位「張」(cards)，紧跟数字，多处复用：剩餘 5 [張] / 目標 4 [張]',
+'game.roundWord': '桌面端回合显示「第 N / M 輪」(EN: Round N / M)，roundWord=輪/Round',
+'game.roundUnit': '移动端回合显示「第 N/M 輪」(EN: Round N/M)，roundUnit=輪/Round',
+'game.targetPrefix': '拼接「目標 N 張」(EN: Target N cards)，与 cardsUnit 连用',
+'game.selectedPrefix': '拼接「已選 N」(EN: selected N)，紧跟已选数量',
+'game.progressPrefix': '拼接「當前正在抽取 {維度} 維度的人格線索。」前半句',
+'game.progressSuffix': '拼接「當前正在抽取 {維度} 維度的人格線索。」后半句',
+'game.winSuffix': '拼接「{玩家名} 贏了」(EN: {name} wins) 的后缀',
+'game.turnSuffix': '拼接「{玩家名} 的回合中」的后缀（EN 为空）',
+'game.answeredSuffix': '拼接「N 已作答」(EN: N answered)',
+'game.roomTitlePrefix': '拼接「人格麻將 · 聯機房 {房間碼}」前缀',
+'assessment.fullAssessPrefix': '拼接「完整測評（N 題）」前缀',
+'assessment.fullAssessSuffix': '拼接「完整測評（N 題）」后缀',
+'pvpRoom.waitingPlayersPrefix': '拼接「等待玩家（N/2）」前缀',
+'pvpRoom.waitingPlayersSuffix': '拼接「等待玩家（N/2）」后缀',
+'pvpLobby.stillInRoomPrefix': '拼接「你還在房間 {房間碼} …」前缀',
+};
+const FRAGMENT_RE = /(Prefix|Suffix|Unit|Word)$/;
+function noteFor(key: string): string {
+if (NOTES[key]) return NOTES[key];
+const last = key.split('.').pop() ?? '';
+if (FRAGMENT_RE.test(last)) return '⚠ 片段：运行时与数字/其它词拼接成整句，勿单独翻译';
+return '';
+}
+interface MergeGroup { key: string; parts: string[]; zh: string; en: string }
+const MERGE_GROUPS: MergeGroup[] = [
+{ key: 'assessment.progress', parts: ['assessment.progressPrefix', 'assessment.progressSuffix'],
+zh: '當前正在抽取 {維度} 維度的人格線索。', en: 'Currently drawing clues for the {dimension} dimension.' },
+{ key: 'game.declaredLine', parts: ['game.declaredPrefix', 'game.declaredSuffix', 'game.remainingPrefix', 'game.cardsUnit'],
+zh: '申報 {N} 組 · 剩餘 {M} 張', en: 'Declared {N} sets · left {M} cards' },
+{ key: 'game.toastSelfPong', parts: ['game.toastSelfPongPrefix', 'game.toastDoneSuffix'],
+zh: '自摸碰！{維度} 完成！', en: 'Self-draw Pong! {dimension} done!' },
+{ key: 'game.toastPong', parts: ['game.toastPongPrefix', 'game.toastDoneSuffix'],
+zh: '碰！{維度} 完成！', en: 'Pong! {dimension} done!' },
+{ key: 'game.logFullTitle', parts: ['game.logFullTitlePrefix', 'game.logFullTitleSuffix'],
+zh: '行動記錄 · 共 {N} 條', en: 'Action log · {N} total' },
+{ key: 'game.logRound', parts: ['game.logRoundPrefix', 'game.logRoundSuffix'],
+zh: '第 {N} 輪', en: 'Round {N}' },
+{ key: 'pvpLobby.fullAssess', parts: ['pvpLobby.fullAssessPrefix', 'pvpLobby.fullAssessSuffix'],
+zh: '完整測評（{N} 題）', en: 'Full Test ({N} Q)' },
+{ key: 'pvpRoom.waitingPlayers', parts: ['pvpRoom.waitingPlayersPrefix', 'pvpRoom.waitingPlayersSuffix'],
+zh: '等待玩家（{N}/2）', en: 'Waiting for players ({N}/2)' },
+{ key: 'game.target', parts: ['game.targetPrefix'], zh: '目標 {N} 張', en: 'Target {N} cards' },
+{ key: 'game.selected', parts: ['game.selectedPrefix'], zh: '已選 {N}', en: 'selected {N}' },
+{ key: 'game.roundDesktop', parts: ['game.roundWord'], zh: '第 {N} / {M} 輪', en: 'Round {N} / {M}' },
+{ key: 'game.roundMobile', parts: ['game.roundUnit'], zh: '第 {N}/{M} 輪', en: 'Round {N}/{M}' },
+{ key: 'game.roomTitle', parts: ['game.roomTitlePrefix'], zh: '人格麻將 · 聯機房 {房間碼}', en: 'Personalities Mahjong · Room {code}' },
+{ key: 'game.win', parts: ['game.winSuffix'], zh: '{玩家名} 贏了', en: '{name} wins' },
+{ key: 'game.turn', parts: ['game.turnSuffix'], zh: '{玩家名} 中（對方回合進行中）', en: '{name}（EN 無後綴）' },
+{ key: 'assessment.answered', parts: ['assessment.answeredSuffix'], zh: '{N} 已作答', en: '{N} answered' },
+{ key: 'pvpLobby.stillInRoom', parts: ['pvpLobby.stillInRoomPrefix'], zh: '你還在房間 {房間碼} …', en: 'You are still in room {code} …' },
+];
+function applyMerges(rows: Row[]): Row[] {
+const idxOf = (k: string) => rows.findIndex((r) => r.key === k);
+const removeSet = new Set<string>();
+const mergedAt: { anchor: number; row: Row }[] = [];
+for (const g of MERGE_GROUPS) {
+const present = g.parts.filter((p) => idxOf(p) >= 0);
+if (present.length === 0) {
+console.warn(`⚠ 合并组 ${g.key} 的碎片 key 全部缺失（可能已重构），跳过`);
+continue;
+}
+present.forEach((p) => removeSet.add(p));
+const anchor = Math.min(...present.map(idxOf));
+mergedAt.push({
+anchor,
+row: {
+source: 'i18n', section: g.key.split('.')[0], key: `${g.key}（合并）`,
+zh: g.zh, en: g.en,
+note: `🧩 已合并整句：由 ${present.join(' + ')} 运行时拼接而成。{…} 为运行时变量，翻译时请保留占位符与前后空格。`,
+},
+});
+}
+const out: Row[] = [];
+rows.forEach((r, i) => {
+mergedAt.filter((m) => m.anchor === i).forEach((m) => out.push(m.row));
+if (!removeSet.has(r.key)) out.push(r);
+});
+return out;
+}
+const hasCJK = (s: string) => /[一-鿿]/.test(s);
+const hasLatinWord = (s: string) => /[A-Za-z]{3,}/.test(s);
+function isMeaningful(zh: string, en: string): boolean {
+const z = zh.trim();
+const e = en.trim();
+if (!z && !e) return false;
+const zStripped = z.replace(/\$\{[^}]*\}|\{[^}]*\}/g, '').trim();
+if (hasCJK(zStripped)) return true;
+if (hasLatinWord(zStripped)) return true;
+if (hasLatinWord(e)) return true;
+return false;
+}
+test('export bilingual text to docs/i18n-review.csv', () => {
+const zhFlat: Flat = {};
+const enFlat: Flat = {};
+flatten(STRINGS.zh, '', zhFlat);
+flatten(STRINGS.en, '', enFlat);
+const rows: Row[] = [];
+const keys = Array.from(new Set([...Object.keys(zhFlat), ...Object.keys(enFlat)]));
+for (const key of keys) {
+rows.push({ source: 'i18n', section: key.split(/[.[]/)[0], key, zh: zhFlat[key] ?? '', en: enFlat[key] ?? '', note: noteFor(key) });
+}
+const mergedRows = applyMerges(rows);
+rows.length = 0;
+rows.push(...mergedRows);
+for (const q of QUESTIONS) {
+rows.push({ source: 'i18n', section: 'cards', key: `card.${q.id}`, zh: q.text, en: q.textEn, note: '' });
+}
+for (const d of Object.values(DIMENSION_META)) {
+rows.push({ source: 'i18n', section: 'dimension', key: `dimension.${d.key}.name`, zh: d.name, en: d.nameEn, note: '' });
+rows.push({ source: 'i18n', section: 'dimension', key: `dimension.${d.key}.description`, zh: d.description, en: '', note: 'EN 暂缺，待补' });
+}
+for (const { section, mod } of MIGRATED_MODULES) {
+const z: Flat = {};
+const e: Flat = {};
+flatten(mod.zh, '', z);
+flatten(mod.en, '', e);
+const mkeys = Array.from(new Set([...Object.keys(z), ...Object.keys(e)]));
+for (const key of mkeys) {
+rows.push({ source: 'i18n(页面模块)', section, key: `${section}.${key}`, zh: z[key] ?? '', en: e[key] ?? '', note: '' });
+}
+}
+const litPath = resolve(process.cwd(), 'docs/_hardcoded-literals.json');
+const lits = JSON.parse(readFileSync(litPath, 'utf8')) as { file: string; zh: string; en: string }[];
+const seen = new Set<string>();
+let n = 0;
+for (const lit of lits) {
+if (MIGRATED_FILES.has(lit.file)) continue;
+if (!isMeaningful(lit.zh, lit.en)) continue;
+const dedupKey = `${lit.file}|${lit.zh}|${lit.en}`;
+if (seen.has(dedupKey)) continue;
+seen.add(dedupKey);
+const note = lit.zh.includes('${') || lit.zh.includes('{') ? '含 {…} 变量占位，翻译时保留占位' : '';
+rows.push({ source: '未i18n(硬编码)', section: lit.file, key: `literal.${++n}`, zh: lit.zh, en: lit.en, note });
+}
+const header = ['来源', '区块/页面', 'key', '中文', 'English', '备注'];
+const lines = [header.map(csvCell).join(',')];
+for (const r of rows) {
+lines.push([r.source, r.section, r.key, r.zh, r.en, r.note].map(csvCell).join(','));
+}
+const csv = '﻿' + lines.join('\r\n') + '\r\n';
+writeFileSync(resolve(process.cwd(), 'docs/i18n-review.csv'), csv, 'utf8');
+console.log(`✓ wrote ${rows.length} rows -> docs/i18n-review.csv`);
+});
+import { describe, it, expect, beforeEach } from 'vitest';
+import {
+initializeGame,
+hasWon,
+getDeclaredDimensions,
+getPlayerScore,
+getRankings,
+drawCard,
+discardCard,
+skipPong,
+skipPenalizedPlayers,
+} from '../game-logic';
+import { DIMENSIONS } from '@/types';
+import {
+makePlayer,
+makeGameState,
+makeCard,
+makeBigFive,
+makeSettings,
+resetCardIds,
+} from '@/test/fixtures';
+beforeEach(() => {
+resetCardIds();
+});
+describe('initializeGame', () => {
+it('creates 4 players (1 human + 3 AI)', () => {
+const state = initializeGame(makeBigFive(), makeSettings());
+expect(state.players).toHaveLength(4);
+expect(state.players[0].isHuman).toBe(true);
+expect(state.players.slice(1).every((p) => !p.isHuman)).toBe(true);
+});
+it('starts in "drawing" phase with player 0 active', () => {
+const state = initializeGame(makeBigFive(), makeSettings());
+expect(state.phase).toBe('drawing');
+expect(state.currentPlayerIndex).toBe(0);
+expect(state.currentRound).toBe(1);
+});
+it('honors human Big Five scores', () => {
+const human = makeBigFive({ O: 4.5, N: 1.2 });
+const state = initializeGame(human, makeSettings());
+expect(state.players[0].bigFiveScores).toEqual(human);
+});
+it('deals each player a non-empty hand', () => {
+const state = initializeGame(makeBigFive(), makeSettings());
+state.players.forEach((p) => expect(p.hand.length).toBeGreaterThan(0));
+});
+it('initializes empty discard pile and no winner', () => {
+const state = initializeGame(makeBigFive(), makeSettings());
+expect(state.discardPile).toEqual([]);
+expect(state.winner).toBeNull();
+expect(state.actionLog).toEqual([]);
+});
+});
+describe('hasWon', () => {
+it('returns false when no dimensions declared', () => {
+expect(hasWon(makePlayer())).toBe(false);
+});
+it('returns false when only some dimensions declared', () => {
+const player = makePlayer({
+declaredSets: [{ dimension: 'O', cards: [makeCard('O')], round: 1 }],
+});
+expect(hasWon(player)).toBe(false);
+});
+it('returns true when all 5 dimensions declared', () => {
+const declaredSets = DIMENSIONS.map((d) => ({
+dimension: d,
+cards: [makeCard(d), makeCard(d)],
+round: 1,
+}));
+expect(hasWon(makePlayer({ declaredSets }))).toBe(true);
+});
+});
+describe('getDeclaredDimensions', () => {
+it('returns empty Set for fresh player', () => {
+expect(getDeclaredDimensions(makePlayer()).size).toBe(0);
+});
+it('collects unique dimensions from declared sets', () => {
+const player = makePlayer({
+declaredSets: [
+{ dimension: 'O', cards: [], round: 1 },
+{ dimension: 'C', cards: [], round: 1 },
+{ dimension: 'O', cards: [], round: 2 },
+],
+});
+const dims = getDeclaredDimensions(player);
+expect(dims.has('O')).toBe(true);
+expect(dims.has('C')).toBe(true);
+expect(dims.size).toBe(2);
+});
+});
+describe('getPlayerScore', () => {
+it('returns 0 for player with no declared sets', () => {
+expect(getPlayerScore(makePlayer())).toBe(0);
+});
+it('aggregates positive score from declared sets', () => {
+const player = makePlayer({
+bigFiveScores: makeBigFive({ O: 4 }),
+declaredSets: [
+{ dimension: 'O', cards: [makeCard('O'), makeCard('O')], round: 1 },
+],
+});
+expect(getPlayerScore(player)).toBeGreaterThan(0);
+});
+});
+describe('getRankings', () => {
+it('returns players sorted by score descending', () => {
+const high = makePlayer({
+id: 'human',
+bigFiveScores: makeBigFive({ O: 5 }),
+declaredSets: [
+{ dimension: 'O', cards: [makeCard('O'), makeCard('O')], round: 1 },
+],
+});
+const low = makePlayer({ id: 'ai-1' });
+const ranked = getRankings([low, high]);
+expect(ranked[0].id).toBe('human');
+});
+it('preserves all players (no drops)', () => {
+const players = [makePlayer({ id: 'human' }), makePlayer({ id: 'ai-1' })];
+expect(getRankings(players)).toHaveLength(2);
+});
+});
+describe('drawCard', () => {
+it('moves a card from drawPile to drawnCard and switches phase', () => {
+const card = makeCard('O');
+const state = makeGameState({ phase: 'drawing', drawPile: [card] });
+const result = drawCard(state);
+expect(result.drawnCard).toEqual(card);
+expect(result.drawPile).toHaveLength(0);
+expect(result.phase).toBe('discarding');
+});
+it('logs a draw action', () => {
+const card = makeCard('O');
+const state = makeGameState({ phase: 'drawing', drawPile: [card] });
+const result = drawCard(state);
+expect(result.actionLog).toHaveLength(1);
+expect(result.actionLog[0].type).toBe('draw');
+});
+it('forces game-over when both drawPile and discardPile are empty', () => {
+const state = makeGameState({ phase: 'drawing', drawPile: [], discardPile: [] });
+const result = drawCard(state);
+expect(result.phase).toBe('game-over');
+expect(result.winner).not.toBeNull();
+});
+it('reshuffles discard pile back into draw pile when draw pile empties', () => {
+const recycled = makeCard('O');
+const state = makeGameState({
+phase: 'drawing',
+drawPile: [],
+discardPile: [recycled],
+});
+const result = drawCard(state);
+expect(result.drawnCard).toEqual(recycled);
+expect(result.discardPile).toHaveLength(0);
+});
+});
+describe('discardCard', () => {
+it('returns state unchanged if cardId not in hand or drawn card', () => {
+const state = makeGameState({ phase: 'discarding' });
+state.players[0].hand = [makeCard('O')];
+const result = discardCard(state, 99999);
+expect(result).toBe(state);
+});
+it('removes the card from current player hand', () => {
+const card = makeCard('O');
+const state = makeGameState({ phase: 'discarding' });
+state.players[0].hand = [card, makeCard('C')];
+const result = discardCard(state, card.id);
+expect(result.players[0].hand.find((c) => c.id === card.id)).toBeUndefined();
+expect(result.players[0].hand).toHaveLength(1);
+});
+it('opens claim-window after discard (so others can pong)', () => {
+const card = makeCard('O');
+const state = makeGameState({ phase: 'discarding' });
+state.players[0].hand = [card];
+const result = discardCard(state, card.id);
+expect(result.phase).toBe('claim-window');
+expect(result.pendingDiscard).toEqual(card);
+expect(result.discardedByIndex).toBe(0);
+});
+});
+describe('skipPong', () => {
+it('records the skipping player into claimResponses', () => {
+const state = makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+pendingDiscard: makeCard('O'),
+});
+const result = skipPong(state, 1);
+expect(result.claimResponses).toContain(state.players[1].id);
+});
+});
+describe('skipPenalizedPlayers', () => {
+it('does not change state when no one is penalized', () => {
+const state = makeGameState({ phase: 'drawing' });
+const result = skipPenalizedPlayers(state);
+expect(result.currentPlayerIndex).toBe(0);
+});
+it('skips a penalized player at the head of turn queue', () => {
+const state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 0,
+});
+state.players[0].skipNextTurn = true;
+const result = skipPenalizedPlayers(state);
+expect(result.currentPlayerIndex).not.toBe(0);
+expect(result.players[0].skipNextTurn).toBe(false);
+});
+});
+import { describe, it, expect, beforeEach } from 'vitest';
+import { markPlayerLeft, skipPenalizedPlayers } from '../game-logic';
+import { makePlayer, makeGameState, makeCard, resetCardIds } from '@/test/fixtures';
+beforeEach(() => {
+resetCardIds();
+});
+describe('markPlayerLeft', () => {
+it('sets hasLeft on the targeted player', () => {
+const state = makeGameState();
+const next = markPlayerLeft(state, 'ai-1');
+expect(next.players.find((p) => p.id === 'ai-1')?.hasLeft).toBe(true);
+expect(next.players.find((p) => p.id === 'human')?.hasLeft).toBeFalsy();
+});
+it('is idempotent — second leave is a no-op', () => {
+const state = makeGameState();
+const once = markPlayerLeft(state, 'ai-1');
+const twice = markPlayerLeft(once, 'ai-1');
+expect(twice).toBe(once);
+});
+it('ends the game when only one active player remains, awarding them the win', () => {
+const state = makeGameState();
+let next = markPlayerLeft(state, 'ai-1');
+next = markPlayerLeft(next, 'ai-2');
+next = markPlayerLeft(next, 'ai-3');
+expect(next.phase).toBe('game-over');
+expect(next.winner).toBe('human');
+});
+it('current-player-leaves mid-discard advances the turn cleanly', () => {
+const state = makeGameState({
+phase: 'discarding',
+currentPlayerIndex: 0,
+drawnCard: makeCard('O'),
+});
+const next = markPlayerLeft(state, 'human');
+expect(next.players[0].hasLeft).toBe(true);
+expect(next.currentPlayerIndex).not.toBe(0);
+expect(next.drawnCard).toBeNull();
+});
+it('current-player-leaves in drawing phase: skip machinery advances past them', () => {
+const state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 0,
+});
+const next = markPlayerLeft(state, 'human');
+expect(next.players[0].hasLeft).toBe(true);
+expect(next.currentPlayerIndex).toBe(1);
+expect(next.phase).toBe('drawing');
+});
+it('non-current-player leaves during claim-window: auto-passes their claim', () => {
+const pending = makeCard('O');
+const state = makeGameState({
+phase: 'claim-window',
+currentPlayerIndex: 0,
+discardedByIndex: 0,
+pendingDiscard: pending,
+claimResponses: [],
+});
+const next = markPlayerLeft(state, 'ai-2');
+expect(next.players[2].hasLeft).toBe(true);
+if (next.phase === 'claim-window') {
+expect(next.claimResponses).toContain('ai-2');
+}
+});
+it('skipPenalizedPlayers fast-forwards past consecutive hasLeft seats', () => {
+const state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 1,
+players: [
+makePlayer({ id: 'human' }),
+makePlayer({ id: 'ai-1', isHuman: false, hasLeft: true }),
+makePlayer({ id: 'ai-2', isHuman: false, hasLeft: true }),
+makePlayer({ id: 'ai-3', isHuman: false }),
+],
+});
+const next = skipPenalizedPlayers(state);
+expect(next.currentPlayerIndex).toBe(3);
+expect(next.players[1].hasLeft).toBe(true);
+expect(next.players[2].hasLeft).toBe(true);
+});
+});
+import { describe, it, expect, beforeEach } from 'vitest';
+import {
+attemptHu,
+pongCard,
+selfPongCard,
+skipPong,
+discardCard,
+drawCard,
+skipPenalizedPlayers,
+} from '../game-logic';
+import {
+makeCard,
+makeDummy,
+makeGameState,
+makePlayer,
+resetCardIds,
+} from '@/test/fixtures';
+import type { PlayerId } from '@/types';
+beforeEach(() => {
+resetCardIds();
+});
+function aBcClaimState() {
+const pending = makeCard('O', { id: 100 });
+return makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+currentPlayerIndex: 0,
+pendingDiscard: pending,
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({ id: 'B' as PlayerId }),
+makePlayer({
+id: 'C' as PlayerId,
+hand: [makeCard('O', { id: 1 }), makeCard('C', { id: 2 })],
+}),
+],
+discardPile: [],
+drawPile: [makeCard('A', { id: 200 })],
+});
+}
+describe('pong-fail penalty (count too low)', () => {
+it('pong with insufficient cards is treated as a fail, not silently rejected', () => {
+const state = makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+currentPlayerIndex: 0,
+pendingDiscard: makeCard('O', { id: 100 }),
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({ id: 'B' as PlayerId }),
+makePlayer({ id: 'C' as PlayerId, hand: [makeCard('O', { id: 1 })] }),
+],
+});
+const result = pongCard(state, 2, 'O', [1]);
+expect(result).not.toBe(state);
+expect(result.players[2].skipNextTurn).toBe(true);
+expect(result.players[2].revealedHand).toBe(false);
+expect(result.players[2].revealedSelectedCards?.length).toBe(1);
+});
+it('pong with no selected cards is also treated as a fail', () => {
+const state = makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+currentPlayerIndex: 0,
+pendingDiscard: makeCard('O', { id: 100 }),
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({ id: 'B' as PlayerId }),
+makePlayer({ id: 'C' as PlayerId, hand: [makeCard('O', { id: 1 })] }),
+],
+});
+const result = pongCard(state, 2, 'O', []);
+expect(result.players[2].skipNextTurn).toBe(true);
+expect(result.players[2].revealedSelectedCards?.length).toBe(0);
+});
+});
+describe('pong-fail penalty (visibility)', () => {
+it('pong-fail exposes only the attempted cards, NOT the full hand', () => {
+const state = aBcClaimState();
+const result = pongCard(state, 2, 'O', [1, 2]);
+const c = result.players[2];
+expect(c.skipNextTurn).toBe(true);
+expect(c.revealedHand).toBe(false);
+expect(c.revealedSelectedCards).toBeDefined();
+expect(c.revealedSelectedCards?.length).toBe(2);
+});
+it('hu-fail still exposes the full hand', () => {
+const state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 0,
+players: [
+makePlayer({ id: 'A' as PlayerId, hand: [makeCard('O')] }),
+makePlayer({ id: 'B' as PlayerId }),
+],
+});
+const result = attemptHu(state, 0);
+expect(result.players[0].revealedHand).toBe(true);
+expect(result.players[0].skipNextTurn).toBe(true);
+});
+});
+describe('own-turn hu-fail — 立即 advance turn (banner-vs-action 一致性 fix)', () => {
+it('phase=drawing 时 own-turn hu-fail：立即 advance turn，下家接管', () => {
+const state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 0,
+players: [
+makePlayer({ id: 'A' as PlayerId, hand: [makeCard('O', { id: 1 })] }),
+makePlayer({ id: 'B' as PlayerId }),
+makePlayer({ id: 'C' as PlayerId }),
+],
+drawPile: [makeCard('A', { id: 99 })],
+});
+const result = attemptHu(state, 0);
+expect(result.phase).toBe('drawing');
+expect(result.currentPlayerIndex).toBe(1);
+expect(result.players[0].skipNextTurn).toBe(true);
+expect(result.players[0].frozenUntilOwnDiscard).toBe(true);
+expect(result.drawnCard).toBeNull();
+});
+it('phase=discarding 时 own-turn hu-fail：drawnCard 还回手牌 + advance turn', () => {
+const drawn = makeCard('A', { id: 500 });
+const state = makeGameState({
+phase: 'discarding',
+currentPlayerIndex: 0,
+drawnCard: drawn,
+players: [
+makePlayer({ id: 'A' as PlayerId, hand: [makeCard('O', { id: 10 })] }),
+makePlayer({ id: 'B' as PlayerId }),
+makePlayer({ id: 'C' as PlayerId }),
+],
+});
+const result = attemptHu(state, 0);
+expect(result.currentPlayerIndex).toBe(1);
+expect(result.drawnCard).toBeNull();
+expect(result.players[0].hand.map((c) => c.id).sort()).toEqual([10, 500]);
+expect(result.players[0].skipNextTurn).toBe(true);
+expect(result.players[0].frozenUntilOwnDiscard).toBe(true);
+expect(result.players[0].revealedHand).toBe(true);
+});
+it('own-turn hu-fail 当回合 frozenUntilOwnDiscard 不会被 discard 立即清掉', () => {
+const state = makeGameState({
+phase: 'discarding',
+currentPlayerIndex: 0,
+drawnCard: makeCard('A', { id: 7 }),
+players: [
+makePlayer({ id: 'A' as PlayerId, hand: [makeCard('O', { id: 8 })] }),
+makePlayer({ id: 'B' as PlayerId }),
+],
+});
+const result = attemptHu(state, 0);
+expect(result.players[0].frozenUntilOwnDiscard).toBe(true);
+});
+});
+describe('penalty freeze — C cannot act in B\'s claim window', () => {
+function statePostPongFail() {
+return makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 1,
+discardedByIndex: -1,
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({ id: 'B' as PlayerId, hand: [makeCard('A', { id: 50 })] }),
+makePlayer({
+id: 'C' as PlayerId,
+hand: [
+makeCard('O', { id: 30 }),
+makeCard('O', { id: 31 }),
+makeCard('O', { id: 32 }),
+],
+skipNextTurn: true,
+revealedSelectedCards: [makeCard('O', { id: 99 })],
+}),
+],
+drawPile: [makeCard('A', { id: 60 })],
+});
+}
+it('B discards → claim window auto-records C\'s skip (no deadlock)', () => {
+let state = statePostPongFail();
+state = drawCard(state);
+expect(state.phase).toBe('discarding');
+state = discardCard(state, state.drawnCard!.id);
+expect(state.phase).toBe('claim-window');
+expect(state.claimResponses).toContain('C');
+expect(state.claimResponses).not.toContain('A');
+});
+it('penalized C cannot pong even if they would have qualifying cards', () => {
+const state = statePostPongFail();
+const claimState = makeGameState({
+...state,
+phase: 'claim-window',
+discardedByIndex: 1,
+currentPlayerIndex: 1,
+pendingDiscard: makeCard('O', { id: 999 }),
+players: state.players,
+claimResponses: ['C' as PlayerId],
+});
+const result = pongCard(claimState, 2, 'O', [30]);
+expect(result).toBe(claimState);
+});
+it('penalized C cannot hu', () => {
+const state = statePostPongFail();
+const claimState = makeGameState({
+...state,
+phase: 'claim-window',
+discardedByIndex: 1,
+pendingDiscard: makeCard('O', { id: 999 }),
+claimResponses: ['C' as PlayerId],
+});
+const result = attemptHu(claimState, 2);
+expect(result).toBe(claimState);
+});
+});
+describe('penalty freeze — full A→B→C→A cycle reaches normal play', () => {
+it('A discards → C pong-fails → B turn → C auto-skipped own turn → A unfreezes C', () => {
+let state = makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+currentPlayerIndex: 0,
+pendingDiscard: makeCard('O', { id: 100 }),
+drawPile: [makeCard('C', { id: 200 }), makeCard('C', { id: 201 })],
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({ id: 'B' as PlayerId, hand: [makeCard('A', { id: 50 })] }),
+makePlayer({
+id: 'C' as PlayerId,
+hand: [makeCard('O', { id: 1 }), makeCard('C', { id: 2 })],
+}),
+],
+});
+state = pongCard(state, 2, 'O', [1, 2]);
+expect(state.players[2].skipNextTurn).toBe(true);
+state = skipPong(state, 1);
+expect(state.phase).toBe('drawing');
+expect(state.currentPlayerIndex).toBe(1);
+state = drawCard(state);
+expect(state.phase).toBe('discarding');
+const drawnId = state.drawnCard!.id;
+state = discardCard(state, drawnId);
+expect(state.phase).toBe('claim-window');
+expect(state.claimResponses).toContain('C');
+state = skipPong(state, 0);
+expect(state.phase).toBe('drawing');
+expect(state.currentPlayerIndex).toBe(0);
+expect(state.players[2].skipNextTurn).toBe(true);
+expect(state.players[2].extraSkipQueued).toBe(false);
+});
+it('after C\'s auto-skip, drawCard on C\'s next visit clears revealedSelectedCards', () => {
+let state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 2,
+drawPile: [makeCard('O', { id: 70 })],
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({ id: 'B' as PlayerId }),
+makePlayer({
+id: 'C' as PlayerId,
+skipNextTurn: false,
+revealedSelectedCards: [makeCard('O', { id: 88 })],
+}),
+],
+});
+state = drawCard(state);
+expect(state.players[2].revealedSelectedCards).toBeUndefined();
+});
+});
+describe('penalty freeze — multiple penalized players', () => {
+it('all penalized claimers auto-skip; window finalizes on remaining player', () => {
+let state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 0,
+drawPile: [makeCard('O', { id: 100 })],
+players: [
+makePlayer({ id: 'A' as PlayerId, hand: [makeCard('O', { id: 10 })] }),
+makePlayer({ id: 'B' as PlayerId, skipNextTurn: true }),
+makePlayer({ id: 'C' as PlayerId, skipNextTurn: true }),
+],
+});
+state = drawCard(state);
+state = discardCard(state, state.drawnCard!.id);
+expect(state.phase).not.toBe('claim-window');
+expect(state.currentPlayerIndex).toBeGreaterThanOrEqual(0);
+});
+});
+describe('skipPenalizedPlayers — sanity: clears skipNextTurn after own auto-skip', () => {
+it('penalized player at head of turn queue auto-skips and clears flag', () => {
+let state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 0,
+players: [
+makePlayer({ id: 'A' as PlayerId, skipNextTurn: true }),
+makePlayer({ id: 'B' as PlayerId }),
+makePlayer({ id: 'C' as PlayerId }),
+],
+});
+state = skipPenalizedPlayers(state);
+expect(state.currentPlayerIndex).toBe(1);
+expect(state.players[0].skipNextTurn).toBe(false);
+});
+});
+describe('penalty freeze — frozenUntilOwnDiscard (罚停一整轮)', () => {
+it('pong-fail tags the offender with frozenUntilOwnDiscard=true', () => {
+const state = makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+currentPlayerIndex: 0,
+pendingDiscard: makeCard('O', { id: 100 }),
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({
+id: 'B' as PlayerId,
+hand: [makeCard('O', { id: 10 }), makeCard('C', { id: 11 })],
+}),
+makePlayer({ id: 'C' as PlayerId }),
+],
+});
+const result = pongCard(state, 1, 'O', [10, 11]);
+expect(result.players[1].skipNextTurn).toBe(true);
+expect(result.players[1].frozenUntilOwnDiscard).toBe(true);
+});
+it('hu-fail tags the offender with frozenUntilOwnDiscard=true', () => {
+const state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 0,
+players: [
+makePlayer({ id: 'A' as PlayerId, hand: [makeCard('O')] }),
+makePlayer({ id: 'B' as PlayerId }),
+],
+});
+const result = attemptHu(state, 0);
+expect(result.players[0].skipNextTurn).toBe(true);
+expect(result.players[0].frozenUntilOwnDiscard).toBe(true);
+expect(result.players[0].revealedHand).toBe(true);
+});
+it('B\'s freeze survives the own-turn auto-skip — still locked out next claim window', () => {
+let state = makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+currentPlayerIndex: 0,
+pendingDiscard: makeCard('O', { id: 100 }),
+drawPile: [makeCard('A', { id: 200 }), makeCard('A', { id: 201 })],
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({
+id: 'B' as PlayerId,
+hand: [makeCard('O', { id: 10 }), makeCard('C', { id: 11 })],
+}),
+makePlayer({ id: 'C' as PlayerId, hand: [] }),
+],
+});
+state = pongCard(state, 1, 'O', [10, 11]);
+state = skipPong(state, 2);
+expect(state.currentPlayerIndex).toBe(2);
+expect(state.players[1].skipNextTurn).toBe(true);
+expect(state.players[1].extraSkipQueued).toBe(false);
+expect(state.players[1].frozenUntilOwnDiscard).toBe(true);
+state = drawCard(state);
+state = discardCard(state, state.drawnCard!.id);
+expect(state.phase).toBe('claim-window');
+expect(state.claimResponses).toContain('B');
+expect(state.players[1].frozenUntilOwnDiscard).toBe(true);
+});
+it('B\'s own next clean discard clears B\'s freeze', () => {
+let state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 1,
+drawPile: [makeCard('A', { id: 300 })],
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({
+id: 'B' as PlayerId,
+frozenUntilOwnDiscard: true,
+hand: [makeCard('O', { id: 50 })],
+}),
+makePlayer({ id: 'C' as PlayerId }),
+],
+});
+state = drawCard(state);
+state = discardCard(state, state.drawnCard!.id);
+expect(state.players[1].frozenUntilOwnDiscard).toBe(false);
+});
+it('self-pong-fail: drawnCard returns to hand, both skipNextTurn AND frozenUntilOwnDiscard set, turn advanced', () => {
+const drawn = makeCard('A', { id: 500 });
+let state = makeGameState({
+phase: 'discarding',
+currentPlayerIndex: 2,
+drawnCard: drawn,
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({ id: 'B' as PlayerId }),
+makePlayer({
+id: 'C' as PlayerId,
+hand: [makeCard('O', { id: 600 }), makeCard('C', { id: 601 })],
+}),
+],
+});
+state = selfPongCard(state, 2, 'O', [600, 601]);
+expect(state.players[2].hand.map((c) => c.id).sort()).toEqual([500, 600, 601]);
+expect(state.players[2].skipNextTurn).toBe(true);
+expect(state.players[2].frozenUntilOwnDiscard).toBe(true);
+expect(state.currentPlayerIndex).not.toBe(2);
+expect(state.drawnCard).toBeNull();
+});
+it('强 trap: 已归档维度 pong → fail + 罚停 + failReason="already-declared"', () => {
+const state = makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+currentPlayerIndex: 0,
+pendingDiscard: makeCard('O', { id: 100 }),
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({
+id: 'B' as PlayerId,
+hand: [makeCard('O', { id: 10 }), makeCard('O', { id: 11 })],
+declaredSets: [
+{
+dimension: 'O',
+cards: [
+makeCard('O', { id: 90 }),
+makeCard('O', { id: 91 }),
+makeCard('O', { id: 92 }),
+],
+round: 1,
+},
+],
+}),
+makePlayer({ id: 'C' as PlayerId }),
+],
+});
+const result = pongCard(state, 1, 'O', [10, 11]);
+expect(result.players[1].skipNextTurn).toBe(true);
+expect(result.players[1].frozenUntilOwnDiscard).toBe(true);
+const failAction = [...result.actionLog].reverse().find((a) => a.type === 'pong-fail');
+expect(failAction).toBeDefined();
+expect(failAction!.failReason).toBe('already-declared');
+});
+it('强 trap: 已归档维度 self-pong → fail + 罚停 + failReason="already-declared"', () => {
+const drawn = makeCard('O', { id: 500 });
+const state = makeGameState({
+phase: 'discarding',
+currentPlayerIndex: 0,
+drawnCard: drawn,
+players: [
+makePlayer({
+id: 'A' as PlayerId,
+hand: [makeCard('O', { id: 10 }), makeCard('O', { id: 11 })],
+declaredSets: [
+{
+dimension: 'O',
+cards: [
+makeCard('O', { id: 90 }),
+makeCard('O', { id: 91 }),
+makeCard('O', { id: 92 }),
+],
+round: 1,
+},
+],
+}),
+makePlayer({ id: 'B' as PlayerId }),
+],
+});
+const result = selfPongCard(state, 0, 'O', [10, 11, 500]);
+expect(result.players[0].skipNextTurn).toBe(true);
+expect(result.players[0].frozenUntilOwnDiscard).toBe(true);
+const failAction = [...result.actionLog].reverse().find((a) => a.type === 'pong-fail');
+expect(failAction).toBeDefined();
+expect(failAction!.failReason).toBe('already-declared');
+});
+it('普通 pong-fail (count/dim 错) failReason="wrong-cards"', () => {
+const state = makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+currentPlayerIndex: 0,
+pendingDiscard: makeCard('O', { id: 100 }),
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({
+id: 'B' as PlayerId,
+hand: [makeCard('O', { id: 10 }), makeCard('C', { id: 11 })],
+}),
+],
+});
+const result = pongCard(state, 1, 'O', [10, 11]);
+const failAction = [...result.actionLog].reverse().find((a) => a.type === 'pong-fail');
+expect(failAction).toBeDefined();
+expect(failAction!.failReason).toBe('wrong-cards');
+});
+it('加重罚停：pong-fail 后 extraSkipQueued=true，第一次 own-skip 后重新激活 skipNextTurn', () => {
+const state = makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+currentPlayerIndex: 0,
+pendingDiscard: makeCard('O', { id: 100 }),
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({
+id: 'B' as PlayerId,
+hand: [makeCard('O', { id: 10 }), makeCard('C', { id: 11 })],
+}),
+makePlayer({ id: 'C' as PlayerId, hand: [] }),
+],
+});
+const afterFail = pongCard(state, 1, 'O', [10, 11]);
+expect(afterFail.players[1].skipNextTurn).toBe(true);
+expect(afterFail.players[1].extraSkipQueued).toBe(true);
+expect(afterFail.players[1].frozenUntilOwnDiscard).toBe(true);
+});
+it('加重罚停：skipPenalizedPlayers 单次调用 consume 一次后立即激活 skipNextTurn 第二次', () => {
+const state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 1,
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({
+id: 'B' as PlayerId,
+skipNextTurn: true,
+extraSkipQueued: true,
+frozenUntilOwnDiscard: true,
+}),
+makePlayer({ id: 'C' as PlayerId }),
+],
+});
+const result = skipPenalizedPlayers(state);
+expect(result.players[1].skipNextTurn).toBe(true);
+expect(result.players[1].extraSkipQueued).toBe(false);
+expect(result.players[1].frozenUntilOwnDiscard).toBe(true);
+expect(result.currentPlayerIndex).not.toBe(1);
+});
+it('加重罚停：第二次 own-turn 跳过完成即立即解冻（2 跳后自由）', () => {
+const state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 1,
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({
+id: 'B' as PlayerId,
+skipNextTurn: true,
+extraSkipQueued: false,
+frozenUntilOwnDiscard: true,
+}),
+makePlayer({ id: 'C' as PlayerId }),
+],
+});
+const result = skipPenalizedPlayers(state);
+expect(result.players[1].skipNextTurn).toBe(false);
+expect(result.players[1].extraSkipQueued).toBe(false);
+expect(result.players[1].frozenUntilOwnDiscard).toBe(false);
+const lastSkip = [...result.actionLog].reverse().find((a) => a.type === 'skip' && a.playerId === ('B' as PlayerId));
+expect(lastSkip?.clearedPenalty).toBe(true);
+});
+it('a dummy-card own discard also clears the freeze', () => {
+let state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 1,
+drawPile: [makeDummy({ id: 999 })],
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({
+id: 'B' as PlayerId,
+frozenUntilOwnDiscard: true,
+}),
+makePlayer({ id: 'C' as PlayerId }),
+],
+});
+state = drawCard(state);
+state = discardCard(state, state.drawnCard!.id);
+expect(state.players[1].frozenUntilOwnDiscard).toBe(false);
+});
+});
+describe('option B — 碰牌偷走出牌权时，被略过的罚停座位补计一次跳过', () => {
+function pongState(bMods: Partial<ReturnType<typeof makePlayer>>, cMods: Partial<ReturnType<typeof makePlayer>>) {
+return makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+currentPlayerIndex: 0,
+pendingDiscard: makeCard('O', { id: 100 }),
+claimResponses: [],
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({ id: 'B' as PlayerId, ...bMods }),
+makePlayer({ id: 'C' as PlayerId, ...cMods }),
+makePlayer({ id: 'D' as PlayerId, hand: [makeCard('O', { id: 1 }), makeCard('O', { id: 2 })] }),
+],
+});
+}
+it('被略过的座位若在第 1 跳（extraSkipQueued）→ 补计一次，仍剩一跳', () => {
+const state = pongState(
+{ skipNextTurn: true, extraSkipQueued: true, frozenUntilOwnDiscard: true },
+{}
+);
+const result = pongCard(state, 3, 'O', [1, 2]);
+expect(result.actionLog.some((a) => a.type === 'pong-success')).toBe(true);
+expect(result.players[1].extraSkipQueued).toBe(false);
+expect(result.players[1].skipNextTurn).toBe(true);
+expect(result.players[1].frozenUntilOwnDiscard).toBe(true);
+expect(result.actionLog.some((a) => a.type === 'skip' && a.playerId === ('B' as PlayerId))).toBe(true);
+});
+it('被略过的座位若在最后一跳 → 补计后立即解冻', () => {
+const state = pongState(
+{},
+{ skipNextTurn: true, extraSkipQueued: false, frozenUntilOwnDiscard: true }
+);
+const result = pongCard(state, 3, 'O', [1, 2]);
+expect(result.players[2].skipNextTurn).toBe(false);
+expect(result.players[2].frozenUntilOwnDiscard).toBe(false);
+const cSkip = result.actionLog.find((a) => a.type === 'skip' && a.playerId === ('C' as PlayerId));
+expect(cSkip?.clearedPenalty).toBe(true);
+});
+it('未罚停的被略过座位不受影响（不生成 skip）', () => {
+const state = pongState({}, {});
+const result = pongCard(state, 3, 'O', [1, 2]);
+expect(result.players[1].skipNextTurn).toBeFalsy();
+expect(result.actionLog.some((a) => a.type === 'skip')).toBe(false);
+});
+});
+import { describe, it, expect, beforeEach } from 'vitest';
+import { pongCard, skipPong, drawCard, discardCard } from '../game-logic';
+import { makeCard, makeGameState, makePlayer, resetCardIds } from '@/test/fixtures';
+import type { PlayerId, GameState } from '@/types';
+beforeEach(() => resetCardIds());
+function step(state: GameState, log: string[]): GameState {
+const pc = state.players.length;
+if (state.phase === 'claim-window') {
+for (let off = 1; off < pc; off++) {
+const idx = (state.discardedByIndex + off) % pc;
+const p = state.players[idx];
+if (state.phase !== 'claim-window') break;
+if (state.claimResponses.includes(p.id)) continue;
+log.push(`claim: ${p.id} skip`);
+state = skipPong(state, idx);
+}
+return state;
+}
+if (state.phase === 'drawing') {
+const idx = state.currentPlayerIndex;
+const before = state.players[idx];
+state = drawCard(state);
+if (state.phase === 'discarding' || state.phase === 'ai-turn') {
+const cur = state.players[state.currentPlayerIndex];
+log.push(`turn: ${cur.id} draw+discard (was frozen=${!!before.frozenUntilOwnDiscard})`);
+const discardId = cur.hand[0]?.id ?? state.drawnCard?.id;
+if (discardId != null) state = discardCard(state, discardId);
+} else {
+log.push(`turn: ${before.id} auto-skipped (skipNextTurn)`);
+}
+return state;
+}
+return state;
+}
+describe('REPRO: 碰失败后罚停最终解除', () => {
+it('C 碰失败后，30 步内应拿到真实回合并清除 frozenUntilOwnDiscard', () => {
+const mkHand = (ids: number[]) =>
+ids.map((id, i) => makeCard((['O', 'C', 'E', 'A', 'N'] as const)[i % 5], { id }));
+let state = makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+currentPlayerIndex: 0,
+pendingDiscard: makeCard('O', { id: 100 }),
+players: [
+makePlayer({ id: 'A' as PlayerId, hand: mkHand([10, 11, 12, 13, 14]) }),
+makePlayer({ id: 'B' as PlayerId, hand: mkHand([20, 21, 22, 23, 24]) }),
+makePlayer({ id: 'C' as PlayerId, hand: [makeCard('O', { id: 1 }), makeCard('C', { id: 2 }), makeCard('E', { id: 3 }), makeCard('A', { id: 4 }), makeCard('N', { id: 5 }) ] }),
+],
+drawPile: Array.from({ length: 40 }, (_, i) => makeCard((['O', 'C', 'E', 'A', 'N'] as const)[i % 5], { id: 300 + i })),
+discardPile: [],
+});
+state = pongCard(state, 2, 'O', [1, 2]);
+expect(state.players[2].skipNextTurn).toBe(true);
+expect(state.players[2].frozenUntilOwnDiscard).toBe(true);
+const log: string[] = [];
+let cGotRealTurn = false;
+for (let i = 0; i < 60 && state.phase !== 'game-over'; i++) {
+const cBefore = state.players[2];
+if (state.phase === 'drawing' && state.currentPlayerIndex === 2 && !cBefore.skipNextTurn) {
+cGotRealTurn = true;
+}
+state = step(state, log);
+if (!state.players[2].frozenUntilOwnDiscard && cGotRealTurn) break;
+}
+if (state.players[2].frozenUntilOwnDiscard) {
+console.log('C 仍 frozen！循环日志:\n' + log.join('\n'));
+}
+expect(cGotRealTurn).toBe(true);
+expect(state.players[2].frozenUntilOwnDiscard).toBe(false);
+});
+});
+import { describe, it, expect, beforeEach } from 'vitest';
+import { pongCard, selfPongCard } from '../game-logic';
+import { makeCard, makeGameState, makePlayer, resetCardIds } from '@/test/fixtures';
+import type { PlayerId } from '@/types';
+beforeEach(() => resetCardIds());
+describe('pong empty-hand deadlock guard', () => {
+it('pong consuming the whole hand (non-win) advances the turn instead of deadlocking', () => {
+const state = makeGameState({
+phase: 'claim-window', discardedByIndex: 0, currentPlayerIndex: 0,
+pendingDiscard: makeCard('O', { id: 100 }),
+drawPile: [makeCard('A', { id: 200 })],
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({ id: 'B' as PlayerId, hand: [makeCard('O', { id: 10 }), makeCard('O', { id: 11 })] }),
+makePlayer({ id: 'C' as PlayerId }),
+],
+});
+const r = pongCard(state, 1, 'O', [10, 11]);
+expect(r.players[1].hand.length).toBe(0);
+expect(r.players[1].declaredSets.length).toBe(1);
+expect(r.phase).not.toBe('discarding');
+expect(r.currentPlayerIndex).not.toBe(1);
+expect(r.winner).toBeNull();
+});
+it('self-pong consuming hand+drawn (non-win) advances the turn', () => {
+const drawn = makeCard('O', { id: 500 });
+const state = makeGameState({
+phase: 'discarding', currentPlayerIndex: 1, drawnCard: drawn,
+drawPile: [makeCard('A', { id: 600 })],
+players: [
+makePlayer({ id: 'A' as PlayerId }),
+makePlayer({ id: 'B' as PlayerId, hand: [makeCard('O', { id: 10 }), makeCard('O', { id: 11 })] }),
+makePlayer({ id: 'C' as PlayerId }),
+],
+});
+const r = selfPongCard(state, 1, 'O', [10, 11, 500]);
+expect(r.players[1].hand.length).toBe(0);
+expect(r.players[1].declaredSets.length).toBe(1);
+expect(r.phase).not.toBe('discarding');
+expect(r.currentPlayerIndex).not.toBe(1);
+expect(r.drawnCard).toBeNull();
+});
+});
+import { describe, it, expect, beforeEach } from 'vitest';
+import { initializePvpGame, applyPvpAction } from '../pvp-game-logic';
+import type { RoomPlayer, RoomSettings, PvpAction } from '@/types/pvp';
+import type { BigFiveScores } from '@/types';
+import { makeBigFive, makeCard, makeGameState, makePlayer, resetCardIds } from '@/test/fixtures';
+beforeEach(() => {
+resetCardIds();
+});
+const settings: RoomSettings = { totalRounds: 4, maxPlayers: 4 };
+function makeRoomPlayers(uuids: string[]): RoomPlayer[] {
+return uuids.map((id, i) => ({
+room_id: 'room-test',
+player_id: id,
+seat_index: i,
+student_id: `student-${i}`,
+}));
+}
+describe('initializePvpGame', () => {
+it('builds a game state with the supplied player count', () => {
+const players = makeRoomPlayers(['uuid-a', 'uuid-b', 'uuid-c']);
+const bigFiveMap: Record<string, BigFiveScores> = {
+'uuid-a': makeBigFive({ O: 4 }),
+'uuid-b': makeBigFive({ C: 5 }),
+'uuid-c': makeBigFive(),
+};
+const state = initializePvpGame(players, bigFiveMap, settings);
+expect(state.players).toHaveLength(3);
+expect(state.players.every((p) => p.isHuman)).toBe(true);
+expect(state.phase).toBe('drawing');
+expect(state.currentRound).toBe(1);
+});
+it('falls back to random Big Five when player has no scores in the map', () => {
+const players = makeRoomPlayers(['uuid-a']);
+const state = initializePvpGame(players, {}, settings);
+const scores = state.players[0].bigFiveScores;
+expect(scores.O).toBeGreaterThanOrEqual(1);
+expect(scores.O).toBeLessThanOrEqual(5);
+});
+it('respects supplied Big Five for known players', () => {
+const myScores = makeBigFive({ O: 4.7, N: 1.3 });
+const players = makeRoomPlayers(['uuid-a']);
+const state = initializePvpGame(players, { 'uuid-a': myScores }, settings);
+expect(state.players[0].bigFiveScores).toEqual(myScores);
+});
+it('propagates totalRounds from settings', () => {
+const players = makeRoomPlayers(['uuid-a', 'uuid-b']);
+const state = initializePvpGame(players, {}, { totalRounds: 7, maxPlayers: 4 });
+expect(state.settings.totalRounds).toBe(7);
+});
+});
+describe('applyPvpAction — security guards', () => {
+function stateWithCustomPlayers() {
+return makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 0,
+players: [
+makePlayer({ id: 'uuid-a' as any }),
+makePlayer({ id: 'uuid-b' as any, isHuman: false }),
+makePlayer({ id: 'uuid-c' as any, isHuman: false }),
+],
+});
+}
+it('rejects draw from a non-current player', () => {
+const state = stateWithCustomPlayers();
+state.drawPile = [makeCard('O')];
+const result = applyPvpAction(state, 'uuid-b', { type: 'draw' });
+expect(result).toBe(state);
+});
+it('rejects discard from a non-current player', () => {
+const state = stateWithCustomPlayers();
+const card = makeCard('O');
+state.players[1].hand = [card];
+const action: PvpAction = { type: 'discard', cardId: card.id };
+const result = applyPvpAction(state, 'uuid-b', action);
+expect(result).toBe(state);
+});
+it('rejects pong outside claim-window', () => {
+const state = stateWithCustomPlayers();
+state.phase = 'drawing';
+const action: PvpAction = { type: 'pong', dimension: 'O', handCardIds: [] };
+const result = applyPvpAction(state, 'uuid-b', action);
+expect(result).toBe(state);
+});
+it('rejects skip-pong outside claim-window', () => {
+const state = stateWithCustomPlayers();
+state.phase = 'drawing';
+const action: PvpAction = { type: 'skip-pong' };
+const result = applyPvpAction(state, 'uuid-b', action);
+expect(result).toBe(state);
+});
+it('rejects hu from a non-current player outside claim-window (late-arriving hu must not steal drawnCard / warp the turn)', () => {
+const state = stateWithCustomPlayers();
+state.phase = 'drawing';
+const result = applyPvpAction(state, 'uuid-b', { type: 'hu' });
+expect(result).toBe(state);
+});
+it('rejects actions from a player not seated in the game state', () => {
+const state = stateWithCustomPlayers();
+const result = applyPvpAction(state, 'uuid-ghost', { type: 'hu' });
+expect(result).toBe(state);
+});
+it('maps seats by engine state, not room roster: actions stay correct after a seat is removed from the roster', () => {
+const state = stateWithCustomPlayers();
+state.phase = 'claim-window';
+state.discardedByIndex = 0;
+state.pendingDiscard = makeCard('O');
+const result = applyPvpAction(state, 'uuid-c', { type: 'skip-pong' });
+expect(result.claimResponses).toContain('uuid-c');
+expect(result.claimResponses).not.toContain('uuid-b');
+});
+it('locks out players who already responded in the current claim-window', () => {
+const state = stateWithCustomPlayers();
+state.phase = 'claim-window';
+state.discardedByIndex = 0;
+state.pendingDiscard = makeCard('O');
+state.claimResponses = ['uuid-b'] as any;
+const action: PvpAction = { type: 'skip-pong' };
+const result = applyPvpAction(state, 'uuid-b', action);
+expect(result).toBe(state);
+});
+});
+describe('applyPvpAction — happy paths', () => {
+it('draw from current player advances state to discarding', () => {
+const card = makeCard('O');
+const state = makeGameState({
+phase: 'drawing',
+currentPlayerIndex: 0,
+drawPile: [card],
+players: [
+makePlayer({ id: 'uuid-a' as any }),
+makePlayer({ id: 'uuid-b' as any, isHuman: false }),
+],
+});
+const result = applyPvpAction(state, 'uuid-a', { type: 'draw' });
+expect(result.phase).toBe('discarding');
+expect(result.drawnCard).toEqual(card);
+});
+it('skip-pong inside claim-window from non-current player records response', () => {
+const state = makeGameState({
+phase: 'claim-window',
+discardedByIndex: 0,
+pendingDiscard: makeCard('O'),
+players: [
+makePlayer({ id: 'uuid-a' as any }),
+makePlayer({ id: 'uuid-b' as any, isHuman: false }),
+makePlayer({ id: 'uuid-c' as any, isHuman: false }),
+],
+});
+const result = applyPvpAction(state, 'uuid-b', { type: 'skip-pong' });
+expect(result.claimResponses).toContain('uuid-b');
+expect(result.phase).toBe('claim-window');
+});
+});
+import { describe, it, expect, beforeEach } from 'vitest';
+import { serializeGameState } from '../pvp-serializer';
+import { makeGameState, makeCard, makePlayer, resetCardIds } from '@/test/fixtures';
+beforeEach(() => {
+resetCardIds();
+});
+describe('serializeGameState — viewer isolation (security)', () => {
+function buildStateWithDistinctHands() {
+const humanCards = [makeCard('O'), makeCard('C')];
+const ai1Cards = [makeCard('E'), makeCard('A')];
+const ai2Cards = [makeCard('N')];
+const state = makeGameState({
+players: [
+makePlayer({ id: 'human', hand: humanCards }),
+makePlayer({ id: 'ai-1', hand: ai1Cards, isHuman: false }),
+makePlayer({ id: 'ai-2', hand: ai2Cards, isHuman: false }),
+],
+});
+return { state, humanCards, ai1Cards, ai2Cards };
+}
+it('reveals own hand to the viewer', () => {
+const { state, humanCards } = buildStateWithDistinctHands();
+const serialized = serializeGameState(state, 'human');
+const me = serialized.players.find((p) => p.id === 'human')!;
+expect(me.hand).toEqual(humanCards);
+expect(me.handCount).toBe(humanCards.length);
+});
+it('hides opponent hands from the viewer', () => {
+const { state } = buildStateWithDistinctHands();
+const serialized = serializeGameState(state, 'human');
+const opponent1 = serialized.players.find((p) => p.id === 'ai-1')!;
+const opponent2 = serialized.players.find((p) => p.id === 'ai-2')!;
+expect(opponent1.hand).toBeUndefined();
+expect(opponent2.hand).toBeUndefined();
+});
+it('still reveals opponent handCount (so UI can show card counts)', () => {
+const { state, ai1Cards, ai2Cards } = buildStateWithDistinctHands();
+const serialized = serializeGameState(state, 'human');
+const opponent1 = serialized.players.find((p) => p.id === 'ai-1')!;
+const opponent2 = serialized.players.find((p) => p.id === 'ai-2')!;
+expect(opponent1.handCount).toBe(ai1Cards.length);
+expect(opponent2.handCount).toBe(ai2Cards.length);
+});
+it('hides ALL hands when viewerPlayerId is null (generic broadcast)', () => {
+const { state } = buildStateWithDistinctHands();
+const serialized = serializeGameState(state, null);
+expect(serialized.players.every((p) => p.hand === undefined)).toBe(true);
+});
+it('reveals ALL hands when viewerPlayerId is "__all__" (host-only mode)', () => {
+const { state } = buildStateWithDistinctHands();
+const serialized = serializeGameState(state, '__all__');
+expect(serialized.players.every((p) => Array.isArray(p.hand))).toBe(true);
+});
+});
+describe('serializeGameState — drawnCard visibility', () => {
+it('hides drawnCard from non-current viewer', () => {
+const drawnCard = makeCard('O');
+const state = makeGameState({
+drawnCard,
+currentPlayerIndex: 0,
+players: [makePlayer({ id: 'human' }), makePlayer({ id: 'ai-1', isHuman: false })],
+});
+const fromOpponent = serializeGameState(state, 'ai-1');
+expect(fromOpponent.drawnCard).toBeNull();
+});
+it('reveals drawnCard to the current player viewer', () => {
+const drawnCard = makeCard('O');
+const state = makeGameState({
+drawnCard,
+currentPlayerIndex: 0,
+players: [makePlayer({ id: 'human' }), makePlayer({ id: 'ai-1', isHuman: false })],
+});
+const fromCurrent = serializeGameState(state, 'human');
+expect(fromCurrent.drawnCard).toEqual(drawnCard);
+});
+it('reveals drawnCard in __all__ mode (host broadcast — clients filter by turn)', () => {
+const drawnCard = makeCard('O');
+const state = makeGameState({ drawnCard });
+const broadcast = serializeGameState(state, '__all__');
+expect(broadcast.drawnCard).toEqual(drawnCard);
+});
+});
+describe('serializeGameState — penalty reveals (hu-fail / pong-fail)', () => {
+it('exposes full hand when revealedHand=true (hu-fail penalty)', () => {
+const state = makeGameState();
+const culprit = state.players[1];
+culprit.revealedHand = true;
+culprit.hand = [makeCard('O'), makeCard('C')];
+const serialized = serializeGameState(state, 'human');
+const opp = serialized.players.find((p) => p.id === culprit.id)!;
+expect(opp.revealedCards).toEqual(culprit.hand);
+});
+it('exposes only attempted cards when revealedSelectedCards is set (pong-fail)', () => {
+const state = makeGameState();
+const culprit = state.players[1];
+const attempted = [makeCard('O'), makeCard('O')];
+culprit.revealedSelectedCards = attempted;
+culprit.hand = [...attempted, makeCard('C'), makeCard('N')];
+const serialized = serializeGameState(state, 'human');
+const opp = serialized.players.find((p) => p.id === culprit.id)!;
+expect(opp.revealedSelectedCards).toEqual(attempted);
+expect(opp.hand).toBeUndefined();
+});
+});
+describe('serializeGameState — passthrough fields', () => {
+it('forwards phase, round, currentPlayerIndex, winner', () => {
+const state = makeGameState({
+phase: 'discarding',
+currentRound: 5,
+currentPlayerIndex: 2,
+winner: 'ai-1',
+});
+const serialized = serializeGameState(state, 'human');
+expect(serialized.phase).toBe('discarding');
+expect(serialized.currentRound).toBe(5);
+expect(serialized.currentPlayerIndex).toBe(2);
+expect(serialized.winner).toBe('ai-1');
+});
+it('uses drawPileCount instead of full drawPile contents (no cheating)', () => {
+const state = makeGameState({
+drawPile: [makeCard('O'), makeCard('C'), makeCard('E')],
+});
+const serialized = serializeGameState(state, 'human');
+expect(serialized.drawPileCount).toBe(3);
+expect((serialized as unknown as { drawPile?: unknown }).drawPile).toBeUndefined();
+});
+it('passes through totalRounds from settings', () => {
+const state = makeGameState({
+settings: { totalRounds: 8, aiDifficulty: 'easy' },
+});
+const serialized = serializeGameState(state, 'human');
+expect(serialized.totalRounds).toBe(8);
+});
+});
 import {
 GameCard,
 Player,
@@ -11595,47 +13602,50 @@ prevStep: '上一步',
 nextStep: '下一步',
 pvpFlow: [
 {
+title: '開始測評',
+body: '首次進入時，首頁只有一個「開始測評」入口。先完成人格測評，測評分數會決定你之後每個維度要湊幾張牌。',
+},
+{
+title: '輸入學號',
+body: '答題前輸入一次學號即可，用於記錄你的測評結果、方便課堂統計。請固定用同一台設備、同一個瀏覽器，不要清除緩存。',
+note: '學號全程只輸入這一次，之後聯機 / 單機都會自動帶入，無需再填。',
+},
+{
+title: '查看人格畫像',
+body: '答完題進入「你的人格畫像」：五維雷達圖 + 各維度得分。這一頁底部就是「聯機對戰 / 單機對戰 / 重新測評」的入口。',
+note: '測評分數會轉成各維度目標張數，每個人的胡牌路線都不同。',
+},
+{
 title: '進入聯機對戰',
-body: '從首頁點「聯機對戰」。這裏不是直接進牌桌，而是先進入聯機大廳。',
+body: '在畫像頁點「聯機對戰」。學號已從測評帶入，選好頭像與人格牌堆後，創建或加入房間，並設定最多玩家數、遊戲輪數、揭示難度。',
 },
 {
-title: '填寫身份信息',
-body: '只輸入學號，並再次輸入學號確認。學號用於防止同一個人同時佔兩個活動房間的座位。',
-},
-{
-title: '檢查是否完成測評',
-body: '已測評：系統會用你的五維分數生成本局目標張數。未測評：會先引導去測評，否則你的目標張數沒有依據。',
-note: '測評結果會影響每個維度需要歸檔幾張，所以不同玩家的胡牌路線不同。',
-},
-{
-title: '創建房間 / 加入房間',
-body: '房主創建房間後拿到房間碼並等待其他玩家；非房主輸入房間碼加入。4 個真實玩家坐齊後才適合開始。',
-},
-{
-title: '開始遊戲',
-body: '房主負責點開始。進入牌桌後，所有人的手牌與棄牌默認直接顯示人格 tag（明牌）——房主也可改為半公開或隱藏，那時就得靠描述、記憶和每回合查看能力判斷。',
+title: '開始對戰',
+body: '房主創建房間後拿到房間碼，分享給同學加入；人齊後房主點「開始對戰」進入牌桌。默認明牌（全場人格公開），房主也可改半公開或隱藏。',
 },
 ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 soloFlow: [
 {
+title: '開始測評',
+body: '首次進入時，首頁只有一個「開始測評」入口。先完成人格測評，測評分數會決定你之後每個維度要湊幾張牌。',
+},
+{
+title: '輸入學號',
+body: '答題前輸入一次學號即可，用於記錄你的測評結果、方便課堂統計。請固定用同一台設備、同一個瀏覽器，不要清除緩存。',
+note: '學號全程只輸入這一次，之後聯機 / 單機都會自動帶入，無需再填。',
+},
+{
+title: '查看人格畫像',
+body: '答完題進入「你的人格畫像」：五維雷達圖 + 各維度得分。這一頁底部就是「聯機對戰 / 單機對戰 / 重新測評」的入口。',
+note: '測評分數會轉成各維度目標張數，每個人的胡牌路線都不同。',
+},
+{
 title: '進入單機對戰',
-body: '從首頁點「單機對戰」。如果沒有測評結果，會先去測評；如果已經測評，直接進入單機設置大廳。',
+body: '在畫像頁點「單機對戰」進入對戰大廳。設定 AI 難度（簡單 / 中等 / 困難）、遊戲輪數、看牌難度，並查看三名 AI 對手檔案（大雄 / 陳教授 / 老林）。',
 },
 {
-title: '選擇 AI 難度',
-body: '簡單偏隨機，中等會做基礎歸檔判斷，困難會更積極推測你的牌。',
-},
-{
-title: '選擇輪數',
-body: '5 / 10 / 15 / 無限都可以。無限會一直打到有人食胡或牌局自然結束。',
-},
-{
-title: '確認對手陣容',
-body: '單機固定是你 + 3 個 AI。AI 會按自己的策略抽牌、棄牌、碰牌和食胡。',
-},
-{
-title: '開始遊戲',
-body: '進入牌桌後流程和聯機一致：抽牌、查看、歸檔、棄牌、響應別人棄牌。',
+title: '開始對戰',
+body: '設定好後點「開始對戰」直接進入牌桌。單機固定是你 + 3 個 AI，流程與聯機一致：抽牌、查看、歸檔、棄牌、響應別人棄牌。',
 },
 ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 steps: [
@@ -11795,28 +13805,32 @@ shotStaticBadge: '靜態示意',
 shotProductName: '人格麻將',
 shotPvp: '聯機對戰',
 shotSolo: '單機對戰',
-shotPlayerInfo: '玩家信息',
 shotStudentId: '學號',
-shotEnterStudentId: '請輸入學號',
-shotConfirmStudentId: '確認學號',
-shotReenterStudentId: '再次輸入學號確認',
-shotAssessedTrue: '已完成測評',
-shotAssessedTrueBody: '直接生成本局目標張數。',
-shotAssessedFalse: '未完成測評',
-shotAssessedFalseBody: '先去答題，再回到大廳。',
+shotStartAssessBtn: '開始測評',
+shotHomeHint: '首次進入只有這一個入口',
+shotStudentIdTitle: '輸入學號',
+shotStudentIdPlaceholder: '例如 17094905G',
+shotStudentIdOnce: '全程只輸入這一次',
+shotPortraitTitle: '你的人格畫像',
+shotRetest: '重新測評',
+shotMaxPlayersLabel: '最多玩家',
+shotMaxPlayers: ['2 人', '3 人', '4 人'] as readonly string[],
+shotRevealLabel: '揭示難度',
+shotReveals: ['明牌', '半公開', '隱藏'] as readonly string[],
+shotAiDifficultyLabel: 'AI 難度',
+shotRoundsLabel: '遊戲輪數',
+shotOpponentLabel: '對手檔案',
 shotCreateRoom: '創建房間',
-shotRoomCode: (code: string) => `房間碼 ${code}`,
 shotJoinRoom: '加入房間',
-shotEnter4Code: '輸入 4 位房間碼',
 shotHost: '房主',
-shotReady: '已就緒',
 shotStartGame: '開始遊戲',
 shotStartMatch: '開始對戰',
 shotYou: '你',
 shotDifficulties: ['簡單', '中等', '困難'] as readonly string[],
 shotRounds: ['5輪', '10輪', '15輪', '無限'] as readonly string[],
-shotAiOpponents: ['Brian', 'Prof. Chen', 'Lin'] as readonly string[],
+shotAiOpponents: ['大雄', '陳教授', '老林'] as readonly string[],
 shotAiOpponentLabel: 'AI 對手',
+sandboxCtaLead: '流程看明白了？進沙盒親手打一回合',
 },
 en: {
 eyebrow: 'Tutorial',
@@ -11851,47 +13865,50 @@ prevStep: 'Previous',
 nextStep: 'Next',
 pvpFlow: [
 {
+title: 'Start the Assessment',
+body: 'On your first visit the home page has just one entry: "Start Assessment". Complete the personality assessment first — your scores decide how many cards each dimension will need later.',
+},
+{
+title: 'Enter Your Student ID',
+body: 'Before the questions, enter your student ID once. It records your assessment result for class statistics. Stick to the same device and browser, and do not clear your cache.',
+note: 'The student ID is entered only this once — online and single-player both carry it over automatically, no need to type it again.',
+},
+{
+title: 'View Your Personality Profile',
+body: 'After the questions you reach "Your Personality Profile": a five-dimension radar chart plus per-dimension scores. The bottom of this page is where "Online Match / Single Player / Retest" live.',
+note: 'Your scores turn into each dimension’s target count, so every player has a different path to a Win.',
+},
+{
 title: 'Enter Online Match',
-body: 'Tap "Online Match" on the home page. This does not take you straight to the table — it opens the online lobby first.',
+body: 'Tap "Online Match" on the profile page. Your student ID is carried over from the assessment; pick an avatar and personality deck, then create or join a room and set max players, rounds, and reveal difficulty.',
 },
 {
-title: 'Fill in Your Identity',
-body: 'Just enter your student ID, then re-enter it to confirm. The student ID prevents one person from occupying two active rooms at once.',
-},
-{
-title: 'Check Whether You Have Been Assessed',
-body: 'Assessed: the system uses your five-dimension scores to generate this game’s target counts. Not assessed: you are guided to the assessment first, otherwise your target counts have no basis.',
-note: 'Your assessment result determines how many cards each dimension needs to declare, so different players have different paths to a Win.',
-},
-{
-title: 'Create / Join a Room',
-body: 'The host creates a room, gets a room code, and waits for others; non-hosts enter the room code to join. It is best to start once 4 real players are seated.',
-},
-{
-title: 'Start the Game',
-body: 'The host taps start. Once at the table, every hand and discard shows its personality tag by default (Open) — the host can switch to Half or Hidden, where you rely on descriptions, memory, and your per-turn view ability to judge.',
+title: 'Start the Match',
+body: 'The host creates a room, gets a room code, and shares it for others to join; once everyone is in, the host taps "Start Match" to enter the table. Open by default (all personalities public) — the host can switch to Half or Hidden.',
 },
 ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 soloFlow: [
 {
+title: 'Start the Assessment',
+body: 'On your first visit the home page has just one entry: "Start Assessment". Complete the personality assessment first — your scores decide how many cards each dimension will need later.',
+},
+{
+title: 'Enter Your Student ID',
+body: 'Before the questions, enter your student ID once. It records your assessment result for class statistics. Stick to the same device and browser, and do not clear your cache.',
+note: 'The student ID is entered only this once — online and single-player both carry it over automatically, no need to type it again.',
+},
+{
+title: 'View Your Personality Profile',
+body: 'After the questions you reach "Your Personality Profile": a five-dimension radar chart plus per-dimension scores. The bottom of this page is where "Online Match / Single Player / Retest" live.',
+note: 'Your scores turn into each dimension’s target count, so every player has a different path to a Win.',
+},
+{
 title: 'Enter Single Player',
-body: 'Tap "Single Player" on the home page. If you have no assessment result, you go to the assessment first; if already assessed, you go straight to the single-player setup lobby.',
+body: 'Tap "Single Player" on the profile page to open the battle lobby. Set the AI difficulty (Easy / Medium / Hard), rounds, and view difficulty, and check the three AI opponent profiles (Brian / Prof. Chen / Lin).',
 },
 {
-title: 'Choose AI Difficulty',
-body: 'Easy is more random, Medium makes basic declaration judgements, and Hard guesses your cards more aggressively.',
-},
-{
-title: 'Choose the Number of Rounds',
-body: '5 / 10 / 15 / Unlimited all work. Unlimited keeps going until someone Wins or the game ends naturally.',
-},
-{
-title: 'Confirm the Opponents',
-body: 'Single player is always you + 3 AI opponents. The AI draws, discards, Pongs, and Wins by its own strategy.',
-},
-{
-title: 'Start the Game',
-body: 'Once at the table the flow matches online play: draw, view, declare, discard, and respond to others’ discards.',
+title: 'Start the Match',
+body: 'Once set, tap "Start Match" to go straight to the table. Single player is always you + 3 AI, and the flow matches online play: draw, view, declare, discard, and respond to others’ discards.',
 },
 ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 steps: [
@@ -12051,21 +14068,24 @@ shotStaticBadge: 'Static mockup',
 shotProductName: 'Personalities Mahjong',
 shotPvp: 'Online Match',
 shotSolo: 'Single Player',
-shotPlayerInfo: 'Player Info',
 shotStudentId: 'Student ID',
-shotEnterStudentId: 'Enter your student ID',
-shotConfirmStudentId: 'Confirm Student ID',
-shotReenterStudentId: 'Re-enter your student ID',
-shotAssessedTrue: 'Assessment completed',
-shotAssessedTrueBody: 'Generate this game’s target counts directly.',
-shotAssessedFalse: 'Assessment not completed',
-shotAssessedFalseBody: 'Take the test first, then return to the lobby.',
+shotStartAssessBtn: 'Start Assessment',
+shotHomeHint: 'The only entry on first visit',
+shotStudentIdTitle: 'Enter Student ID',
+shotStudentIdPlaceholder: 'e.g. 17094905G',
+shotStudentIdOnce: 'Entered only once, ever',
+shotPortraitTitle: 'Your Personality Profile',
+shotRetest: 'Retest',
+shotMaxPlayersLabel: 'Max Players',
+shotMaxPlayers: ['2P', '3P', '4P'] as readonly string[],
+shotRevealLabel: 'Reveal',
+shotReveals: ['Open', 'Half', 'Hidden'] as readonly string[],
+shotAiDifficultyLabel: 'AI Difficulty',
+shotRoundsLabel: 'Rounds',
+shotOpponentLabel: 'Opponents',
 shotCreateRoom: 'Create Room',
-shotRoomCode: (code: string) => `Room code ${code}`,
 shotJoinRoom: 'Join Room',
-shotEnter4Code: 'Enter the 4-digit room code',
 shotHost: 'Host',
-shotReady: 'Ready',
 shotStartGame: 'Start Game',
 shotStartMatch: 'Start Match',
 shotYou: 'You',
@@ -12073,6 +14093,7 @@ shotDifficulties: ['Easy', 'Medium', 'Hard'] as readonly string[],
 shotRounds: ['5 rds', '10 rds', '15 rds', 'Unlimited'] as readonly string[],
 shotAiOpponents: ['Brian', 'Prof. Chen', 'Lin'] as readonly string[],
 shotAiOpponentLabel: 'AI opponent',
+sandboxCtaLead: 'Got the flow? Play a hands-on round in the sandbox',
 },
 } as const;
 import {

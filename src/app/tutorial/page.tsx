@@ -653,9 +653,9 @@ function InteractiveSandbox({
         {/* 看牌模式对照：把「看 4 张永久保留 / 看 2 张不保留」两条规则常驻显示在看牌步，
             让两种模式都出现在 UI 里（当前示範用隱藏·看 2 張，高亮那条）。紧凑两行、不换行。*/}
         {(state.scene === 'viewing' || state.scene === 'view-picking') && (
-          <div className="mx-auto mt-2 flex w-fit max-w-full flex-col gap-1 rounded-xl border border-[var(--psy-border)] bg-[var(--psy-card-content)] px-4 py-2 text-[11px] leading-tight">
-            <span className="whitespace-nowrap text-[var(--psy-muted)]">{s.revealHalfNote}</span>
-            <span className="whitespace-nowrap font-medium text-[var(--psy-accent)]">{s.revealHiddenNote}</span>
+          <div className="mx-auto mt-2 flex w-full max-w-xs flex-col gap-1 rounded-xl border border-[var(--psy-border)] bg-[var(--psy-card-content)] px-4 py-2 text-[11px] leading-tight">
+            <span className="text-[var(--psy-muted)]">{s.revealHalfNote}</span>
+            <span className="font-medium text-[var(--psy-accent)]">{s.revealHiddenNote}</span>
           </div>
         )}
 

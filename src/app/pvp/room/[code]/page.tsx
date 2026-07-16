@@ -224,10 +224,10 @@ export default function RoomWaitPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-2xl space-y-8"
       >
-        <div className="psy-panel psy-etched relative space-y-3 rounded-[2rem] px-8 py-10 text-center">
+        <div className="psy-panel psy-etched relative space-y-3 rounded-[2rem] px-4 py-10 text-center sm:px-8">
           <p className="psy-eyebrow">ROOM CODE</p>
-          <div className="flex items-center justify-center gap-3">
-            <div className="psy-serif text-7xl font-medium tracking-[0.32em] text-[var(--psy-accent)] tabular-nums sm:text-8xl">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="psy-serif min-w-0 text-6xl font-medium tracking-[0.2em] text-[var(--psy-accent)] tabular-nums sm:text-8xl sm:tracking-[0.32em]">
               {code}
             </div>
             <button

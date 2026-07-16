@@ -1,4 +1,4 @@
-# 人格麻将心理卡牌对战系统 — 软件著作权申请信息
+# 人格麻将教学系统 — 软件著作权申请信息
 # Personalities Mahjong Card Game — Software Copyright Registration Information
 
 > 本文档整理软件著作权（软著）登记所需的技术信息。标注【待填】的栏位需申请人自行确认后填写。
@@ -13,12 +13,12 @@
 
 | 项目 | 内容 |
 |------|------|
-| 软件全称 | 人格麻将心理卡牌对战系统 |
+| 软件全称 | 人格麻将教学系统 |
 | 软件简称 | 人格麻将（Personalities Mahjong） |
 | 版本号 | V1.0 |
 | 软件分类 | 应用软件 / Web 网页应用（在线卡牌游戏） |
 | 开发方式 | 原始开发（独立完成，非改编、非合作、非委托） |
-| 著作权人 | 【待填：个人姓名 / 香港理工大学（PolyU）/ 其他机构】 |
+| 著作权人 | 许沛鸿（中国国籍） |
 | 软件用途 | 教学与研究用途；基于人格测评（Big Five 五因素模型）的心理学卡牌对战游戏 |
 
 ### 软件主要功能
@@ -40,7 +40,7 @@
 **2026 年 7 月 11 日**（开发起始日期：2026 年 3 月 29 日；开发周期约 3.5 个月，累计 253 次版本提交。）
 
 ### 二、著作权人
-**【待填】** — 常见为：个人（申请人本人姓名）；机构（香港理工大学 The Hong Kong Polytechnic University 或所属院系/单位）。
+**许沛鸿**（中国国籍；原始取得，享有全部著作权）。
 
 ### 三、开发时硬件环境
 - 处理器：Apple Silicon 芯片（ARM 架构，64 位）
@@ -102,12 +102,12 @@
 
 | Item | Content |
 |------|---------|
-| Full Name | Personalities Mahjong Psychological Card Battle System |
+| Full Name | Personalities Mahjong Educational System |
 | Short Name | Personalities Mahjong |
 | Version | V1.0 |
 | Category | Application software / Web application (online card game) |
 | Development Type | Original development (independently completed; not adapted, collaborative, or commissioned) |
-| Copyright Owner | **[To be filled: individual name / The Hong Kong Polytechnic University (PolyU) / other institution]** |
+| Copyright Owner | **Xu Peihong (Chinese nationality)** |
 | Purpose | Educational and research use; a psychology-themed card battle game based on the Big Five personality assessment |
 
 ### Main Features
@@ -129,7 +129,7 @@
 **July 11, 2026** (Development started March 29, 2026; ~3.5 months, 253 version commits.)
 
 ### 2. Copyright Owner
-**[To be filled]** — typically an individual (applicant's name) or institution (The Hong Kong Polytechnic University or affiliated department/unit).
+**Xu Peihong** (Chinese nationality; original acquisition, holds all copyrights).
 
 ### 3. Development Hardware Environment
 - CPU: Apple Silicon (ARM, 64-bit)

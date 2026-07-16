@@ -6,7 +6,7 @@ import { STRINGS, type Locale } from '@/lib/i18n';
 // 三个人格牌堆入口（与 pvp 建房牌堆选择一致）：目前仅 Big Five 可选，其余「即将上线」。
 const DECKS = [
   { id: 'big-five', name: 'Big Five', nameKey: null, subKey: 'deckBigFiveSub', locked: false },
-  { id: 'hexaco', name: 'HEXACO', nameKey: null, subKey: 'deckHexacoSub', locked: true },
+  { id: 'hexaco', name: null, nameKey: 'deckHexacoName', subKey: 'deckHexacoSub', locked: true },
   { id: 'cpai', name: null, nameKey: 'deckCpaiName', subKey: 'deckCpaiSub', locked: true },
 ] as const;
 
@@ -69,7 +69,7 @@ export function DeckSelectModal({
                   className={`psy-tile flex flex-col items-start gap-1 px-4 py-4 text-left transition ${d.locked ? 'cursor-not-allowed opacity-55' : ''}`}
                 >
                   <div className="flex w-full items-center justify-between gap-2">
-                    <span className="psy-serif text-base text-[var(--psy-ink)]">{d.name ?? p[d.nameKey as 'deckCpaiName']}</span>
+                    <span className="psy-serif text-base text-[var(--psy-ink)]">{d.name ?? p[d.nameKey as 'deckCpaiName' | 'deckHexacoName']}</span>
                     {d.locked && (
                       <span className="shrink-0 text-[10px] text-[var(--psy-muted)]">🔒 {p.comingSoon}</span>
                     )}
