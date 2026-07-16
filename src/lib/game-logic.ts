@@ -281,11 +281,19 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
   const targets = getTargetCounts(player.bigFiveScores);
   const declaredDims = getDeclaredDimensions(player);
 
-  // Count personality cards by dimension across hand + the freshly-drawn card.
-  // ⚠️ drawnCard 与 hand 分开存：自摸碰(selfPongCard)的 pool 含 drawnCard，
-  // attemptHu 必须一致——否则「补齐的最后一张正好是刚抽到的那张」时，胡会漏数
-  // 它、误判为「不够张数」而失败（自摸碰却能成，玩家困惑）。见 bug 报告。
-  const pool: GameCard[] = [...player.hand, ...(state.drawnCard ? [state.drawnCard] : [])];
+  // 胡牌牌池 = 手牌 + 刚摸到的牌(自摸胡) + 正在截胡的弃牌(荣胡)。三处都要算，
+  // 漏任一处都会在「靠那张补齐」时把胡误判为张数不够而失败：
+  //   - drawnCard：自己摸到的最后一张(与 hand 分开存，见 selfPongCard)。自摸胡。
+  //   - pendingDiscard：别人打出、你在 claim-window 里截胡的那张(你不是弃牌者本人时)。荣胡。
+  const claimCard: GameCard | null =
+    state.phase === 'claim-window' && state.pendingDiscard && playerIndex !== state.discardedByIndex
+      ? state.pendingDiscard
+      : null;
+  const pool: GameCard[] = [
+    ...player.hand,
+    ...(state.drawnCard ? [state.drawnCard] : []),
+    ...(claimCard ? [claimCard] : []),
+  ];
   const handByDim: Record<Dimension, PersonalityCard[]> = { O: [], C: [], E: [], A: [], N: [] };
   for (const card of pool) {
     if (isPersonalityCard(card)) {
@@ -328,6 +336,8 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
       ...state,
       players: newPlayers,
       drawnCard: null,
+      // 荣胡：被截的弃牌已并入胜者归档，清掉 pending（不进弃牌堆）。自摸胡时本就是 null。
+      pendingDiscard: null,
       actionLog: [...state.actionLog, action],
       phase: 'game-over',
       winner: player.id,
