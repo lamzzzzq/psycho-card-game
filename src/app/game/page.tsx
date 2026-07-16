@@ -658,14 +658,21 @@ export default function GamePage() {
         {pongIntent && (
           <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
             <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-              {pongIntent.type === 'self' ? tg.pongIntentSelf : tg.pongIntentOther} ·{' '}
-              <span className="text-[var(--psy-accent)]">
-                {dimName(pongIntent.dimension)}
-              </span>{' '}
-              · {tg.pongSelectPrompt}{' '}
-              <span className="font-bold text-[var(--psy-accent-strong)]">{pongIntentRequiredSelectCount}</span> {tg.cardsUnit}
-              {pongIntent.type === 'self' ? tg.pongSelectSelfSuffix : tg.pongSelectOtherPrefixA + pongIntentTarget + tg.pongSelectOtherPrefixB}
-              {locale === 'en' ? ' (' : '（'}{tg.selectedPrefix} <span className="font-bold text-[var(--psy-accent-strong)]">{selectedCardIds.length}</span>{locale === 'en' ? ')' : '）'}
+              {pongIntent.type === 'self' && !selfPongDimensionChosen ? (
+                // 自摸碰还没选维度：不要默认显示「開放性」，改为提示先选一个人格线索
+                <>{tg.pongIntentSelf} · {tg.pongChooseDimPrompt}</>
+              ) : (
+                <>
+                  {pongIntent.type === 'self' ? tg.pongIntentSelf : tg.pongIntentOther} ·{' '}
+                  <span className="text-[var(--psy-accent)]">
+                    {dimName(pongIntent.dimension)}
+                  </span>{' '}
+                  · {tg.pongSelectPrompt}{' '}
+                  <span className="font-bold text-[var(--psy-accent-strong)]">{pongIntentRequiredSelectCount}</span> {tg.cardsUnit}
+                  {pongIntent.type === 'self' ? tg.pongSelectSelfSuffix : tg.pongSelectOtherPrefixA + pongIntentTarget + tg.pongSelectOtherPrefixB}
+                  {locale === 'en' ? ' (' : '（'}{tg.selectedPrefix} <span className="font-bold text-[var(--psy-accent-strong)]">{selectedCardIds.length}</span>{locale === 'en' ? ')' : '）'}
+                </>
+              )}
             </p>
             {/* Self-pong dimension switcher (only when there are multiple candidates) */}
             {pongIntent.type === 'self' && selfPongCandidates.length > 1 && (

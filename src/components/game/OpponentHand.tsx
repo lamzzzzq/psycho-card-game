@@ -98,8 +98,10 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
           </div>
         </div>
 
+        {/* 「出牌中」文字标签移动端隐藏——卡片已有发光边框(psy-turn-border+ring)指示当前回合，
+            移动端空间紧、不再用文字重复；桌面端保留。 */}
         {isCurrentTurn && !isPenalized && !hasLeft && !isTentativeOffline && (
-          <span className="shrink-0 rounded-full border border-[rgba(195,154,82,0.55)] bg-[var(--psy-accent)] px-2 py-0.5 text-[9px] font-semibold text-white shadow-[0_4px_10px_rgba(154,116,72,0.24)]">
+          <span className="hidden shrink-0 rounded-full border border-[rgba(195,154,82,0.55)] bg-[var(--psy-accent)] px-2 py-0.5 text-[9px] font-semibold text-white shadow-[0_4px_10px_rgba(154,116,72,0.24)] sm:inline-block">
             {locale === 'en' ? 'Playing' : '出牌中'}
           </span>
         )}
@@ -169,8 +171,10 @@ export function OpponentHand({ player, isCurrentTurn, isTentativeOffline = false
         </div>
       )}
 
-      {/* Archive */}
-      <DeclaredArea declaredSets={player.declaredSets} compact title={`${playerLabel(player, locale)}${t.archiveOf}`} locale={locale} />
+      {/* Archive — 移动端隐藏（吃空间、遮住名字/张数，用户反馈根本没法玩）；桌面端保留 */}
+      <div className="hidden sm:block">
+        <DeclaredArea declaredSets={player.declaredSets} compact title={`${playerLabel(player, locale)}${t.archiveOf}`} locale={locale} />
+      </div>
 
       {/* Reveal trigger — opens modal */}
       {(showCards || hasRevealedSubset) && (

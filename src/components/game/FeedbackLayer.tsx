@@ -148,9 +148,13 @@ export function useYourTurnNotifier(
     prevIdxRef.current = currentPlayerIndex;
     prevIsCurrentRef.current = viewerIsCurrent;
 
-    // Only fire when the turn actually changed AND became the viewer's turn
+    // Only fire when the turn actually changed AND became the viewer's turn.
+    // 延迟 ~1.2s 再出「輪到你了」：让「歸檔成功 / 碰牌成功」等结算类 toast 先播完，
+    // 避免两个提示同屏叠着（用户反馈：同时弹出很乱、因果不清）。若期间回合又变则取消。
     if (viewerIsCurrent && !prevIsCurrent && prevIdx !== currentPlayerIndex) {
-      setBanner(++nextIdRef.current);
+      const id = ++nextIdRef.current;
+      const timer = setTimeout(() => setBanner(id), 1200);
+      return () => clearTimeout(timer);
     }
   }, [currentPlayerIndex, viewerIsCurrent]);
 

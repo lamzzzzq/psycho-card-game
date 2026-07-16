@@ -198,7 +198,6 @@ export function DeclaredArea({
           className="w-full rounded-[0.9rem] border border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] px-2.5 py-1.5 text-left transition hover:border-[rgba(154,116,72,0.28)]"
         >
           <div className="flex items-center gap-2">
-            <div className="psy-serif shrink-0 text-[10px] text-[var(--psy-muted)]">{t.archiveWord}</div>
             <div className="min-w-0 flex-1">
               {declaredSets.length === 0 ? (
                 <div className="text-[10px] text-[var(--psy-muted)]">{t.noPublicArchive}</div>

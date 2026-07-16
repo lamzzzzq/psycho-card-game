@@ -195,6 +195,7 @@ export const STRINGS = {
       // Pong-intent panel
       pongIntentSelf: '自摸歸檔',
       pongIntentOther: '歸檔對方棄牌',
+      pongChooseDimPrompt: '請先選擇一個人格線索',
       pongSelectPrompt: '請精確選擇',
       pongSelectSelfSuffix: '同維度牌（含剛抽到的）',
       pongSelectOtherPrefixA: '同維度手牌（連同棄牌共湊 ',
@@ -574,6 +575,7 @@ export const STRINGS = {
       // Pong-intent panel
       pongIntentSelf: 'Self archive',
       pongIntentOther: 'Archive discard',
+      pongChooseDimPrompt: 'Pick a personality dimension first',
       pongSelectPrompt: 'Select exactly',
       pongSelectSelfSuffix: 'cards of this dimension (incl. the one just drawn)',
       pongSelectOtherPrefixA: 'hand cards of this dimension (with the discard, totaling ',

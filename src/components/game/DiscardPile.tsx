@@ -119,11 +119,21 @@ export function DiscardPile({
         {topCard ? (
           <div className="relative">
             {highlight && (
-              <motion.div
-                animate={{ boxShadow: ['0 0 0 0 rgba(195,154,82,0)', '0 0 0 2px rgba(195,154,82,0.3), 0 0 13px rgba(195,154,82,0.16)', '0 0 0 0 rgba(195,154,82,0)'] }}
-                transition={{ repeat: Infinity, duration: 2.6, ease: 'easeInOut' }}
-                className="pointer-events-none absolute inset-0 rounded-[1.1rem] sm:rounded-[1.35rem]"
-              />
+              <>
+                {/* 与抽牌堆同款呼吸描边（内圈+外扩散环），不再用丑的 boxShadow 脉冲；弃牌堆不加 👆 */}
+                <motion.div
+                  animate={{ opacity: [0.55, 1, 0.55] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="pointer-events-none absolute inset-0 rounded-[1rem] border-2 sm:rounded-[1.25rem]"
+                  style={{ borderColor: 'rgba(154,116,72,0.56)' }}
+                />
+                <motion.div
+                  animate={{ opacity: [0.5, 0, 0.5], scale: [1, 1.12, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.8, ease: 'easeOut' }}
+                  className="pointer-events-none absolute -inset-1 rounded-[1.25rem] border sm:rounded-[1.4rem]"
+                  style={{ borderColor: 'rgba(195,154,82,0.48)' }}
+                />
+              </>
             )}
             <div className="sm:hidden">
               <TarotCard {...tarotProps(topCard, locale, revealTags)} width={72} />
@@ -156,11 +166,21 @@ export function DiscardPile({
               style={{ background: 'radial-gradient(circle at 50% 45%, rgba(195,154,82,0.14), transparent 72%)' }}
             />
             {highlight && (
-              <motion.div
-                animate={{ boxShadow: ['0 0 0 0 rgba(195,154,82,0)', '0 0 0 2px rgba(195,154,82,0.3), 0 0 13px rgba(195,154,82,0.16)', '0 0 0 0 rgba(195,154,82,0)'] }}
-                transition={{ repeat: Infinity, duration: 2.6, ease: 'easeInOut' }}
-                className="pointer-events-none absolute inset-0 rounded-[1.1rem] sm:rounded-[1.35rem]"
-              />
+              <>
+                {/* 与抽牌堆同款呼吸描边（内圈+外扩散环），不再用丑的 boxShadow 脉冲；弃牌堆不加 👆 */}
+                <motion.div
+                  animate={{ opacity: [0.55, 1, 0.55] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="pointer-events-none absolute inset-0 rounded-[1rem] border-2 sm:rounded-[1.25rem]"
+                  style={{ borderColor: 'rgba(154,116,72,0.56)' }}
+                />
+                <motion.div
+                  animate={{ opacity: [0.5, 0, 0.5], scale: [1, 1.12, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.8, ease: 'easeOut' }}
+                  className="pointer-events-none absolute -inset-1 rounded-[1.25rem] border sm:rounded-[1.4rem]"
+                  style={{ borderColor: 'rgba(195,154,82,0.48)' }}
+                />
+              </>
             )}
             <span className="psy-serif relative text-sm tracking-[0.2em] text-[var(--psy-muted)] sm:text-base">{t.discardPileName}</span>
           </div>
