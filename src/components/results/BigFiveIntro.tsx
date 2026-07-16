@@ -41,7 +41,7 @@ export function BigFiveIntro({ locale }: { locale: Locale }) {
       <div className="overflow-hidden rounded-[1.1rem] border border-[var(--psy-border)] text-[14px]">
         {DIMS.map((d, i) => (
           <div key={d.key} className={`flex ${i > 0 ? 'border-t border-[var(--psy-border)]' : ''}`}>
-            <div className="flex w-[8.5rem] shrink-0 items-start gap-2 border-r border-[var(--psy-border)] bg-[rgba(195,154,82,0.07)] px-3 py-3 sm:w-64 sm:px-4">
+            <div className="flex w-[8.5rem] shrink-0 items-start gap-2 border-r border-[var(--psy-border)] bg-[var(--psy-accent-soft)] px-3 py-3 sm:w-64 sm:px-4">
               <span className="mt-[6px] h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
               <span className="psy-serif font-semibold leading-5 text-[var(--psy-ink)]">
                 {isEn ? d.en : (
