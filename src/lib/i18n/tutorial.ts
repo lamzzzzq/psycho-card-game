@@ -23,7 +23,7 @@ export const TUTORIAL_T = {
     dgLocked: '鎖定一組',
     dgGoalCaption: '每維各需湊夠對應張數（圈內數字＝要幾張，每維不同）→ 5 維全部歸檔即食胡獲勝',
     dgPongCaption: '湊滿「該維度目標張數」即可鎖定：2 張手牌 + 1 張進來的牌 = 3 張（張數要與目標一致）',
-    dgTableCaption: '你 + 3 AI（或 1 到 3 名玩家）圍住牌堆',
+    dgTableCaption: '你 + 3 AI（或 2–4 名玩家）圍住牌堆',
     dgDrawCaption: '每回合先從牌堆摸 1 張',
     dgDiscardCaption: '棄 1 張 → 開啟判讀窗口',
     dgWinBtn: '食胡',
@@ -104,7 +104,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '牌桌',
-        body: '單機固定 4 人（你 + 3 個 AI）；聯機 1 到 3 名玩家。牌堆會依人數縮放。牌分兩類：帶顏色標記的「人格描述牌」（屬於某一維度），以及無維度歸屬的「知識牌」（中立，可棄可觀察對手風格）。',
+        body: '單機固定 4 人（你 + 3 個 AI）；聯機 2–4 名玩家。牌堆會依人數縮放。牌分兩類：帶顏色標記的「人格描述牌」（屬於某一維度），以及無維度歸屬的「知識牌」（中立，可棄可觀察對手風格）。',
         hint: '初始手牌張數 = 5 個維度目標張數之和 − 1。少的那張要靠「碰」或「食胡」補齊。',
       },
       {
@@ -139,7 +139,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '聯機 · 退出與輪轉',
-        body: '聯機房 2–4 人，任何人點「退出對局」即從該桌退出 —— 不接管，剩下的玩家繼續打到分勝負。\n• 退出者的座位永久跳過（看到「🚪 已退出對局」徽章）；\n• 僅剩 1 人即自動宣告該玩家勝利；\n• 你的回合超過 60 秒未操作會彈「請注意：現在是你的回合」提醒，每 60 秒重複一次直到你出牌。',
+        body: '聯機房 2–4 人，任何人點「退出對局」即從該桌退出 —— 不接管，剩下的玩家繼續打到分勝負。\n• 退出者的座位永久跳過（看到「🚪 已退出對局」徽章）；\n• 僅剩 1 人即自動宣告該玩家勝利；\n• 你的回合超過 30 秒未操作會彈「請注意：現在是你的回合」提醒，每 30 秒重複一次直到你出牌。',
         hint: '同學號同時進入兩個活動房間會被拒絕 —— 防止兩個客戶端共享同一座位。',
       },
       {
@@ -454,7 +454,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Online · Leaving & Rotation',
-        body: 'An online room holds 2–4 players; anyone can tap "Leave" to exit the table — no takeover, the remaining players keep playing until a winner is decided.\n• The leaver’s seat is permanently skipped (you see a "🚪 Left the game" badge);\n• When only 1 player remains, that player is automatically declared the winner;\n• If your turn goes more than 60 seconds without action, a "Heads up: it’s your turn" reminder pops, repeating every 60 seconds until you discard.',
+        body: 'An online room holds 2–4 players; anyone can tap "Leave" to exit the table — no takeover, the remaining players keep playing until a winner is decided.\n• The leaver’s seat is permanently skipped (you see a "🚪 Left the game" badge);\n• When only 1 player remains, that player is automatically declared the winner;\n• If your turn goes more than 30 seconds without action, a "Heads up: it’s your turn" reminder pops, repeating every 30 seconds until you discard.',
         hint: 'The same student ID entering two active rooms at once is rejected — preventing two clients from sharing one seat.',
       },
       {
