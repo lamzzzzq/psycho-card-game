@@ -11,8 +11,10 @@ import { getRoomPlayers, kickPlayer, dissolveRoom, leaveRoom } from '@/lib/room-
 import { Room, RoomSettings } from '@/types/pvp';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
+import { useWakeLock } from '@/stores/useWakeLock';
 
 export default function RoomWaitPage() {
+  useWakeLock(); // 屏幕常亮：房主/玩家在房间等待时别自动锁屏掉线
   const params = useParams();
   const router = useRouter();
   const code = params.code as string;

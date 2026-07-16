@@ -10,7 +10,7 @@ export const LOBBY_T = {
     },
     backHome: '← 返回主頁',
     title: '單人遊戲',
-    subtitle: '設置遊戲參數，準備進入人格博弈。',
+    subtitle: '設置遊戲參數，準備進入人格博弈',
     difficultyLabel: 'AI 難度',
     difficultyOptions: [
       { label: '簡單', desc: '憑直覺出牌' },

@@ -14,6 +14,7 @@ import {
 } from '@/components/game/FeedbackLayer';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
+import { useWakeLock } from '@/stores/useWakeLock';
 import { useLocaleStore, STRINGS, playerLabel } from '@/lib/i18n';
 import { DIMENSION_META } from '@/data/dimensions';
 import { DIMENSIONS, Dimension, GameCard } from '@/types';
@@ -40,6 +41,7 @@ interface FlyingAnim {
 }
 
 export default function GamePage() {
+  useWakeLock(); // 屏幕常亮：单机牌桌也别自动锁屏
   const router = useRouter();
   const {
     game,

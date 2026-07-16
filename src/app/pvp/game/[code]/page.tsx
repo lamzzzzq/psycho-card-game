@@ -21,6 +21,7 @@ import { leaveRoom, leaveAllRooms, updateRoomStatus } from '@/lib/room-api';
 import { retryPendingSaves, removePendingInterrupted } from '@/lib/game-record';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
+import { useWakeLock } from '@/stores/useWakeLock';
 
 interface FlyingAnim { id: number; from: { x: number; y: number }; to: { x: number; y: number }; text: string; }
 import { DIMENSION_META } from '@/data/dimensions';
@@ -65,6 +66,7 @@ function toPlayer(sp: SerializedPlayer, overrideHand?: GameCard[]): Player {
 }
 
 export default function PvpGamePage() {
+  useWakeLock(); // 屏幕常亮：牌桌上别自动锁屏掉线(房主掉线全员暂停)
   const params = useParams();
   const router = useRouter();
   const code = params.code as string;
@@ -892,7 +894,7 @@ export default function PvpGamePage() {
                     <span className="truncate font-medium text-[var(--psy-accent)]">{t.yourTurnShort}</span>
                   ) : (
                     <>
-                      <span className="max-w-[6ch] truncate">{currentPlayer?.name}</span>
+                      <span className="max-w-[10ch] truncate">{currentPlayer?.name}</span>
                       {t.turnSuffix && <span className="shrink-0">{t.turnSuffix}</span>}
                     </>
                   )}
