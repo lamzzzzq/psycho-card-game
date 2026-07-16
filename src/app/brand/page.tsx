@@ -59,6 +59,8 @@ function Section({ eyebrow, title, children }: { eyebrow: string; title: string;
 
 /* ── Logo 基元 ── */
 const INK = '#3a3020';
+const NAVY = '#16324a';
+const BRAND_RED = '#a93a2f';
 const GOLD = '#c39a52';
 const GOLD_STRONG = '#9a7448';
 const CREAM = '#fdf8f1';
@@ -406,6 +408,84 @@ function LogoCard({ label, note, children }: { label: string; note: string; chil
         <div className="mt-0.5 text-[11px] leading-snug text-[var(--psy-muted)]">{note}</div>
       </div>
     </div>
+  );
+}
+
+function BrandLockupCard({ label, note, children }: { label: string; note: string; children: ReactNode }) {
+  return (
+    <div className="psy-panel psy-etched flex flex-col gap-3 rounded-[1.3rem] p-4 text-center">
+      <div className="flex h-56 w-full items-center justify-center rounded-[1rem] bg-[var(--psy-card-content)] px-3">
+        <svg viewBox="0 0 360 220" className="h-full w-full max-w-[360px]">{children}</svg>
+      </div>
+      <div>
+        <div className="psy-serif text-sm font-semibold text-[var(--psy-ink)]">{label}</div>
+        <div className="mt-0.5 text-[11px] leading-snug text-[var(--psy-muted)]">{note}</div>
+      </div>
+    </div>
+  );
+}
+
+function MiniCardsMark({ x = 146, y = 14, scale = 1 }: { x?: number; y?: number; scale?: number }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      <g transform="rotate(-10 34 42)">
+        <rect x="8" y="4" width="44" height="66" rx="8" fill="#fff8eb" stroke={NAVY} strokeWidth="4" />
+        <rect x="13" y="10" width="34" height="54" rx="5" fill="none" stroke={GOLD} strokeWidth="1.7" />
+        <CompassGlyph cx={30} cy={38} />
+      </g>
+      <g transform="rotate(8 58 46)">
+        <rect x="45" y="10" width="44" height="66" rx="8" fill="#fff8eb" stroke={NAVY} strokeWidth="4" />
+        <rect x="50" y="16" width="34" height="54" rx="5" fill="none" stroke={GOLD} strokeWidth="1.7" />
+        <path d="M62 43 C51 32 58 22 68 31 C78 22 85 32 74 43 L68 49Z" fill="none" stroke={GOLD_STRONG} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </g>
+  );
+}
+
+function SwooshCardMark({ x = 142, y = 12, scale = 1 }: { x?: number; y?: number; scale?: number }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      <g transform="rotate(-8 48 54)">
+        <rect x="22" y="8" width="58" height="82" rx="12" fill="#fff8eb" stroke={NAVY} strokeWidth="5" />
+        <rect x="28" y="15" width="46" height="68" rx="8" fill="none" stroke={GOLD} strokeWidth="2" />
+        <path d="M34 63 C43 37 62 31 75 38" fill="none" stroke={GOLD} strokeWidth="6" strokeLinecap="round" />
+        <path d="M35 72 C49 45 65 46 75 62" fill="none" stroke={NAVY} strokeWidth="5" strokeLinecap="round" />
+        <path d="M47 56 C53 43 65 43 70 56 C65 65 52 65 47 56Z" fill="rgba(195,154,82,0.18)" />
+      </g>
+    </g>
+  );
+}
+
+function Wordmark({ x = 180, y = 132, align = 'middle', compact = false }: { x?: number; y?: number; align?: 'start' | 'middle'; compact?: boolean }) {
+  return (
+    <g>
+      <text x={x} y={y} textAnchor={align} fontFamily="Georgia, 'Times New Roman', serif" fontSize={compact ? 23 : 34} fontWeight="800" fill={NAVY}>PERSONALITIES</text>
+      <text x={x} y={y + (compact ? 32 : 45)} textAnchor={align} fontFamily="Georgia, 'Times New Roman', serif" fontSize={compact ? 34 : 48} fontWeight="900" fill={BRAND_RED}>MAHJONG</text>
+    </g>
+  );
+}
+
+function BrushWordmark({ x = 180, y = 128, align = 'middle' }: { x?: number; y?: number; align?: 'start' | 'middle' }) {
+  return (
+    <g>
+      <text x={x} y={y} textAnchor={align} fontFamily="Georgia, 'Times New Roman', serif" fontSize="33" fontWeight="800" fill={NAVY}>PERSONALITIES</text>
+      <text x={x} y={y + 47} textAnchor={align} fontFamily="Trebuchet MS, Arial, sans-serif" fontSize="50" fontWeight="900" fill={BRAND_RED}>MAHJONG</text>
+      <path d={`M${align === 'middle' ? x - 82 : x} ${y + 54} C${align === 'middle' ? x - 30 : x + 52} ${y + 67} ${align === 'middle' ? x + 36 : x + 116} ${y + 67} ${align === 'middle' ? x + 91 : x + 183} ${y + 52}`} fill="none" stroke={BRAND_RED} strokeWidth="3" strokeLinecap="round" opacity="0.55" />
+    </g>
+  );
+}
+
+function GeminiSealLockup() {
+  return (
+    <g>
+      <text x="180" y="30" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="18" fontWeight="800" fill={NAVY}>PERSONALITIES</text>
+      <circle cx="180" cy="100" r="58" fill="#fff8eb" stroke={NAVY} strokeWidth="5" />
+      <circle cx="180" cy="100" r="47" fill="none" stroke={GOLD} strokeWidth="2" opacity="0.8" />
+      <path d="M136 101 C149 78 170 70 200 75 C219 79 232 91 238 111" fill="none" stroke="rgba(195,154,82,0.28)" strokeWidth="8" strokeLinecap="round" />
+      <MiniCardsMark x={148} y={70} scale={0.55} />
+      <text x="180" y="190" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="26" fontWeight="900" fill={BRAND_RED}>MAHJONG</text>
+      <path d="M96 35 H133 M227 35 H264 M92 181 H129 M231 181 H268" stroke={GOLD} strokeWidth="2" strokeLinecap="round" opacity="0.55" />
+    </g>
   );
 }
 
@@ -800,6 +880,59 @@ export default function BrandPage() {
             <div className="psy-serif text-base font-semibold text-[var(--psy-ink)]">抽象路线判断</div>
             <p className="mt-2 text-[13px] leading-6 text-[var(--psy-ink-soft)]">
               如果想从「具体游戏图标」升级成更像品牌的标志，可以重点看 F1、F2、F5。F1 最容易和五维测评绑定；F2 最有品牌感；F5 介于雷达图和抽象晶体之间，适合做长期视觉母题。
+            </p>
+          </div>
+        </Section>
+
+        {/* Gemini-like brand lockups */}
+        <Section eyebrow="Brand Lockup · 品牌组合" title="接近 Gemini 那种完整品牌感">
+          <p className="text-[13px] leading-6 text-[var(--psy-muted)]">
+            这组不是单独的小图标，而是更像真实品牌提案的完整组合：图形标 + 英文字标 + 徽章/横版应用。参考 Gemini 的商业完成度，但把红蓝压暗、金色降低面积，避免和当前暖纸米白网页脱节。
+          </p>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <BrandLockupCard label="G1 · 双牌经典版" note="最接近参考图的品牌组合：牌组在上，粗衬线字标在下">
+              <MiniCardsMark x={129} y={20} scale={1.05} />
+              <Wordmark x={180} y={130} />
+            </BrandLockupCard>
+            <BrandLockupCard label="G2 · 心罗盘横版" note="适合网页页眉、海报横幅；图标和字标更像正式 logo">
+              <MiniCardsMark x={30} y={58} scale={0.88} />
+              <Wordmark x={140} y={88} align="start" compact />
+            </BrandLockupCard>
+            <BrandLockupCard label="G3 · 单牌旋纹版" note="像 Gemini 3C 的单牌品牌标，更简洁、更像 app icon">
+              <SwooshCardMark x={138} y={8} scale={0.86} />
+              <BrushWordmark x={180} y={143} />
+            </BrandLockupCard>
+            <BrandLockupCard label="G4 · 圆章徽章版" note="适合课程证书、讲义封面、社交头像，但小尺寸要简化">
+              <GeminiSealLockup />
+            </BrandLockupCard>
+            <BrandLockupCard label="G5 · 学术品牌版" note="降低游戏感，像大学课程项目或 research tool">
+              <rect x="34" y="34" width="292" height="152" rx="24" fill="#fff8eb" stroke={NAVY} strokeWidth="4" />
+              <path d="M54 72 H306" stroke={GOLD} strokeWidth="2" opacity="0.62" />
+              <text x="180" y="68" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="17" fontWeight="800" fill={NAVY}>PERSONALITIES MAHJONG</text>
+              <AbstractFivefoldGlyph />
+              <g transform="translate(105 132)">
+                {DIM_COLORS.map((color, i) => <circle key={color} cx={i * 38} cy="0" r="6" fill={color} />)}
+              </g>
+              <text x="180" y="164" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="13" fontWeight="700" fill={GOLD_STRONG}>BIG FIVE · CARD GAME · SOCIAL READING</text>
+            </BrandLockupCard>
+            <BrandLockupCard label="G6 · 现代品牌版" note="减少复古感，用 PM 字母标 + 强字标，更适合网站品牌栏">
+              <g transform="translate(38 47)">
+                <rect x="0" y="0" width="86" height="86" rx="20" fill={NAVY} />
+                <path d="M24 62 V24 H38 C52 24 58 32 58 43 C58 54 51 61 38 61 H36" fill="none" stroke={CREAM} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M54 63 V24 L66 44 L78 24 V63" fill="none" stroke={GOLD} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                <g transform="translate(17 73)">
+                  {DIM_COLORS.map((color, i) => <circle key={color} cx={i * 12} cy="0" r="3" fill={color} />)}
+                </g>
+              </g>
+              <text x="145" y="86" fontFamily="Georgia, 'Times New Roman', serif" fontSize="30" fontWeight="850" fill={NAVY}>PERSONALITIES</text>
+              <text x="145" y="129" fontFamily="Trebuchet MS, Arial, sans-serif" fontSize="47" fontWeight="900" fill={BRAND_RED}>MAHJONG</text>
+              <path d="M146 143 H312" stroke={GOLD} strokeWidth="3" strokeLinecap="round" opacity="0.68" />
+            </BrandLockupCard>
+          </div>
+          <div className="rounded-[1.2rem] border border-[rgba(22,50,74,0.22)] bg-[rgba(22,50,74,0.06)] p-4">
+            <div className="psy-serif text-base font-semibold text-[var(--psy-ink)]">这条路线的取舍</div>
+            <p className="mt-2 text-[13px] leading-6 text-[var(--psy-ink-soft)]">
+              如果目标是“看起来像一个已经能对外发布的品牌”，G1/G2/G6 比前面的 icon 草案更接近。G4 最像徽章，但细节多；G3 比较有 app icon 潜力；G5 更适合课程和研究语境。建议后续从 G2 或 G6 里继续精修字标比例。
             </p>
           </div>
         </Section>
