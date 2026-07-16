@@ -9,7 +9,7 @@ export const LOBBY_T = {
       backHome: '← 返回首頁',
     },
     backHome: '← 返回主頁',
-    title: '對戰大廳',
+    title: '單人遊戲',
     subtitle: '設置遊戲參數，準備進入人格博弈。',
     difficultyLabel: 'AI 難度',
     difficultyOptions: [
@@ -41,7 +41,7 @@ export const LOBBY_T = {
       backHome: '← Back home',
     },
     backHome: '← Back home',
-    title: 'Battle Lobby',
+    title: 'Single Player',
     subtitle: 'Set the match parameters and step into the mind game.',
     difficultyLabel: 'AI difficulty',
     difficultyOptions: [
