@@ -64,6 +64,7 @@ const GOLD_STRONG = '#9a7448';
 const CREAM = '#fdf8f1';
 const DIM_COLORS = ['#c084fc', '#60a5fa', '#facc15', '#4ade80', '#f87171'] as const;
 const SAGE = '#6f8f55';
+const SKY = '#60a5fa';
 const VIOLET = '#a78bfa';
 
 // 五维雷达小图形（麻将/塔罗内部通用）
@@ -196,6 +197,154 @@ function ColorSealGlyph({ cx = 60, cy = 60 }: { cx?: number; cy?: number }) {
   );
 }
 
+function FanTilesGlyph() {
+  return (
+    <g>
+      {[-18, 0, 18].map((rot, i) => (
+        <g key={rot} transform={`rotate(${rot} 60 70)`}>
+          <rect x={42 + i * 3} y="24" width="39" height="62" rx="9" fill={i === 1 ? '#fff8eb' : '#f1e5cb'} stroke={INK} strokeWidth="2.4" />
+          <rect x={46 + i * 3} y="29" width="31" height="52" rx="6" fill="none" stroke={DIM_COLORS[i]} strokeWidth="1.4" opacity="0.9" />
+        </g>
+      ))}
+      <text x="60" y="76" textAnchor="middle" fontSize="28" fontWeight="760" fill={GOLD_STRONG}>心</text>
+    </g>
+  );
+}
+
+function GateTileGlyph() {
+  return (
+    <g>
+      <path d="M33 100 V44 Q33 18 60 18 Q87 18 87 44 V100" fill="#fff8eb" stroke={INK} strokeWidth="3.1" />
+      <path d="M41 97 V45 Q41 28 60 28 Q79 28 79 45 V97" fill="none" stroke={SAGE} strokeWidth="2" opacity="0.8" />
+      <path d="M47 69 C53 57 67 57 73 69 C68 75 52 75 47 69Z" fill={GOLD} opacity="0.48" />
+      <RadarGlyph cx={60} cy={59} r={16} />
+    </g>
+  );
+}
+
+function ProfileTileGlyph() {
+  return (
+    <g>
+      <ColorTileBase fill="#fff8eb" rail={SAGE}>
+        <path d="M47 73 C48 60 54 52 61 52 C69 52 75 60 76 73" fill="none" stroke={INK} strokeWidth="3.4" strokeLinecap="round" />
+        <circle cx="60" cy="42" r="10" fill="rgba(195,154,82,0.24)" stroke={GOLD_STRONG} strokeWidth="2" />
+        {DIM_COLORS.map((color, i) => <circle key={color} cx={43 + i * 8.5} cy="88" r="2.5" fill={color} />)}
+      </ColorTileBase>
+    </g>
+  );
+}
+
+function TarotMirrorGlyph() {
+  return (
+    <TarotBase>
+      <path d="M45 64 C45 48 52 38 60 38 C68 38 75 48 75 64 C70 72 50 72 45 64Z" fill="rgba(96,165,250,0.18)" stroke={SKY} strokeWidth="2" />
+      <path d="M52 62 C57 58 63 58 68 62" fill="none" stroke={GOLD_STRONG} strokeWidth="2" strokeLinecap="round" />
+      <circle cx="60" cy="51" r="4" fill={GOLD_STRONG} />
+    </TarotBase>
+  );
+}
+
+function TarotStudyGlyph() {
+  return (
+    <TarotBase>
+      <path d="M43 44 H77 M43 54 H77 M43 64 H70" stroke={INK} strokeWidth="3" strokeLinecap="round" opacity="0.72" />
+      <path d="M47 77 C55 71 65 71 73 77" fill="none" stroke={GOLD} strokeWidth="2.3" strokeLinecap="round" />
+      {DIM_COLORS.map((color, i) => <circle key={color} cx={44 + i * 8} cy="86" r="2.4" fill={color} />)}
+    </TarotBase>
+  );
+}
+
+function TarotPortalGlyph() {
+  return (
+    <TarotBase>
+      <path d="M43 80 V54 Q43 37 60 37 Q77 37 77 54 V80" fill="rgba(192,132,252,0.16)" stroke={VIOLET} strokeWidth="2.4" />
+      <path d="M52 75 V57 Q52 46 60 46 Q68 46 68 57 V75" fill="none" stroke={GOLD_STRONG} strokeWidth="2" />
+      <circle cx="60" cy="62" r="3" fill={INK} />
+    </TarotBase>
+  );
+}
+
+function AbstractOrbitGlyph() {
+  return (
+    <g>
+      <circle cx="60" cy="60" r="34" fill="none" stroke={GOLD} strokeWidth="2" opacity="0.6" />
+      <ellipse cx="60" cy="60" rx="42" ry="18" fill="none" stroke={SAGE} strokeWidth="2.8" transform="rotate(-18 60 60)" />
+      <ellipse cx="60" cy="60" rx="42" ry="18" fill="none" stroke={VIOLET} strokeWidth="2.2" transform="rotate(54 60 60)" opacity="0.72" />
+      {DIM_COLORS.map((color, i) => {
+        const rad = ((-90 + i * 72) * Math.PI) / 180;
+        return <circle key={color} cx={60 + 34 * Math.cos(rad)} cy={60 + 34 * Math.sin(rad)} r="4.2" fill={color} />;
+      })}
+      <circle cx="60" cy="60" r="9" fill={CREAM} stroke={INK} strokeWidth="2.4" />
+    </g>
+  );
+}
+
+function AbstractFoldGlyph() {
+  return (
+    <g>
+      <path d="M31 78 C43 38 67 29 90 46 C76 50 68 62 64 91 C54 78 43 74 31 78Z" fill="rgba(96,165,250,0.2)" stroke={SKY} strokeWidth="2.6" />
+      <path d="M30 47 C52 32 76 39 91 70 C72 62 55 65 41 84 C42 66 38 55 30 47Z" fill="rgba(195,154,82,0.22)" stroke={GOLD_STRONG} strokeWidth="2.6" />
+      <path d="M45 56 C55 51 66 53 75 62" fill="none" stroke={INK} strokeWidth="3" strokeLinecap="round" />
+    </g>
+  );
+}
+
+function AbstractWaveGlyph() {
+  return (
+    <g>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <path
+          key={i}
+          d={`M28 ${42 + i * 8} C42 ${25 + i * 7} 60 ${60 + i * 2} 76 ${42 + i * 8} C84 ${34 + i * 5} 91 ${37 + i * 6} 96 ${43 + i * 7}`}
+          fill="none"
+          stroke={DIM_COLORS[i]}
+          strokeWidth={i === 2 ? 4 : 3}
+          strokeLinecap="round"
+          opacity={i === 2 ? 0.9 : 0.66}
+        />
+      ))}
+      <circle cx="60" cy="60" r="7" fill={INK} />
+    </g>
+  );
+}
+
+function AbstractKnotGlyph() {
+  return (
+    <g>
+      <path d="M34 60 C34 35 57 30 60 52 C63 30 86 35 86 60 C86 85 63 90 60 68 C57 90 34 85 34 60Z" fill="none" stroke={INK} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M38 60 C47 55 52 55 60 60 C68 65 73 65 82 60" fill="none" stroke={GOLD} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="60" cy="60" r="5" fill={DIM_COLORS[4]} />
+    </g>
+  );
+}
+
+function AbstractFivefoldGlyph() {
+  const pts = DIM_COLORS.map((color, i) => {
+    const rad = ((-90 + i * 72) * Math.PI) / 180;
+    return { color, x: 60 + 30 * Math.cos(rad), y: 60 + 30 * Math.sin(rad) };
+  });
+  return (
+    <g>
+      <polygon points={pts.map((p) => `${p.x},${p.y}`).join(' ')} fill="rgba(253,248,241,0.78)" stroke={INK} strokeWidth="2.8" />
+      <polygon points={pts.map((p, i) => `${60 + (0.46 + i * 0.07) * (p.x - 60)},${60 + (0.46 + i * 0.07) * (p.y - 60)}`).join(' ')} fill={GOLD} fillOpacity="0.22" stroke={GOLD_STRONG} strokeWidth="2" />
+      {pts.map((p) => <circle key={p.color} cx={p.x} cy={p.y} r="5" fill={p.color} stroke={CREAM} strokeWidth="1.4" />)}
+      <circle cx="60" cy="60" r="5" fill={INK} />
+    </g>
+  );
+}
+
+function AbstractMonogramGlyph() {
+  return (
+    <g>
+      <path d="M30 87 V34 H45 C58 34 66 42 66 55 C66 68 58 76 45 76 H42" fill="none" stroke={INK} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M57 87 V34 L73 63 L90 34 V87" fill="none" stroke={GOLD_STRONG} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+      <g transform="translate(37 96)">
+        {DIM_COLORS.map((color, i) => <circle key={color} cx={i * 11.5} cy="0" r="3" fill={color} />)}
+      </g>
+    </g>
+  );
+}
+
 /* 麻将牌基底：圆角矩形 + 内金线 */
 function TileBase({ children, x = 30, rot = 0 }: { children?: ReactNode; x?: number; rot?: number }) {
   return (
@@ -283,7 +432,7 @@ export default function BrandPage() {
           <p className="psy-eyebrow text-[10px]">Brand Kit · 品牌规范</p>
           <h1 className="psy-serif text-4xl leading-none text-[var(--psy-ink)] sm:text-5xl">人格麻將 · Personalities Mahjong</h1>
           <p className="max-w-2xl text-base leading-7 text-[var(--psy-ink-soft)]">
-            这份文档整理项目的玩法、概念、目标与视觉配色，供同事在同一套设计语言下发散更多 logo / 视觉可行性。下方给出两个方向的 logo 草案：<strong>麻将风</strong>（老板偏向）与<strong>塔罗风</strong>（卡面延伸），仅为方向示意，非最终稿。
+            这份文档整理项目的玩法、概念、目标与视觉配色，供同事在同一套设计语言下发散更多 logo / 视觉可行性。下方给出多组 logo 草案：麻将风、塔罗风、彩色五维、课程徽章与抽象符号，仅为方向示意，非最终稿。
           </p>
         </header>
 
@@ -378,7 +527,7 @@ export default function BrandPage() {
         </Section>
 
         {/* Logo direction — Mahjong */}
-        <Section eyebrow="Logo · 方向 A" title="麻将风（老板偏向）">
+        <Section eyebrow="Logo · 方向 A" title="麻将风（牌局识别）">
           <p className="text-[13px] leading-6 text-[var(--psy-muted)]">以麻将牌为主体，牌面嵌入心理符号（心 / 五维雷达 / 罗盘）。稳、直观、和「麻将」名字直接呼应。</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <LogoCard label="A1 · 心牌" note="麻将牌面嵌「心」——心理 × 麻将最直接的组合">
@@ -398,6 +547,15 @@ export default function BrandPage() {
                   <text x="60" y="74" textAnchor="middle" fontSize="38" fontWeight="700" fill={GOLD_STRONG}>心</text>
                 </TileBase>
               </>
+            </LogoCard>
+            <LogoCard label="A4 · 手牌扇面" note="三张牌形成手牌展开，更有牌局和选择感">
+              <FanTilesGlyph />
+            </LogoCard>
+            <LogoCard label="A5 · 心门牌" note="把牌框做成入口，强调进入人格牌局">
+              <GateTileGlyph />
+            </LogoCard>
+            <LogoCard label="A6 · 画像牌" note="用人物轮廓 + 五维点，偏测评档案感">
+              <ProfileTileGlyph />
             </LogoCard>
           </div>
         </Section>
@@ -425,6 +583,15 @@ export default function BrandPage() {
                 <RadarGlyph cx={60} cy={64} r={19} />
               </TarotBase>
             </LogoCard>
+            <LogoCard label="B4 · 镜像卡" note="像读牌也像看见自己，心理测评感更强">
+              <TarotMirrorGlyph />
+            </LogoCard>
+            <LogoCard label="B5 · 研究卡" note="卡面像记录纸，适合教学/课程语境">
+              <TarotStudyGlyph />
+            </LogoCard>
+            <LogoCard label="B6 · 门廊卡" note="偏仪式感，强调揭示和进入内在空间">
+              <TarotPortalGlyph />
+            </LogoCard>
           </div>
         </Section>
 
@@ -438,7 +605,7 @@ export default function BrandPage() {
               牌叠 + 英文字标的商业感更强，但藏青、砖红、毛笔式 MAHJONG 会把品牌推向传统棋牌或餐饮感，和当前温润学术的产品界面不一致；圆形徽章也太密，缩小后不利于 favicon。
             </AnalysisCard>
             <AnalysisCard title="建议定版方向" tone="pick">
-              用「两张麻将牌 + 心/五维」作为核心图标，字标保持无衬线、墨色为主、金色点睛。这样既保留老板偏好的麻将风，也避免过度传统化。
+              用「两张麻将牌 + 心/五维」作为核心图标，字标保持无衬线、墨色为主、金色点睛。这样既保留麻将识别，也避免过度传统化。
             </AnalysisCard>
           </div>
 
@@ -460,6 +627,20 @@ export default function BrandPage() {
               <TileBase>
                 <HeartMindGlyph cx={60} cy={61} />
               </TileBase>
+            </LogoCard>
+            <LogoCard label="C4 · 彩线心局" note="在 C1 基础上把五维色做成更明显的关系线">
+              <>
+                <ColorTileBase x={35} rot={-8} fill="#f2e7cf" rail={SAGE} />
+                <ColorTileBase x={27} rot={4} fill="#fff8eb" rail={VIOLET}>
+                  <ColorHeartMindGlyph cx={57} cy={61} />
+                </ColorTileBase>
+              </>
+            </LogoCard>
+            <LogoCard label="C5 · 手牌心局" note="从双牌扩成手牌，游戏感更足但复杂度上升">
+              <FanTilesGlyph />
+            </LogoCard>
+            <LogoCard label="C6 · 画像心局" note="更偏学习平台/测评报告，可用于课程版本">
+              <ProfileTileGlyph />
             </LogoCard>
           </div>
 
@@ -494,6 +675,19 @@ export default function BrandPage() {
               <SplitColorTile>
                 <ColorHeartMindGlyph cx={60} cy={62} />
               </SplitColorTile>
+            </LogoCard>
+            <LogoCard label="D4 · 五维花牌" note="彩色更明显，弱化牌框，偏亲和与学习工具">
+              <ColorTileBase fill="#fff8eb" rail={SAGE}>
+                <BloomGlyph cx={60} cy={61} />
+              </ColorTileBase>
+            </LogoCard>
+            <LogoCard label="D5 · 彩环印记" note="保留圆环和五维点，可作为 favicon 备选">
+              <ColorSealGlyph cx={60} cy={60} />
+            </LogoCard>
+            <LogoCard label="D6 · 彩色轨道" note="少用具体图形，用五维关系线表达人格结构">
+              <ColorTileBase fill="#fff8eb" rail={VIOLET}>
+                <AbstractOrbitGlyph />
+              </ColorTileBase>
             </LogoCard>
           </div>
           <div className="rounded-[1.2rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-4">
@@ -535,10 +729,79 @@ export default function BrandPage() {
                 </g>
               </>
             </LogoCard>
+            <LogoCard label="E5 · 研究印章" note="比 E1 更简化，适合课程 slide 和讲义页脚">
+              <>
+                <circle cx="60" cy="60" r="37" fill="#fff8eb" stroke={INK} strokeWidth="3" />
+                <path d="M38 60 H82 M60 38 V82" stroke={GOLD} strokeWidth="2" opacity="0.56" />
+                <AbstractFivefoldGlyph />
+              </>
+            </LogoCard>
+            <LogoCard label="E6 · 牌桌徽章" note="把多人牌局做成圆徽章，宣传物上更完整">
+              <>
+                <circle cx="60" cy="60" r="40" fill="#fff8eb" stroke={INK} strokeWidth="3" />
+                {[0, 90, 180, 270].map((rot, i) => (
+                  <g key={rot} transform={`rotate(${rot} 60 60)`}>
+                    <rect x="53" y="22" width="14" height="27" rx="4" fill={DIM_COLORS[i]} opacity="0.72" />
+                  </g>
+                ))}
+                <circle cx="60" cy="60" r="16" fill={CREAM} stroke={GOLD_STRONG} strokeWidth="2" />
+              </>
+            </LogoCard>
+            <LogoCard label="E7 · 字标圆章" note="更偏品牌应用，不依赖中文心字">
+              <>
+                <circle cx="60" cy="60" r="38" fill="#fff8eb" stroke={INK} strokeWidth="3" />
+                <text x="60" y="57" textAnchor="middle" fontSize="17" fontWeight="800" fill={INK}>PM</text>
+                <text x="60" y="74" textAnchor="middle" fontSize="9" fontWeight="700" fill={GOLD_STRONG}>OCEAN</text>
+                <circle cx="60" cy="60" r="27" fill="none" stroke={GOLD} strokeWidth="1.4" />
+              </>
+            </LogoCard>
+            <LogoCard label="E8 · 课程标签" note="最克制，适合导航栏、文档页和课堂材料">
+              <>
+                <rect x="20" y="39" width="80" height="42" rx="10" fill="#fff8eb" stroke={INK} strokeWidth="3" />
+                <path d="M32 60 H88" stroke={GOLD} strokeWidth="2" opacity="0.52" />
+                <text x="60" y="57" textAnchor="middle" fontSize="15" fontWeight="800" fill={INK}>人格麻将</text>
+                <g transform="translate(38 69)">
+                  {DIM_COLORS.map((color, i) => <rect key={color} x={i * 10.5} y="0" width="6" height="6" rx="2" fill={color} />)}
+                </g>
+              </>
+            </LogoCard>
           </div>
           <p className="text-[13px] leading-6 text-[var(--psy-muted)]">
-            这几条不是都适合做主 logo：E1 偏正式，E2 偏亲和，E3 最游戏化，E4 最克制。它们可以作为分支参考，主路线仍建议从 D1 / C1 继续打磨。
+            这几条不是都适合做主 logo：E1/E5 偏正式，E2 偏亲和，E3/E6 最游戏化，E4/E8 最克制。它们可以作为分支参考，主路线仍建议从 D1 / C1 继续打磨。
           </p>
+        </Section>
+
+        {/* Abstract explorations */}
+        <Section eyebrow="Abstract · 抽象方向" title="不依赖具体物件的符号">
+          <p className="text-[13px] leading-6 text-[var(--psy-muted)]">
+            这组故意减少麻将牌、塔罗卡、心字等具象元素，转向「人格结构 / 关系 / 选择 / 自我折叠」的抽象表达。它们更像品牌符号，识别门槛更高，但成熟度和延展性更强。
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <LogoCard label="F1 · 五维轨道" note="五个维度围绕中心人格，适合动态 logo">
+              <AbstractOrbitGlyph />
+            </LogoCard>
+            <LogoCard label="F2 · 人格折面" note="两片折面叠合，表达自我与他人的读解">
+              <AbstractFoldGlyph />
+            </LogoCard>
+            <LogoCard label="F3 · 心理波形" note="用五条行为曲线表达测评数据，不像游戏图标">
+              <AbstractWaveGlyph />
+            </LogoCard>
+            <LogoCard label="F4 · 关系结" note="像两个人格互相缠绕，适合对战/识人主题">
+              <AbstractKnotGlyph />
+            </LogoCard>
+            <LogoCard label="F5 · 五维晶体" note="雷达图再抽象成晶体，成熟但仍有测评来源">
+              <AbstractFivefoldGlyph />
+            </LogoCard>
+            <LogoCard label="F6 · PM 字母织构" note="用 Personalities Mahjong 首字母做半抽象字标">
+              <AbstractMonogramGlyph />
+            </LogoCard>
+          </div>
+          <div className="rounded-[1.2rem] border border-[rgba(96,165,250,0.28)] bg-[rgba(96,165,250,0.07)] p-4">
+            <div className="psy-serif text-base font-semibold text-[var(--psy-ink)]">抽象路线判断</div>
+            <p className="mt-2 text-[13px] leading-6 text-[var(--psy-ink-soft)]">
+              如果想从「具体游戏图标」升级成更像品牌的标志，可以重点看 F1、F2、F5。F1 最容易和五维测评绑定；F2 最有品牌感；F5 介于雷达图和抽象晶体之间，适合做长期视觉母题。
+            </p>
+          </div>
         </Section>
 
         {/* Wordmark */}
