@@ -59,6 +59,10 @@ function armClaimTimer(getStore: () => PvpStore) {
 // truly unrecoverable and we dissolve locally.
 let hostGraceTimer: ReturnType<typeof setTimeout> | null = null;
 
+// 回前台立即补同步的 visibilitychange handler（手机切后台→presence/state 落后，
+// 等 Supabase 自动重连有几秒延迟；前台时主动补一次 → 恢复更快、更平滑）。
+let visibilityHandler: (() => void) | null = null;
+
 interface PvpStore {
   // Room state
   room: Room | null;
@@ -578,12 +582,41 @@ export const usePvpStore = create<PvpStore>()(
         }
       });
 
+    // 回前台立即补一次同步：重新上报 presence + 非房主拉最新状态 / 房主重广播。
+    // 与 SUBSCRIBED 里的逻辑一致,但不必等 Supabase 自动重连,恢复更平滑。
+    if (typeof document !== 'undefined') {
+      if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
+      visibilityHandler = () => {
+        if (document.visibilityState !== 'visible') return;
+        const { channel: ch, isHost: iAmHost, myPlayerId: mid, rawGameState: raw } = get();
+        if (!ch || !mid) return;
+        void ch.track({ player_id: mid, t: Date.now() }).catch(() => {});
+        if (!iAmHost) {
+          ch.send({ type: 'broadcast', event: 'msg', payload: { type: 'state-request', fromPlayerId: mid } });
+        } else if (raw) {
+          const ordered = [...get().players].sort((a, b) => a.seat_index - b.seat_index);
+          for (const op of ordered) {
+            ch.send({
+              type: 'broadcast',
+              event: 'msg',
+              payload: { type: 'game-state-update', gameState: serializeGameState(raw, op.player_id), toPlayerId: op.player_id },
+            });
+          }
+        }
+      };
+      document.addEventListener('visibilitychange', visibilityHandler);
+    }
+
     set({ channel, myPlayerId });
   },
 
   unsubscribeRoom: () => {
     const { channel } = get();
     if (channel) channel.unsubscribe();
+    if (visibilityHandler && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', visibilityHandler);
+      visibilityHandler = null;
+    }
     // Clear all pending grace timers (host's per-player + client-side
     // host-grace).
     for (const t of offlineTimers.values()) clearTimeout(t);
