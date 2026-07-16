@@ -90,7 +90,10 @@ export default function LobbyPage() {
           >
             {s.backHome}
           </button>
-          <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">{s.title}</h1>
+          <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">
+            {s.title}
+            <span className="ml-2 align-baseline text-2xl font-semibold text-[var(--psy-accent)] sm:ml-3 sm:text-3xl">· Big Five</span>
+          </h1>
           <p className="text-base leading-7 text-[var(--psy-ink-soft)]">{s.subtitle}</p>
         </div>
 
