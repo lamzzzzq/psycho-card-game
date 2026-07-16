@@ -33,7 +33,7 @@ const DIMS = [
   { name: 'Neuroticism 神經質', hex: '#f87171' },
 ];
 
-function Swatch({ name, hex, dark }: { name: string; hex: string; dark?: boolean }) {
+function Swatch({ name, hex }: { name: string; hex: string }) {
   return (
     <div className="overflow-hidden rounded-[0.9rem] border border-[var(--psy-border)] bg-[var(--psy-card-content)]">
       <div className="h-14" style={{ backgroundColor: hex }} />
@@ -62,6 +62,9 @@ const INK = '#3a3020';
 const GOLD = '#c39a52';
 const GOLD_STRONG = '#9a7448';
 const CREAM = '#fdf8f1';
+const DIM_COLORS = ['#c084fc', '#60a5fa', '#facc15', '#4ade80', '#f87171'] as const;
+const SAGE = '#6f8f55';
+const VIOLET = '#a78bfa';
 
 // 五维雷达小图形（麻将/塔罗内部通用）
 function RadarGlyph({ cx = 60, cy = 62, r = 20 }: { cx?: number; cy?: number; r?: number }) {
@@ -93,12 +96,139 @@ function CompassGlyph({ cx = 60, cy = 60 }: { cx?: number; cy?: number }) {
   );
 }
 
+function HeartMindGlyph({ cx = 60, cy = 61 }: { cx?: number; cy?: number }) {
+  return (
+    <g>
+      <text x={cx} y={cy + 13} textAnchor="middle" fontSize="35" fontWeight="760" fill={GOLD_STRONG}>心</text>
+      {[-90, -18, 54, 126, 198].map((a, i) => {
+        const rad = (a * Math.PI) / 180;
+        return <circle key={i} cx={cx + 29 * Math.cos(rad)} cy={cy + 29 * Math.sin(rad)} r="2.2" fill={GOLD} opacity="0.86" />;
+      })}
+      <circle cx={cx} cy={cy} r="30" fill="none" stroke={GOLD} strokeWidth="1.2" opacity="0.35" />
+    </g>
+  );
+}
+
+function ColorHeartMindGlyph({ cx = 60, cy = 61 }: { cx?: number; cy?: number }) {
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r="31" fill="rgba(195,154,82,0.08)" stroke={GOLD} strokeWidth="1.1" opacity="0.8" />
+      {DIM_COLORS.map((color, i) => {
+        const rad = ((-90 + i * 72) * Math.PI) / 180;
+        return (
+          <g key={color}>
+            <line x1={cx} y1={cy} x2={cx + 30 * Math.cos(rad)} y2={cy + 30 * Math.sin(rad)} stroke={color} strokeWidth="1.2" opacity="0.48" />
+            <circle cx={cx + 30 * Math.cos(rad)} cy={cy + 30 * Math.sin(rad)} r="2.8" fill={color} />
+          </g>
+        );
+      })}
+      <text x={cx} y={cy + 13} textAnchor="middle" fontSize="34" fontWeight="780" fill={INK}>心</text>
+    </g>
+  );
+}
+
+function ColorRadarGlyph({ cx = 60, cy = 62, r = 22 }: { cx?: number; cy?: number; r?: number }) {
+  const ring = DIM_COLORS.map((color, i) => {
+    const a1 = (-90 + i * 72) * (Math.PI / 180);
+    const a2 = (-90 + (i + 1) * 72) * (Math.PI / 180);
+    return (
+      <path
+        key={color}
+        d={`M${cx} ${cy} L${(cx + r * Math.cos(a1)).toFixed(1)} ${(cy + r * Math.sin(a1)).toFixed(1)} A${r} ${r} 0 0 1 ${(cx + r * Math.cos(a2)).toFixed(1)} ${(cy + r * Math.sin(a2)).toFixed(1)} Z`}
+        fill={color}
+        opacity="0.2"
+      />
+    );
+  });
+  return (
+    <g>
+      {ring}
+      <RadarGlyph cx={cx} cy={cy} r={r * 0.76} />
+    </g>
+  );
+}
+
+function RadarCompassGlyph({ cx = 60, cy = 60 }: { cx?: number; cy?: number }) {
+  return (
+    <g>
+      <CompassGlyph cx={cx} cy={cy} />
+      <circle cx={cx} cy={cy} r="25" fill="none" stroke={GOLD} strokeWidth="1.2" opacity="0.46" />
+      <RadarGlyph cx={cx} cy={cy} r={15} />
+    </g>
+  );
+}
+
+function BloomGlyph({ cx = 60, cy = 60 }: { cx?: number; cy?: number }) {
+  return (
+    <g>
+      {DIM_COLORS.map((color, i) => {
+        const rad = ((-90 + i * 72) * Math.PI) / 180;
+        return (
+          <ellipse
+            key={color}
+            cx={cx + 12 * Math.cos(rad)}
+            cy={cy + 12 * Math.sin(rad)}
+            rx="10"
+            ry="20"
+            fill={color}
+            opacity="0.72"
+            transform={`rotate(${-90 + i * 72} ${cx + 12 * Math.cos(rad)} ${cy + 12 * Math.sin(rad)})`}
+          />
+        );
+      })}
+      <circle cx={cx} cy={cy} r="12" fill={CREAM} stroke={GOLD_STRONG} strokeWidth="2" />
+      <text x={cx} y={cy + 7} textAnchor="middle" fontSize="18" fontWeight="760" fill={INK}>心</text>
+    </g>
+  );
+}
+
+function ColorSealGlyph({ cx = 60, cy = 60 }: { cx?: number; cy?: number }) {
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r="39" fill="#fff8eb" stroke={INK} strokeWidth="3" />
+      <circle cx={cx} cy={cy} r="32" fill="none" stroke={GOLD} strokeWidth="1.5" opacity="0.8" />
+      {DIM_COLORS.map((color, i) => {
+        const rad = ((-90 + i * 72) * Math.PI) / 180;
+        return <circle key={color} cx={cx + 32 * Math.cos(rad)} cy={cy + 32 * Math.sin(rad)} r="4" fill={color} stroke={CREAM} strokeWidth="1" />;
+      })}
+      <text x={cx} y={cy + 9} textAnchor="middle" fontSize="27" fontWeight="780" fill={GOLD_STRONG}>心</text>
+    </g>
+  );
+}
+
 /* 麻将牌基底：圆角矩形 + 内金线 */
 function TileBase({ children, x = 30, rot = 0 }: { children?: ReactNode; x?: number; rot?: number }) {
   return (
     <g transform={rot ? `rotate(${rot} 60 60)` : undefined}>
       <rect x={x} y="12" width="60" height="96" rx="13" fill={CREAM} stroke={INK} strokeWidth="3.4" />
       <rect x={x + 6} y="18" width="48" height="84" rx="8" fill="none" stroke={GOLD} strokeWidth="1.4" opacity="0.7" />
+      {children}
+    </g>
+  );
+}
+
+function ColorTileBase({ children, x = 30, rot = 0, fill = '#fff8eb', rail = GOLD, stroke = INK }: { children?: ReactNode; x?: number; rot?: number; fill?: string; rail?: string; stroke?: string }) {
+  return (
+    <g transform={rot ? `rotate(${rot} 60 60)` : undefined}>
+      <rect x={x} y="12" width="60" height="96" rx="13" fill={fill} stroke={stroke} strokeWidth="3.2" />
+      <rect x={x + 5.5} y="17.5" width="49" height="85" rx="8.5" fill="none" stroke={rail} strokeWidth="1.6" opacity="0.82" />
+      <path d={`M${x + 9} 24 H${x + 51}`} stroke={rail} strokeWidth="2" opacity="0.38" />
+      {children}
+    </g>
+  );
+}
+
+function SplitColorTile({ children }: { children?: ReactNode }) {
+  return (
+    <g>
+      <clipPath id="splitTileClip"><rect x="30" y="12" width="60" height="96" rx="13" /></clipPath>
+      <g clipPath="url(#splitTileClip)">
+        <rect x="30" y="12" width="60" height="96" fill="#fff8eb" />
+        <rect x="30" y="12" width="30" height="96" fill="rgba(111,143,85,0.18)" />
+        <rect x="60" y="12" width="30" height="96" fill="rgba(201,96,63,0.14)" />
+      </g>
+      <rect x="30" y="12" width="60" height="96" rx="13" fill="none" stroke={INK} strokeWidth="3.2" />
+      <rect x="36" y="18" width="48" height="84" rx="8" fill="none" stroke={GOLD} strokeWidth="1.5" opacity="0.72" />
       {children}
     </g>
   );
@@ -126,6 +256,20 @@ function LogoCard({ label, note, children }: { label: string; note: string; chil
         <div className="psy-serif text-sm font-semibold text-[var(--psy-ink)]">{label}</div>
         <div className="mt-0.5 text-[11px] leading-snug text-[var(--psy-muted)]">{note}</div>
       </div>
+    </div>
+  );
+}
+
+function AnalysisCard({ title, tone, children }: { title: string; tone: 'good' | 'risk' | 'pick'; children: ReactNode }) {
+  const toneClass = {
+    good: 'border-[rgba(111,143,85,0.35)] bg-[rgba(111,143,85,0.08)]',
+    risk: 'border-[rgba(201,96,63,0.32)] bg-[rgba(201,96,63,0.07)]',
+    pick: 'border-[rgba(195,154,82,0.4)] bg-[rgba(195,154,82,0.1)]',
+  }[tone];
+  return (
+    <div className={`rounded-[1.2rem] border p-4 ${toneClass}`}>
+      <div className="psy-serif text-base font-semibold text-[var(--psy-ink)]">{title}</div>
+      <div className="mt-2 text-[13px] leading-6 text-[var(--psy-ink-soft)]">{children}</div>
     </div>
   );
 }
@@ -284,12 +428,126 @@ export default function BrandPage() {
           </div>
         </Section>
 
+        {/* Recommendation */}
+        <Section eyebrow="My take · 我的判断" title="主线用「麻将牌」，气质用「心理测评」">
+          <div className="grid gap-3 lg:grid-cols-3">
+            <AnalysisCard title="Claude 方向可取" tone="good">
+              麻将牌、心、五维雷达这些元素是对的：一眼能读出「这是麻将相关的心理游戏」。其中 A3 的对牌关系最好，天然有牌局、对战、胡牌的语义。
+            </AnalysisCard>
+            <AnalysisCard title="Gemini 方向要收敛" tone="risk">
+              牌叠 + 英文字标的商业感更强，但藏青、砖红、毛笔式 MAHJONG 会把品牌推向传统棋牌或餐饮感，和当前温润学术的产品界面不一致；圆形徽章也太密，缩小后不利于 favicon。
+            </AnalysisCard>
+            <AnalysisCard title="建议定版方向" tone="pick">
+              用「两张麻将牌 + 心/五维」作为核心图标，字标保持无衬线、墨色为主、金色点睛。这样既保留老板偏好的麻将风，也避免过度传统化。
+            </AnalysisCard>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <LogoCard label="C1 · 心局（推荐）" note="两张牌代表牌局与对手，心 + 五点代表人格测评">
+              <>
+                <TileBase x={34} rot={-8} />
+                <TileBase x={28} rot={4}>
+                  <HeartMindGlyph cx={58} cy={61} />
+                </TileBase>
+              </>
+            </LogoCard>
+            <LogoCard label="C2 · 人格罗盘" note="麻将牌内放罗盘雷达，强调识人、判断、指向">
+              <TileBase>
+                <RadarCompassGlyph cx={60} cy={61} />
+              </TileBase>
+            </LogoCard>
+            <LogoCard label="C3 · 极简心牌" note="适合 favicon / app icon，缩小后仍能识别">
+              <TileBase>
+                <HeartMindGlyph cx={60} cy={61} />
+              </TileBase>
+            </LogoCard>
+          </div>
+
+          <div className="rounded-[1.2rem] border border-[var(--psy-border)] bg-[var(--psy-card-content)] p-4">
+            <div className="psy-serif text-base font-semibold text-[var(--psy-ink)]">落地优先级</div>
+            <p className="mt-2 text-[13px] leading-6 text-[var(--psy-ink-soft)]">
+              第一版先推进 <strong>C1 心局</strong>：它比单张心牌更有游戏感，比圆形徽章更轻，比毛笔字标更贴近当前产品。视觉上只保留三件事：<strong>牌形、心字、五维点</strong>。罗盘可以作为二级图形，不建议放进主 logo 的第一版。
+            </p>
+          </div>
+        </Section>
+
+        {/* Color variants */}
+        <Section eyebrow="Color Logo · 彩色尝试" title="可以加颜色，但要小面积、有理由">
+          <p className="text-[13px] leading-6 text-[var(--psy-muted)]">
+            现在的粗框 + 白底确实偏保守。更适合本网页的做法不是换成强烈主色，而是把五维人格色放到牌面小符号、内衬或边线里：既跟测评系统连上，也不会破坏暖纸米白的整体气质。
+          </p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <LogoCard label="D1 · 彩色心局（推荐）" note="保留 C1 架构，五维色作为心字周围的测评点">
+              <>
+                <ColorTileBase x={35} rot={-8} fill="#f4ead3" rail={SAGE} stroke="#3f3424" />
+                <ColorTileBase x={27} rot={4} fill="#fff8eb" rail={GOLD_STRONG}>
+                  <ColorHeartMindGlyph cx={57} cy={61} />
+                </ColorTileBase>
+              </>
+            </LogoCard>
+            <LogoCard label="D2 · 五维牌面" note="牌面内放彩色雷达，直接把人格画像变成 logo 记忆点">
+              <ColorTileBase fill="#fff8eb" rail={VIOLET}>
+                <ColorRadarGlyph cx={60} cy={62} r={25} />
+              </ColorTileBase>
+            </LogoCard>
+            <LogoCard label="D3 · 双性格牌" note="左右微染色，表达人与人/自我两面，不用大面积彩虹">
+              <SplitColorTile>
+                <ColorHeartMindGlyph cx={60} cy={62} />
+              </SplitColorTile>
+            </LogoCard>
+          </div>
+          <div className="rounded-[1.2rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-4">
+            <div className="psy-serif text-base font-semibold text-[var(--psy-ink)]">颜色建议</div>
+            <p className="mt-2 text-[13px] leading-6 text-[var(--psy-ink-soft)]">
+              如果要定一个彩色版，我会选 <strong>D1 彩色心局</strong>：框架还是稳定的麻将牌，颜色只负责说明「人格五维」。D2 更适合测评页或报告页，D3 更有概念但识别门槛稍高。
+            </p>
+          </div>
+        </Section>
+
+        {/* Explorations */}
+        <Section eyebrow="More styles · 新风格" title="再开几条不同路线">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <LogoCard label="E1 · 徽章印章" note="更像课程/研究项目标识，适合报告封面">
+              <ColorSealGlyph cx={60} cy={60} />
+            </LogoCard>
+            <LogoCard label="E2 · 五瓣心花" note="五维色组成花/人格结构，游戏感较弱但亲和">
+              <BloomGlyph cx={60} cy={60} />
+            </LogoCard>
+            <LogoCard label="E3 · 牌桌视角" note="四张牌围成桌面，中间是心，强调多人牌局">
+              <>
+                {[0, 90, 180, 270].map((rot, i) => (
+                  <g key={rot} transform={`rotate(${rot} 60 60)`}>
+                    <rect x="50" y="14" width="20" height="38" rx="5" fill={i % 2 ? '#fff4df' : '#f1e5cb'} stroke={INK} strokeWidth="2" />
+                    <rect x="53" y="18" width="14" height="30" rx="3" fill="none" stroke={DIM_COLORS[i]} strokeWidth="1.2" opacity="0.85" />
+                  </g>
+                ))}
+                <circle cx="60" cy="60" r="19" fill={CREAM} stroke={GOLD_STRONG} strokeWidth="2.2" />
+                <text x="60" y="68" textAnchor="middle" fontSize="22" fontWeight="780" fill={INK}>心</text>
+              </>
+            </LogoCard>
+            <LogoCard label="E4 · 学术标签" note="少图形、重字标，适合网页页眉和课件标题">
+              <>
+                <rect x="16" y="32" width="88" height="56" rx="14" fill="#fff8eb" stroke={INK} strokeWidth="3" />
+                <rect x="23" y="39" width="74" height="42" rx="9" fill="none" stroke={GOLD} strokeWidth="1.4" />
+                <text x="60" y="59" textAnchor="middle" fontSize="18" fontWeight="780" fill={INK}>PM</text>
+                <g transform="translate(38 68)">
+                  {DIM_COLORS.map((color, i) => <circle key={color} cx={i * 11} cy="0" r="3" fill={color} />)}
+                </g>
+              </>
+            </LogoCard>
+          </div>
+          <p className="text-[13px] leading-6 text-[var(--psy-muted)]">
+            这几条不是都适合做主 logo：E1 偏正式，E2 偏亲和，E3 最游戏化，E4 最克制。它们可以作为分支参考，主路线仍建议从 D1 / C1 继续打磨。
+          </p>
+        </Section>
+
         {/* Wordmark */}
         <Section eyebrow="Lockup · 组合" title="图标 + 字标">
           <div className="psy-panel psy-etched flex flex-col items-center gap-4 rounded-[1.4rem] p-6 sm:flex-row sm:justify-center sm:gap-6">
             <svg viewBox="0 0 120 120" className="h-20 w-20 shrink-0">
-              <TileBase>
-                <text x="60" y="74" textAnchor="middle" fontSize="40" fontWeight="700" fill={GOLD_STRONG}>心</text>
+              <TileBase x={34} rot={-8} />
+              <TileBase x={28} rot={4}>
+                <HeartMindGlyph cx={58} cy={61} />
               </TileBase>
             </svg>
             <div className="text-center sm:text-left">
@@ -298,7 +556,7 @@ export default function BrandPage() {
             </div>
           </div>
           <p className="text-[13px] leading-6 text-[var(--psy-muted)]">
-            落地建议：网页顶栏 / favicon 用<strong>纯图标</strong>（避免与页面标题文字重复）；完整「图标+字标」留给启动页、宣传图、打印物。字标用站内干净字体，别用毛笔体；配色只用奶油 / 金 / 墨，避免藏青+砖红那种与现有系统冲突的组合。
+            落地建议：网页顶栏 / favicon 用<strong>纯图标</strong>（避免与页面标题文字重复）；完整「图标+字标」留给启动页、宣传图、打印物。字标用站内干净字体，别用毛笔体；配色以奶油 / 金 / 墨为底，五维色只做测评点或细节，不做大面积主色。
           </p>
         </Section>
 
@@ -308,21 +566,22 @@ export default function BrandPage() {
             <div className="rounded-[1.2rem] border border-[rgba(111,143,85,0.35)] bg-[rgba(111,143,85,0.08)] p-4">
               <div className="psy-serif text-sm font-semibold text-[var(--psy-success)]">✓ Do</div>
               <ul className="mt-2 space-y-1.5 text-[13px] leading-6 text-[var(--psy-ink-soft)]">
-                <li>· 只用奶油 / 金 / 墨的核心配色</li>
+                <li>· 以奶油 / 金 / 墨为底，允许五维色小面积点缀</li>
                 <li>· 图标以麻将牌或塔罗卡框为主体</li>
                 <li>· 嵌入心理符号：心 / 五维雷达 / 罗盘</li>
                 <li>· wordmark 用干净无衬线字体</li>
                 <li>· 顶栏 / favicon 用纯图标版</li>
+                <li>· 主 logo 优先测试「两张牌 + 心 + 五维点」或彩色 D1</li>
               </ul>
             </div>
             <div className="rounded-[1.2rem] border border-[rgba(201,96,63,0.35)] bg-[rgba(201,96,63,0.08)] p-4">
-              <div className="psy-serif text-sm font-semibold text-[var(--psy-danger)]">✕ Don't</div>
+              <div className="psy-serif text-sm font-semibold text-[var(--psy-danger)]">✕ Don&apos;t</div>
               <ul className="mt-2 space-y-1.5 text-[13px] leading-6 text-[var(--psy-ink-soft)]">
                 <li>· 用毛笔 / 书法手写体做 MAHJONG</li>
                 <li>· 用藏青 + 砖红等高饱和主色</li>
                 <li>· 图标里再放一遍品牌全称文字</li>
                 <li>· 过密的圆形徽章（缩到 favicon 会糊）</li>
-                <li>· 五维专属色当品牌主色（只用于图表）</li>
+                <li>· 五维专属色大面积铺满整张牌</li>
               </ul>
             </div>
           </div>
