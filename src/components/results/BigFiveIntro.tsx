@@ -37,12 +37,12 @@ export function BigFiveIntro({ locale }: { locale: Locale }) {
         )}
       </p>
 
-      {/* 五维表格 */}
+      {/* 五维表格：移动端上下堆叠(名称块在上、说明在下)，桌面端 2 列 */}
       <div className="overflow-hidden rounded-[1.1rem] border border-[var(--psy-border)] text-[14px]">
         {DIMS.map((d, i) => (
-          <div key={d.key} className={`flex ${i > 0 ? 'border-t border-[var(--psy-border)]' : ''}`}>
-            <div className="flex w-[8.5rem] shrink-0 items-start gap-2 border-r border-[var(--psy-border)] bg-[var(--psy-accent-soft)] px-3 py-3 sm:w-64 sm:px-4">
-              <span className="mt-[6px] h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
+          <div key={d.key} className={`flex flex-col sm:flex-row ${i > 0 ? 'border-t border-[var(--psy-border)]' : ''}`}>
+            <div className="flex items-center gap-2 border-b border-[var(--psy-border)] bg-[var(--psy-accent-soft)] px-3 py-2.5 sm:w-64 sm:shrink-0 sm:items-start sm:border-b-0 sm:border-r sm:px-4 sm:py-3">
+              <span className="h-2 w-2 shrink-0 rounded-full sm:mt-[6px]" style={{ backgroundColor: d.color }} />
               <span className="psy-serif font-semibold leading-5 text-[var(--psy-ink)]">
                 {isEn ? d.en : (
                   <>
@@ -52,7 +52,7 @@ export function BigFiveIntro({ locale }: { locale: Locale }) {
                 )}
               </span>
             </div>
-            <div className="flex-1 px-3 py-3 leading-6 text-[var(--psy-ink-soft)] sm:px-4">
+            <div className="flex-1 px-3 py-2.5 leading-6 text-[var(--psy-ink-soft)] sm:px-4 sm:py-3">
               {isEn ? d.descEn : d.descZh}
             </div>
           </div>
