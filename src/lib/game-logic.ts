@@ -281,9 +281,13 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
   const targets = getTargetCounts(player.bigFiveScores);
   const declaredDims = getDeclaredDimensions(player);
 
-  // Count personality cards by dimension in hand
+  // Count personality cards by dimension across hand + the freshly-drawn card.
+  // ⚠️ drawnCard 与 hand 分开存：自摸碰(selfPongCard)的 pool 含 drawnCard，
+  // attemptHu 必须一致——否则「补齐的最后一张正好是刚抽到的那张」时，胡会漏数
+  // 它、误判为「不够张数」而失败（自摸碰却能成，玩家困惑）。见 bug 报告。
+  const pool: GameCard[] = [...player.hand, ...(state.drawnCard ? [state.drawnCard] : [])];
   const handByDim: Record<Dimension, PersonalityCard[]> = { O: [], C: [], E: [], A: [], N: [] };
-  for (const card of player.hand) {
+  for (const card of pool) {
     if (isPersonalityCard(card)) {
       handByDim[card.dimension].push(card);
     }
@@ -307,7 +311,8 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
       cards.forEach((c) => usedCardIds.add(c.id));
     }
 
-    const newHand = player.hand.filter((c) => !usedCardIds.has(c.id));
+    // 从 pool(含 drawnCard) 里过滤，避免刚抽到的牌被消耗后仍残留
+    const newHand = pool.filter((c) => !usedCardIds.has(c.id));
     const newPlayers = state.players.map((p, i) =>
       i === playerIndex ? { ...p, hand: newHand, declaredSets: newDeclaredSets } : p
     );
@@ -322,6 +327,7 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
     return {
       ...state,
       players: newPlayers,
+      drawnCard: null,
       actionLog: [...state.actionLog, action],
       phase: 'game-over',
       winner: player.id,
