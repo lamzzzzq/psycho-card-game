@@ -33,46 +33,39 @@ const DIMS = [
   { name: 'Agreeableness 宜人性', hex: '#4ade80' },
   { name: 'Neuroticism 神經質', hex: '#f87171' },
 ];
-const LOGO_ELEMENTS = [
-  { name: 'Ψ · Psi', desc: '心理学 / 心智的通用符号，语言无关，适合中英和未来多语言版本。' },
-  { name: '鲁宾花瓶', desc: '双侧脸与花瓶的错视，呼应「读懂自己，也读懂别人」的玩法核心。' },
-  { name: '麻将牌身', desc: '圆角牌框连接游戏本体，也能直接复用现有卡牌的象牙面与金边。' },
-  { name: '圆形轨道', desc: '表达人格维度与测评结构，同时避免把 logo 锁死在固定五维。' },
-  { name: '神经节点', desc: '保留科学/测评感，但只做少量点线，避免变成复杂脑图。' },
-];
 const BRAND_LOGO_RULES = [
   { name: '唯一主 Logo', use: '品牌识别', desc: '只指定一个：Psi Tile。它代表整款产品，不按页面或功能变化。' },
   { name: '默认带底板', use: '层次规范', desc: '主 Logo 不建议裸放在米白网页上；默认使用暖牌底板，保证牌框、留白和页面背景分开。' },
   { name: 'Logo Lockup', use: '完整品牌露出', desc: '带底板的 Psi Tile + 人格麻將 / Personalities Mahjong 字标，用在首页首屏、页眉、海报和课件封面。' },
   { name: 'Logo Mark', use: '小尺寸品牌露出', desc: 'favicon、导航栏、App icon 优先用带底板版本；裸 PNG 只作为源标记和特殊场景备用。' },
-  { name: '不要混用', use: '品牌一致性', desc: 'Psi Vase、Psi Orbit、节点树等不能替代主 Logo，只能作为功能 icon 或辅助插图。' },
+  { name: '备选不混用', use: '品牌一致性', desc: '其他图形可以作为 Logo 备选参与评审，但一旦选定主 Logo，网页各处只使用同一个主 Logo。' },
 ];
 const LOGO_BACKPLATES = [
   { id: 'warm-tile', src: '/brand/generated/logo-backplates/logo-backplate-warm-tile.png', title: '推荐：暖牌底板', desc: '最适合当前网页。暖砂底 + 象牙内层 + 金边，让 Logo 从米白背景里浮出来。' },
   { id: 'ivory-card', src: '/brand/generated/logo-backplates/logo-backplate-ivory-card.png', title: '轻量：象牙卡底', desc: '更克制，适合导航栏、规则页角标和正文附近的小尺寸露出。' },
   { id: 'terracotta', src: '/brand/generated/logo-backplates/logo-backplate-terracotta.png', title: '强调：陶土底', desc: '更醒目，适合活动入口、分享图或需要强品牌识别的按钮区域。' },
 ];
-const ICON_SYSTEM = [
-  { id: 'psi-vase-B', src: '/brand/generated/marks-tight/psi-vase-B.png', name: '自我/他人读取', use: '加载页 / 分享图 / 规则页导语', desc: '鲁宾花瓶适合讲“读懂自己，也读懂别人”的概念，但细节多，不作为主 Logo。' },
-  { id: 'alt-directions-C', src: '/brand/generated/marks-tight/alt-directions-C.png', name: '人格维度 / 测评结构', use: '测评页 / 结果页 / 空状态', desc: '圆形轨道表达维度与结构，适合功能状态，不承担品牌唯一识别。' },
-  { id: 'alt-directions-E', src: '/brand/generated/marks-tight/alt-directions-E.png', name: '心理网络 / 节点', use: '分析页 / 数据解释 / 轻动效', desc: '保留一点科学感，用于解释心理线索，避免放到 favicon 或页眉。' },
-  { id: 'psi-vase-E', src: '/brand/generated/marks-tight/psi-vase-E.png', name: '牌局分享 / 头像轨道', use: '结算卡片 / 分享海报', desc: '适合大图场景，强调人物与维度关系，不作为导航 logo。' },
-  { id: 'alt-directions-G', src: '/brand/generated/marks-tight/alt-directions-G.png', name: '低调角标', use: 'Footer / 规则页角标', desc: '只作弱品牌提示，不能替代完整主 Logo。' },
+const MAIN_LOGO_ASSETS = [
+  { id: 'logo-backplate-warm-tile', src: '/brand/generated/logo-backplates/logo-backplate-warm-tile.png', label: '默认网页 Logo' },
+  { id: 'logo-backplate-ivory-card', src: '/brand/generated/logo-backplates/logo-backplate-ivory-card.png', label: '小尺寸 / 导航轻量版' },
+  { id: 'logo-backplate-terracotta', src: '/brand/generated/logo-backplates/logo-backplate-terracotta.png', label: '强调场景版' },
+  { id: 'alt-directions-A', src: '/brand/generated/marks-tight/alt-directions-A.png', label: '裸标记源文件' },
 ];
-const PNG_ASSET_LIBRARY = [
-  { id: 'alt-directions-A', src: '/brand/generated/marks-tight/alt-directions-A.png', label: 'Logo：Psi Tile 主标' },
-  { id: 'logo-backplate-warm-tile', src: '/brand/generated/logo-backplates/logo-backplate-warm-tile.png', label: 'Logo：推荐底板版' },
-  { id: 'logo-backplate-ivory-card', src: '/brand/generated/logo-backplates/logo-backplate-ivory-card.png', label: 'Logo：轻量底板版' },
-  { id: 'logo-backplate-terracotta', src: '/brand/generated/logo-backplates/logo-backplate-terracotta.png', label: 'Logo：强调底板版' },
-  { id: 'alt-directions-B', src: '/brand/generated/marks-tight/alt-directions-B.png', label: 'Icon 候选：花瓶负形' },
-  { id: 'alt-directions-C', src: '/brand/generated/marks-tight/alt-directions-C.png', label: 'Icon：轨道系统' },
-  { id: 'alt-directions-D', src: '/brand/generated/marks-tight/alt-directions-D.png', label: 'Icon 候选：双页折叠' },
-  { id: 'alt-directions-E', src: '/brand/generated/marks-tight/alt-directions-E.png', label: 'Icon：神经节点' },
-  { id: 'alt-directions-I', src: '/brand/generated/marks-tight/alt-directions-I.png', label: '旧候选：App icon 外框' },
-  { id: 'psi-vase-A', src: '/brand/generated/marks-tight/psi-vase-A.png', label: 'Icon 候选：红金花瓶' },
-  { id: 'psi-vase-B', src: '/brand/generated/marks-tight/psi-vase-B.png', label: 'Icon：圆章花瓶' },
-  { id: 'psi-vase-C', src: '/brand/generated/marks-tight/psi-vase-C.png', label: 'Icon 候选：卡面花瓶' },
-  { id: 'psi-vase-E', src: '/brand/generated/marks-tight/psi-vase-E.png', label: 'Icon：头像轨道' },
+const LOGO_ALTERNATIVES = [
+  { id: 'psi-vase-B', src: '/brand/generated/marks-tight/psi-vase-B.png', title: 'Psi Vase 圆章版', note: '更强调自我/他人的双重读取，适合继续评审为主 Logo 备选。' },
+  { id: 'alt-directions-C', src: '/brand/generated/marks-tight/alt-directions-C.png', title: 'Psi Orbit 轨道版', note: '更偏心理测评和人格维度，识别感轻，适合作为备选方向。' },
+  { id: 'alt-directions-E', src: '/brand/generated/marks-tight/alt-directions-E.png', title: 'Psi Network 节点版', note: '更有科学/研究感，但作为主 Logo 会比 Psi Tile 复杂。' },
+  { id: 'alt-directions-B', src: '/brand/generated/marks-tight/alt-directions-B.png', title: 'Rubin Vase 负形版', note: '概念感强，但与麻将游戏本体的连接弱，需要继续精修。' },
+  { id: 'psi-vase-C', src: '/brand/generated/marks-tight/psi-vase-C.png', title: 'Psi Card 卡面版', note: '保留卡牌边框，和产品界面更接近，可作为简化备选。' },
+  { id: 'alt-directions-I', src: '/brand/generated/marks-tight/alt-directions-I.png', title: 'Rounded App 版', note: '更像应用图标候选，不建议直接作为正式主 Logo。' },
+];
+const MAIN_LOGO_PLACEMENTS = [
+  { name: 'Homepage 首屏', use: '完整品牌露出', desc: '使用暖牌底板 Logo + 人格麻將 / Personalities Mahjong 字标，是最完整的品牌出现方式。' },
+  { name: 'Top Navigation', use: '全站导航', desc: '使用轻量象牙底板 Logo，放在品牌名左侧；所有一级页面保持一致。' },
+  { name: 'favicon / Browser tab', use: '浏览器标签', desc: '使用轻量底板版本，避免透明裸标记在浅色浏览器背景上没有边界。' },
+  { name: 'PWA / App icon', use: '安装图标', desc: '使用暖牌底板版本导出 192px / 512px，保留圆角和阴影层次。' },
+  { name: 'Share / OG image', use: '分享预览图', desc: '使用暖牌底板 Logo + 标题与一句说明，确保截图和社交预览里品牌明确。' },
+  { name: 'Slides / Poster', use: '课件与海报', desc: '使用完整锁版；空间不足时只放带底板 Logo，不使用其他图形替代。' },
 ];
 
 function Swatch({ name, hex }: { name: string; hex: string }) {
@@ -614,7 +607,7 @@ export default function BrandPage() {
           <p className="psy-eyebrow text-[10px]">Brand Kit · 品牌规范</p>
           <h1 className="psy-serif text-4xl leading-none text-[var(--psy-ink)] sm:text-5xl">人格麻將 · Personalities Mahjong</h1>
           <p className="max-w-2xl text-base leading-7 text-[var(--psy-ink-soft)]">
-            这份文档整理项目的玩法、概念、目标与视觉配色，并把品牌资产分成两层：<strong className="text-[var(--psy-ink)]">Logo 只有一个</strong>，负责整款产品的品牌识别；<strong className="text-[var(--psy-ink)]">Icon 可以有多个</strong>，负责不同页面、状态和功能的辅助表达。
+            这份文档现在只整理主 Logo 的使用方式：<strong className="text-[var(--psy-ink)]">Logo 只有一个</strong>，负责整款产品的品牌识别；其他图形可以作为 Logo 备选参与评审，但不会被描述成某个页面或功能的小 icon。
           </p>
         </header>
 
@@ -632,9 +625,6 @@ export default function BrandPage() {
                 </p>
                 <p className="mt-2 text-[14px] leading-7 text-[var(--psy-ink-soft)]">
                   但它不能直接透明裸放在当前网页的米白背景上；透明版会显得平、没有层次。网页默认使用 <strong className="text-[var(--psy-ink)]">logo-backplate-warm-tile</strong>：暖砂底板 + 象牙内层 + 金边，把主 Logo 托起来。
-                </p>
-                <p className="mt-2 text-[14px] leading-7 text-[var(--psy-ink-soft)]">
-                  其他鲁宾花瓶、轨道、节点树方案不再叫 logo；它们进入 icon 系统，用在加载、测评、分享、规则说明等具体功能场景。
                 </p>
               </div>
             </div>
@@ -683,29 +673,38 @@ export default function BrandPage() {
           </div>
         </Section>
 
-        {/* Icon system */}
-        <Section eyebrow="Icon System · 功能小图标" title="Icon 可以有多个，但不能替代 Logo">
+        {/* Logo alternatives */}
+        <Section eyebrow="Logo Alternatives · 备选方案" title="其他图形只作为主 Logo 备选">
+          <div className="rounded-[1.25rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-4">
+            <p className="text-[14px] leading-7 text-[var(--psy-ink-soft)]">
+              下面这些不是功能 icon，也不对应某个页面功能。它们只作为「如果不选 Psi Tile，是否有别的主 Logo 方向」的备选方案。最终对外仍然只能选一个主 Logo。
+            </p>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {ICON_SYSTEM.map((icon) => (
-              <LogoProposalCard key={icon.id} label={icon.use} title={icon.name} note={icon.desc}>
-                <LogoPng src={icon.src} alt={`${icon.name} function icon`} />
+            {LOGO_ALTERNATIVES.map((logo) => (
+              <LogoProposalCard key={logo.id} label={logo.id} title={logo.title} note={logo.note}>
+                <LogoPng src={logo.src} alt={`${logo.title} logo alternative`} />
               </LogoProposalCard>
             ))}
           </div>
+        </Section>
+
+        {/* Main logo assets */}
+        <Section eyebrow="Logo Assets · 主 Logo 文件" title="只展示主 Logo 的几种导出形态">
           <div className="rounded-[1.25rem] border border-[var(--psy-border)] bg-[rgba(253,249,240,0.66)] p-4">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <div className="psy-eyebrow text-[9px]">PNG Asset Library · 实际切图资产</div>
-                <div className="psy-serif mt-1 text-lg font-semibold text-[var(--psy-ink)]">切图库：1 个主 Logo + 多个功能 icon 候选</div>
+                <div className="psy-eyebrow text-[9px]">Main Logo PNG · 主 Logo 资产</div>
+                <div className="psy-serif mt-1 text-lg font-semibold text-[var(--psy-ink)]">同一个 Logo，不同底板和尺寸用途</div>
               </div>
-              <div className="text-[12px] text-[var(--psy-muted)]">透明 PNG / 640px 画布 / 网页可直接引用</div>
+              <div className="text-[12px] text-[var(--psy-muted)]">网页默认使用带底板版本</div>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {PNG_ASSET_LIBRARY.map((logo) => (
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {MAIN_LOGO_ASSETS.map((logo) => (
                 <div key={logo.id} className="rounded-[0.95rem] border border-[rgba(150,118,78,0.18)] bg-[var(--psy-card-content)] p-3">
                   <div className="flex h-28 items-center justify-center">
                     <div className="h-24 w-24">
-                      <LogoPng src={logo.src} alt={`${logo.id} PNG brand asset`} />
+                      <LogoPng src={logo.src} alt={`${logo.id} main logo asset`} />
                     </div>
                   </div>
                   <div className="mt-2 truncate text-[11px] font-semibold text-[var(--psy-ink)]">{logo.id}</div>
@@ -717,21 +716,22 @@ export default function BrandPage() {
         </Section>
 
         {/* Real usage examples */}
-        <Section eyebrow="Usage · 真实网页案例" title="Logo 和 Icon 在网页里如何分工">
+        <Section eyebrow="Usage · 主 Logo 出现位置" title="只设计主 Logo 在哪里出现">
           <div className="grid gap-3 lg:grid-cols-3">
-            <UsageMockup title="Logo：favicon / 浏览器标签" note="品牌识别场景，只用带底板的 Psi Tile 主 Logo。">
-              <div className="flex items-center gap-3 rounded-[0.75rem] border border-[var(--psy-border)] bg-[#fffaf2] px-3 py-2">
-                <div className="h-6 w-6 rounded-[0.45rem] bg-[var(--psy-card-content)] p-0.5">
-                  <LogoPng src="/brand/generated/logo-backplates/logo-backplate-ivory-card.png" alt="favicon logo preview with backplate" />
+            <UsageMockup title="Homepage 首屏" note="完整品牌露出：Logo + 中英文品牌名 + 一句说明。">
+              <div className="rounded-[1rem] border border-[var(--psy-border)] bg-[#fffaf2] p-5">
+                <div className="mx-auto h-20 w-20">
+                  <LogoPng src="/brand/generated/logo-backplates/logo-backplate-warm-tile.png" alt="homepage hero logo preview" />
                 </div>
-                <div className="min-w-0 flex-1 truncate text-[12px] font-medium text-[var(--psy-ink)]">人格麻將 · Personalities Mahjong</div>
+                <div className="psy-serif mt-3 text-center text-xl font-semibold text-[var(--psy-ink)]">人格麻將</div>
+                <div className="text-center text-[11px] uppercase tracking-[0.18em] text-[var(--psy-muted)]">Personalities Mahjong</div>
               </div>
             </UsageMockup>
-            <UsageMockup title="Logo：导航栏 / 页首锁版" note="产品入口和一级页面保持同一个 Logo。">
+            <UsageMockup title="Top Navigation" note="全站页眉：轻量底板 Logo + 品牌名。">
               <div className="flex items-center justify-between rounded-[0.9rem] border border-[var(--psy-border)] bg-[#fffaf2] px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 shrink-0">
-                    <LogoPng src="/brand/generated/logo-backplates/logo-backplate-ivory-card.png" alt="navbar logo preview with backplate" />
+                    <LogoPng src="/brand/generated/logo-backplates/logo-backplate-ivory-card.png" alt="navbar main logo preview" />
                   </div>
                   <div>
                     <div className="psy-serif text-base font-semibold text-[var(--psy-ink)]">人格麻將</div>
@@ -741,53 +741,59 @@ export default function BrandPage() {
                 <span className="rounded-full bg-[var(--psy-accent)] px-3 py-1 text-[11px] font-semibold text-[#fff9f0]">开始</span>
               </div>
             </UsageMockup>
-            <UsageMockup title="Logo：PWA / App icon" note="主 Logo 的应用版本，不是第二个 Logo。">
+            <UsageMockup title="favicon / Browser tab" note="浏览器小尺寸：只用轻量底板版。">
+              <div className="flex items-center gap-3 rounded-[0.75rem] border border-[var(--psy-border)] bg-[#fffaf2] px-3 py-2">
+                <div className="h-6 w-6 rounded-[0.45rem] bg-[var(--psy-card-content)] p-0.5">
+                  <LogoPng src="/brand/generated/logo-backplates/logo-backplate-ivory-card.png" alt="favicon main logo preview" />
+                </div>
+                <div className="min-w-0 flex-1 truncate text-[12px] font-medium text-[var(--psy-ink)]">人格麻將 · Personalities Mahjong</div>
+              </div>
+            </UsageMockup>
+            <UsageMockup title="PWA / App icon" note="安装图标：暖牌底板版，导出 192px / 512px。">
               <div className="flex items-center justify-center">
                 <div className="h-24 w-24">
-                  <LogoPng src="/brand/generated/logo-backplates/logo-backplate-warm-tile.png" alt="PWA app icon logo preview with warm backplate" />
+                  <LogoPng src="/brand/generated/logo-backplates/logo-backplate-warm-tile.png" alt="PWA app icon main logo preview" />
                 </div>
               </div>
             </UsageMockup>
-            <UsageMockup title="Icon：加载页 / 品牌一刻" note="功能氛围图标，可以用 Psi Vase 讲故事。">
-              <div className="flex h-28 flex-col items-center justify-center gap-2">
-                <div className="h-16 w-16">
-                  <LogoPng src="/brand/generated/marks-tight/psi-vase-B.png" alt="loading emblem logo preview" />
-                </div>
-                <div className="text-[12px] font-medium text-[var(--psy-muted)]">正在洗牌并读取人格线索</div>
-              </div>
-            </UsageMockup>
-            <UsageMockup title="Icon：结算分享图" note="分享内容里的辅助 icon，不替代页眉 Logo。">
+            <UsageMockup title="Share / OG image" note="分享预览：主 Logo + 标题 + 一句产品说明。">
               <div className="rounded-[0.9rem] border border-[var(--psy-border)] bg-[#fffaf2] p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-14 w-14">
-                    <LogoPng src="/brand/generated/marks-tight/psi-vase-E.png" alt="share card logo preview" />
+                  <div className="h-14 w-14 shrink-0">
+                    <LogoPng src="/brand/generated/logo-backplates/logo-backplate-warm-tile.png" alt="share preview main logo" />
                   </div>
                   <div>
-                    <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">人格牌局完成</div>
-                    <div className="text-[11px] text-[var(--psy-muted)]">OCEAN profile · Mahjong reading</div>
+                    <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">人格麻將</div>
+                    <div className="text-[11px] text-[var(--psy-muted)]">用一局麻将读懂人格线索</div>
                   </div>
-                </div>
-                <div className="mt-3 flex gap-1">
-                  {DIM_COLORS.map((color) => <span key={color} className="h-2 flex-1 rounded-full" style={{ backgroundColor: color }} />)}
                 </div>
               </div>
             </UsageMockup>
-            <UsageMockup title="Icon：Footer / 规则页角标" note="低调角标是辅助 icon，不是主 Logo。">
-              <div className="flex items-center justify-between border-t border-[var(--psy-border)] pt-4">
-                <div className="flex items-center gap-2 text-[12px] text-[var(--psy-muted)]">
-                  <div className="h-7 w-7 opacity-75">
-                    <LogoPng src="/brand/generated/marks-tight/alt-directions-G.png" alt="footer logo preview" />
-                  </div>
-                  <span>人格麻將 · 香港理工大學</span>
+            <UsageMockup title="Slides / Poster" note="课件和海报：完整锁版，空间不足时只保留带底板 Logo。">
+              <div className="rounded-[0.9rem] border border-[var(--psy-border)] bg-[#fffaf2] p-4">
+                <div className="mx-auto h-16 w-16">
+                  <LogoPng src="/brand/generated/logo-backplates/logo-backplate-warm-tile.png" alt="slides poster main logo" />
                 </div>
-                <span className="text-[11px] text-[var(--psy-muted)]">Brand mark v0</span>
+                <div className="mt-3 text-center">
+                  <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">Personalities Mahjong</div>
+                  <div>
+                    <span className="text-[11px] text-[var(--psy-muted)]">Course material / Poster header</span>
+                  </div>
+                </div>
               </div>
             </UsageMockup>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {MAIN_LOGO_PLACEMENTS.map((item) => (
+              <StrategyCard key={item.name} eyebrow={item.use} title={item.name}>
+                {item.desc}
+              </StrategyCard>
+            ))}
           </div>
         </Section>
 
         {/* Logo strategy */}
-        <Section eyebrow="Logo Strategy · 新策略" title="Ψ 心理符号 × 鲁宾花瓶 × 麻将牌">
+        <Section eyebrow="Logo Strategy · 主 Logo 策略" title="主 Logo 只服务品牌识别">
           <div className="space-y-4">
             <div className="rounded-[1.35rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-5">
               <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">设计背景</div>
@@ -795,53 +801,46 @@ export default function BrandPage() {
                 新主 Logo 的核心不再只是「像麻将」或「像心理测评」，而是把两件事合成一个语言无关的品牌符号：<strong className="text-[var(--psy-ink)]">Ψ 代表心理学</strong>，<strong className="text-[var(--psy-ink)]">麻将牌框代表游戏本体</strong>。它需要服务中文、英文和未来其他语言版本，所以主 Logo 本体不放文字。
               </p>
               <p className="mt-2 text-[14px] leading-7 text-[var(--psy-ink-soft)]">
-                鲁宾花瓶、圆形轨道和神经节点保留为功能 icon 的表达资源：它们可以帮助解释自我/他人、测评结构和心理线索，但不应该和主 Logo 抢品牌识别的位置。整体配色继续沿用网站的暖纸米白、象牙牌面、暖金、陶土红和少量柔绿。
+                当前阶段不讨论其他功能图标。所有对外品牌露出都围绕同一个 Psi Tile 主 Logo，只通过底板、尺寸、字标组合来适配不同位置。
               </p>
             </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              {LOGO_ELEMENTS.map((item) => (
-                <StrategyCard key={item.name} eyebrow="Element" title={item.name}>
-                  {item.desc}
-                </StrategyCard>
-              ))}
-            </div>
-
-            <div className="grid gap-3 lg:grid-cols-2">
-              <StrategyCard eyebrow="Thinking" title="Logo 简，Icon 丰富">
-                <p>
-                  <strong className="text-[var(--psy-ink)]">Logo</strong>负责品牌识别，越稳定越好，用于 favicon、App icon、导航栏；<strong className="text-[var(--psy-ink)]">Icon</strong>负责解释功能，可以加入鲁宾花瓶、轨道、节点，用于加载页、分享图、测评页和规则页大图。
-                </p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <StrategyCard eyebrow="Core" title="Ψ 心理符号">
+                心理学 / 心智的通用符号，语言无关，适合中英和未来多语言版本。
               </StrategyCard>
-              <StrategyCard eyebrow="Scalability" title="不锁死在固定五维">
-                <p>
-                  游戏现在围绕 Big Five，但未来可能扩展到 4 维、6 维或其他人格模型。因此主 Logo 不用五边形或固定五颗点作为核心结构；维度点、轨道和节点放进功能 icon 系统里，随页面语境增减。
-                </p>
+              <StrategyCard eyebrow="Game" title="麻将牌框">
+                圆角牌框连接游戏本体，也能直接复用现有卡牌的象牙面与金边。
+              </StrategyCard>
+              <StrategyCard eyebrow="Depth" title="必须带底板">
+                主 Logo 裸放在米白网页上会缺少层次；默认使用暖牌底板或象牙卡底。
+              </StrategyCard>
+              <StrategyCard eyebrow="Consistency" title="全站一致">
+                Homepage、导航、favicon、PWA、分享图和课件都使用同一个主 Logo。
               </StrategyCard>
             </div>
           </div>
         </Section>
 
         {/* Asset palette */}
-        <Section eyebrow="Asset Palette · 标志与图标配色" title="Logo 和 Icon 共用网站暖纸系统">
+        <Section eyebrow="Logo Palette · 主 Logo 配色" title="主 Logo 沿用网站暖纸系统">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StrategyCard eyebrow="Base" title="象牙 / 暖纸">
-              <p>牌面与图标底色使用 `#fdf8f1` / `#fdf9f0`，页面背景使用 `#f4edd9`，让 Logo 和 icon 放进页面时不突兀。</p>
+              <p>牌面与底板使用 `#fdf8f1` / `#fdf9f0`，页面背景使用 `#f4edd9`，让 Logo 放进页面时自然但有层次。</p>
             </StrategyCard>
             <StrategyCard eyebrow="Hero color" title="暖金 Ψ">
               <p>Ψ 使用 `#c39a52` 与 `#9a7448`，既有心理学符号的权威感，也延续卡牌金边和按钮强调色。</p>
             </StrategyCard>
-            <StrategyCard eyebrow="Accent" title="陶土红侧脸">
-              <p>鲁宾花瓶两侧脸可用 `#c9603f` 小面积点缀，表达人物与互动；它属于 icon 语言，不进入主 Logo 核心。</p>
+            <StrategyCard eyebrow="Accent" title="陶土红">
+              <p>陶土红 `#c9603f` 只作为主 Logo 内部重点色，让 Ψ 的负形更清晰，也和当前网页按钮/提示色相协调。</p>
             </StrategyCard>
-            <StrategyCard eyebrow="Support" title="墨色 / 柔绿">
-              <p>墨色 `#3a3020` 负责描边和小尺寸清晰度；柔绿 `#6f8f55` 只用于节点、叶片或很小的平衡色。</p>
+            <StrategyCard eyebrow="Support" title="墨色描边">
+              <p>墨色 `#3a3020` 只负责小尺寸识别和边界，不大面积使用，避免变成传统棋牌或冷硬科技感。</p>
             </StrategyCard>
           </div>
         </Section>
 
-        {/* Asset output system */}
-        <Section eyebrow="Output · 最终产出形态" title="产出分两类：一个 Logo，多组 Icon">
+        {/* Logo output system */}
+        <Section eyebrow="Output · 主 Logo 导出" title="最终只交付主 Logo 的几种格式">
           <div className="grid gap-3 sm:grid-cols-2">
             {BRAND_LOGO_RULES.map((item) => (
               <StrategyCard key={item.name} eyebrow={item.use} title={item.name}>
@@ -849,29 +848,22 @@ export default function BrandPage() {
               </StrategyCard>
             ))}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {ICON_SYSTEM.map((item) => (
-              <StrategyCard key={item.id} eyebrow={item.use} title={`Icon · ${item.name}`}>
-                {item.desc}
-              </StrategyCard>
-            ))}
-          </div>
           <p className="text-[13px] leading-6 text-[var(--psy-muted)]">
-            当前页面里的 PNG 是评审与网页展示用资产。正式落地时，主 Logo 应重绘为 <strong>SVG</strong> 源文件，并同时导出「裸标记」和「带底板」两套；网页默认使用带底板版本，再导出 `favicon.ico` / `icon.svg` / `apple-icon.png` / PWA 尺寸 PNG。功能 icon 可以保留为同风格 SVG 或透明 PNG，但命名和使用上不能替代主 Logo。
+            当前页面里的 PNG 是评审与网页展示用资产。正式落地时，主 Logo 应重绘为 <strong>SVG</strong> 源文件，并同时导出「裸标记」和「带底板」两套；网页默认使用带底板版本，再导出 `favicon.ico` / `icon.svg` / `apple-icon.png` / PWA 尺寸 PNG。
           </p>
         </Section>
 
         {/* Placement */}
-        <Section eyebrow="Web Usage · 网页呈现" title="哪些地方用 Logo，哪些地方用 Icon">
+        <Section eyebrow="Web Usage · 主 Logo 呈现" title="主 Logo 出现位置汇总">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <StrategyCard eyebrow="Logo" title="favicon / App icon / 导航栏">
+            <StrategyCard eyebrow="Small" title="favicon / App icon / 导航栏">
               使用唯一主 Logo：Psi Tile。默认选择带暖色底板版本，负责告诉用户“这是 Personalities Mahjong”，不随页面内容变化。
             </StrategyCard>
-            <StrategyCard eyebrow="Icon" title="加载页 / 测评页 / 结果页">
-              使用鲁宾花瓶、轨道、节点等功能 icon。它们负责解释当前功能或状态，不承担品牌唯一识别。
+            <StrategyCard eyebrow="Large" title="Homepage / 海报 / 课件封面">
+              使用主 Logo + 中英文品牌名的完整锁版；空间不足时只保留带底板 Logo。
             </StrategyCard>
-            <StrategyCard eyebrow="Lockup" title="首页 / 海报 / 课件封面">
-              使用主 Logo + 中英文品牌名的完整锁版；需要更丰富叙事时，icon 可以作为旁边的辅助图形。
+            <StrategyCard eyebrow="Share" title="OG image / 分享预览">
+              使用主 Logo + 标题 + 一句产品说明；不要加入其他候选图形，避免误解为副 Logo。
             </StrategyCard>
           </div>
         </Section>
