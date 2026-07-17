@@ -175,7 +175,7 @@ export default function RulesPage() {
           background: #fbf8f1;
           color: #2a241b;
           box-shadow: 0 12px 40px rgba(0,0,0,0.35);
-          padding: 10mm 13mm 14mm;
+          padding: 9mm 9mm 11mm;
           box-sizing: border-box;
           font-family: ui-sans-serif, "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
           line-height: 1.55;
@@ -236,11 +236,13 @@ export default function RulesPage() {
         @media print {
           .no-print { display: none !important; }
           .rules-screen { background: #fff; padding: 0; }
-          .a4-fit { max-width: none; }
-          .a4 { box-shadow: none; zoom: 1 !important; }
+          /* 打印時：不再固定 210mm（會超出可打印區被裁），改 width:auto 填滿 @page 內容區，
+             所有邊距交給 @page，內容寬度 = A4 - 邊距，永不右側溢出被裁 */
+          .a4-fit { max-width: none; width: auto; }
+          .a4 { box-shadow: none; zoom: 1 !important; width: auto; min-height: 0; padding: 0; }
           /* 第四節「碰與食胡」起始換頁：第1頁=頁首+一二三，第2頁=四五六 */
           .rsec.pg-break { break-before: page; }
-          @page { size: A4; margin: 13mm; } /* 上下留 13mm 作頁邊/頁腳空間 */
+          @page { size: A4; margin: 12mm 10mm; } /* 上下12 左右10，頁腳/頁邊空間 */
         }
       `}</style>
 
