@@ -1,0 +1,16 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Psi Tile — etched frame">
+  <!-- 方向1 变体b · 双描边「刻蚀」牌框（呼应网站 psy-etched 卡框）+ 金 Ψ -->
+  <defs>
+    <linearGradient id="d1bf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf7"/><stop offset="1" stop-color="#faf1de"/></linearGradient>
+    <linearGradient id="d1bp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8b46a"/><stop offset="1" stop-color="#b3873f"/></linearGradient>
+  </defs>
+  <rect x="20" y="10" width="80" height="100" rx="21" fill="url(#d1bf)" stroke="#c39a52" stroke-width="3.5"/>
+  <!-- 内刻蚀细框 -->
+  <rect x="27" y="17" width="66" height="86" rx="15" fill="none" stroke="#c39a52" stroke-width="1.4" opacity="0.55"/>
+  <!-- 四角小饰点 -->
+  <circle cx="33" cy="23" r="1.6" fill="#c39a52"/><circle cx="87" cy="23" r="1.6" fill="#c39a52"/>
+  <circle cx="33" cy="97" r="1.6" fill="#c39a52"/><circle cx="87" cy="97" r="1.6" fill="#c39a52"/>
+  <g fill="none" stroke="url(#d1bp)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(21,20) scale(0.78)">
+    <path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/>
+  </g>
+</svg>

@@ -1,0 +1,9 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Psi Tile — gold emboss">
+  <!-- 方向1 变体c · 金牌身 + 象牙镂空 Ψ（反白/浮雕感），适合深色场景与单色 -->
+  <rect x="22" y="12" width="76" height="96" rx="20" fill="#c39a52"/>
+  <rect x="22" y="12" width="76" height="96" rx="20" fill="none" stroke="#8f6a33" stroke-width="2"/>
+  <rect x="29" y="18" width="62" height="30" rx="13" fill="#ffffff" opacity="0.16"/>
+  <g fill="none" stroke="#fdf7ea" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(21,20) scale(0.78)">
+    <path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/>
+  </g>
+</svg>

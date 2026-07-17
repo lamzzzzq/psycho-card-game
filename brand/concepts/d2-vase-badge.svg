@@ -1,0 +1,10 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Psi Vase — badge">
+  <!-- 方向2 变体a · 圆徽：两张陶土侧脸对望，中间负空间是金 Ψ-花瓶 -->
+  <defs><linearGradient id="d2ap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8b46a"/><stop offset="1" stop-color="#b3873f"/></linearGradient></defs>
+  <circle cx="60" cy="60" r="50" fill="#f7ecd6"/><circle cx="60" cy="60" r="50" fill="none" stroke="#c39a52" stroke-width="3"/>
+  <path fill="#cf7350" d="M60 16 A 44 44 0 0 0 60 104 L 60 100 Q 55 92 56 84 Q 57 78 50 72 Q 57 66 53 59 Q 49 53 57 47 Q 53 42 55 37 Q 57 32 60 30 Z"/>
+  <path fill="#cf7350" d="M60 16 A 44 44 0 0 1 60 104 L 60 100 Q 65 92 64 84 Q 63 78 70 72 Q 63 66 67 59 Q 71 53 63 47 Q 67 42 65 37 Q 63 32 60 30 Z"/>
+  <g fill="none" stroke="url(#d2ap)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(35,34) scale(0.5)">
+    <path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 88"/><path d="M41 88 L59 88"/>
+  </g>
+</svg>

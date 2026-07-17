@@ -25,36 +25,24 @@ export default function RulesPage() {
   const fitRef = useRef<HTMLDivElement>(null);
 
   // 把固定 210mm 的 A4 等比縮放到可用寬度（像 PDF 預覽）。
-  // ⚠️ 只在「寬度」變化時重算：Safari 上下滑動會因地址欄收放而觸發 resize（只改高度），
-  // 若每次都重設 transform/height 會逐幀重排 → 畫面抽搐閃爍。用 ResizeObserver + 寬度守衛避開。
+  // 用 CSS zoom（不是 transform）：zoom 會連同「佈局高度」一起縮，內容多長都完整顯示、
+  // 超過一頁就自動往下延（列印自動分頁），不會被裁；也不需手動算容器高度。
+  // 只在「寬度」變化時重設 → Safari 上下滑動（只改高度）不會觸發，畫面不抽搐。
   useEffect(() => {
     const a4 = a4Ref.current;
     const fit = fitRef.current;
     if (!a4 || !fit) return;
     let lastW = -1;
-    let raf = 0;
     const apply = () => {
-      const avail = fit.clientWidth;
-      if (avail <= 0 || avail === lastW) return; // 寬度沒變（例如滑動）→ 跳過，不重排
-      lastW = avail;
-      const scale = Math.min(1, avail / A4_WIDTH_PX);
-      a4.style.transform = `scale(${scale})`;
-      fit.style.height = `${a4.offsetHeight * scale}px`;
+      const w = fit.clientWidth;
+      if (w <= 0 || w === lastW) return;
+      lastW = w;
+      (a4.style as CSSStyleDeclaration & { zoom?: string }).zoom = String(Math.min(1, w / A4_WIDTH_PX));
     };
-    const schedule = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(apply);
-    };
-    schedule();
-    const ro = new ResizeObserver(schedule);
+    apply();
+    const ro = new ResizeObserver(apply);
     ro.observe(fit);
-    // 字體/佈局穩定後強制再算一次（此時高度可能變了但寬度沒變）
-    const t = window.setTimeout(() => { lastW = -1; apply(); }, 250);
-    return () => {
-      ro.disconnect();
-      cancelAnimationFrame(raf);
-      window.clearTimeout(t);
-    };
+    return () => ro.disconnect();
   }, [locale, hydrated]);
 
   // 單個內容區塊 → JSX
@@ -179,33 +167,32 @@ export default function RulesPage() {
           font-weight: 600;
         }
 
-        /* 縮放容器：寬度鋪滿，內部把固定 A4 scale 到剛好 */
-        .a4-fit { width: 100%; max-width: 210mm; display: flex; justify-content: center; overflow: hidden; }
+        /* 縮放容器：寬度鋪滿；用 zoom 縮放 A4（連佈局一起縮，內容完整、不裁） */
+        .a4-fit { width: 100%; max-width: 210mm; }
         .a4 {
           width: 210mm;
           min-height: 297mm;
-          flex: none;
-          transform-origin: top center;
           background: #fbf8f1;
           color: #2a241b;
           box-shadow: 0 12px 40px rgba(0,0,0,0.35);
-          padding: 13mm 13mm 15mm;
+          padding: 12mm 13mm 15mm;
           box-sizing: border-box;
           font-family: ui-sans-serif, "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
           line-height: 1.6;
         }
         .a4 .serif { font-family: ui-serif, "Songti TC", Georgia, serif; }
 
-        /* 頁首：置中，QR 在標題正上方 */
+        /* 頁首：標題+副標左上角，QR+網址右上角（省版面） */
         .head {
-          display: flex; flex-direction: column; align-items: center; text-align: center;
-          gap: 6px; border-bottom: 2px solid #c89b5d; padding-bottom: 12px; margin-bottom: 10px;
+          display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+          border-bottom: 2px solid #c89b5d; padding-bottom: 10px; margin-bottom: 10px;
         }
-        .qrbox { text-align: center; }
-        .qrbox .cap { font-size: 10.5px; color: #6b5d44; margin-top: 4px; line-height: 1.4; }
-        .a4 h1 { font-size: 31px; margin: 2px 0 0; letter-spacing: 2px; color: #1c1812; }
+        .title-wrap { min-width: 0; }
+        .qrbox { text-align: center; flex: none; }
+        .qrbox .cap { font-size: 10px; color: #6b5d44; margin-top: 3px; line-height: 1.35; }
+        .a4 h1 { font-size: 30px; margin: 3px 0 0; letter-spacing: 2px; color: #1c1812; }
         .a4 .eyebrow { font-size: 12px; letter-spacing: 6px; color: #7a4d12; margin: 0; }
-        .a4 .sub { font-size: 13px; color: #6b5d44; margin: 4px 0 0; }
+        .a4 .sub { font-size: 13px; color: #6b5d44; margin: 5px 0 0; }
 
         /* 章節：單欄 */
         .sections { margin-top: 4px; }
@@ -249,8 +236,9 @@ export default function RulesPage() {
         @media print {
           .no-print { display: none !important; }
           .rules-screen { background: #fff; padding: 0; }
-          .a4-fit { height: auto !important; overflow: visible !important; max-width: none; }
-          .a4 { box-shadow: none; transform: none !important; }
+          .a4-fit { max-width: none; }
+          .a4 { box-shadow: none; zoom: 1 !important; }
+          .rsec { break-inside: avoid; }
           @page { size: A4; margin: 11mm; }
         }
       `}</style>
@@ -263,13 +251,15 @@ export default function RulesPage() {
       <div className="a4-fit" ref={fitRef}>
         <div className="a4" ref={a4Ref}>
           <div className="head">
-            <div className="qrbox">
-              <QRCodeSVG value={GAME_URL} size={86} level="M" fgColor="#2a241b" bgColor="#fbf8f1" />
-              <div className="cap">{s.scanToEnter}<br />{DISPLAY_URL}</div>
+            <div className="title-wrap">
+              {locale === 'en' && <p className="eyebrow serif">PSYCHO CARD</p>}
+              <h1 className="serif">{s.title}</h1>
+              <p className="sub">{s.subtitle}</p>
             </div>
-            {locale === 'en' && <p className="eyebrow serif">PSYCHO CARD</p>}
-            <h1 className="serif">{s.title}</h1>
-            <p className="sub">{s.subtitle}</p>
+            <div className="qrbox">
+              <QRCodeSVG value={GAME_URL} size={78} level="M" fgColor="#2a241b" bgColor="#fbf8f1" />
+              <div className="cap">{DISPLAY_URL}</div>
+            </div>
           </div>
 
           <div className="sections">

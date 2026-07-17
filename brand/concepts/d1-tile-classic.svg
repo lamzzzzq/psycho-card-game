@@ -1,0 +1,12 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Psi Tile — classic">
+  <!-- 方向1 变体a · 经典麻将牌 + 金 Ψ -->
+  <defs>
+    <linearGradient id="d1af" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf7"/><stop offset="1" stop-color="#faf1de"/></linearGradient>
+    <linearGradient id="d1ap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8b46a"/><stop offset="1" stop-color="#b3873f"/></linearGradient>
+  </defs>
+  <rect x="22" y="12" width="76" height="96" rx="20" fill="url(#d1af)" stroke="#c39a52" stroke-width="3.5"/>
+  <rect x="30" y="19" width="60" height="30" rx="13" fill="#ffffff" opacity="0.45"/>
+  <g fill="none" stroke="url(#d1ap)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(21,20) scale(0.78)">
+    <path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/>
+  </g>
+</svg>
