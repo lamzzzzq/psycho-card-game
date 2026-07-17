@@ -210,14 +210,14 @@ export default function RulesPage() {
         .a4 .sub { font-size: 13px; color: #6b5d44; margin: 6px 0 0; }
 
         /* 章節：單欄，節間拉開間距填滿版面 */
-        .sections { margin-top: 4px; }
-        .rsec { margin: 0 0 20px; }
+        .sections { margin-top: 2px; }
+        .rsec { margin: 0 0 12px; }
         .rsec h2 {
-          font-size: 17px; margin: 10px 0 8px; color: #7a4d12;
+          font-size: 17px; margin: 8px 0 6px; color: #7a4d12;
           border-bottom: 1px solid #d8c39a; padding-bottom: 5px; letter-spacing: 0.5px;
         }
-        .a4 .rsec p { font-size: 13px; margin: 5px 0; line-height: 1.55; }
-        .rsub { font-weight: 700; color: #3a2f1c; margin-top: 9px !important; font-size: 13.5px !important; }
+        .a4 .rsec p { font-size: 13px; margin: 4px 0; line-height: 1.5; }
+        .rsub { font-weight: 700; color: #3a2f1c; margin-top: 7px !important; font-size: 13.5px !important; }
         .rli { display: flex; gap: 3px; }
         .rli-dot { color: #c89b5d; flex: none; }
         .a4 .warn { color: #a23b1e; }
@@ -255,8 +255,11 @@ export default function RulesPage() {
              所有邊距交給 @page，內容寬度 = A4 - 邊距，永不右側溢出被裁 */
           .a4-fit { max-width: none; width: auto; height: auto !important; overflow: visible; display: block; }
           .a4 { box-shadow: none; transform: none !important; width: auto; min-height: 0; padding: 0; }
-          /* 第四節「碰與食胡」起始換頁：第1頁=頁首+一二三，第2頁=四五六 */
-          .rsec.pg-break { break-before: page; }
+          /* 不硬編分頁(不同語言長度不同會產生空白頁)。改為自然連續排版 + 保護:
+             圖例/提示框不被拆開、標題不落單在頁底。頁數隨內容自適應、無空白頁。 */
+          .fig, .a4 .tip, .a4 .warn { break-inside: avoid; }
+          .rsec h2, .rsub { break-after: avoid; }
+          .dims { break-inside: avoid; }
           @page { size: A4; margin: 12mm 10mm; } /* 上下12 左右10，頁腳/頁邊空間 */
         }
       `}</style>
@@ -281,7 +284,7 @@ export default function RulesPage() {
 
           <div className="sections">
             {s.sections.map((sec, si) => (
-              <section key={si} className={si === 3 ? 'rsec pg-break' : 'rsec'}>
+              <section key={si} className="rsec">
                 <h2 className="serif">{sec.title}</h2>
                 {sec.blocks.map(renderBlock)}
                 {renderFig(sec.fig)}
