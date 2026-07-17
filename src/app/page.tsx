@@ -44,7 +44,7 @@ export default function Home() {
     // 移动端：内容从顶部流动 + 底部留白给 sticky CTA 栏；桌面：垂直居中。
     <div className="flex flex-1 flex-col items-center px-5 pt-20 pb-40 sm:px-6 sm:pt-24 lg:justify-center lg:pb-10 lg:pt-10">
       {/* 语言切换：覆盖持久化缓存，随时切回中文/英文（不必手动改 ?lang=） */}
-      <div className="psy-serif fixed left-4 top-4 z-40 flex items-center gap-0.5 rounded-full border border-[var(--psy-border)] bg-[rgba(253,249,240,0.95)] p-0.5 text-xs shadow-[var(--psy-shadow)] sm:left-8 sm:top-8">
+      <div className="psy-serif fixed left-4 top-4 z-40 [transform:translateZ(0)] flex items-center gap-0.5 rounded-full border border-[var(--psy-border)] bg-[rgba(253,249,240,0.95)] p-0.5 text-xs shadow-[var(--psy-shadow)] sm:left-8 sm:top-8">
         {(['zh', 'en'] as const).map((l) => (
           <button
             key={l}
@@ -98,7 +98,7 @@ export default function Home() {
 
       {/* 主行动区：移动端固定底栏（拇指可达），桌面端回归内联网格。
           放在 motion.div 之外，避免 framer transform 祖先让 fixed 失效。 */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--psy-border)] bg-[rgba(253,249,240,0.97)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgba(120,90,50,0.1)] lg:static lg:mx-auto lg:mt-10 lg:w-full lg:max-w-5xl lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+      <div className="fixed inset-x-0 bottom-0 z-40 [transform:translateZ(0)] [will-change:transform] border-t border-[var(--psy-border)] bg-[rgba(253,249,240,0.97)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgba(120,90,50,0.1)] lg:static lg:mx-auto lg:mt-10 lg:w-full lg:max-w-5xl lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
         {/* 有報告：聯機 / 單機 / 查看人格報告（重新測評只在報告頁出現，首頁不暴露）。
             無報告：只有一個「開始測評 / 繼續測評」入口，引導先完成測評。 */}
         {hasResults ? (

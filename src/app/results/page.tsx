@@ -80,7 +80,7 @@ export default function ResultsPage() {
 
       {/* 三個入口：移动端常驻底部（sticky 底栏，拇指可达），桌面端静态居中。
           放在 motion.div 之外——framer transform 祖先会让 position:fixed 失效。 */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--psy-border)] bg-[rgba(253,249,240,0.97)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgba(120,90,50,0.1)] lg:static lg:mt-8 lg:w-full lg:max-w-5xl lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+      <div className="fixed inset-x-0 bottom-0 z-40 [transform:translateZ(0)] [will-change:transform] border-t border-[var(--psy-border)] bg-[rgba(253,249,240,0.97)] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgba(120,90,50,0.1)] lg:static lg:mt-8 lg:w-full lg:max-w-5xl lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
         <div className="mx-auto grid max-w-5xl grid-cols-2 gap-2 lg:grid-cols-3 lg:gap-3">
           <button
             onClick={() => router.push('/pvp')}
