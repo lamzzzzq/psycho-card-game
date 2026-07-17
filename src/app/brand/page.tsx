@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Image from 'next/image';
 
 // 品牌规范页 /brand —— 供内部交付：整理玩法/概念/目标/配色 + logo 方案(麻将风 & 塔罗风)。
 // 纯静态展示页，不接入正式游戏逻辑；同事可据此发散更多 logo 可行性。
@@ -52,6 +53,18 @@ const LOGO_PLACEMENTS = [
   { where: '加载页', spec: 'Psi Vase 或 Psi Orbit', note: '可使用更完整的徽记，也可以让轨道做轻微旋转动效。' },
   { where: '结算分享图', spec: '品牌徽记', note: '用叙事更强的鲁宾花瓶版本，让截图有品牌识别。' },
   { where: 'Footer / 规则页', spec: '单色线稿版', note: '降低存在感，作为课程/教学材料中的稳定品牌角标。' },
+];
+const PNG_LOGO_CANDIDATES = [
+  { id: 'alt-directions-A', src: '/brand/generated/marks-tight/alt-directions-A.png', label: '主线：Psi Tile' },
+  { id: 'alt-directions-B', src: '/brand/generated/marks-tight/alt-directions-B.png', label: '花瓶负形' },
+  { id: 'alt-directions-C', src: '/brand/generated/marks-tight/alt-directions-C.png', label: '轨道系统' },
+  { id: 'alt-directions-D', src: '/brand/generated/marks-tight/alt-directions-D.png', label: '双页折叠' },
+  { id: 'alt-directions-E', src: '/brand/generated/marks-tight/alt-directions-E.png', label: '神经节点' },
+  { id: 'alt-directions-I', src: '/brand/generated/marks-tight/alt-directions-I.png', label: 'App icon' },
+  { id: 'psi-vase-A', src: '/brand/generated/marks-tight/psi-vase-A.png', label: '红金花瓶' },
+  { id: 'psi-vase-B', src: '/brand/generated/marks-tight/psi-vase-B.png', label: '圆章花瓶' },
+  { id: 'psi-vase-C', src: '/brand/generated/marks-tight/psi-vase-C.png', label: '卡面花瓶' },
+  { id: 'psi-vase-E', src: '/brand/generated/marks-tight/psi-vase-E.png', label: '头像轨道' },
 ];
 
 function Swatch({ name, hex }: { name: string; hex: string }) {
@@ -553,60 +566,11 @@ function StrategyCard({ title, eyebrow, children }: { title: string; eyebrow: st
   );
 }
 
-function PsiTileMark() {
-  return (
-    <svg viewBox="0 0 120 120" className="h-full w-full">
-      <rect x="31" y="13" width="58" height="94" rx="14" fill={CREAM} stroke={INK} strokeWidth="4" />
-      <rect x="38" y="20" width="44" height="80" rx="9" fill="none" stroke={GOLD} strokeWidth="2" opacity="0.78" />
-      <text x="60" y="77" textAnchor="middle" fontFamily="Georgia, serif" fontSize="53" fontWeight="700" fill={GOLD_STRONG}>Ψ</text>
-    </svg>
-  );
-}
-
-function PsiVaseMark() {
-  return (
-    <svg viewBox="0 0 120 120" className="h-full w-full">
-      <circle cx="60" cy="60" r="47" fill={CREAM} stroke={INK} strokeWidth="3.4" />
-      <circle cx="60" cy="60" r="38" fill="none" stroke={GOLD} strokeWidth="1.7" opacity="0.72" />
-      <path d="M35 38 C25 47 25 72 37 82 C43 75 43 48 35 38Z" fill="#c9603f" opacity="0.86" />
-      <path d="M85 38 C95 47 95 72 83 82 C77 75 77 48 85 38Z" fill="#c9603f" opacity="0.86" />
-      <text x="60" y="79" textAnchor="middle" fontFamily="Georgia, serif" fontSize="52" fontWeight="700" fill={GOLD_STRONG}>Ψ</text>
-      <path d="M53 28 C57 21 62 21 67 28" fill="none" stroke={SAGE} strokeWidth="3" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function PsiOrbitMark() {
-  return (
-    <svg viewBox="0 0 120 120" className="h-full w-full">
-      <path d="M26 62 A34 34 0 0 1 58 26" fill="none" stroke={INK} strokeWidth="3" strokeLinecap="round" />
-      <path d="M94 58 A34 34 0 0 1 62 94" fill="none" stroke={GOLD} strokeWidth="3" strokeLinecap="round" />
-      <circle cx="29" cy="66" r="4" fill={SAGE} />
-      <circle cx="91" cy="51" r="4" fill="#c9603f" />
-      <circle cx="60" cy="95" r="4" fill={GOLD_STRONG} />
-      <text x="60" y="75" textAnchor="middle" fontFamily="Georgia, serif" fontSize="50" fontWeight="700" fill={GOLD_STRONG}>Ψ</text>
-    </svg>
-  );
-}
-
-function PsiMindMark() {
-  return (
-    <svg viewBox="0 0 120 120" className="h-full w-full">
-      <text x="60" y="77" textAnchor="middle" fontFamily="Georgia, serif" fontSize="50" fontWeight="700" fill={GOLD_STRONG}>Ψ</text>
-      <path d="M38 44 C42 28 58 27 61 41 C66 28 82 31 84 47 C94 51 94 68 84 73" fill="none" stroke={INK} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M42 82 C49 91 70 93 79 82" fill="none" stroke={GOLD} strokeWidth="3" strokeLinecap="round" />
-      <circle cx="39" cy="44" r="4" fill="#c9603f" />
-      <circle cx="61" cy="41" r="4" fill={SAGE} />
-      <circle cx="84" cy="47" r="4" fill={GOLD} />
-    </svg>
-  );
-}
-
 function LogoProposalCard({ label, title, note, children }: { label: string; title: string; note: string; children: ReactNode }) {
   return (
     <div className="psy-panel flex flex-col gap-3 rounded-[1.25rem] p-4">
-      <div className="flex h-40 items-center justify-center rounded-[1rem] bg-[var(--psy-card-content)]">
-        <div className="h-28 w-28">{children}</div>
+      <div className="flex h-48 items-center justify-center rounded-[1rem] bg-[var(--psy-card-content)]">
+        <div className="h-40 w-40">{children}</div>
       </div>
       <div>
         <div className="psy-eyebrow text-[9px]">{label}</div>
@@ -617,8 +581,8 @@ function LogoProposalCard({ label, title, note, children }: { label: string; tit
   );
 }
 
-function TinyLogo({ children }: { children: ReactNode }) {
-  return <div className="h-9 w-9 shrink-0">{children}</div>;
+function LogoPng({ src, alt, className = 'h-full w-full' }: { src: string; alt: string; className?: string }) {
+  return <Image src={src} alt={alt} width={640} height={640} className={`${className} object-contain`} sizes="(max-width: 768px) 160px, 240px" />;
 }
 
 function UsageMockup({ title, note, children }: { title: string; note: string; children: ReactNode }) {
@@ -650,28 +614,52 @@ export default function BrandPage() {
         <Section eyebrow="Logo Draft · 可用候选" title="先看真正可以落地的 logo">
           <div className="rounded-[1.35rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-5">
             <div className="flex flex-col gap-5 md:flex-row md:items-center">
-              <div className="mx-auto h-28 w-28 shrink-0 md:mx-0"><PsiTileMark /></div>
+              <div className="mx-auto h-36 w-36 shrink-0 md:mx-0">
+                <LogoPng src="/brand/generated/marks-tight/alt-directions-A.png" alt="Psi tile logo candidate" />
+              </div>
               <div>
-                <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">推荐主线：Psi Tile 作为主标记</div>
+                <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">推荐主线：使用切图 PNG 里的 Psi Tile 作为主标记</div>
                 <p className="mt-2 text-[14px] leading-7 text-[var(--psy-ink-soft)]">
-                  这版最适合真正放进网页：它只保留 <strong className="text-[var(--psy-ink)]">Ψ + 麻将牌框 + 暖金/象牙配色</strong>，缩到 favicon 也能识别；鲁宾花瓶和轨道版本作为徽记和辅助图形使用，不抢主标记的位置。
+                  这里展示的是 GPT 生成后切出来的 PNG 方案，不是程序临时画的符号。主标记优先选 <strong className="text-[var(--psy-ink)]">alt-directions-A</strong>：它保留 Ψ、牌框和暖金/象牙配色，缩到 favicon 也比复杂徽章更稳。
                 </p>
               </div>
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <LogoProposalCard label="Primary" title="Psi Tile 主标记" note="favicon、导航栏、App icon 的默认选择。">
-              <PsiTileMark />
+              <LogoPng src="/brand/generated/marks-tight/alt-directions-A.png" alt="Psi tile PNG logo" />
             </LogoProposalCard>
             <LogoProposalCard label="Emblem" title="Psi Vase 徽记" note="用于加载页、分享图、规则页大图，讲自我/他人双重读取。">
-              <PsiVaseMark />
+              <LogoPng src="/brand/generated/marks-tight/psi-vase-B.png" alt="Psi vase PNG logo" />
             </LogoProposalCard>
             <LogoProposalCard label="System" title="Psi Orbit 辅助图形" note="用于测评页、空状态、轻动效，不锁定固定五维。">
-              <PsiOrbitMark />
+              <LogoPng src="/brand/generated/marks-tight/alt-directions-C.png" alt="Psi orbit PNG logo" />
             </LogoProposalCard>
             <LogoProposalCard label="Alt" title="Psi Mind 节点版" note="保留参考图的科学感，但简化成少量节点。">
-              <PsiMindMark />
+              <LogoPng src="/brand/generated/marks-tight/alt-directions-E.png" alt="Psi mind PNG logo" />
             </LogoProposalCard>
+          </div>
+          <div className="rounded-[1.25rem] border border-[var(--psy-border)] bg-[rgba(253,249,240,0.66)] p-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="psy-eyebrow text-[9px]">PNG Source Cuts · 实际切图</div>
+                <div className="psy-serif mt-1 text-lg font-semibold text-[var(--psy-ink)]">从生成图里切出的候选，不是页面临时绘制</div>
+              </div>
+              <div className="text-[12px] text-[var(--psy-muted)]">透明 PNG / 640px 画布 / 网页可直接引用</div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {PNG_LOGO_CANDIDATES.map((logo) => (
+                <div key={logo.id} className="rounded-[0.95rem] border border-[rgba(150,118,78,0.18)] bg-[var(--psy-card-content)] p-3">
+                  <div className="flex h-28 items-center justify-center">
+                    <div className="h-24 w-24">
+                      <LogoPng src={logo.src} alt={`${logo.id} PNG logo cut`} />
+                    </div>
+                  </div>
+                  <div className="mt-2 truncate text-[11px] font-semibold text-[var(--psy-ink)]">{logo.id}</div>
+                  <div className="truncate text-[10px] text-[var(--psy-muted)]">{logo.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </Section>
 
@@ -680,14 +668,18 @@ export default function BrandPage() {
           <div className="grid gap-3 lg:grid-cols-3">
             <UsageMockup title="favicon / 浏览器标签" note="只用 Psi Tile。16px 时避免侧脸、节点和文字。">
               <div className="flex items-center gap-3 rounded-[0.75rem] border border-[var(--psy-border)] bg-[#fffaf2] px-3 py-2">
-                <div className="h-6 w-6 rounded-[0.45rem] bg-[var(--psy-card-content)] p-0.5"><PsiTileMark /></div>
+                <div className="h-6 w-6 rounded-[0.45rem] bg-[var(--psy-card-content)] p-0.5">
+                  <LogoPng src="/brand/generated/marks-tight/alt-directions-A.png" alt="favicon logo preview" />
+                </div>
                 <div className="min-w-0 flex-1 truncate text-[12px] font-medium text-[var(--psy-ink)]">人格麻將 · Personalities Mahjong</div>
               </div>
             </UsageMockup>
             <UsageMockup title="导航栏 / 页首锁版" note="图形标 + 文字标题，文字不写进 logo 本体。">
               <div className="flex items-center justify-between rounded-[0.9rem] border border-[var(--psy-border)] bg-[#fffaf2] px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <TinyLogo><PsiTileMark /></TinyLogo>
+                  <div className="h-9 w-9 shrink-0">
+                    <LogoPng src="/brand/generated/marks-tight/alt-directions-A.png" alt="navbar logo preview" />
+                  </div>
                   <div>
                     <div className="psy-serif text-base font-semibold text-[var(--psy-ink)]">人格麻將</div>
                     <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--psy-muted)]">Personalities Mahjong</div>
@@ -699,20 +691,24 @@ export default function BrandPage() {
             <UsageMockup title="PWA / App icon" note="满版暖沙底 + 主标记，适合 192/512px 导出。">
               <div className="flex items-center justify-center">
                 <div className="h-24 w-24 rounded-[1.45rem] border border-[rgba(154,116,72,0.38)] bg-[#f4edd9] p-4 shadow-[0_12px_24px_rgba(120,90,50,0.14)]">
-                  <PsiTileMark />
+                  <LogoPng src="/brand/generated/marks-tight/alt-directions-I.png" alt="PWA app icon logo preview" />
                 </div>
               </div>
             </UsageMockup>
             <UsageMockup title="加载页 / 品牌一刻" note="可用 Psi Vase，尺寸更大时讲故事更清楚。">
               <div className="flex h-28 flex-col items-center justify-center gap-2">
-                <div className="h-16 w-16"><PsiVaseMark /></div>
+                <div className="h-16 w-16">
+                  <LogoPng src="/brand/generated/marks-tight/psi-vase-B.png" alt="loading emblem logo preview" />
+                </div>
                 <div className="text-[12px] font-medium text-[var(--psy-muted)]">正在洗牌并读取人格线索</div>
               </div>
             </UsageMockup>
             <UsageMockup title="结算分享图" note="徽记 + 标题 + 分数摘要，适合截图传播。">
               <div className="rounded-[0.9rem] border border-[var(--psy-border)] bg-[#fffaf2] p-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-14 w-14"><PsiVaseMark /></div>
+                  <div className="h-14 w-14">
+                    <LogoPng src="/brand/generated/marks-tight/psi-vase-E.png" alt="share card logo preview" />
+                  </div>
                   <div>
                     <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">人格牌局完成</div>
                     <div className="text-[11px] text-[var(--psy-muted)]">OCEAN profile · Mahjong reading</div>
@@ -726,7 +722,9 @@ export default function BrandPage() {
             <UsageMockup title="Footer / 规则页角标" note="使用单色或低存在感版本，不打扰阅读。">
               <div className="flex items-center justify-between border-t border-[var(--psy-border)] pt-4">
                 <div className="flex items-center gap-2 text-[12px] text-[var(--psy-muted)]">
-                  <div className="h-7 w-7 opacity-75"><PsiTileMark /></div>
+                  <div className="h-7 w-7 opacity-75">
+                    <LogoPng src="/brand/generated/marks-tight/alt-directions-G.png" alt="footer logo preview" />
+                  </div>
                   <span>人格麻將 · 香港理工大學</span>
                 </div>
                 <span className="text-[11px] text-[var(--psy-muted)]">Brand mark v0</span>
