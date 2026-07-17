@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { useLocaleStore } from '@/lib/i18n';
@@ -9,10 +8,9 @@ import { RULES_T, type RuleBlock } from '@/lib/i18n/rules';
 
 const GAME_URL = 'https://www.personalitiesmahjong.com/';
 const DISPLAY_URL = 'www.personalitiesmahjong.com';
-const A4_WIDTH_PX = 793.7; // 210mm @ 96dpi
 
-// A4 硬拷貝規則頁 = 一張固定版面的「PDF」。螢幕上整頁等比縮放鋪滿寬度（手機=整張縮小、
-// 桌面=放大），永不重排；列印 / 存 PDF 時還原真 A4。所見即所存。
+// 規則頁：螢幕上是一張正常的長文檔（不縮放、不裁切、可滾動）；
+// 只有列印 / 存 PDF 時 @media print 才把它排成真 A4（自然 2 頁）。
 // 規則正文逐字照跟 big5_revised rules docx；emoji / 配圖自由發揮。
 export default function RulesPage() {
   const router = useRouter();
@@ -20,38 +18,6 @@ export default function RulesPage() {
   const localeRaw = useLocaleStore((s) => s.locale);
   const locale = hydrated ? localeRaw : 'zh';
   const s = RULES_T[locale];
-
-  const a4Ref = useRef<HTMLDivElement>(null);
-  const fitRef = useRef<HTMLDivElement>(null);
-
-  // 把固定 210mm 的 A4 等比縮放到可用寬度（像 PDF 預覽）。
-  // 用 transform:scale（不是 zoom）——zoom 在 iOS Safari 上不可靠，會導致內容按窄屏重排。
-  // transform 跨瀏覽器一致；容器高度手動設為 a4.offsetHeight*scale 以收起縮放留白。
-  // 雙 ResizeObserver：觀察 fit(寬度變才重算 scale) + a4(內容高度變才更新容器高，例如字體載入)。
-  // 滾動只改視窗高度、不改 fit 寬度與 a4 內容高 → 不觸發重算，畫面不抽搐。
-  useEffect(() => {
-    const a4 = a4Ref.current;
-    const fit = fitRef.current;
-    if (!a4 || !fit) return;
-    let lastW = -1;
-    let scale = 1;
-    const apply = () => {
-      const w = fit.clientWidth;
-      if (w <= 0) return;
-      if (w !== lastW) {
-        lastW = w;
-        scale = Math.min(1, w / A4_WIDTH_PX);
-        a4.style.transform = `scale(${scale})`;
-      }
-      fit.style.height = `${a4.offsetHeight * scale}px`;
-    };
-    apply();
-    const roFit = new ResizeObserver(apply);
-    roFit.observe(fit);
-    const roA4 = new ResizeObserver(apply);
-    roA4.observe(a4);
-    return () => { roFit.disconnect(); roA4.disconnect(); };
-  }, [locale, hydrated]);
 
   // 單個內容區塊 → JSX
   const renderBlock = (b: RuleBlock, i: number) => {
@@ -175,14 +141,11 @@ export default function RulesPage() {
           font-weight: 600;
         }
 
-        /* 縮放容器：寬度鋪滿；transform:scale 縮 A4，flex 置中、overflow 收起縮放留白 */
-        .a4-fit { width: 100%; max-width: 210mm; display: flex; justify-content: center; overflow: hidden; }
+        /* 螢幕：a4 是一張正常長文檔(桌面≈A4寬、手機滿寬自適應、可滾動、不縮放不裁切) */
+        .a4-fit { width: 100%; max-width: 210mm; }
         .a4 {
           position: relative;
-          transform-origin: top center;
-          width: 210mm;
-          min-height: 297mm;
-          flex: none;
+          width: 100%;
           background: #fbf8f1;
           color: #2a241b;
           box-shadow: 0 12px 40px rgba(0,0,0,0.35);
@@ -253,14 +216,15 @@ export default function RulesPage() {
           .rules-screen { background: #fff; padding: 0; }
           /* 打印時：不再固定 210mm（會超出可打印區被裁），改 width:auto 填滿 @page 內容區，
              所有邊距交給 @page，內容寬度 = A4 - 邊距，永不右側溢出被裁 */
-          .a4-fit { max-width: none; width: auto; height: auto !important; overflow: visible; display: block; }
-          .a4 { box-shadow: none; transform: none !important; width: auto; min-height: 0; padding: 0; }
+          .a4-fit { max-width: none; width: 100%; }
+          /* width:100% 填滿 @page 內容區(不 shrink-to-fit 導致右邊超出被切);padding:0,邊距交給 @page */
+          .a4 { box-shadow: none; width: 100%; padding: 0; }
           /* 不硬編分頁(不同語言長度不同會產生空白頁)。改為自然連續排版 + 保護:
              圖例/提示框不被拆開、標題不落單在頁底。頁數隨內容自適應、無空白頁。 */
           .fig, .a4 .tip, .a4 .warn { break-inside: avoid; }
           .rsec h2, .rsub { break-after: avoid; }
           .dims { break-inside: avoid; }
-          @page { size: A4; margin: 12mm 10mm; } /* 上下12 左右10，頁腳/頁邊空間 */
+          @page { size: A4; margin: 12mm; } /* 四邊 12mm，右邊留足不被切 */
         }
       `}</style>
 
@@ -269,8 +233,8 @@ export default function RulesPage() {
         <button className="rules-btn rules-btn-primary" onClick={() => window.print()}>{s.printOrPdf}</button>
       </div>
 
-      <div className="a4-fit" ref={fitRef}>
-        <div className="a4" ref={a4Ref}>
+      <div className="a4-fit">
+        <div className="a4">
           <div className="head">
             <div className="title-wrap">
               <h1 className="serif">{s.title}</h1>
