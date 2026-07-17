@@ -98,32 +98,31 @@ export const TUTORIAL_T = {
     // ── STEPS（規則要點卡片）──
     steps: [
       {
-        title: '🎯 終極目標：五維全部「公開歸檔」',
-        body: '把大五人格的 5 個維度（開放性 O、盡責性 C、外向性 E、宜人性 A、神經質 N）全部湊齊並「公開歸檔」，最快完成的人「食胡」獲勝。\n每個維度要湊幾張，取決於你自己的測評分數 —— 所以每個人的「胡牌路線」都不一樣。',
-        hint: '初始手牌張數 =（五維目標張數之和）− 1。少的那 1 張，要靠「碰」或「食胡」補齊。',
+        title: '🎯 終極目標：5維度「公開歸檔」！',
+        body: '你的目標是將大五人格的 5 個維度（OCEAN）全部湊齊並「公開歸檔」，最快完成的人獲勝！\n特別注意：每個維度要湊幾張牌，取決於你自己一開始的測評分數。所以，每個人的「胡牌路線（目標張數）」都是不一樣的！\n例如：你的目標可能是 O 需 3 張、C 需 4 張、E 需 2 張、A 需 5 張、N 需 4 張。',
+        hint: '初始手牌公式：你的初始手牌張數 = 5 個維度目標張數之和 − 1（少的那 1 張，要靠「碰」或「食胡」來補齊）。',
       },
       {
         title: '🃏 認識卡牌',
-        body: '牌堆只有兩類牌，很好認：\n• 人格描述牌（有顏色）：帶特定人格維度標籤，是你用來歸檔（湊張數）的核心牌。\n• 知識牌（灰色 / 無顏色）：印有心理學術語與定義，沒有維度、不能用來歸檔。',
-        hint: '知識牌抽到就打掉，安全不穿幫；還能順便觀察對手打出知識牌的時機，試探他們的出牌風格。',
+        body: '牌堆中只有兩類牌，非常好認：\n・人格描述牌（有顏色）：帶有特定人格維度的標籤，是你用來歸檔（湊張數）的核心牌。\n・知識牌（灰色 / 無顏色）：印有心理學術語與定義。它們沒有維度屬性，不能用來歸檔。',
+        hint: '妙用：抽到就打掉，安全不穿幫；還能順便觀察對手打出知識牌的時機，試探他們的出牌風格！',
       },
       {
-        title: '🔄 基本輪迴：摸牌 → 出牌',
-        body: '❶ 摸牌：輪到你先從牌堆摸 1 張，然後可查看手牌、歸檔或準備出牌。\n❷ 出牌：從手牌選 1 張不需要的丟到中間「棄牌堆」—— 這張牌會進入幾秒的「心理判讀窗口」，其他玩家可決定要不要搶來「碰」或「食胡」。\n看牌難度（房主設定）決定你每回合能看幾張手牌：明牌（全公開）/ 半公開（看 4 張、永久保留）/ 隱藏（看 2 張、下一輪重置）。',
+        title: '🔄 遊戲基本輪迴：摸牌 ➔ 出牌',
+        body: '❶ 摸牌（抽牌）\n輪到你時，先從牌堆摸 1 張牌。此時你可以查看手牌、選擇歸檔（碰）或準備出牌。\n🔍 核心機制：你能看多少張手牌？依房主設定的「看牌難度」而定：\n・明牌（預設）：全場公開！自己手牌 + 所有棄牌都直接顯示人格標籤，免查看。\n・半公開：每回合可看 4 張手牌（看過就永久顯示）；棄牌不顯示。\n・隱藏：每回合只能看 2 張，一輪後自動重置（蓋回去）；棄牌不顯示。\n❷ 出牌\n從手牌選 1 張不需要的牌丟到中間的「棄牌堆」。這張牌會進入幾秒鐘的「心理判讀窗口」，這時其他玩家可以決定要不要搶這張牌來「碰」或「食胡」。',
       },
       {
         title: '⚡ 兩大核心動作：碰 與 食胡',
-        body: '🀄 碰（公開歸檔）：某維度湊齊你的目標張數即可歸檔鎖定。\n• 自摸碰：自己回合（摸牌後），從「手牌 + 剛摸的牌」挑出恰好目標張數的同維度牌（每回合限 1 次）。\n• 截胡碰：別人的判讀窗口內、只差 1 張時，搶走那張棄牌湊齊（先搶先得）。\n🏆 食胡（宣告勝利）：已歸檔 + 手牌 + 當下判定牌，恰好完成全部 5 維時宣告，自摸或截胡皆可。',
-        hint: '系統不會提示哪個維度夠了 —— 5 個維度按鈕都會亮，你得自己算對維度與張數。選錯 / 沒算好 → 判定失敗被「罰停」！',
+        body: '🀄 碰（公開歸檔）\n當某一維度的牌湊齊了你的目標張數，你就可以宣告「碰」來鎖定（歸檔）該維度。\n・自摸碰：在自己的回合，從「手牌 + 剛摸的牌」中，挑出符合目標張數的同維度牌歸檔。（每回合限 1 次）\n・截胡碰（搶牌）：在別人的「心理判讀窗口」內，如果你手牌的同維度張數「只差 1 張」就達標，可以立即點擊搶走那張棄牌，湊齊歸檔！（先搶先得）\n⚠️ 系統不會提示你哪個維度夠了！5 個維度按鈕都會亮起，你必須自己算對張數與維度。一旦選錯、放錯牌，就會被「罰停」！\n🏆 食胡（宣告勝利）\n當你已歸檔的維度 + 手牌 + 當下判定牌，剛好完美達成了 5 個維度的所有目標張數：\n・自摸食胡：自己回合摸到最後一張關鍵牌。\n・截胡食胡：別人丟出你需要的最後一張牌，直接攔截！\n⚠️ 沒算好就喊食胡？判定失敗的話，會遭受嚴厲的罰停懲罰！',
       },
       {
         title: '🚫 懲罰機制：罰停',
-        body: '「碰失敗 / 自摸碰失敗 / 食胡失敗」懲罰相同：\n• 罰停一回合：下次輪到你自動跳過（不抽、不出）。\n• 強制亮牌：押錯的牌（碰）或整副手牌（食胡）立即公開給全場。\n• 失去參與：罰停期間不能碰、不能食胡別人的棄牌。\n• 頭像掛上大大的「⛔ 罰停中」標識。',
-        hint: '一次失誤等於送對手一回合，動手前務必看清楚、算明白！',
+        body: '如果你「碰失敗 / 自摸碰失敗 / 食胡失敗」，會受到以下懲罰：\n・罰停一回合：下次輪到你時自動被跳過（不抽牌、不出牌）。\n・強制亮牌：碰失敗的牌（或食胡失敗時的「整副手牌」）必須立即公開給全場看。\n・失去參與權：罰停期間，你不能參與別人的棄牌判定（無法碰牌、無法食胡）。\n・社死標記：你的頭像會掛上大大的「⛔ 罰停中」標誌。',
+        hint: '提示：一次失誤等於送對手一回合，動手前請務必看清楚、算明白！',
       },
       {
         title: '👥 聯機與勝負規則',
-        body: '• 人數：聯機 2–4 人；單機固定 4 人（你 + 3 個 AI）。\n• 退出：有人點「退出對局」後座位永久跳過（🚪 已退出），不影響其他人繼續；若只剩 1 人，該玩家直接獲勝。\n• 逾時提醒：回合超過 30 秒未操作會彈提醒（每 30 秒一次）。\n• 防作弊：同一學號不可同時進入兩個活躍房間。\n• 無人胡：打滿約定輪數仍無人食胡 → 按「已歸檔維度數（多者勝）→ 剩餘手牌張數（少者勝）」判定。',
+        body: '・人數彈性：聯機支援 2–4 名玩家；單機固定 4 人（你 + 3 個 AI）。\n・斷線 / 退出處理：有人點擊「退出對局」後，該座位會永久跳過（顯示 🚪 已退出），不影響剩餘玩家繼續切磋；若退到只剩 1 人，該玩家直接躺贏！\n・防作弊機制：同一個學號無法同時進入兩個活動房間。\n・逾時提醒：回合超時 60 秒未操作，系統會每分鐘彈窗提醒。\n・無人胡牌怎麼辦？如果打滿約定圈數仍無人食胡，則按以下順序判定勝負：',
       },
     ] as ReadonlyArray<{ title: string; body: string; hint?: string }>,
 
@@ -392,32 +391,31 @@ export const TUTORIAL_T = {
     // ── STEPS ──
     steps: [
       {
-        title: '🎯 Ultimate Goal: Publicly Archive All Five',
-        body: 'Collect and "publicly archive" all 5 Big Five dimensions (Openness O, Conscientiousness C, Extraversion E, Agreeableness A, Neuroticism N); the first to finish declares "Win." How many cards each dimension needs comes from your own assessment score — so everyone’s path to a win is different.',
-        hint: 'Starting hand size = (sum of the five targets) − 1. That one missing card must be completed via "Pong" or "Win".',
+        title: '🎯 Ultimate Goal: Publicly Archive All 5 Dimensions!',
+        body: 'Your goal is to collect and "publicly archive" all 5 Big Five dimensions (OCEAN); the first to finish wins!\nNote: how many cards each dimension needs depends on your own assessment score at the start. So everyone’s "path to a win (target counts)" is different!\nExample: your targets might be O needs 3, C needs 4, E needs 2, A needs 5, N needs 4.',
+        hint: 'Starting-hand formula: your starting hand size = the sum of the 5 dimension targets − 1 (that one missing card must be completed via "Pong" or "Win").',
       },
       {
         title: '🃏 Know the Cards',
-        body: 'The deck has only two kinds of cards:\n• Personality cards (colored): carry a dimension tag — your core cards for archiving (reaching a target count).\n• Knowledge cards (grey / uncolored): psychology terms and definitions; no dimension, cannot be archived.',
-        hint: 'Discard knowledge cards when drawn (safe, no giveaway); watching when an opponent plays them can also hint at their style.',
+        body: 'The deck has only two kinds of cards, easy to tell apart:\n・Personality cards (colored): carry a specific dimension tag — your core cards for archiving (reaching a target count).\n・Knowledge cards (grey / uncolored): psychology terms and definitions. They have no dimension and cannot be archived.',
+        hint: 'Handy tip: discard them the moment you draw one (safe, no giveaway); watching when opponents play them also probes their style!',
       },
       {
-        title: '🔄 The Loop: Draw → Discard',
-        body: '❶ Draw: on your turn, draw 1 card, then view your hand, archive, or get ready to discard.\n❷ Discard: pick 1 unwanted card to the middle "discard pile" — it opens a few-second "psychological read window" where others may grab it to "Pong" or "Win."\nReveal difficulty (set by the host) decides how many hand cards you can view each turn: Open (all public) / Half (view 4, kept) / Hidden (view 2, reset next round).',
+        title: '🔄 The Basic Loop: Draw ➔ Discard',
+        body: '❶ Draw\nOn your turn, first draw 1 card from the deck. Now you can view your hand, choose to archive (Pong), or get ready to discard.\n🔍 Core mechanic: how many hand cards can you see? It depends on the host’s "reveal difficulty":\n・Open (default): fully public! Your hand + all discards show their dimension tags directly, no viewing needed.\n・Half: view up to 4 hand cards each turn (once viewed, shown permanently); discards not shown.\n・Hidden: view only 2 each turn, auto-reset after a round (turned back over); discards not shown.\n❷ Discard\nPick 1 unwanted card from your hand into the middle "discard pile". This card opens a few-second "psychological read window", during which other players may decide whether to grab it to "Pong" or "Win".',
       },
       {
         title: '⚡ Two Core Actions: Pong & Win',
-        body: '🀄 Pong (public archive): reach a dimension’s target count to lock it.\n• Self-draw Pong: on your own turn (after drawing), pick exactly the target count of same-dimension cards from your hand + the just-drawn card (once per turn).\n• Claim Pong: within an opponent’s read window, if you are one short, grab that discard to complete the set (first-come).\n🏆 Win (declare victory): when archived + hand + the current card exactly complete all 5 dimensions — by self-draw or claim.',
-        hint: 'The system won’t tell you which dimension is ready — all 5 buttons light up; you must count the dimension and cards yourself. A wrong or miscounted pick fails and you are "Frozen"!',
+        body: '🀄 Pong (public archive)\nWhen a dimension reaches your target count, you can declare "Pong" to lock (archive) that dimension.\n・Self-draw Pong: on your own turn, from "hand + the just-drawn card", pick the same-dimension cards matching the target count and archive them. (Once per turn)\n・Claim Pong (grab): within another player’s "read window", if your same-dimension count is "just 1 short" of the target, you can instantly grab that discard to complete the archive! (First-come)\n⚠️ The system won’t tell you which dimension is ready! All 5 dimension buttons light up; you must count the counts and dimensions yourself. Pick or place wrong and you get "Frozen"!\n🏆 Win (declare victory)\nWhen your archived dimensions + hand + the current judged card perfectly complete all target counts for the 5 dimensions:\n・Self-draw Win: you draw the final key card on your own turn.\n・Claim Win: someone discards the last card you need — intercept it directly!\n⚠️ Called Win without counting right? A failed judgment brings a harsh Frozen penalty!',
       },
       {
         title: '🚫 Penalty: Frozen',
-        body: 'A failed Pong / self-draw Pong / Win all carry the same penalty:\n• Frozen one turn: your next turn is auto-skipped (no draw, no discard).\n• Forced reveal: the cards you bet (Pong) or your whole hand (Win) are shown to everyone.\n• Locked out: while frozen you cannot Pong or Win on others’ discards.\n• A big "⛔ Frozen" badge sits under your avatar.',
-        hint: 'One slip hands your opponent a turn — look carefully and count before you act!',
+        body: 'If you fail a "Pong / self-draw Pong / Win", you receive these penalties:\n・Frozen one turn: your next turn is auto-skipped (no draw, no discard).\n・Forced reveal: the failed Pong cards (or your "whole hand" on a failed Win) are immediately shown to everyone.\n・Locked out: while frozen you cannot join others’ discard judgments (cannot Pong or Win).\n・Public shame badge: a big "⛔ Frozen" mark hangs on your avatar.',
+        hint: 'Tip: one slip hands your opponent a turn — look carefully and count clearly before you act!',
       },
       {
-        title: '👥 Online & Results',
-        body: '• Players: online 2–4; single player is always 4 (you + 3 AI).\n• Leaving: tapping "Leave" permanently skips that seat (🚪 Left); others keep playing, and if only 1 remains that player wins.\n• Idle nudge: if a turn goes over 30 seconds without action, a reminder pops (every 30 seconds).\n• Anti-cheat: the same student ID cannot occupy two active rooms at once.\n• No winner: if the agreed rounds run out with no Win → rank by archived-dimension count (more wins), then remaining hand cards (fewer wins).',
+        title: '👥 Online & Results Rules',
+        body: '・Flexible player count: online supports 2–4 players; single player is fixed at 4 (you + 3 AI).\n・Disconnect / leave: after someone taps "Leave", that seat is permanently skipped (shows 🚪 Left) and the remaining players keep going; if only 1 player remains, that player simply wins!\n・Anti-cheat: the same student ID cannot enter two active rooms at once.\n・Idle nudge: if a turn goes 60 seconds without action, the system pops a reminder every minute.\n・What if no one wins? If the agreed rounds run out with no Win, the result is decided in the following order:',
       },
     ] as ReadonlyArray<{ title: string; body: string; hint?: string }>,
 
