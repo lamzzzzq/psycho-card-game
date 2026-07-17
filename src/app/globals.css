@@ -38,6 +38,9 @@ body {
   /* 兜底：杜绝任何宽于视口的元素造成横向平移（clip 不建立滚动容器，不影响 fixed/sticky）。 */
   overflow-x: clip;
   max-width: 100%;
+  /* 关掉 iOS 橡皮筋回弹(overscroll)：否则滚到顶/底或惯性时，页面会回弹，
+     带着 position:fixed 的底栏一起「弹上弹下再复位」，看起来像抖动。 */
+  overscroll-behavior-y: none;
   /* 禁止 iOS 横竖屏切换时自动放大字号 */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
