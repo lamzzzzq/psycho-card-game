@@ -32,6 +32,27 @@ const DIMS = [
   { name: 'Agreeableness 宜人性', hex: '#4ade80' },
   { name: 'Neuroticism 神經質', hex: '#f87171' },
 ];
+const LOGO_ELEMENTS = [
+  { name: 'Ψ · Psi', desc: '心理学 / 心智的通用符号，语言无关，适合中英和未来多语言版本。' },
+  { name: '鲁宾花瓶', desc: '双侧脸与花瓶的错视，呼应「读懂自己，也读懂别人」的玩法核心。' },
+  { name: '麻将牌身', desc: '圆角牌框连接游戏本体，也能直接复用现有卡牌的象牙面与金边。' },
+  { name: '圆形轨道', desc: '表达人格维度与测评结构，同时避免把 logo 锁死在固定五维。' },
+  { name: '神经节点', desc: '保留科学/测评感，但只做少量点线，避免变成复杂脑图。' },
+];
+const LOGO_OUTPUTS = [
+  { name: '主标记 · Psi Tile', use: 'favicon / 页首 / App 图标', desc: '最简的 Ψ + 麻将牌。小尺寸优先，保证 16-32px 仍可识别。' },
+  { name: '徽记 · Psi Vase', use: '加载页 / 规则页 / 分享图', desc: 'Ψ 与鲁宾花瓶双侧脸结合，用来讲品牌故事，尺寸可以更大。' },
+  { name: '辅助图形 · Psi Orbit', use: '测评页 / 空状态 / 动效', desc: '用圆形轨道和自由数量的点表达人格模型，不绑定固定维度数。' },
+  { name: '品牌组合 · Mark + Wordmark', use: '首页首屏 / 海报 / 课件封面', desc: '图形标配合 Personalities Mahjong 字标，用于完整品牌露出。' },
+];
+const LOGO_PLACEMENTS = [
+  { where: 'favicon', spec: '纯图形主标记', note: '使用最简 Psi Tile，避免双脸/节点细节在 16px 糊掉。' },
+  { where: '导航 / 页首', spec: '图形 + 文字锁版', note: 'logo 放在「人格麻將」标题左侧或上方，文字不写进标记本体。' },
+  { where: 'PWA / App icon', spec: '暖沙底满版图标', note: '保留圆角牌框和 Ψ，适合 192px / 512px 导出。' },
+  { where: '加载页', spec: 'Psi Vase 或 Psi Orbit', note: '可使用更完整的徽记，也可以让轨道做轻微旋转动效。' },
+  { where: '结算分享图', spec: '品牌徽记', note: '用叙事更强的鲁宾花瓶版本，让截图有品牌识别。' },
+  { where: 'Footer / 规则页', spec: '单色线稿版', note: '降低存在感，作为课程/教学材料中的稳定品牌角标。' },
+];
 
 function Swatch({ name, hex }: { name: string; hex: string }) {
   return (
@@ -503,6 +524,16 @@ function AnalysisCard({ title, tone, children }: { title: string; tone: 'good' |
   );
 }
 
+function StrategyCard({ title, eyebrow, children }: { title: string; eyebrow: string; children: ReactNode }) {
+  return (
+    <div className="rounded-[1.2rem] border border-[var(--psy-border)] bg-[var(--psy-card-content)] p-4">
+      <div className="psy-eyebrow text-[9px]">{eyebrow}</div>
+      <div className="psy-serif mt-1 text-base font-semibold text-[var(--psy-ink)]">{title}</div>
+      <div className="mt-2 text-[13px] leading-6 text-[var(--psy-ink-soft)]">{children}</div>
+    </div>
+  );
+}
+
 export default function BrandPage() {
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-10">
@@ -515,6 +546,85 @@ export default function BrandPage() {
             这份文档整理项目的玩法、概念、目标与视觉配色，供同事在同一套设计语言下发散更多 logo / 视觉可行性。下方给出多组 logo 草案：麻将风、塔罗风、彩色五维、课程徽章与抽象符号，仅为方向示意，非最终稿。
           </p>
         </header>
+
+        {/* Logo strategy */}
+        <Section eyebrow="Logo Strategy · 新策略" title="Ψ 心理符号 × 鲁宾花瓶 × 麻将牌">
+          <div className="space-y-4">
+            <div className="rounded-[1.35rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-5">
+              <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">设计背景</div>
+              <p className="mt-2 text-[14px] leading-7 text-[var(--psy-ink-soft)]">
+                新 logo 的核心不再只是「像麻将」或「像心理测评」，而是把三件事合成一个语言无关的品牌符号：<strong className="text-[var(--psy-ink)]">Ψ 代表心理学</strong>，<strong className="text-[var(--psy-ink)]">鲁宾花瓶代表自我与他人的双重读取</strong>，<strong className="text-[var(--psy-ink)]">麻将牌框代表游戏本体</strong>。它需要服务中文、英文和未来其他语言版本，所以主标记本体不放文字。
+              </p>
+              <p className="mt-2 text-[14px] leading-7 text-[var(--psy-ink-soft)]">
+                设计上要避免老板给的参考图里偏花哨的彩色脑图、复杂节点和冷蓝银科技感；转成现有网站的暖纸米白、象牙牌面、暖金、陶土红和少量柔绿，让 logo 像是从当前卡牌系统里自然长出来的。
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {LOGO_ELEMENTS.map((item) => (
+                <StrategyCard key={item.name} eyebrow="Element" title={item.name}>
+                  {item.desc}
+                </StrategyCard>
+              ))}
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-2">
+              <StrategyCard eyebrow="Thinking" title="一简一繁的双层系统">
+                <p>
+                  <strong className="text-[var(--psy-ink)]">主标记</strong>负责小尺寸识别，越简单越好，用于 favicon、App icon、导航栏；<strong className="text-[var(--psy-ink)]">徽记</strong>负责讲故事，可以加入鲁宾花瓶、轨道、节点，用于加载页、分享图和规则页大图。
+                </p>
+              </StrategyCard>
+              <StrategyCard eyebrow="Scalability" title="不锁死在固定五维">
+                <p>
+                  游戏现在围绕 Big Five，但未来可能扩展到 4 维、6 维或其他人格模型。因此 logo 不用五边形或固定五颗点作为核心结构，优先用圆形轨道、自由数量节点和可增减的辅助符号。
+                </p>
+              </StrategyCard>
+            </div>
+          </div>
+        </Section>
+
+        {/* Logo palette */}
+        <Section eyebrow="Logo Palette · 标志配色" title="沿用网站暖纸系统，而不是另起一套">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <StrategyCard eyebrow="Base" title="象牙 / 暖纸">
+              <p>牌面与徽章底色使用 `#fdf8f1` / `#fdf9f0`，页面背景使用 `#f4edd9`，让 logo 放进页面时不突兀。</p>
+            </StrategyCard>
+            <StrategyCard eyebrow="Hero color" title="暖金 Ψ">
+              <p>Ψ 使用 `#c39a52` 与 `#9a7448`，既有心理学符号的权威感，也延续卡牌金边和按钮强调色。</p>
+            </StrategyCard>
+            <StrategyCard eyebrow="Accent" title="陶土红侧脸">
+              <p>鲁宾花瓶两侧脸可用 `#c9603f` 小面积点缀，表达人物与互动，但不做大面积主色。</p>
+            </StrategyCard>
+            <StrategyCard eyebrow="Support" title="墨色 / 柔绿">
+              <p>墨色 `#3a3020` 负责描边和小尺寸清晰度；柔绿 `#6f8f55` 只用于节点、叶片或很小的平衡色。</p>
+            </StrategyCard>
+          </div>
+        </Section>
+
+        {/* Logo output system */}
+        <Section eyebrow="Output · 最终产出形态" title="不是一个图，而是一套可落地的 logo 系统">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {LOGO_OUTPUTS.map((item) => (
+              <StrategyCard key={item.name} eyebrow={item.use} title={item.name}>
+                {item.desc}
+              </StrategyCard>
+            ))}
+          </div>
+          <p className="text-[13px] leading-6 text-[var(--psy-muted)]">
+            目前页面里的方案仍是提案。正式落地时，选定方向后应重绘为 <strong>SVG</strong>，再导出 `favicon.ico` / `icon.svg` / `apple-icon.png` / PWA 尺寸 PNG。GPT 位图只适合评审和方向选择，不应直接作为最终源文件。
+          </p>
+        </Section>
+
+        {/* Placement */}
+        <Section eyebrow="Web Usage · 网页呈现" title="logo 在网站里怎么出现">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {LOGO_PLACEMENTS.map((item) => (
+              <StrategyCard key={item.where} eyebrow={item.spec} title={item.where}>
+                {item.note}
+              </StrategyCard>
+            ))}
+          </div>
+        </Section>
 
         {/* Concept */}
         <Section eyebrow="Concept · 概念" title="心理学 × 麻将">
