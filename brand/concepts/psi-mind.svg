@@ -1,0 +1,33 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Psi Mind logo">
+  <!-- 方案 D · Psi Mind：呼应老板方向 A（脑 + Ψ + 节点），已简化为暖色扁平、可缩放。 -->
+  <defs>
+    <linearGradient id="mindPsi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d8b46a"/>
+      <stop offset="1" stop-color="#b3873f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 圆徽底 -->
+  <circle cx="60" cy="62" r="48" fill="#fdf9f0"/>
+  <circle cx="60" cy="62" r="48" fill="none" stroke="#c39a52" stroke-width="3"/>
+
+  <!-- 顶部脑半球弧（虚线）+ 节点：神经/数据连接，数量随意（不锁维度） -->
+  <path d="M30 46 Q60 20 90 46" fill="none" stroke="#c9603f" stroke-width="2.5"
+        stroke-dasharray="2.5 6" stroke-linecap="round" opacity="0.75"/>
+  <circle cx="30" cy="46" r="3.4" fill="#c9603f"/>
+  <circle cx="46" cy="30" r="3" fill="#c39a52"/>
+  <circle cx="60" cy="24" r="3.4" fill="#6f8f55"/>
+  <circle cx="74" cy="30" r="3" fill="#c39a52"/>
+  <circle cx="90" cy="46" r="3.4" fill="#c9603f"/>
+  <!-- 从节点垂到 Ψ 顶端的细连线 -->
+  <path d="M46 33 L47 44 M60 27 L60 40 M74 33 L73 44" stroke="#c39a52" stroke-width="1.6"
+        stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Ψ -->
+  <g fill="none" stroke="url(#mindPsi)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"
+     transform="translate(27,36) scale(0.66)">
+    <path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/>
+    <path d="M50 26 L50 84"/>
+    <path d="M40 84 L60 84"/>
+  </g>
+</svg>

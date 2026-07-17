@@ -1,0 +1,129 @@
+<title>人格麻將 · Logo 方案预览</title>
+<style>
+  :root {
+    --bg: #f4edd9; --panel: #fdf9f0; --ink: #3a3020; --soft: #6b5a3f;
+    --muted: #9a8a68; --gold: #c39a52; --line: rgba(154,116,72,0.28);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#241f17; --panel:#2e2820; --ink:#f2e9d6; --soft:#c9bda2; --muted:#9a8a68; --line:rgba(200,170,110,0.22); }
+  }
+  :root[data-theme="dark"] { --bg:#241f17; --panel:#2e2820; --ink:#f2e9d6; --soft:#c9bda2; --muted:#9a8a68; --line:rgba(200,170,110,0.22); }
+  :root[data-theme="light"] { --bg:#f4edd9; --panel:#fdf9f0; --ink:#3a3020; --soft:#6b5a3f; --muted:#9a8a68; --line:rgba(154,116,72,0.28); }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font-family: ui-sans-serif, "PingFang TC","Microsoft JhengHei", system-ui, sans-serif; line-height:1.6; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1 { font-family: ui-serif, "Songti TC", Georgia, serif; font-size: 30px; margin: 0 0 4px; letter-spacing: 1px; }
+  .sub { color: var(--soft); margin: 0 0 28px; }
+  h2 { font-size: 18px; color: var(--gold); border-bottom: 1px solid var(--line); padding-bottom: 6px; margin: 40px 0 16px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  @media (max-width: 640px){ .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+  .card .name { font-weight: 700; margin: 12px 0 2px; }
+  .card .tag { font-size: 12.5px; color: var(--soft); }
+  .stage { display:flex; gap:14px; align-items:center; justify-content:center; }
+  .stage .lite, .stage .dark { width: 108px; height:108px; border-radius:14px; display:grid; place-items:center; }
+  .stage .lite { background:#f4edd9; }
+  .stage .dark { background:#241f17; }
+  .stage svg { width: 86px; height: 86px; }
+  .row { display:flex; align-items:center; gap:22px; flex-wrap:wrap; background:var(--panel);
+    border:1px solid var(--line); border-radius:18px; padding:20px; }
+  .row .lbl { font-size:12px; color:var(--muted); width:100%; }
+  .favi { display:flex; align-items:flex-end; gap:18px; }
+  .favi .b { text-align:center; }
+  .favi .b small { display:block; color:var(--muted); font-size:11px; margin-top:4px; }
+  .lockup { display:flex; align-items:center; gap:14px; }
+  .lockup .title { font-family: ui-serif,"Songti TC",Georgia,serif; font-size:30px; letter-spacing:2px; }
+  .note { color: var(--soft); font-size: 13.5px; }
+  .rec { display:inline-block; font-size:11px; font-weight:700; color:#fff; background:var(--gold);
+    border-radius:999px; padding:2px 9px; margin-left:8px; vertical-align:middle; }
+</style>
+
+<div class="wrap">
+  <h1>人格麻將 · Logo 方案</h1>
+  <p class="sub">四个方向 · 基于老板喜欢的 Ψ+脑 / Ψ+花瓶，改成网站暖金色。详见 <code>brand/LOGO_STRATEGY.md</code>。</p>
+
+  <h2>四个方案</h2>
+  <div class="grid">
+
+    <div class="card">
+      <div class="stage">
+        <div class="lite">
+          <!-- TILE -->
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf7"/><stop offset="1" stop-color="#faf1de"/></linearGradient><linearGradient id="pg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8b46a"/><stop offset="1" stop-color="#b3873f"/></linearGradient></defs><rect x="22" y="12" width="76" height="96" rx="20" fill="url(#tf)" stroke="#c39a52" stroke-width="3.5"/><rect x="30" y="19" width="60" height="30" rx="13" fill="#ffffff" opacity="0.45"/><rect x="29" y="19" width="62" height="82" rx="15" fill="none" stroke="#c39a52" stroke-width="1" opacity="0.35"/><g fill="none" stroke="url(#pg1)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(21,20) scale(0.78)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/></g></svg>
+        </div>
+        <div class="dark">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="12" width="76" height="96" rx="20" fill="#fdf9f0" stroke="#c39a52" stroke-width="3.5"/><g fill="none" stroke="#b3873f" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(21,20) scale(0.78)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/></g></svg>
+        </div>
+      </div>
+      <div class="name">A · Psi Tile <span class="rec">推荐主标记</span></div>
+      <div class="tag">Ψ + 麻将牌。最简、耐缩放 → favicon / App 图标 / 页首。</div>
+    </div>
+
+    <div class="card">
+      <div class="stage">
+        <div class="lite">
+          <!-- VASE -->
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8b46a"/><stop offset="1" stop-color="#b3873f"/></linearGradient></defs><circle cx="60" cy="60" r="50" fill="#f7ecd6"/><circle cx="60" cy="60" r="50" fill="none" stroke="#c39a52" stroke-width="3"/><path fill="#cf7350" d="M60 16 A 44 44 0 0 0 60 104 L 60 100 Q 55 92 56 84 Q 57 78 50 72 Q 57 66 53 59 Q 49 53 57 47 Q 53 42 55 37 Q 57 32 60 30 Z"/><path fill="#cf7350" d="M60 16 A 44 44 0 0 1 60 104 L 60 100 Q 65 92 64 84 Q 63 78 70 72 Q 63 66 67 59 Q 71 53 63 47 Q 67 42 65 37 Q 63 32 60 30 Z"/><g fill="none" stroke="url(#vp)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(35,34) scale(0.5)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 88"/><path d="M41 88 L59 88"/></g></svg>
+        </div>
+        <div class="dark">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="50" fill="#f7ecd6"/><circle cx="60" cy="60" r="50" fill="none" stroke="#c39a52" stroke-width="3"/><path fill="#cf7350" d="M60 16 A 44 44 0 0 0 60 104 L 60 100 Q 55 92 56 84 Q 57 78 50 72 Q 57 66 53 59 Q 49 53 57 47 Q 53 42 55 37 Q 57 32 60 30 Z"/><path fill="#cf7350" d="M60 16 A 44 44 0 0 1 60 104 L 60 100 Q 65 92 64 84 Q 63 78 70 72 Q 63 66 67 59 Q 71 53 63 47 Q 67 42 65 37 Q 63 32 60 30 Z"/><g fill="none" stroke="#b3873f" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(35,34) scale(0.5)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 88"/><path d="M41 88 L59 88"/></g></svg>
+        </div>
+      </div>
+      <div class="name">B · Psi Vase</div>
+      <div class="tag">鲁宾花瓶：两张侧脸中间的负空间是金色 Ψ-花瓶。故事最强 → 加载页 / 分享图。</div>
+    </div>
+
+    <div class="card">
+      <div class="stage">
+        <div class="lite">
+          <!-- ORBIT -->
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="op" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8b46a"/><stop offset="1" stop-color="#b3873f"/></linearGradient></defs><circle cx="60" cy="60" r="44" fill="none" stroke="#c39a52" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round" opacity="0.55"/><rect x="53.5" y="8.5" width="13" height="17" rx="4" fill="#fdf9f0" stroke="#c39a52" stroke-width="2"/><rect x="15" y="76" width="13" height="17" rx="4" fill="#fdf9f0" stroke="#c39a52" stroke-width="2" transform="rotate(-52 21.5 84.5)"/><rect x="92" y="76" width="13" height="17" rx="4" fill="#fdf9f0" stroke="#c39a52" stroke-width="2" transform="rotate(52 98.5 84.5)"/><circle cx="98.5" cy="35.5" r="4" fill="#cf7350"/><circle cx="21.5" cy="35.5" r="4" fill="#6f8f55"/><circle cx="60" cy="104" r="4" fill="#c39a52"/><g fill="none" stroke="url(#op)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" transform="translate(27,27) scale(0.66)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/></g></svg>
+        </div>
+        <div class="dark">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="44" fill="none" stroke="#c39a52" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round" opacity="0.7"/><rect x="53.5" y="8.5" width="13" height="17" rx="4" fill="#fdf9f0" stroke="#c39a52" stroke-width="2"/><rect x="15" y="76" width="13" height="17" rx="4" fill="#fdf9f0" stroke="#c39a52" stroke-width="2" transform="rotate(-52 21.5 84.5)"/><rect x="92" y="76" width="13" height="17" rx="4" fill="#fdf9f0" stroke="#c39a52" stroke-width="2" transform="rotate(52 98.5 84.5)"/><circle cx="98.5" cy="35.5" r="4" fill="#cf7350"/><circle cx="21.5" cy="35.5" r="4" fill="#6f8f55"/><circle cx="60" cy="104" r="4" fill="#c39a52"/><g fill="none" stroke="#d8b46a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" transform="translate(27,27) scale(0.66)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/></g></svg>
+        </div>
+      </div>
+      <div class="name">C · Psi Orbit</div>
+      <div class="tag">中心 Ψ + 圆形轨道上散布小牌/圆点（数量示意）。灵活维度、可做旋转动效。</div>
+    </div>
+
+    <div class="card">
+      <div class="stage">
+        <div class="lite">
+          <!-- MIND -->
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8b46a"/><stop offset="1" stop-color="#b3873f"/></linearGradient></defs><circle cx="60" cy="62" r="48" fill="#fdf9f0"/><circle cx="60" cy="62" r="48" fill="none" stroke="#c39a52" stroke-width="3"/><path d="M30 46 Q60 20 90 46" fill="none" stroke="#c9603f" stroke-width="2.5" stroke-dasharray="2.5 6" stroke-linecap="round" opacity="0.75"/><circle cx="30" cy="46" r="3.4" fill="#c9603f"/><circle cx="46" cy="30" r="3" fill="#c39a52"/><circle cx="60" cy="24" r="3.4" fill="#6f8f55"/><circle cx="74" cy="30" r="3" fill="#c39a52"/><circle cx="90" cy="46" r="3.4" fill="#c9603f"/><path d="M46 33 L47 44 M60 27 L60 40 M74 33 L73 44" stroke="#c39a52" stroke-width="1.6" stroke-linecap="round" opacity="0.5"/><g fill="none" stroke="url(#mp)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(27,36) scale(0.66)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/></g></svg>
+        </div>
+        <div class="dark">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="62" r="48" fill="#fdf9f0"/><circle cx="60" cy="62" r="48" fill="none" stroke="#c39a52" stroke-width="3"/><path d="M30 46 Q60 20 90 46" fill="none" stroke="#c9603f" stroke-width="2.5" stroke-dasharray="2.5 6" stroke-linecap="round" opacity="0.75"/><circle cx="30" cy="46" r="3.4" fill="#c9603f"/><circle cx="46" cy="30" r="3" fill="#c39a52"/><circle cx="60" cy="24" r="3.4" fill="#6f8f55"/><circle cx="74" cy="30" r="3" fill="#c39a52"/><circle cx="90" cy="46" r="3.4" fill="#c9603f"/><g fill="none" stroke="#b3873f" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(27,36) scale(0.66)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/></g></svg>
+        </div>
+      </div>
+      <div class="name">D · Psi Mind</div>
+      <div class="tag">脑 + Ψ + 节点（老板方向 A 的暖色简化版）。节点数量随意、不锁维度。</div>
+    </div>
+  </div>
+
+  <h2>小尺寸测试（favicon 认得出吗？）· 用主标记 Psi Tile</h2>
+  <div class="row">
+    <div class="lbl">同一个 Psi Tile 缩到 16 / 24 / 32 / 48px —— Ψ 依然清晰。</div>
+    <div class="favi">
+      <div class="b"><svg width="16" height="16" viewBox="0 0 120 120"><rect x="22" y="12" width="76" height="96" rx="20" fill="#fdf9f0" stroke="#c39a52" stroke-width="4"/><g fill="none" stroke="#b3873f" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" transform="translate(21,20) scale(0.78)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/></g></svg><small>16</small></div>
+      <div class="b"><svg width="24" height="24" viewBox="0 0 120 120"><rect x="22" y="12" width="76" height="96" rx="20" fill="#fdf9f0" stroke="#c39a52" stroke-width="4"/><g fill="none" stroke="#b3873f" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" transform="translate(21,20) scale(0.78)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/></g></svg><small>24</small></div>
+      <div class="b"><svg width="32" height="32" viewBox="0 0 120 120"><rect x="22" y="12" width="76" height="96" rx="20" fill="#fdf9f0" stroke="#c39a52" stroke-width="3.5"/><g fill="none" stroke="#b3873f" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(21,20) scale(0.78)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/></g></svg><small>32</small></div>
+      <div class="b"><svg width="48" height="48" viewBox="0 0 120 120"><rect x="22" y="12" width="76" height="96" rx="20" fill="#fdf9f0" stroke="#c39a52" stroke-width="3.5"/><g fill="none" stroke="#b3873f" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(21,20) scale(0.78)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/></g></svg><small>48</small></div>
+    </div>
+  </div>
+
+  <h2>页首锁版示意（标记 + 文字，文字不属于 logo 本体）</h2>
+  <div class="row">
+    <div class="lockup">
+      <svg width="46" height="46" viewBox="0 0 120 120"><rect x="22" y="12" width="76" height="96" rx="20" fill="#fdf9f0" stroke="#c39a52" stroke-width="3.5"/><g fill="none" stroke="#b3873f" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(21,20) scale(0.78)"><path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/></g></svg>
+      <span class="title">人格麻將</span>
+    </div>
+  </div>
+
+  <p class="note" style="margin-top:28px">
+    这些是<strong>方向概念稿</strong>（手写 SVG），用于快速对齐方向；定稿后可交设计师或图生细化。
+    推荐：主 logo 用 A（Psi Tile），徽记二选一 B / C。放置见 <code>brand/PLACEMENT.md</code>。
+  </p>
+</div>
