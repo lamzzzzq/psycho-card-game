@@ -145,20 +145,21 @@ export default function RulesPage() {
           background: #fbf8f1;
           color: #2a241b;
           box-shadow: 0 12px 40px rgba(0,0,0,0.35);
-          padding: 15mm 15mm;
+          padding: 12mm 15mm 14mm;
           box-sizing: border-box;
           font-family: ui-sans-serif, "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
           line-height: 1.55;
         }
         .a4 .serif { font-family: ui-serif, "Songti TC", Georgia, serif; }
-        .a4 h1 { font-size: 29px; margin: 0; letter-spacing: 2px; color: #1c1812; }
+        .a4 h1 { font-size: 26px; margin: 0; letter-spacing: 2px; color: #1c1812; }
         .a4 .sub { font-size: 12px; color: #6b5d44; }
         .head {
-          display: flex; justify-content: space-between; align-items: flex-start;
-          border-bottom: 2px solid #c89b5d; padding-bottom: 12px; margin-bottom: 6px;
+          display: flex; justify-content: space-between; align-items: center;
+          border-bottom: 2px solid #c89b5d; padding-bottom: 8px; margin-bottom: 4px;
         }
-        .qrbox { text-align: center; }
-        .qrbox .cap { font-size: 10px; color: #6b5d44; margin-top: 4px; }
+        .head .title-wrap { padding-top: 2px; }
+        .qrbox { text-align: center; flex: none; }
+        .qrbox .cap { font-size: 9px; color: #6b5d44; margin-top: 3px; line-height: 1.35; }
 
         /* 章節：兩欄流式排版，單節不跨欄斷開 */
         .sections { column-count: 2; column-gap: 20px; margin-top: 6px; }
@@ -213,7 +214,7 @@ export default function RulesPage() {
 
       <div className="a4">
         <div className="head">
-          <div>
+          <div className="title-wrap">
             {locale === 'en' && (
               <p className="serif" style={{ fontSize: 12, letterSpacing: 6, color: '#7a4d12', margin: 0 }}>PSYCHO CARD</p>
             )}
@@ -221,7 +222,7 @@ export default function RulesPage() {
             <p className="sub" style={{ marginTop: 6 }}>{s.subtitle}</p>
           </div>
           <div className="qrbox">
-            <QRCodeSVG value={GAME_URL} size={92} level="M" fgColor="#2a241b" bgColor="#fbf8f1" />
+            <QRCodeSVG value={GAME_URL} size={62} level="M" fgColor="#2a241b" bgColor="#fbf8f1" />
             <div className="cap">{s.scanToEnter}<br />{GAME_URL.replace('https://', '')}</div>
           </div>
         </div>
