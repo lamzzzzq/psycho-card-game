@@ -1,0 +1,19 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Psi Mind — silhouette">
+  <!-- 方向4 变体c · 柔和脑轮廓（金描边）内嵌 Ψ，扁平不写实 -->
+  <defs><linearGradient id="d4cp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8b46a"/><stop offset="1" stop-color="#b3873f"/></linearGradient></defs>
+  <!-- 脑外轮廓（圆润两瓣） -->
+  <path d="M60 20
+    C 40 14 24 26 26 44
+    C 16 50 18 66 30 70
+    C 30 84 44 92 60 88
+    C 76 92 90 84 90 70
+    C 102 66 104 50 94 44
+    C 96 26 80 14 60 20 Z"
+    fill="#faf1de" stroke="#c39a52" stroke-width="3"/>
+  <!-- 中缝 -->
+  <path d="M60 22 L60 40" stroke="#c39a52" stroke-width="1.6" opacity="0.35" stroke-linecap="round"/>
+  <!-- Ψ -->
+  <g fill="none" stroke="url(#d4cp)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(27,30) scale(0.66)">
+    <path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/>
+  </g>
+</svg>

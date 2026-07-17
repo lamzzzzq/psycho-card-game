@@ -1,0 +1,14 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Psi Mind — nodes">
+  <!-- 方向4 变体b · 极简：Ψ 三叉尖端接神经节点 + 细连线，无外框（可缩小） -->
+  <defs><linearGradient id="d4bp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8b46a"/><stop offset="1" stop-color="#b3873f"/></linearGradient></defs>
+  <!-- 连线（从三叉尖端往上发散） -->
+  <g stroke="#c39a52" stroke-width="1.8" stroke-linecap="round" opacity="0.6" fill="none">
+    <path d="M40 34 Q34 24 26 22"/><path d="M60 30 L60 18"/><path d="M80 34 Q86 24 94 22"/>
+  </g>
+  <!-- 节点 -->
+  <circle cx="26" cy="22" r="4.2" fill="#cf7350"/><circle cx="60" cy="18" r="4.6" fill="#6f8f55"/><circle cx="94" cy="22" r="4.2" fill="#c9a24a"/>
+  <!-- Ψ -->
+  <g fill="none" stroke="url(#d4bp)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(21,26) scale(0.78)">
+    <path d="M35 30 L35 55 Q35 70 50 70 Q65 70 65 55 L65 30"/><path d="M50 26 L50 84"/><path d="M40 84 L60 84"/>
+  </g>
+</svg>
