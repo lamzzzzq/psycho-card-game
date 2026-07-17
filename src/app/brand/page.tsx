@@ -52,12 +52,30 @@ const MAIN_LOGO_ASSETS = [
   { id: 'alt-directions-A', src: '/brand/generated/marks-tight/alt-directions-A.png', label: '裸标记源文件' },
 ];
 const LOGO_ALTERNATIVES = [
-  { id: 'psi-vase-B', src: '/brand/generated/marks-tight/psi-vase-B.png', title: 'Psi Vase 圆章版', note: '更强调自我/他人的双重读取，适合继续评审为主 Logo 备选。' },
-  { id: 'alt-directions-C', src: '/brand/generated/marks-tight/alt-directions-C.png', title: 'Psi Orbit 轨道版', note: '更偏心理测评和人格维度，识别感轻，适合作为备选方向。' },
-  { id: 'alt-directions-E', src: '/brand/generated/marks-tight/alt-directions-E.png', title: 'Psi Network 节点版', note: '更有科学/研究感，但作为主 Logo 会比 Psi Tile 复杂。' },
-  { id: 'alt-directions-B', src: '/brand/generated/marks-tight/alt-directions-B.png', title: 'Rubin Vase 负形版', note: '概念感强，但与麻将游戏本体的连接弱，需要继续精修。' },
-  { id: 'psi-vase-C', src: '/brand/generated/marks-tight/psi-vase-C.png', title: 'Psi Card 卡面版', note: '保留卡牌边框，和产品界面更接近，可作为简化备选。' },
-  { id: 'alt-directions-I', src: '/brand/generated/marks-tight/alt-directions-I.png', title: 'Rounded App 版', note: '更像应用图标候选，不建议直接作为正式主 Logo。' },
+  { id: 'alt-directions-A', src: '/brand/generated/marks-tight/alt-directions-A.png', title: 'Original A', note: '早期方向候选，保留用于横向比较主 Logo 是否需要牌框、轨道或抽象化。' },
+  { id: 'alt-directions-B', src: '/brand/generated/marks-tight/alt-directions-B.png', title: 'Original B', note: '早期方向候选，保留用于横向比较主 Logo 是否需要牌框、轨道或抽象化。' },
+  { id: 'alt-directions-C', src: '/brand/generated/marks-tight/alt-directions-C.png', title: 'Original C', note: '早期方向候选，保留用于横向比较主 Logo 是否需要牌框、轨道或抽象化。' },
+  { id: 'alt-directions-D', src: '/brand/generated/marks-tight/alt-directions-D.png', title: 'Original D', note: '早期方向候选，保留用于横向比较主 Logo 是否需要牌框、轨道或抽象化。' },
+  { id: 'alt-directions-E', src: '/brand/generated/marks-tight/alt-directions-E.png', title: 'Original E', note: '早期方向候选，保留用于横向比较主 Logo 是否需要牌框、轨道或抽象化。' },
+  { id: 'alt-directions-F', src: '/brand/generated/marks-tight/alt-directions-F.png', title: 'Original F', note: '早期方向候选，保留用于横向比较主 Logo 是否需要牌框、轨道或抽象化。' },
+  { id: 'alt-directions-G', src: '/brand/generated/marks-tight/alt-directions-G.png', title: 'Original G', note: '早期方向候选，保留用于横向比较主 Logo 是否需要牌框、轨道或抽象化。' },
+  { id: 'alt-directions-H', src: '/brand/generated/marks-tight/alt-directions-H.png', title: 'Original H', note: '早期方向候选，保留用于横向比较主 Logo 是否需要牌框、轨道或抽象化。' },
+  { id: 'alt-directions-I', src: '/brand/generated/marks-tight/alt-directions-I.png', title: 'Original I', note: '早期方向候选，保留用于横向比较主 Logo 是否需要牌框、轨道或抽象化。' },
+  { id: 'psi-vase-A', src: '/brand/generated/marks-tight/psi-vase-A.png', title: 'Psi Vase A', note: '鲁宾花瓶 / Ψ 方向候选，概念感强，但需评估小尺寸识别和复杂度。' },
+  { id: 'psi-vase-B', src: '/brand/generated/marks-tight/psi-vase-B.png', title: 'Psi Vase B', note: '鲁宾花瓶 / Ψ 方向候选，概念感强，但需评估小尺寸识别和复杂度。' },
+  { id: 'psi-vase-C', src: '/brand/generated/marks-tight/psi-vase-C.png', title: 'Psi Vase C', note: '鲁宾花瓶 / Ψ 方向候选，概念感强，但需评估小尺寸识别和复杂度。' },
+  { id: 'psi-vase-D', src: '/brand/generated/marks-tight/psi-vase-D.png', title: 'Psi Vase D', note: '鲁宾花瓶 / Ψ 方向候选，概念感强，但需评估小尺寸识别和复杂度。' },
+  { id: 'psi-vase-E', src: '/brand/generated/marks-tight/psi-vase-E.png', title: 'Psi Vase E', note: '鲁宾花瓶 / Ψ 方向候选，概念感强，但需评估小尺寸识别和复杂度。' },
+  { id: 'psi-vase-F', src: '/brand/generated/marks-tight/psi-vase-F.png', title: 'Psi Vase F', note: '鲁宾花瓶 / Ψ 方向候选，概念感强，但需评估小尺寸识别和复杂度。' },
+  { id: 'open-directions-H1', src: '/brand/generated/marks-tight/open-directions-H1.png', title: 'Open H1', note: '开放式 Ψ + 轻圆弧。我的偏好之一：不靠硬牌框，品牌感更强。' },
+  { id: 'open-directions-H2', src: '/brand/generated/marks-tight/open-directions-H2.png', title: 'Open H2', note: '软徽章 + 双侧脸。比硬框更温和，但边缘仍略复杂。' },
+  { id: 'open-directions-H3', src: '/brand/generated/marks-tight/open-directions-H3.png', title: 'Open H3', note: '人格点阵 + Ψ。学术感强，但可能偏测评工具。' },
+  { id: 'open-directions-H4', src: '/brand/generated/marks-tight/open-directions-H4.png', title: 'Open H4', note: '软四叶徽章。比麻将牌框更亲和，可继续简化。' },
+  { id: 'open-directions-H5', src: '/brand/generated/marks-tight/open-directions-H5.png', title: 'Open H5', note: 'PM 字母 + Ψ。更像真实品牌 monogram，但麻将感较弱。' },
+  { id: 'open-directions-H6', src: '/brand/generated/marks-tight/open-directions-H6.png', title: 'Open H6', note: '双人负形 + Ψ。概念完整，适合重点评审。' },
+  { id: 'open-directions-H7', src: '/brand/generated/marks-tight/open-directions-H7.png', title: 'Open H7', note: '无限环 + Ψ。最抽象，延展性强，但需要补麻将关联。' },
+  { id: 'open-directions-H8', src: '/brand/generated/marks-tight/open-directions-H8.png', title: 'Open H8', note: '折叠卡 + 轨道。游戏感强，仍比硬牌框轻。' },
+  { id: 'open-directions-H9', src: '/brand/generated/marks-tight/open-directions-H9.png', title: 'Open H9', note: '人物手牌。叙事强但细节多，不建议最终主 Logo。' },
 ];
 const MAIN_LOGO_PLACEMENTS = [
   { name: 'Homepage 首屏', use: '完整品牌露出', desc: '使用暖牌底板 Logo + 人格麻將 / Personalities Mahjong 字标，是最完整的品牌出现方式。' },
@@ -675,12 +693,21 @@ export default function BrandPage() {
 
         {/* Logo alternatives */}
         <Section eyebrow="Logo Alternatives · 备选方案" title="其他图形只作为主 Logo 备选">
-          <div className="rounded-[1.25rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-4">
-            <p className="text-[14px] leading-7 text-[var(--psy-ink-soft)]">
-              下面这些不是功能 icon，也不对应某个页面功能。它们只作为「如果不选 Psi Tile，是否有别的主 Logo 方向」的备选方案。最终对外仍然只能选一个主 Logo。
-            </p>
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="rounded-[1.25rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-4">
+              <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">候选范围</div>
+              <p className="mt-2 text-[14px] leading-7 text-[var(--psy-ink-soft)]">
+                下面完整放入目前已生成并切好的 24 个方向：早期 A-I、Psi Vase A-F、以及新生成的 Open H1-H9。它们不是功能 icon，也不对应某个页面功能；只用于评审「哪一个方向最适合作为唯一主 Logo」。
+              </p>
+            </div>
+            <div className="rounded-[1.25rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-4">
+              <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">我对硬边框的判断</div>
+              <p className="mt-2 text-[14px] leading-7 text-[var(--psy-ink-soft)]">
+                我不建议最终主 Logo 过度依赖死板的麻将牌粗框。它识别游戏性很快，但容易变成“牌面图标”，品牌感和延展性会弱。更值得继续推进的是 <strong className="text-[var(--psy-ink)]">Open H1 / H6 / H7</strong> 这类开放式 Ψ、负形人物或抽象关系结构；如果需要保留麻将感，可以只用很轻的卡牌暗示，而不是厚重外框。
+              </p>
+            </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {LOGO_ALTERNATIVES.map((logo) => (
               <LogoProposalCard key={logo.id} label={logo.id} title={logo.title} note={logo.note}>
                 <LogoPng src={logo.src} alt={`${logo.title} logo alternative`} />
