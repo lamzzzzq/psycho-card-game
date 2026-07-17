@@ -177,6 +177,17 @@ export default function RulesPage() {
           .rtitle .rt-main { font-size: 21px; white-space: normal; }
           .rtitle .rt-sub { font-size: 14px; white-space: normal; }
           .qrbox svg { width: 52px !important; height: 52px !important; }
+          /* 配圖在手機也擠成一行(縮小卡片/字號/間距 + 不換行)。僅螢幕預覽,列印 A4 不受影響 */
+          .fig { flex-wrap: nowrap; gap: 4px; padding: 8px 6px; }
+          .fig-card { width: 20px; height: 28px; font-size: 10px; }
+          .fig-set { padding: 3px 5px; gap: 4px; letter-spacing: 1px; }
+          .fig-num { padding: 0 4px; font-size: 9.5px; }
+          .fig-grp { gap: 2px; }
+          .fig-grp small { font-size: 8px; }
+          .fig-op { font-size: 11px; }
+          .fig .chip, .chip { padding: 3px 7px; font-size: 10px; }
+          .fig-pill { padding: 2px 5px; font-size: 10px; gap: 2px; }
+          .fig-cap { font-size: 9px; }
         }
 
         /* 章節：單欄，節間拉開間距填滿版面 */
