@@ -175,52 +175,52 @@ export default function RulesPage() {
           background: #fbf8f1;
           color: #2a241b;
           box-shadow: 0 12px 40px rgba(0,0,0,0.35);
-          padding: 12mm 13mm 15mm;
+          padding: 10mm 13mm 14mm;
           box-sizing: border-box;
           font-family: ui-sans-serif, "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
-          line-height: 1.6;
+          line-height: 1.55;
         }
         .a4 .serif { font-family: ui-serif, "Songti TC", Georgia, serif; }
 
-        /* 頁首：標題+副標左上角，QR+網址右上角（省版面） */
+        /* 頁首：標題+副標左上角，QR+網址右上角（QR 高度≈標題塊，網址右對齊置於 QR 正下方） */
         .head {
           display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
-          border-bottom: 2px solid #c89b5d; padding-bottom: 10px; margin-bottom: 10px;
+          border-bottom: 2px solid #c89b5d; padding-bottom: 8px; margin-bottom: 8px;
         }
         .title-wrap { min-width: 0; }
-        .qrbox { text-align: center; flex: none; }
-        .qrbox .cap { font-size: 10px; color: #6b5d44; margin-top: 3px; line-height: 1.35; }
-        .a4 h1 { font-size: 30px; margin: 3px 0 0; letter-spacing: 2px; color: #1c1812; }
+        .qrbox { text-align: right; flex: none; }
+        .qrbox .cap { font-size: 10px; color: #6b5d44; margin-top: 3px; line-height: 1.3; }
+        .a4 h1 { font-size: 30px; margin: 2px 0 0; letter-spacing: 2px; color: #1c1812; line-height: 1.1; }
         .a4 .eyebrow { font-size: 12px; letter-spacing: 6px; color: #7a4d12; margin: 0; }
-        .a4 .sub { font-size: 13px; color: #6b5d44; margin: 5px 0 0; }
+        .a4 .sub { font-size: 13px; color: #6b5d44; margin: 6px 0 0; }
 
         /* 章節：單欄 */
-        .sections { margin-top: 4px; }
-        .rsec { margin: 0 0 14px; }
+        .sections { margin-top: 2px; }
+        .rsec { margin: 0 0 10px; }
         .rsec h2 {
-          font-size: 18px; margin: 8px 0 7px; color: #7a4d12;
-          border-bottom: 1px solid #d8c39a; padding-bottom: 5px; letter-spacing: 0.5px;
+          font-size: 17px; margin: 6px 0 5px; color: #7a4d12;
+          border-bottom: 1px solid #d8c39a; padding-bottom: 4px; letter-spacing: 0.5px;
         }
-        .a4 .rsec p { font-size: 13.5px; margin: 4px 0; line-height: 1.65; }
-        .rsub { font-weight: 700; color: #3a2f1c; margin-top: 8px !important; font-size: 14px !important; }
+        .a4 .rsec p { font-size: 13px; margin: 3px 0; line-height: 1.5; }
+        .rsub { font-weight: 700; color: #3a2f1c; margin-top: 6px !important; font-size: 13.5px !important; }
         .rli { display: flex; gap: 3px; }
         .rli-dot { color: #c89b5d; flex: none; }
         .a4 .warn { color: #a23b1e; }
         .a4 .tip {
           background: rgba(200,155,93,0.12); border: 1px solid rgba(200,155,93,0.3);
-          border-radius: 9px; padding: 8px 11px; color: #7a4d12; margin: 8px 0 !important;
+          border-radius: 9px; padding: 6px 10px; color: #7a4d12; margin: 6px 0 !important;
         }
 
-        .dims { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+        .dims { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
         .dim {
-          border: 1px solid #c9b48a; border-radius: 8px; padding: 5px 9px;
+          border: 1px solid #c9b48a; border-radius: 8px; padding: 4px 8px;
           font-size: 12px; background: #fff;
         }
         .dim b { color: #7a4d12; }
         .chip { border: 1px solid #c9b48a; border-radius: 999px; padding: 4px 13px; background:#fff; font-size: 12.5px; }
         /* 配圖 */
         .fig { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px;
-          border: 1px solid #d9c8a4; border-radius: 12px; background: #fff; padding: 11px 12px; margin: 9px 0 3px; }
+          border: 1px solid #d9c8a4; border-radius: 12px; background: #fff; padding: 8px 12px; margin: 6px 0 2px; }
         .fig-pill { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #c9b48a;
           border-radius: 999px; padding: 3px 10px; font-size: 12.5px; font-weight: 700; background: #faf4e8; color: #5c451f; }
         .fig-card { display: inline-flex; align-items: center; justify-content: center; width: 27px; height: 37px;
@@ -238,8 +238,9 @@ export default function RulesPage() {
           .rules-screen { background: #fff; padding: 0; }
           .a4-fit { max-width: none; }
           .a4 { box-shadow: none; zoom: 1 !important; }
-          .rsec { break-inside: avoid; }
-          @page { size: A4; margin: 11mm; }
+          /* 第四節「碰與食胡」起始換頁：第1頁=頁首+一二三，第2頁=四五六 */
+          .rsec.pg-break { break-before: page; }
+          @page { size: A4; margin: 13mm; } /* 上下留 13mm 作頁邊/頁腳空間 */
         }
       `}</style>
 
@@ -257,14 +258,14 @@ export default function RulesPage() {
               <p className="sub">{s.subtitle}</p>
             </div>
             <div className="qrbox">
-              <QRCodeSVG value={GAME_URL} size={78} level="M" fgColor="#2a241b" bgColor="#fbf8f1" />
+              <QRCodeSVG value={GAME_URL} size={64} level="M" fgColor="#2a241b" bgColor="#fbf8f1" />
               <div className="cap">{DISPLAY_URL}</div>
             </div>
           </div>
 
           <div className="sections">
             {s.sections.map((sec, si) => (
-              <section key={si} className="rsec">
+              <section key={si} className={si === 3 ? 'rsec pg-break' : 'rsec'}>
                 <h2 className="serif">{sec.title}</h2>
                 {sec.blocks.map(renderBlock)}
                 {renderFig(sec.fig)}
