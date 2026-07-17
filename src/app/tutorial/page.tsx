@@ -1063,29 +1063,25 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
       );
     }
 
-    case 1: // 牌桌：你 + 3 AI 圍住牌堆
+    case 1: // 認識卡牌：人格牌（有色，可歸檔）+ 知識牌（中立，可安全棄）
       return (
-        <DiagramFrame caption={s.dgTableCaption}>
-          <span className="text-lg">🧑</span>
-          <span className="text-lg opacity-80">🤖</span>
-          <PileBox label="DRAW" />
-          <span className="text-lg opacity-80">🤖</span>
-          <span className="text-lg opacity-80">🤖</span>
-        </DiagramFrame>
-      );
-
-    case 2: // 抽牌：牌堆 → +1 手牌
-      return (
-        <DiagramFrame caption={s.dgDrawCaption}>
-          <PileBox label="DRAW" />
-          <Sym>→</Sym>
+        <DiagramFrame caption={s.dgKnowledgeCaption}>
           <MiniCard label="E" color={c} />
+          <Sym>+</Sym>
+          <span
+            className="inline-flex h-11 w-8 items-center justify-center rounded-md text-[15px] font-bold text-[var(--psy-muted)]"
+            style={{ background: '#fdf8f1', border: '1px dashed rgba(154,116,72,0.32)' }}
+          >
+            ⓘ
+          </span>
         </DiagramFrame>
       );
 
-    case 3: // 出牌：打 1 張 → 棄牌堆（開判讀窗口）
+    case 2: // 基本輪迴：摸牌 → 出牌 → 判讀窗口
       return (
         <DiagramFrame caption={s.dgDiscardCaption}>
+          <PileBox label="DRAW" />
+          <Sym>→</Sym>
           <MiniCard label="E" color={c} />
           <Sym>→</Sym>
           <PileBox label="棄" glow />
@@ -1093,7 +1089,7 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
         </DiagramFrame>
       );
 
-    case 4: // 碰：2 張同維度手牌 + 1 張進來的牌 = 湊滿 3 張鎖定（數字=該維度目標張數）
+    case 3: // 碰／食胡：2 張同維度手牌 + 1 張進來的牌 = 湊滿鎖定
       return (
         <DiagramFrame caption={s.dgPongCaption}>
           <div className="flex flex-col items-center gap-1">
@@ -1126,25 +1122,7 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
         </DiagramFrame>
       );
 
-    case 5: // 食胡：5 維湊齊 → 按食胡
-      return (
-        <DiagramFrame caption={s.dgWinCaption}>
-          <div className="flex gap-1">
-            {DIMENSIONS.map((d) => (
-              <DonePill key={d} label={d} />
-            ))}
-          </div>
-          <Sym>→</Sym>
-          <span
-            className="rounded-full px-3 py-1 text-[11px] font-bold text-white"
-            style={{ background: 'rgba(214,90,72,0.9)', border: '1px solid rgba(214,90,72,0.6)' }}
-          >
-            {s.dgWinBtn}
-          </span>
-        </DiagramFrame>
-      );
-
-    case 6: // 罰停：宣告失敗 → 罰停 1 回合 + 亮牌
+    case 4: // 罰停：宣告失敗 → 罰停 1 回合 + 亮牌
       return (
         <DiagramFrame caption={s.dgFrozenCaption}>
           <span className="text-xl">⛔</span>
@@ -1155,44 +1133,7 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
         </DiagramFrame>
       );
 
-    case 7: // 查看 2 張：蓋牌 → 🔍 → 揭開維度
-      return (
-        <DiagramFrame caption={s.dgViewCaption}>
-          <div className="flex gap-1">
-            <FaceDownCard />
-            <FaceDownCard />
-          </div>
-          <Sym>🔍</Sym>
-          <div className="flex gap-1">
-            <MiniCard label="E" color={c} />
-            <MiniCard label="A" color={DIMENSION_META.A.colorHex} />
-          </div>
-        </DiagramFrame>
-      );
-
-    case 8: // 知識牌：無維度、安全棄牌
-      return (
-        <DiagramFrame caption={s.dgKnowledgeCaption}>
-          <span
-            className="inline-flex h-11 w-8 items-center justify-center rounded-md text-[15px] font-bold text-[var(--psy-muted)]"
-            style={{ background: '#fdf8f1', border: '1px dashed rgba(154,116,72,0.32)' }}
-          >
-            ⓘ
-          </span>
-        </DiagramFrame>
-      );
-
-    case 9: // 聯機退出：退出 → 座位永久跳過
-      return (
-        <DiagramFrame caption={s.dgExitCaption}>
-          <span className="text-lg">🚪</span>
-          <Sym>→</Sym>
-          <span className="text-lg">🪑</span>
-          <span className="text-sm font-bold" style={{ color: danger }}>✕</span>
-        </DiagramFrame>
-      );
-
-    case 10: // 勝負結算：比已歸檔維度數排名
+    case 5: // 聯機與勝負：無人胡 → 比已歸檔維度數排名
       return (
         <DiagramFrame caption={s.dgScoringCaption}>
           <span className="text-base">🥇</span>
