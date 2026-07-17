@@ -168,9 +168,16 @@ export default function RulesPage() {
         /* flex column + align-items:flex-end 強制 QR 與網址都貼右邊(text-align 對 svg 不生效) */
         .qrbox { flex: none; display: flex; flex-direction: column; align-items: flex-end; }
         .qrbox .cap { font-size: 10px; color: #6b5d44; margin-top: 3px; line-height: 1.3; text-align: right; }
-        .a4 h1 { font-size: 30px; margin: 2px 0 0; letter-spacing: 2px; color: #1c1812; line-height: 1.1; }
-        .a4 .eyebrow { font-size: 12px; letter-spacing: 6px; color: #7a4d12; margin: 0; }
-        .a4 .sub { font-size: 13px; color: #6b5d44; margin: 6px 0 0; }
+        .a4 h1.rtitle { margin: 2px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+        .rtitle .rt-main { font-size: 30px; letter-spacing: 2px; color: #1c1812; line-height: 1.1; white-space: nowrap; }
+        .rtitle .rt-sub { font-size: 19px; letter-spacing: 1px; color: #6b5d44; white-space: nowrap; line-height: 1.1; }
+        /* 手機:標題固定兩行(主一行、副一行);主標字號調小、允許換行兜底,QR 縮小給標題騰空間,避免英文長標題蓋到 QR */
+        @media (max-width: 640px) {
+          .rtitle { flex-direction: column; align-items: flex-start; gap: 3px; }
+          .rtitle .rt-main { font-size: 21px; white-space: normal; }
+          .rtitle .rt-sub { font-size: 14px; white-space: normal; }
+          .qrbox svg { width: 52px !important; height: 52px !important; }
+        }
 
         /* 章節：單欄，節間拉開間距填滿版面 */
         .sections { margin-top: 2px; }
@@ -237,8 +244,12 @@ export default function RulesPage() {
         <div className="a4">
           <div className="head">
             <div className="title-wrap">
-              <h1 className="serif">{s.title}</h1>
-              <p className="sub">{s.subtitle}</p>
+              {/* 分級標題:人格麻將(大)+Big Five 遊戲規則(稍小)。flex-wrap → 桌面一行,
+                  裝不下自動主大副小換行;手機(≤640)固定兩行(主一行、副一行)。 */}
+              <h1 className="serif rtitle">
+                <span className="rt-main">{s.titleMain}</span>
+                <span className="rt-sub">{s.titleSub}</span>
+              </h1>
             </div>
             <div className="qrbox">
               <QRCodeSVG value={GAME_URL} size={64} level="M" fgColor="#2a241b" bgColor="#fbf8f1" />

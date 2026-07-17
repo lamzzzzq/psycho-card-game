@@ -14,8 +14,8 @@ export const RULES_T = {
     printOrPdf: '🖨 列印 / 存 PDF',
 
     // 抬頭
-    title: '人格麻將 · 遊戲規則',
-    subtitle: '用卡牌拼出你的人格 — Big Five 五大人格 × 麻將玩法',
+    titleMain: '人格麻將',
+    titleSub: 'Big Five 遊戲規則',
     scanToEnter: '掃碼進入遊戲',
 
     // 維度名（目標圖例用）
@@ -120,8 +120,8 @@ export const RULES_T = {
     printOrPdf: '🖨 Print / Save PDF',
 
     // header
-    title: 'Personalities Mahjong · Game Rules',
-    subtitle: 'Build your personality with cards — Big Five traits × Mahjong play',
+    titleMain: 'Personalities Mahjong',
+    titleSub: 'Big Five Game Rules',
     scanToEnter: 'Scan to enter',
 
     // dimensions
