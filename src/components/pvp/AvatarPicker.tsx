@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { AVATAR_EMOJIS } from '@/data/avatars';
+import { useLocaleStore } from '@/lib/i18n';
+import { useHydrated } from '@/stores/useHydration';
 
 interface AvatarPickerProps {
   value: string;
@@ -11,12 +13,16 @@ interface AvatarPickerProps {
 
 // 左右結構：左側大頭像預覽（點擊展開），右側提示 + 展開箭頭。
 // 頭像數量多（180+），不內聯平鋪：展開後顯示可滾動的小縮略圖網格。
-export function AvatarPicker({ value, onChange, label = '選擇頭像' }: AvatarPickerProps) {
+export function AvatarPicker({ value, onChange, label }: AvatarPickerProps) {
   const [open, setOpen] = useState(false);
+  const hydrated = useHydrated();
+  const localeRaw = useLocaleStore((s) => s.locale);
+  const en = (hydrated ? localeRaw : 'zh') === 'en';
+  const labelText = label ?? (en ? 'Choose avatar' : '選擇頭像');
 
   return (
     <div className="space-y-2">
-      <p className="psy-eyebrow text-[10px]">{label}</p>
+      <p className="psy-eyebrow text-[10px]">{labelText}</p>
 
       <div className="flex items-stretch gap-3">
         {/* 左：大頭像預覽，點擊展開 */}
@@ -24,7 +30,7 @@ export function AvatarPicker({ value, onChange, label = '選擇頭像' }: Avatar
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
-          aria-label={label}
+          aria-label={labelText}
           className="psy-tile flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.1rem] transition hover:scale-[1.03]"
         >
           <span className="text-4xl leading-none sm:text-5xl">{value}</span>
@@ -37,7 +43,7 @@ export function AvatarPicker({ value, onChange, label = '選擇頭像' }: Avatar
           aria-expanded={open}
           className="psy-tile flex flex-1 items-center justify-between px-4 py-3 text-sm transition"
         >
-          <span className="text-[var(--psy-ink-soft)]">{open ? '收起頭像選擇' : '點擊選擇頭像'}</span>
+          <span className="text-[var(--psy-ink-soft)]">{open ? (en ? 'Collapse' : '收起頭像選擇') : (en ? 'Tap to choose avatar' : '點擊選擇頭像')}</span>
           <span className={`text-xs text-[var(--psy-muted)] transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
         </button>
       </div>

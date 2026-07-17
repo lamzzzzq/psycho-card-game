@@ -1094,7 +1094,7 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
           <Sym>→</Sym>
           <MiniCard label="E" color={c} />
           <Sym>→</Sym>
-          <PileBox label="棄" glow />
+          <PileBox label={s.dgDiscardPile} glow />
           <span className="text-lg">👀</span>
         </DiagramFrame>
       );

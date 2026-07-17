@@ -32,7 +32,8 @@ export function DimensionBar({ dimension, score, delay = 0 }: DimensionBarProps)
           </span>
           <div>
             <div className="psy-serif text-sm font-medium text-[var(--psy-ink)]">{en ? meta.nameEn : meta.name}</div>
-            <div className="text-[11px] text-[var(--psy-muted)]">{en ? meta.name : meta.nameEn}</div>
+            {/* 英文版不顯示中文名(避免中英混排);中文版下方保留英文縮寫(中文 UI 含英文屬正常) */}
+            {!en && <div className="text-[11px] text-[var(--psy-muted)]">{meta.nameEn}</div>}
           </div>
         </div>
         <span className="psy-serif text-sm font-bold" style={{ color: meta.colorHex }}>
