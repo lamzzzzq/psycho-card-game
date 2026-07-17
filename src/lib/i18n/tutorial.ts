@@ -7,6 +7,8 @@ export const TUTORIAL_T = {
     // ── 頁眉 / 頁腳 ──
     eyebrow: 'Tutorial',
     title: '人格麻將 · Big Five · 教學',
+    titleMain: '人格麻將',
+    titleSub: 'Big Five 教學',
     rulesHardcopy: '規則 Hardcopy',
     backHome: '返回主頁',
 
@@ -305,6 +307,8 @@ export const TUTORIAL_T = {
     // ── Header / footer ──
     eyebrow: 'Tutorial',
     title: 'Personalities Mahjong · Big Five · Tutorial',
+    titleMain: 'Personalities Mahjong',
+    titleSub: 'Big Five Tutorial',
     rulesHardcopy: 'Rules Hardcopy',
     backHome: 'Back to Home',
 
@@ -320,7 +324,7 @@ export const TUTORIAL_T = {
     dgIncoming: 'Drawn / discarded',
     dgLocked: 'Locked set',
     dgGoalCaption: 'Each dimension needs its own count (the number in the chip = how many cards, different per dimension) → declare all 5 to win.',
-    dgPongCaption: 'Reach that dimension’s target count to lock it: 2 hand cards + 1 incoming card = 3 (the count must match the target).',
+    dgPongCaption: 'Reach that dimension\'s target count to lock it: 2 hand cards + 1 incoming card = 3 (the count must match the target).',
     dgTableCaption: 'You + 3 AI (or 1 to 3 players) around the pile',
     dgDrawCaption: 'Draw 1 from the pile to start your turn',
     dgDiscardCaption: 'Discard 1 → opens the read window',
@@ -360,7 +364,7 @@ export const TUTORIAL_T = {
       {
         title: 'View Your Personality Profile',
         body: 'After the questions you reach "Your Personality Profile": a five-dimension radar chart plus per-dimension scores. The bottom of this page is where "Online Match / Single Player / Retest" live.',
-        note: 'Your assessment scores set each dimension’s target count and also your starting hand size (= the sum of the five targets − 1), so every player has a different opening and path to a Win.',
+        note: 'Your assessment scores set each dimension\'s target count and also your starting hand size (= the sum of the five targets − 1), so every player has a different opening and path to a Win.',
       },
       {
         title: 'Enter Online Match',
@@ -386,7 +390,7 @@ export const TUTORIAL_T = {
       {
         title: 'View Your Personality Profile',
         body: 'After the questions you reach "Your Personality Profile": a five-dimension radar chart plus per-dimension scores. The bottom of this page is where "Online Match / Single Player / Retest" live.',
-        note: 'Your assessment scores set each dimension’s target count and also your starting hand size (= the sum of the five targets − 1), so every player has a different opening and path to a Win.',
+        note: 'Your assessment scores set each dimension\'s target count and also your starting hand size (= the sum of the five targets − 1), so every player has a different opening and path to a Win.',
       },
       {
         title: 'Enter Single Player',
@@ -394,7 +398,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Start the Match',
-        body: 'Once set, tap "Start Match" to go straight to the table. Single player is always you + 3 AI, and the flow matches online play: draw, view, declare, discard, and respond to others’ discards.',
+        body: 'Once set, tap "Start Match" to go straight to the table. Single player is always you + 3 AI, and the flow matches online play: draw, view, declare, discard, and respond to others\' discards.',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -402,7 +406,7 @@ export const TUTORIAL_T = {
     steps: [
       {
         title: '🎯 Ultimate Goal: Publicly Archive All 5 Dimensions!',
-        body: 'Your goal is to collect and "publicly archive" all 5 Big Five dimensions (OCEAN); the first to finish wins!\nNote: how many cards each dimension needs depends on your own assessment score at the start. So everyone’s "path to a win (target counts)" is different!\nExample: your targets might be O needs 3, C needs 4, E needs 2, A needs 5, N needs 4.',
+        body: 'Your goal is to collect and "publicly archive" all 5 Big Five dimensions (OCEAN); the first to finish wins!\nNote: how many cards each dimension needs depends on your own assessment score at the start. So everyone\'s "path to a win (target counts)" is different!\nExample: your targets might be O needs 3, C needs 4, E needs 2, A needs 5, N needs 4.',
         hint: 'Starting-hand formula: your starting hand size = the sum of the 5 dimension targets − 1 (that one missing card must be completed via "Pong" or "Win").',
       },
       {
@@ -412,15 +416,15 @@ export const TUTORIAL_T = {
       },
       {
         title: '🔄 The Basic Loop: Draw ➔ Discard',
-        body: '❶ Draw\nOn your turn, first draw 1 card from the deck. Now you can view your hand, choose to archive (Pong), or get ready to discard.\n🔍 Core mechanic: how many hand cards can you see? It depends on the host’s "reveal difficulty":\n・Open (default): fully public! Your hand + all discards show their dimension tags directly, no viewing needed.\n・Half: view up to 4 hand cards each turn (once viewed, shown permanently); discards not shown.\n・Hidden: view only 2 each turn, auto-reset after a round (turned back over); discards not shown.\n❷ Discard\nPick 1 unwanted card from your hand into the middle "discard pile". This card opens a few-second "psychological read window", during which other players may decide whether to grab it to "Pong" or "Win".',
+        body: '❶ Draw\nOn your turn, first draw 1 card from the deck. Now you can view your hand, choose to archive (Pong), or get ready to discard.\n🔍 Core mechanic: how many hand cards can you see? It depends on the host\'s "reveal difficulty":\n・Open (default): fully public! Your hand + all discards show their dimension tags directly, no viewing needed.\n・Half: view up to 4 hand cards each turn (once viewed, shown permanently); discards not shown.\n・Hidden: view only 2 each turn, auto-reset after a round (turned back over); discards not shown.\n❷ Discard\nPick 1 unwanted card from your hand into the middle "discard pile". This card opens a few-second "psychological read window", during which other players may decide whether to grab it to "Pong" or "Win".',
       },
       {
         title: '⚡ Two Core Actions: Pong & Win',
-        body: '🀄 Pong (public archive)\nWhen a dimension reaches your target count, you can declare "Pong" to lock (archive) that dimension.\n・Self-draw Pong: on your own turn, from "hand + the just-drawn card", pick the same-dimension cards matching the target count and archive them. (Once per turn)\n・Claim Pong (grab): within another player’s "read window", if your same-dimension count is "just 1 short" of the target, you can instantly grab that discard to complete the archive! (First-come)\n⚠️ The system won’t tell you which dimension is ready! All 5 dimension buttons light up; you must count the counts and dimensions yourself. Pick or place wrong and you get "Frozen"!\n🏆 Win (declare victory)\nWhen your archived dimensions + hand + the current judged card perfectly complete all target counts for the 5 dimensions:\n・Self-draw Win: you draw the final key card on your own turn.\n・Claim Win: someone discards the last card you need — intercept it directly!\n⚠️ Called Win without counting right? A failed judgment brings a harsh Frozen penalty!',
+        body: '🀄 Pong (public archive)\nWhen a dimension reaches your target count, you can declare "Pong" to lock (archive) that dimension.\n・Self-draw Pong: on your own turn, from "hand + the just-drawn card", pick the same-dimension cards matching the target count and archive them. (Once per turn)\n・Claim Pong (grab): within another player\'s "read window", if your same-dimension count is "just 1 short" of the target, you can instantly grab that discard to complete the archive! (First-come)\n⚠️ The system won\'t tell you which dimension is ready! All 5 dimension buttons light up; you must count the counts and dimensions yourself. Pick or place wrong and you get "Frozen"!\n🏆 Win (declare victory)\nWhen your archived dimensions + hand + the current judged card perfectly complete all target counts for the 5 dimensions:\n・Self-draw Win: you draw the final key card on your own turn.\n・Claim Win: someone discards the last card you need — intercept it directly!\n⚠️ Called Win without counting right? A failed judgment brings a harsh Frozen penalty!',
       },
       {
         title: '🚫 Penalty: Frozen',
-        body: 'If you fail a "Pong / self-draw Pong / Win", you receive these penalties:\n・Frozen one turn: your next turn is auto-skipped (no draw, no discard).\n・Forced reveal: the failed Pong cards (or your "whole hand" on a failed Win) are immediately shown to everyone.\n・Locked out: while frozen you cannot join others’ discard judgments (cannot Pong or Win).\n・Public shame badge: a big "⛔ Frozen" mark hangs on your avatar.',
+        body: 'If you fail a "Pong / self-draw Pong / Win", you receive these penalties:\n・Frozen one turn: your next turn is auto-skipped (no draw, no discard).\n・Forced reveal: the failed Pong cards (or your "whole hand" on a failed Win) are immediately shown to everyone.\n・Locked out: while frozen you cannot join others\' discard judgments (cannot Pong or Win).\n・Public shame badge: a big "⛔ Frozen" mark hangs on your avatar.',
         hint: 'Tip: one slip hands your opponent a turn — look carefully and count clearly before you act!',
       },
       {
@@ -465,7 +469,7 @@ export const TUTORIAL_T = {
 
     // ── Sandbox: intro overlay ──
     introTitle: 'First: the "Targets" board',
-    introBody: 'Each dimension has a required count — you must collect that many cards to "Pong" the set and lock it in publicly. The count comes from your assessment score, differs per dimension, and the bigger the number the harder. Here are this demo’s targets:',
+    introBody: 'Each dimension has a required count — you must collect that many cards to "Pong" the set and lock it in publicly. The count comes from your assessment score, differs per dimension, and the bigger the number the harder. Here are this demo\'s targets:',
     introBtn: 'Start the lesson',
 
     // ── Sandbox: target board + operation banner ──
@@ -485,7 +489,7 @@ export const TUTORIAL_T = {
       `Step 2 · Self-draw Pong · ${name} · Select exactly ${cnt} (${sel}/${cnt} selected)`,
 
     // ── Sandbox: frozen demo box ──
-    penaltyDemo: 'Frozen-for-one-turn demo: you cannot join others’ read windows this round, and your next turn is auto-skipped.',
+    penaltyDemo: 'Frozen-for-one-turn demo: you cannot join others\' read windows this round, and your next turn is auto-skipped.',
 
     // ── Sandbox: claim window card ──
     claimWho: 'Brian discarded a card',
@@ -506,9 +510,9 @@ export const TUTORIAL_T = {
     captionViewing: 'Reveal difficulty changes how many you can view per turn AND whether they stay revealed: Half lets you view 4 each turn and they stay revealed for good (until played); Hidden lets you view 2 (the hardest) but they reset next round — not kept. This demo uses the hardest — Hidden — so tap the highlighted "View 2" above to start.',
     captionViewPicking: (n: number) =>
       n >= 2
-        ? 'You’ve seen both! Tap the highlighted "Done viewing" to continue.'
+        ? 'You\'ve seen both! Tap the highlighted "Done viewing" to continue.'
         : `Tap the 2 highlighted cards below to reveal their true dimensions (${n}/2 seen).`,
-    captionAfterDraw: 'Look at the "Targets" board above: Neuroticism needs 4, and your hand has exactly 4 Neuroticism. Tap the highlighted "Self-draw Pong" to start (you’ll pick the dimension, then the cards).',
+    captionAfterDraw: 'Look at the "Targets" board above: Neuroticism needs 4, and your hand has exactly 4 Neuroticism. Tap the highlighted "Self-draw Pong" to start (you\'ll pick the dimension, then the cards).',
     captionPongDimension: (name: string) =>
       `Self-draw Pong needs a dimension first. The count "${name}" needs on the board is exactly what you hold — choose the highlighted "${name}".`,
     captionPongPickingDone: (name: string, cnt: number) => `${cnt} "${name}" cards selected. Tap the highlighted "Confirm Pong" to declare.`,
@@ -523,17 +527,17 @@ export const TUTORIAL_T = {
     captionClaimSuccess: 'A Claim Pong also forms a declaration. Next, a demo of "Win".',
     captionHuDemo: 'Win is the victory button, used only when all targets are complete. Failure is costly, so do not use it for trial and error.',
     captionHuWindow: (name: string) =>
-      `You have declared 4 dimensions and only "${name}" is left. The opponent’s discard is judged as "${name}" — exactly the dimension you needed. Tap the highlighted "Win" to declare victory.`,
+      `You have declared 4 dimensions and only "${name}" is left. The opponent\'s discard is judged as "${name}" — exactly the dimension you needed. Tap the highlighted "Win" to declare victory.`,
     captionHuSuccess: 'You win! All 5 dimensions are complete.',
     captionDiscardPicking: 'Tap the card to discard.',
     captionDone: 'Your turn is over. Next, simulate the "Pong / Win" window after someone else discards.',
 
     // ── Sandbox: feedback (in reducer) ──
-    fbDraw: 'Drew a card. There are many options now — first let’s demo "view 2 cards".',
+    fbDraw: 'Drew a card. There are many options now — first let\'s demo "view 2 cards".',
     fbViewTwo: 'This turn you viewed 2 cards: one Conscientiousness, one Neuroticism. In Hidden mode viewed cards reset next round — not kept; in a real game only the 2 you pick are revealed.',
     fbViewStart: 'Tap the 2 highlighted cards below to reveal their true dimensions.',
     fbViewPicked: 'One revealed. Now tap the other highlighted card.',
-    fbViewDone: 'Both viewed. In Hidden mode you see only 2 per turn and they reset next round (not kept); in Half mode you’d view 4 per turn and they stay revealed for good.',
+    fbViewDone: 'Both viewed. In Hidden mode you see only 2 per turn and they reset next round (not kept); in Half mode you\'d view 4 per turn and they stay revealed for good.',
     fbFinishView: 'You know the just-drawn card can complete a set. Now, a demo of Self-draw Pong.',
     fbOpenPong: 'Self-draw Pong needs you to fix a dimension first. Hint: your hand has 4 "Neuroticism" cards — choose it.',
     fbChooseDim: (name: string, cnt: number) => `Chose "${name}". Now select exactly ${cnt} "${name}" cards from your hand.`,
@@ -550,15 +554,15 @@ export const TUTORIAL_T = {
     fbOpenClaim: (name: string) => `An opponent discarded a "${name}" card. Pick 2 "${name}" cards from your hand, plus this discard to complete a set.`,
     fbClaimFail: (name: string, picked: number) =>
       `Claim Pong needs exactly 2 "${name}" cards in hand (selected ${picked}). In a real game a wrong pick fails and freezes you for one turn.`,
-    fbClaimSuccess: 'Claim Pong succeeded. You completed a declaration using 2 same-type cards from your hand + the opponent’s discard.',
+    fbClaimSuccess: 'Claim Pong succeeded. You completed a declaration using 2 same-type cards from your hand + the opponent\'s discard.',
     fbShowHu: 'Win declares victory: press it when all 5 dimensions are complete. Pressing it by mistake reveals your whole hand and freezes you.',
-    fbWrongDimHint: (name: string) => `This isn’t "${name}". Mixing dimensions fails the Pong — pick only "${name}".`,
-    fbEnterHu: (name: string) => `Win lesson: you’ve declared 4 dimensions and only "${name}" is left.`,
+    fbWrongDimHint: (name: string) => `This isn\'t "${name}". Mixing dimensions fails the Pong — pick only "${name}".`,
+    fbEnterHu: (name: string) => `Win lesson: you\'ve declared 4 dimensions and only "${name}" is left.`,
     fbHuSuccess: 'You win! All 5 dimensions complete — victory declared.',
 
     // ── Sandbox: Win window + gap label ──
     huWho: 'An opponent discards a personality card',
-    huBody: (name: string) => `It is judged as "${name}" — exactly the dimension you needed. Your 3 "${name}" in hand + this card = the 5th set. That’s a Win!`,
+    huBody: (name: string) => `It is judged as "${name}" — exactly the dimension you needed. Your 3 "${name}" in hand + this card = the 5th set. That\'s a Win!`,
     huGapSuffix: (name: string) => `${name} (missing)`,
 
     // ── Sandbox: fallback dimension name for fail reasons ──

@@ -454,7 +454,7 @@ export const STRINGS = {
     assessment: {
       eyebrow: 'Persona Reading',
       title: 'Draw Your Persona Archetype',
-      intro: 'Each question is like turning over a metaphorical card. Go with your first instinct — your answers converge into your own “five-factor personality profile,” which directly sets your “winning targets” for the game ahead.',
+      intro: 'Each question is like turning over a metaphorical card. Go with your first instinct — your answers converge into your own "five-factor personality profile," which directly sets your "winning targets" for the game ahead.',
       gateTitle: 'Enter Student ID',
       gateHint: 'Your student ID records your assessment result for class statistics.',
       gatePlaceholder: 'e.g. 17094905G',
@@ -505,7 +505,7 @@ export const STRINGS = {
       cancel: 'Cancel',
       confirmExit: 'Leave Game',
       // Banners / toasts
-      hostOfflinePaused: '⚠ Host briefly offline — actions paused; room dissolves if they don’t return within 3 min',
+      hostOfflinePaused: '⚠ Host briefly offline — actions paused; room dissolves if they don\'t return within 3 min',
       idleYourTurnEyebrow: 'Action needed',
       idleYourTurn: 'Your turn — choose an action',
       stolenToast: '⚡ Claimed first — someone ponged before you',
@@ -554,7 +554,7 @@ export const STRINGS = {
       firstComeFirst: 'First click wins',
       discardedCardLabel: 'Discarded card',
       claimHint1: 'Pick hand cards of the same trait as the discard, then tap Pong',
-      claimHint2: 'Total count must meet that dimension’s target',
+      claimHint2: 'Total count must meet that dimension\'s target',
       claimHint3: 'Mixing in other traits is penalized',
       submittedWaiting: 'Submitted, awaiting resolution…',
       pass: 'Pass',
@@ -590,7 +590,7 @@ export const STRINGS = {
       view: 'View',
       // Round info (desktop)
       roundWord: 'Round',
-      turnOf: '’s turn',
+      turnOf: '\'s turn',
       yourTurnNow: 'Your turn',
       // Mobile sheet titles
       sheetPersonaTitle: 'Personality Scale',
@@ -615,7 +615,7 @@ export const STRINGS = {
       noCardsToShow: 'No cards to show',
       totalCards: 'total',
       close: 'Close',
-      archiveOf: '’s archive',
+      archiveOf: '\'s archive',
       // DeclaredArea
       archiveRecord: 'Archive Record',
       noArchiveDone: 'No completed archives',
@@ -634,7 +634,7 @@ export const STRINGS = {
       unknownPlayer: 'Unknown player',
       // PlayerHand
       pickDiscard: 'First tap a card to discard',
-      confirmDiscardHint: 'Tap “Discard” to confirm',
+      confirmDiscardHint: 'Tap "Discard" to confirm',
       submitDiscard: 'Discard',
       selectSameDim: 'Pick the cards you believe share the same personality clue',
       newDraw: 'NEW',

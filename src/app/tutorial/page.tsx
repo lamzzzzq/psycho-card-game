@@ -48,7 +48,7 @@ const SANDBOX_HAND: GameCard[] = [
   PC(102, 'N', '我容易情緒波動', 'My mood swings easily', 14),
   PC(103, 'N', '我容易感到壓力', 'I get stressed out easily', 24),
   PC(104, 'C', '我會認真完成我承諾過的事', 'I follow through on what I promise', 3),
-  PC(105, 'A', '我願意體諒別人的感受', 'I am willing to consider others’ feelings', 7),
+  PC(105, 'A', '我願意體諒別人的感受', 'I am willing to consider others\' feelings', 7),
   PC(106, 'A', '我會主動幫助遇到困難的人', 'I take the initiative to help people in trouble', 17),
   PC(107, 'O', '我對抽象的哲學問題很感興趣', 'I am interested in abstract, philosophical questions', 25),
   PC(108, 'C', '我做事情之前總會制定計劃', 'I always make a plan before doing things', 13),
@@ -62,7 +62,7 @@ const CLAIM_CARDS: Record<Dimension, PersonalityCard> = {
   O: PC(111, 'O', '我喜歡探索新奇的點子', 'I enjoy exploring novel ideas', 35),
   C: PC(111, 'C', '我做事一向井井有條', 'I keep things well-organized', 23),
   E: PC(111, 'E', '我在人群裏很有活力', 'I feel energetic among people', 1),
-  A: PC(111, 'A', '我會站在別人的角度想', 'I see things from others’ perspective', 27),
+  A: PC(111, 'A', '我會站在別人的角度想', 'I see things from others\' perspective', 27),
   N: PC(111, 'N', '我對批評比較敏感', 'I am rather sensitive to criticism', 44),
 };
 // 食胡課專用：已歸檔 4 維（O/C/E/A），手裏剩 3 張神經質，對手打出第 4 張神經質 → 正好食胡。
@@ -1475,13 +1475,15 @@ export default function TutorialPage() {
             手牌第二行被指引欄蓋住」的元兇之一——沙盒裏收成一行小標題。 */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            {/* 「Big Five」用 nowrap 包裹，避免在窄屏被拆成「Big / Five」两行 */}
-            <h1 className={`psy-serif text-[var(--psy-ink)] ${mode === 'sandbox' ? 'text-xl sm:text-2xl' : 'text-3xl sm:text-5xl'}`}>
-              {s.title.split('Big Five').flatMap((part, i) =>
-                i === 0
-                  ? [part]
-                  : [<span key={i} className="whitespace-nowrap">Big Five</span>, part]
-              )}
+            {/* 分级标题：人格麻將(大) + Big Five 教學(稍小)。flex-wrap → 桌面同行、手机两行；
+                两段各自 nowrap，词不被拆。 */}
+            <h1 className="psy-serif flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+              <span className={`whitespace-nowrap text-[var(--psy-ink)] ${mode === 'sandbox' ? 'text-xl sm:text-2xl' : 'text-3xl sm:text-5xl'}`}>
+                {s.titleMain}
+              </span>
+              <span className={`whitespace-nowrap text-[var(--psy-ink-soft)] ${mode === 'sandbox' ? 'text-sm sm:text-base' : 'text-lg sm:text-2xl'}`}>
+                {s.titleSub}
+              </span>
             </h1>
           </div>
           <div className="flex items-center gap-2">
