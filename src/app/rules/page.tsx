@@ -178,11 +178,13 @@ export default function RulesPage() {
           .rtitle .rt-sub { font-size: 14px; white-space: normal; }
           .qrbox svg { width: 52px !important; height: 52px !important; }
           /* 配圖在手機也擠成一行(縮小卡片/字號/間距 + 不換行)。僅螢幕預覽,列印 A4 不受影響 */
-          .fig { flex-wrap: nowrap; gap: 5px; padding: 9px 6px; }
-          .fig-op { height: 28px; font-size: 12px; }
-          .fig-card { width: 20px; height: 28px; font-size: 10px; }
-          /* 手機隱藏卡下小標籤(太寬會擠/重疊);圖例只留卡片一行,下方 caption 仍解釋 */
-          .fig-grp small { display: none; }
+          /* 手機:標籤保留;內容盒縮到 30px 對齊;放寬容許橫向滾動(弄寬一點)避免擠壓 */
+          .fig { flex-wrap: nowrap; gap: 5px; padding: 9px 8px; overflow-x: auto; justify-content: flex-start; }
+          .fig-op { height: 30px; font-size: 12px; }
+          .fig .chip { height: 30px; }
+          .fig-grp > :first-child { min-height: 30px; }
+          .fig-card { width: 22px; height: 30px; font-size: 11px; }
+          .fig-grp small { font-size: 9px; }
           .fig-set { padding: 3px 5px; gap: 4px; letter-spacing: 1px; }
           .fig-num { padding: 0 4px; font-size: 9.5px; }
           .fig-grp { gap: 2px; }
@@ -228,7 +230,10 @@ export default function RulesPage() {
         .fig-set { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #c9a258;
           border-radius: 8px; padding: 4px 9px; background: #f3e6c8; color: #7a4d12; font-weight: 700; letter-spacing: 2px; }
         .fig-num { background: #c89b5d; color: #20170c; border-radius: 999px; padding: 0 6px; font-size: 12px; }
-        .fig-op { display: inline-flex; align-items: center; height: 37px; color: #7a4d12; font-weight: 700; font-size: 15px; }
+        /* 統一內容高度盒:卡片/膠囊/👀/組合 與 符號 都套 38px 居中盒 → 全部對齊同一中線;標籤在下方正常排 */
+        .fig-op { display: inline-flex; align-items: center; height: 38px; color: #7a4d12; font-weight: 700; font-size: 15px; }
+        .fig .chip { display: inline-flex; align-items: center; height: 38px; box-sizing: border-box; }
+        .fig-grp > :first-child { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; }
         .fig-cap { text-align: center; font-size: 11px; color: #6b5a3e; margin: 3px 0 0; }
         .fig-grp { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; }
         .fig-grp small { font-size: 10.5px; color: #6b5a3e; }
