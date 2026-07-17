@@ -183,13 +183,14 @@ export default function RulesPage() {
         }
         .a4 .serif { font-family: ui-serif, "Songti TC", Georgia, serif; }
 
-        /* 頁首：標題+副標左上角；QR 絕對定位頂到右上角，網址右對齊置於 QR 正下方 */
+        /* 頁首：flex — 標題+副標左上角，QR+網址右上角(貼右邊)。align-items:flex-start
+           讓頁首高度包住較高的 QR 塊，網址永遠在分割線「上方」，不會掉到線下。 */
         .head {
-          position: relative;
-          border-bottom: 2px solid #c89b5d; padding-bottom: 10px; margin-bottom: 16px;
+          display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;
+          border-bottom: 2px solid #c89b5d; padding-bottom: 12px; margin-bottom: 16px;
         }
-        .title-wrap { max-width: 74%; }
-        .qrbox { position: absolute; top: 0; right: 0; text-align: right; }
+        .title-wrap { min-width: 0; }
+        .qrbox { flex: none; text-align: right; }
         .qrbox .cap { font-size: 10px; color: #6b5d44; margin-top: 3px; line-height: 1.3; }
         .a4 h1 { font-size: 30px; margin: 2px 0 0; letter-spacing: 2px; color: #1c1812; line-height: 1.1; }
         .a4 .eyebrow { font-size: 12px; letter-spacing: 6px; color: #7a4d12; margin: 0; }
