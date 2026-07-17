@@ -17,3 +17,17 @@ export function renderCjk(text: string, locale: 'zh' | 'en' = 'zh'): ReactNode {
     ),
   );
 }
+
+/**
+ * 標點短語換行：把整句按中文標點（、，。！？；：）切成短語，每個短語包成
+ * white-space:nowrap，因此換行只發生在標點之後、絕不會在詞中間斷開。
+ * 用於精修過的固定文案（如首頁副標題），比逐詞分詞更可靠（不受分詞字典影響，
+ * 例如「牌桌」不會被拆成「牌／桌上」）。短語本身較短，不會像整句 nowrap 那樣溢出裁切。
+ */
+export function renderCjkPhrases(text: string, locale: 'zh' | 'en' = 'zh'): ReactNode {
+  if (locale === 'en') return text;
+  const parts = text.match(/[^、，。！？；：]+[、，。！？；：]*/g) ?? [text];
+  return parts.map((p, i) => (
+    <span key={i} style={{ whiteSpace: 'nowrap' }}>{p}</span>
+  ));
+}

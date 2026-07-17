@@ -1063,17 +1063,27 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
       );
     }
 
-    case 1: // 認識卡牌：人格牌（有色，可歸檔）+ 知識牌（中立，可安全棄）
+    case 1: // 認識卡牌：兩類牌並排對比（人格牌可歸檔 ✓ / 知識牌不可歸檔 ✗）
       return (
-        <DiagramFrame caption={s.dgKnowledgeCaption}>
-          <MiniCard label="E" color={c} />
-          <Sym>+</Sym>
-          <span
-            className="inline-flex h-11 w-8 items-center justify-center rounded-md text-[15px] font-bold text-[var(--psy-muted)]"
-            style={{ background: '#fdf8f1', border: '1px dashed rgba(154,116,72,0.32)' }}
-          >
-            ⓘ
-          </span>
+        <DiagramFrame caption={s.dgTwoTypesCaption}>
+          {/* 人格描述牌：有顏色、可歸檔 */}
+          <div className="flex flex-col items-center gap-1">
+            <MiniCard label="E" color={c} />
+            <span className="text-[9px] font-medium text-[var(--psy-ink-soft)]">{s.dgCardPersona}</span>
+            <span className="text-[9px] font-semibold" style={{ color: '#3f9d5a' }}>✓ {s.dgCanArchive}</span>
+          </div>
+          <Sym>vs</Sym>
+          {/* 知識牌：灰色、不可歸檔、安全棄 */}
+          <div className="flex flex-col items-center gap-1">
+            <span
+              className="inline-flex h-11 w-8 items-center justify-center rounded-md text-[15px] font-bold text-[var(--psy-muted)]"
+              style={{ background: '#f1ece2', border: '1px dashed rgba(154,116,72,0.35)' }}
+            >
+              ⓘ
+            </span>
+            <span className="text-[9px] font-medium text-[var(--psy-ink-soft)]">{s.dgCardKnowledge}</span>
+            <span className="text-[9px] font-semibold text-[var(--psy-muted)]">✕ {s.dgCantArchive}</span>
+          </div>
         </DiagramFrame>
       );
 

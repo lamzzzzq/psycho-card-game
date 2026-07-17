@@ -6,7 +6,8 @@ import { useLocaleStore } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 import { RULES_T, type RuleBlock } from '@/lib/i18n/rules';
 
-const GAME_URL = 'https://psycho-card-game.vercel.app';
+const GAME_URL = 'https://www.personalitiesmahjong.com/';
+const DISPLAY_URL = 'www.personalitiesmahjong.com';
 
 // A4 硬拷貝規則頁。淺色紙張主題（便於列印），@media print 隱藏螢幕用按鈕。
 // 規則正文逐字照跟 big5_revised rules docx；emoji / 配圖自由發揮。
@@ -161,9 +162,9 @@ export default function RulesPage() {
         .qrbox { text-align: center; flex: none; }
         .qrbox .cap { font-size: 9px; color: #6b5d44; margin-top: 3px; line-height: 1.35; }
 
-        /* 章節：兩欄流式排版，單節不跨欄斷開 */
-        .sections { column-count: 2; column-gap: 20px; margin-top: 6px; }
-        .rsec { break-inside: avoid; margin: 0 0 12px; display: inline-block; width: 100%; }
+        /* 章節：單欄，逐節縱向排列 */
+        .sections { margin-top: 6px; }
+        .rsec { margin: 0 0 12px; }
         .rsec h2 {
           font-size: 15.5px; margin: 6px 0 6px; color: #7a4d12;
           border-bottom: 1px solid #d8c39a; padding-bottom: 4px; letter-spacing: 0.5px;
@@ -223,7 +224,7 @@ export default function RulesPage() {
           </div>
           <div className="qrbox">
             <QRCodeSVG value={GAME_URL} size={62} level="M" fgColor="#2a241b" bgColor="#fbf8f1" />
-            <div className="cap">{s.scanToEnter}<br />{GAME_URL.replace('https://', '')}</div>
+            <div className="cap">{s.scanToEnter}<br />{DISPLAY_URL}</div>
           </div>
         </div>
 
@@ -236,10 +237,6 @@ export default function RulesPage() {
             </section>
           ))}
         </div>
-
-        <p className="sub" style={{ marginTop: 14, textAlign: 'center', borderTop: '1px solid #d8c39a', paddingTop: 8 }}>
-          {s.footer}{GAME_URL.replace('https://', '')}
-        </p>
       </div>
     </div>
   );
