@@ -77,6 +77,36 @@ const LOGO_ALTERNATIVES = [
   { id: 'open-directions-H8', src: '/brand/generated/marks-tight/open-directions-H8.png', title: 'Open H8', note: '折叠卡 + 轨道。游戏感强，仍比硬牌框轻。' },
   { id: 'open-directions-H9', src: '/brand/generated/marks-tight/open-directions-H9.png', title: 'Open H9', note: '人物手牌。叙事强但细节多，不建议最终主 Logo。' },
 ];
+const ROUND_SIX_FOUR_DIRECTIONS = [
+  {
+    id: 'hive',
+    eyebrow: 'Direction 01 · Hive Negative',
+    title: '蜂巢负形',
+    note: '不把蜂巢当背景图案：Ψ 从拼合关系中出现。九张分别拉开色彩、聚合方式与外轮廓。',
+    variants: ['暖金六片', '陶土三片', '绿金环簇', '线框蜂群', '多彩散簇', '不对称大块', '横向牌阵', '嵌套六角窗', '三片极简'],
+  },
+  {
+    id: 'polyhedron',
+    eyebrow: 'Direction 02 · Polyhedron Cutout',
+    title: '多面体切面',
+    note: '同一“多面人格”母题分别展开成实面、线框、折页、层叠与断面；不再只是同一颗五边形。',
+    variants: ['多色切面', '线框金面', '菱形折页', '陶土棱柱', '层叠面板', '线框晶体', '风筝断面', '三块拼面', '双半极简'],
+  },
+  {
+    id: 'orbit',
+    eyebrow: 'Direction 03 · Orbit Mark',
+    title: '轨道标记',
+    note: '01 保留你点名的母版：暖金外轨、柔绿内轨、陶土/柔绿/棕色节点。其余八张从轨迹、节点和留白真正展开。',
+    variants: ['原始双轨母版', '倾斜双轨', '金色大月弧', '牌片断轨', '蓝金穿越环', '对话双弧', '紧凑节点花', '角落大弧', '单笔极简'],
+  },
+  {
+    id: 'growth',
+    eyebrow: 'Direction 04 · Growing Psi',
+    title: '生长 Ψ',
+    note: '让 Ψ 自己成为根、枝、藤或叶片的骨架；九张在生命力与抽象程度间切换，不锁死节点数。',
+    variants: ['种子与根', '单枝新芽', '根系延展', '三叶 Ψ', '陶土珊瑚枝', '藤蔓穿行', '竖向芽序', '叶片负形', '极简新芽'],
+  },
+] as const;
 const MAIN_LOGO_PLACEMENTS = [
   { name: 'Homepage 首屏', use: '完整品牌露出', desc: '使用暖牌底板 Logo + 人格麻將 / Personalities Mahjong 字标，是最完整的品牌出现方式。' },
   { name: 'Top Navigation', use: '全站导航', desc: '使用轻量象牙底板 Logo，放在品牌名左侧；所有一级页面保持一致。' },
@@ -691,8 +721,93 @@ export default function BrandPage() {
           </div>
         </Section>
 
-        {/* Logo alternatives */}
-        <Section eyebrow="Logo Alternatives · 备选方案" title="其他图形只作为主 Logo 备选">
+        <Section eyebrow="Round 6 · Four Directions Expanded" title="基于四条母题，展开 36 张真正不同的平面 PNG">
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="rounded-[1.25rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-4">
+              <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">这一轮在解决什么</div>
+              <p className="mt-2 text-[14px] leading-7 text-[var(--psy-ink-soft)]">
+                不是替换 36 次中央 Ψ，而是让四条母题分别承担不同的品牌能力：<strong className="text-[var(--psy-ink)]">蜂巢</strong>负责负形与组合感，<strong className="text-[var(--psy-ink)]">多面体</strong>负责切面与变化，<strong className="text-[var(--psy-ink)]">轨道</strong>负责关系与动势，<strong className="text-[var(--psy-ink)]">生长 Ψ</strong>负责人格理解与成长。
+              </p>
+            </div>
+            <div className="rounded-[1.25rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-4">
+              <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">当前评审方式</div>
+              <p className="mt-2 text-[14px] leading-7 text-[var(--psy-ink-soft)]">
+                先选<strong className="text-[var(--psy-ink)]">一个主方向</strong>，再从其余 8 张里选构图。优先比较：缩到 32px 是否仍能读出 Ψ、能否在首页的暖纸底与象牙卡上成立、以及反白到暖金按钮时是否仍有识别力。不要把四个方向混用成四个正式 Logo。
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-[1.45rem] border border-[var(--psy-border)] bg-[rgba(253,249,240,0.62)] p-4 sm:p-5">
+            <div className="max-w-3xl">
+              <p className="psy-eyebrow text-[10px]">Surface System · 真实页面底色</p>
+              <h3 className="psy-serif mt-1 text-xl font-semibold text-[var(--psy-ink)] sm:text-2xl">负形只发生在首页已经存在的暖金表面</h3>
+              <p className="mt-1 text-[13px] leading-6 text-[var(--psy-ink-soft)]">
+                首页并没有深色品牌大底。为了不凭空引入另一套视觉，暖纸页底与象牙卡保持正标；只有暖金 CTA / 强调块使用象牙反白的负形标。定稿后，将所选图形本体转为这个反白切口，而不是额外新增一枚“深色版 Logo”。
+              </p>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="overflow-hidden rounded-[1rem] border border-[var(--psy-border)]">
+                <div className="relative flex h-32 items-center justify-center overflow-hidden bg-[var(--psy-bg)]">
+                  <div className="absolute inset-0 opacity-70 [background:repeating-linear-gradient(90deg,transparent_0,transparent_54px,rgba(120,90,50,0.05)_55px,transparent_56px)]" />
+                  <span className="relative psy-serif text-6xl text-[var(--psy-ink)]">Ψ</span>
+                </div>
+                <div className="bg-[var(--psy-surface)] p-3">
+                  <div className="text-[12px] font-semibold text-[var(--psy-ink)]">暖纸页底</div>
+                  <p className="mt-1 text-[11px] leading-5 text-[var(--psy-ink-soft)]">使用深墨正标；保留页面的竖格和呼吸感，不强造色底。</p>
+                </div>
+              </div>
+              <div className="overflow-hidden rounded-[1rem] border border-[var(--psy-border)] bg-[var(--psy-surface)]">
+                <div className="flex h-32 items-center justify-center bg-[var(--psy-card-content)]">
+                  <span className="psy-serif text-6xl text-[var(--psy-accent-strong)]">Ψ</span>
+                </div>
+                <div className="border-t border-[var(--psy-border)] bg-[var(--psy-surface)] p-3">
+                  <div className="text-[12px] font-semibold text-[var(--psy-ink)]">象牙内容卡</div>
+                  <p className="mt-1 text-[11px] leading-5 text-[var(--psy-ink-soft)]">使用暖金或深墨正标，和首页四张功能卡保持同一层级。</p>
+                </div>
+              </div>
+              <div className="overflow-hidden rounded-[1rem] border border-[rgba(154,116,72,0.42)] bg-[var(--psy-surface)]">
+                <div className="flex h-32 items-center justify-center bg-[var(--psy-accent)]">
+                  <span className="psy-serif text-6xl text-[#fff9f0]">Ψ</span>
+                </div>
+                <div className="border-t border-[var(--psy-border)] bg-[var(--psy-surface)] p-3">
+                  <div className="text-[12px] font-semibold text-[var(--psy-ink)]">暖金 CTA / 强调块</div>
+                  <p className="mt-1 text-[11px] leading-5 text-[var(--psy-ink-soft)]">唯一使用象牙负形的场景；最终选中的母题需在此提供反白切口版。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[1.25rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-4">
+            <p className="text-[14px] leading-7 text-[var(--psy-ink-soft)]">
+              四条母题固定为<strong className="text-[var(--psy-ink)]">蜂巢负形、多面体切面、轨道标记、生长 Ψ</strong>。每条都从色彩、形状、构图与符号位置拉开，而不是重复「中央 Ψ + 一圈装饰」。
+            </p>
+          </div>
+          <div className="space-y-8">
+            {ROUND_SIX_FOUR_DIRECTIONS.map((direction) => (
+              <div key={direction.id} className="rounded-[1.45rem] border border-[var(--psy-border)] bg-[rgba(253,249,240,0.6)] p-4 sm:p-5">
+                <div className="mb-4 max-w-3xl">
+                  <p className="psy-eyebrow text-[10px]">{direction.eyebrow}</p>
+                  <h3 className="psy-serif mt-1 text-xl font-semibold text-[var(--psy-ink)] sm:text-2xl">{direction.title}</h3>
+                  <p className="mt-1 text-[13px] leading-6 text-[var(--psy-ink-soft)]">{direction.note}</p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {direction.variants.map((title, index) => {
+                    const no = String(index + 1).padStart(2, '0');
+                    const src = `/brand/generated/round6-four-directions/${direction.id}/${direction.id}-${no}.png`;
+                    return (
+                      <LogoProposalCard key={src} label={`${direction.id.toUpperCase()} ${no}`} title={title} note="平面 PNG 视觉稿；优先看缩小后识别与是否贴合现有暖纸 UI。">
+                        <LogoPng src={src} alt={`${direction.title} ${title} logo proposal`} />
+                      </LogoProposalCard>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* Archived logo alternatives */}
+        <CollapsibleSection eyebrow="Archived Alternatives · 早期备选" title="早期 Logo 备选（已折叠）">
           <div className="grid gap-3 lg:grid-cols-2">
             <div className="rounded-[1.25rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-4">
               <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">候选范围</div>
@@ -714,7 +829,7 @@ export default function BrandPage() {
               </LogoProposalCard>
             ))}
           </div>
-        </Section>
+        </CollapsibleSection>
 
         {/* Main logo assets */}
         <Section eyebrow="Logo Assets · 主 Logo 文件" title="只展示主 Logo 的几种导出形态">
