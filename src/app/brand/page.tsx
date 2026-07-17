@@ -78,6 +78,25 @@ function Section({ eyebrow, title, children }: { eyebrow: string; title: string;
   );
 }
 
+function CollapsibleSection({ eyebrow, title, children }: { eyebrow: string; title: string; children: ReactNode }) {
+  return (
+    <details className="group rounded-[1.35rem] border border-[var(--psy-border)] bg-[rgba(253,249,240,0.5)] p-4">
+      <summary className="cursor-pointer list-none">
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="psy-eyebrow text-[10px]">{eyebrow}</p>
+            <h2 className="psy-serif text-2xl text-[var(--psy-ink)] sm:text-3xl">{title}</h2>
+          </div>
+          <span className="rounded-full border border-[var(--psy-border)] bg-[var(--psy-card-content)] px-3 py-1 text-[12px] text-[var(--psy-muted)]">
+            展开
+          </span>
+        </div>
+      </summary>
+      <div className="mt-4 space-y-4">{children}</div>
+    </details>
+  );
+}
+
 /* ── Logo 基元 ── */
 const INK = '#3a3020';
 const NAVY = '#16324a';
@@ -534,6 +553,86 @@ function StrategyCard({ title, eyebrow, children }: { title: string; eyebrow: st
   );
 }
 
+function PsiTileMark() {
+  return (
+    <svg viewBox="0 0 120 120" className="h-full w-full">
+      <rect x="31" y="13" width="58" height="94" rx="14" fill={CREAM} stroke={INK} strokeWidth="4" />
+      <rect x="38" y="20" width="44" height="80" rx="9" fill="none" stroke={GOLD} strokeWidth="2" opacity="0.78" />
+      <text x="60" y="77" textAnchor="middle" fontFamily="Georgia, serif" fontSize="53" fontWeight="700" fill={GOLD_STRONG}>Ψ</text>
+    </svg>
+  );
+}
+
+function PsiVaseMark() {
+  return (
+    <svg viewBox="0 0 120 120" className="h-full w-full">
+      <circle cx="60" cy="60" r="47" fill={CREAM} stroke={INK} strokeWidth="3.4" />
+      <circle cx="60" cy="60" r="38" fill="none" stroke={GOLD} strokeWidth="1.7" opacity="0.72" />
+      <path d="M35 38 C25 47 25 72 37 82 C43 75 43 48 35 38Z" fill="#c9603f" opacity="0.86" />
+      <path d="M85 38 C95 47 95 72 83 82 C77 75 77 48 85 38Z" fill="#c9603f" opacity="0.86" />
+      <text x="60" y="79" textAnchor="middle" fontFamily="Georgia, serif" fontSize="52" fontWeight="700" fill={GOLD_STRONG}>Ψ</text>
+      <path d="M53 28 C57 21 62 21 67 28" fill="none" stroke={SAGE} strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PsiOrbitMark() {
+  return (
+    <svg viewBox="0 0 120 120" className="h-full w-full">
+      <path d="M26 62 A34 34 0 0 1 58 26" fill="none" stroke={INK} strokeWidth="3" strokeLinecap="round" />
+      <path d="M94 58 A34 34 0 0 1 62 94" fill="none" stroke={GOLD} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="29" cy="66" r="4" fill={SAGE} />
+      <circle cx="91" cy="51" r="4" fill="#c9603f" />
+      <circle cx="60" cy="95" r="4" fill={GOLD_STRONG} />
+      <text x="60" y="75" textAnchor="middle" fontFamily="Georgia, serif" fontSize="50" fontWeight="700" fill={GOLD_STRONG}>Ψ</text>
+    </svg>
+  );
+}
+
+function PsiMindMark() {
+  return (
+    <svg viewBox="0 0 120 120" className="h-full w-full">
+      <text x="60" y="77" textAnchor="middle" fontFamily="Georgia, serif" fontSize="50" fontWeight="700" fill={GOLD_STRONG}>Ψ</text>
+      <path d="M38 44 C42 28 58 27 61 41 C66 28 82 31 84 47 C94 51 94 68 84 73" fill="none" stroke={INK} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M42 82 C49 91 70 93 79 82" fill="none" stroke={GOLD} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="39" cy="44" r="4" fill="#c9603f" />
+      <circle cx="61" cy="41" r="4" fill={SAGE} />
+      <circle cx="84" cy="47" r="4" fill={GOLD} />
+    </svg>
+  );
+}
+
+function LogoProposalCard({ label, title, note, children }: { label: string; title: string; note: string; children: ReactNode }) {
+  return (
+    <div className="psy-panel flex flex-col gap-3 rounded-[1.25rem] p-4">
+      <div className="flex h-40 items-center justify-center rounded-[1rem] bg-[var(--psy-card-content)]">
+        <div className="h-28 w-28">{children}</div>
+      </div>
+      <div>
+        <div className="psy-eyebrow text-[9px]">{label}</div>
+        <div className="psy-serif mt-1 text-base font-semibold text-[var(--psy-ink)]">{title}</div>
+        <p className="mt-1 text-[12px] leading-5 text-[var(--psy-muted)]">{note}</p>
+      </div>
+    </div>
+  );
+}
+
+function TinyLogo({ children }: { children: ReactNode }) {
+  return <div className="h-9 w-9 shrink-0">{children}</div>;
+}
+
+function UsageMockup({ title, note, children }: { title: string; note: string; children: ReactNode }) {
+  return (
+    <div className="rounded-[1.2rem] border border-[var(--psy-border)] bg-[var(--psy-card-content)] p-4">
+      <div className="min-h-32 rounded-[0.9rem] border border-[rgba(150,118,78,0.18)] bg-[var(--psy-surface)] p-4">
+        {children}
+      </div>
+      <div className="psy-serif mt-3 text-sm font-semibold text-[var(--psy-ink)]">{title}</div>
+      <p className="mt-1 text-[12px] leading-5 text-[var(--psy-muted)]">{note}</p>
+    </div>
+  );
+}
+
 export default function BrandPage() {
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-10">
@@ -546,6 +645,95 @@ export default function BrandPage() {
             这份文档整理项目的玩法、概念、目标与视觉配色，供同事在同一套设计语言下发散更多 logo / 视觉可行性。下方给出多组 logo 草案：麻将风、塔罗风、彩色五维、课程徽章与抽象符号，仅为方向示意，非最终稿。
           </p>
         </header>
+
+        {/* Final logo candidates */}
+        <Section eyebrow="Logo Draft · 可用候选" title="先看真正可以落地的 logo">
+          <div className="rounded-[1.35rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-5">
+            <div className="flex flex-col gap-5 md:flex-row md:items-center">
+              <div className="mx-auto h-28 w-28 shrink-0 md:mx-0"><PsiTileMark /></div>
+              <div>
+                <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">推荐主线：Psi Tile 作为主标记</div>
+                <p className="mt-2 text-[14px] leading-7 text-[var(--psy-ink-soft)]">
+                  这版最适合真正放进网页：它只保留 <strong className="text-[var(--psy-ink)]">Ψ + 麻将牌框 + 暖金/象牙配色</strong>，缩到 favicon 也能识别；鲁宾花瓶和轨道版本作为徽记和辅助图形使用，不抢主标记的位置。
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <LogoProposalCard label="Primary" title="Psi Tile 主标记" note="favicon、导航栏、App icon 的默认选择。">
+              <PsiTileMark />
+            </LogoProposalCard>
+            <LogoProposalCard label="Emblem" title="Psi Vase 徽记" note="用于加载页、分享图、规则页大图，讲自我/他人双重读取。">
+              <PsiVaseMark />
+            </LogoProposalCard>
+            <LogoProposalCard label="System" title="Psi Orbit 辅助图形" note="用于测评页、空状态、轻动效，不锁定固定五维。">
+              <PsiOrbitMark />
+            </LogoProposalCard>
+            <LogoProposalCard label="Alt" title="Psi Mind 节点版" note="保留参考图的科学感，但简化成少量节点。">
+              <PsiMindMark />
+            </LogoProposalCard>
+          </div>
+        </Section>
+
+        {/* Real usage examples */}
+        <Section eyebrow="Usage · 真实网页案例" title="logo 如何在网页里搭配使用">
+          <div className="grid gap-3 lg:grid-cols-3">
+            <UsageMockup title="favicon / 浏览器标签" note="只用 Psi Tile。16px 时避免侧脸、节点和文字。">
+              <div className="flex items-center gap-3 rounded-[0.75rem] border border-[var(--psy-border)] bg-[#fffaf2] px-3 py-2">
+                <div className="h-6 w-6 rounded-[0.45rem] bg-[var(--psy-card-content)] p-0.5"><PsiTileMark /></div>
+                <div className="min-w-0 flex-1 truncate text-[12px] font-medium text-[var(--psy-ink)]">人格麻將 · Personalities Mahjong</div>
+              </div>
+            </UsageMockup>
+            <UsageMockup title="导航栏 / 页首锁版" note="图形标 + 文字标题，文字不写进 logo 本体。">
+              <div className="flex items-center justify-between rounded-[0.9rem] border border-[var(--psy-border)] bg-[#fffaf2] px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <TinyLogo><PsiTileMark /></TinyLogo>
+                  <div>
+                    <div className="psy-serif text-base font-semibold text-[var(--psy-ink)]">人格麻將</div>
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--psy-muted)]">Personalities Mahjong</div>
+                  </div>
+                </div>
+                <span className="rounded-full bg-[var(--psy-accent)] px-3 py-1 text-[11px] font-semibold text-[#fff9f0]">开始</span>
+              </div>
+            </UsageMockup>
+            <UsageMockup title="PWA / App icon" note="满版暖沙底 + 主标记，适合 192/512px 导出。">
+              <div className="flex items-center justify-center">
+                <div className="h-24 w-24 rounded-[1.45rem] border border-[rgba(154,116,72,0.38)] bg-[#f4edd9] p-4 shadow-[0_12px_24px_rgba(120,90,50,0.14)]">
+                  <PsiTileMark />
+                </div>
+              </div>
+            </UsageMockup>
+            <UsageMockup title="加载页 / 品牌一刻" note="可用 Psi Vase，尺寸更大时讲故事更清楚。">
+              <div className="flex h-28 flex-col items-center justify-center gap-2">
+                <div className="h-16 w-16"><PsiVaseMark /></div>
+                <div className="text-[12px] font-medium text-[var(--psy-muted)]">正在洗牌并读取人格线索</div>
+              </div>
+            </UsageMockup>
+            <UsageMockup title="结算分享图" note="徽记 + 标题 + 分数摘要，适合截图传播。">
+              <div className="rounded-[0.9rem] border border-[var(--psy-border)] bg-[#fffaf2] p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-14 w-14"><PsiVaseMark /></div>
+                  <div>
+                    <div className="psy-serif text-lg font-semibold text-[var(--psy-ink)]">人格牌局完成</div>
+                    <div className="text-[11px] text-[var(--psy-muted)]">OCEAN profile · Mahjong reading</div>
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-1">
+                  {DIM_COLORS.map((color) => <span key={color} className="h-2 flex-1 rounded-full" style={{ backgroundColor: color }} />)}
+                </div>
+              </div>
+            </UsageMockup>
+            <UsageMockup title="Footer / 规则页角标" note="使用单色或低存在感版本，不打扰阅读。">
+              <div className="flex items-center justify-between border-t border-[var(--psy-border)] pt-4">
+                <div className="flex items-center gap-2 text-[12px] text-[var(--psy-muted)]">
+                  <div className="h-7 w-7 opacity-75"><PsiTileMark /></div>
+                  <span>人格麻將 · 香港理工大學</span>
+                </div>
+                <span className="text-[11px] text-[var(--psy-muted)]">Brand mark v0</span>
+              </div>
+            </UsageMockup>
+          </div>
+        </Section>
 
         {/* Logo strategy */}
         <Section eyebrow="Logo Strategy · 新策略" title="Ψ 心理符号 × 鲁宾花瓶 × 麻将牌">
@@ -717,7 +905,7 @@ export default function BrandPage() {
         </Section>
 
         {/* Logo direction — Mahjong */}
-        <Section eyebrow="Logo · 方向 A" title="麻将风（牌局识别）">
+        <CollapsibleSection eyebrow="Logo · 方向 A" title="麻将风（牌局识别）">
           <p className="text-[13px] leading-6 text-[var(--psy-muted)]">以麻将牌为主体，牌面嵌入心理符号（心 / 五维雷达 / 罗盘）。稳、直观、和「麻将」名字直接呼应。</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <LogoCard label="A1 · 心牌" note="麻将牌面嵌「心」——心理 × 麻将最直接的组合">
@@ -748,10 +936,10 @@ export default function BrandPage() {
               <ProfileTileGlyph />
             </LogoCard>
           </div>
-        </Section>
+        </CollapsibleSection>
 
         {/* Logo direction — Tarot */}
-        <Section eyebrow="Logo · 方向 B" title="塔罗风（卡面延伸）">
+        <CollapsibleSection eyebrow="Logo · 方向 B" title="塔罗风（卡面延伸）">
           <p className="text-[13px] leading-6 text-[var(--psy-muted)]">以游戏内塔罗风卡框为主体（拱顶 + 金线），嵌入罗盘 / 心 / 雷达。更「读心 / 揭示」的意象，和游戏卡面强一致。</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <LogoCard label="B1 · 罗盘卡" note="拱顶卡框 + 罗盘——识人、指向、揭示">
@@ -783,10 +971,10 @@ export default function BrandPage() {
               <TarotPortalGlyph />
             </LogoCard>
           </div>
-        </Section>
+        </CollapsibleSection>
 
         {/* Recommendation */}
-        <Section eyebrow="My take · 我的判断" title="主线用「麻将牌」，气质用「心理测评」">
+        <CollapsibleSection eyebrow="My take · 我的判断" title="主线用「麻将牌」，气质用「心理测评」">
           <div className="grid gap-3 lg:grid-cols-3">
             <AnalysisCard title="Claude 方向可取" tone="good">
               麻将牌、心、五维雷达这些元素是对的：一眼能读出「这是麻将相关的心理游戏」。其中 A3 的对牌关系最好，天然有牌局、对战、胡牌的语义。
@@ -840,10 +1028,10 @@ export default function BrandPage() {
               第一版先推进 <strong>C1 心局</strong>：它比单张心牌更有游戏感，比圆形徽章更轻，比毛笔字标更贴近当前产品。视觉上只保留三件事：<strong>牌形、心字、五维点</strong>。罗盘可以作为二级图形，不建议放进主 logo 的第一版。
             </p>
           </div>
-        </Section>
+        </CollapsibleSection>
 
         {/* Color variants */}
-        <Section eyebrow="Color Logo · 彩色尝试" title="可以加颜色，但要小面积、有理由">
+        <CollapsibleSection eyebrow="Color Logo · 彩色尝试" title="可以加颜色，但要小面积、有理由">
           <p className="text-[13px] leading-6 text-[var(--psy-muted)]">
             现在的粗框 + 白底确实偏保守。更适合本网页的做法不是换成强烈主色，而是把五维人格色放到牌面小符号、内衬或边线里：既跟测评系统连上，也不会破坏暖纸米白的整体气质。
           </p>
@@ -886,10 +1074,10 @@ export default function BrandPage() {
               如果要定一个彩色版，我会选 <strong>D1 彩色心局</strong>：框架还是稳定的麻将牌，颜色只负责说明「人格五维」。D2 更适合测评页或报告页，D3 更有概念但识别门槛稍高。
             </p>
           </div>
-        </Section>
+        </CollapsibleSection>
 
         {/* Explorations */}
-        <Section eyebrow="More styles · 新风格" title="再开几条不同路线">
+        <CollapsibleSection eyebrow="More styles · 新风格" title="再开几条不同路线">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <LogoCard label="E1 · 徽章印章" note="更像课程/研究项目标识，适合报告封面">
               <ColorSealGlyph cx={60} cy={60} />
@@ -959,10 +1147,10 @@ export default function BrandPage() {
           <p className="text-[13px] leading-6 text-[var(--psy-muted)]">
             这几条不是都适合做主 logo：E1/E5 偏正式，E2 偏亲和，E3/E6 最游戏化，E4/E8 最克制。它们可以作为分支参考，主路线仍建议从 D1 / C1 继续打磨。
           </p>
-        </Section>
+        </CollapsibleSection>
 
         {/* Abstract explorations */}
-        <Section eyebrow="Abstract · 抽象方向" title="不依赖具体物件的符号">
+        <CollapsibleSection eyebrow="Abstract · 抽象方向" title="不依赖具体物件的符号">
           <p className="text-[13px] leading-6 text-[var(--psy-muted)]">
             这组故意减少麻将牌、塔罗卡、心字等具象元素，转向「人格结构 / 关系 / 选择 / 自我折叠」的抽象表达。它们更像品牌符号，识别门槛更高，但成熟度和延展性更强。
           </p>
@@ -992,10 +1180,10 @@ export default function BrandPage() {
               如果想从「具体游戏图标」升级成更像品牌的标志，可以重点看 F1、F2、F5。F1 最容易和五维测评绑定；F2 最有品牌感；F5 介于雷达图和抽象晶体之间，适合做长期视觉母题。
             </p>
           </div>
-        </Section>
+        </CollapsibleSection>
 
         {/* Gemini-like brand lockups */}
-        <Section eyebrow="Brand Lockup · 品牌组合" title="接近 Gemini 那种完整品牌感">
+        <CollapsibleSection eyebrow="Brand Lockup · 品牌组合" title="接近 Gemini 那种完整品牌感">
           <p className="text-[13px] leading-6 text-[var(--psy-muted)]">
             这组不是单独的小图标，而是更像真实品牌提案的完整组合：图形标 + 英文字标 + 徽章/横版应用。参考 Gemini 的商业完成度，但把红蓝压暗、金色降低面积，避免和当前暖纸米白网页脱节。
           </p>
@@ -1045,7 +1233,7 @@ export default function BrandPage() {
               如果目标是“看起来像一个已经能对外发布的品牌”，G1/G2/G6 比前面的 icon 草案更接近。G4 最像徽章，但细节多；G3 比较有 app icon 潜力；G5 更适合课程和研究语境。建议后续从 G2 或 G6 里继续精修字标比例。
             </p>
           </div>
-        </Section>
+        </CollapsibleSection>
 
         {/* Wordmark */}
         <Section eyebrow="Lockup · 组合" title="图标 + 字标">
