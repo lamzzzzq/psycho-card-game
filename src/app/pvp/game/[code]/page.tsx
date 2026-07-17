@@ -309,7 +309,7 @@ export default function PvpGamePage() {
       turnNudge(shakeControls); // 屏幕震动 + 设备震动，提醒该你了
       if (hideTimer) window.clearTimeout(hideTimer);
       hideTimer = window.setTimeout(() => setIdleReminderVisible(false), 3000);
-    }, 30_000);
+    }, 60_000);
     return () => {
       window.clearInterval(interval);
       if (hideTimer) window.clearTimeout(hideTimer);

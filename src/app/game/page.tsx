@@ -165,7 +165,7 @@ export default function GamePage() {
       setIdleReminderVisible(true);
       if (hideTimer) window.clearTimeout(hideTimer);
       hideTimer = window.setTimeout(() => setIdleReminderVisible(false), 2500);
-    }, 30_000);
+    }, 60_000);
     return () => {
       window.clearInterval(interval);
       if (hideTimer) window.clearTimeout(hideTimer);
