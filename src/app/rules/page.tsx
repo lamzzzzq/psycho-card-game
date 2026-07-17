@@ -170,6 +170,7 @@ export default function RulesPage() {
         /* 縮放容器：寬度鋪滿；用 zoom 縮放 A4（連佈局一起縮，內容完整、不裁） */
         .a4-fit { width: 100%; max-width: 210mm; }
         .a4 {
+          position: relative;
           width: 210mm;
           min-height: 297mm;
           background: #fbf8f1;
@@ -182,45 +183,45 @@ export default function RulesPage() {
         }
         .a4 .serif { font-family: ui-serif, "Songti TC", Georgia, serif; }
 
-        /* 頁首：標題+副標左上角，QR+網址右上角（QR 高度≈標題塊，網址右對齊置於 QR 正下方） */
+        /* 頁首：標題+副標左上角；QR 絕對定位頂到右上角，網址右對齊置於 QR 正下方 */
         .head {
-          display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
-          border-bottom: 2px solid #c89b5d; padding-bottom: 8px; margin-bottom: 8px;
+          position: relative;
+          border-bottom: 2px solid #c89b5d; padding-bottom: 10px; margin-bottom: 16px;
         }
-        .title-wrap { min-width: 0; }
-        .qrbox { text-align: right; flex: none; }
+        .title-wrap { max-width: 74%; }
+        .qrbox { position: absolute; top: 0; right: 0; text-align: right; }
         .qrbox .cap { font-size: 10px; color: #6b5d44; margin-top: 3px; line-height: 1.3; }
         .a4 h1 { font-size: 30px; margin: 2px 0 0; letter-spacing: 2px; color: #1c1812; line-height: 1.1; }
         .a4 .eyebrow { font-size: 12px; letter-spacing: 6px; color: #7a4d12; margin: 0; }
         .a4 .sub { font-size: 13px; color: #6b5d44; margin: 6px 0 0; }
 
-        /* 章節：單欄 */
-        .sections { margin-top: 2px; }
-        .rsec { margin: 0 0 10px; }
+        /* 章節：單欄，節間拉開間距填滿版面 */
+        .sections { margin-top: 4px; }
+        .rsec { margin: 0 0 20px; }
         .rsec h2 {
-          font-size: 17px; margin: 6px 0 5px; color: #7a4d12;
-          border-bottom: 1px solid #d8c39a; padding-bottom: 4px; letter-spacing: 0.5px;
+          font-size: 17px; margin: 10px 0 8px; color: #7a4d12;
+          border-bottom: 1px solid #d8c39a; padding-bottom: 5px; letter-spacing: 0.5px;
         }
-        .a4 .rsec p { font-size: 13px; margin: 3px 0; line-height: 1.5; }
-        .rsub { font-weight: 700; color: #3a2f1c; margin-top: 6px !important; font-size: 13.5px !important; }
+        .a4 .rsec p { font-size: 13px; margin: 5px 0; line-height: 1.55; }
+        .rsub { font-weight: 700; color: #3a2f1c; margin-top: 9px !important; font-size: 13.5px !important; }
         .rli { display: flex; gap: 3px; }
         .rli-dot { color: #c89b5d; flex: none; }
         .a4 .warn { color: #a23b1e; }
         .a4 .tip {
           background: rgba(200,155,93,0.12); border: 1px solid rgba(200,155,93,0.3);
-          border-radius: 9px; padding: 6px 10px; color: #7a4d12; margin: 6px 0 !important;
+          border-radius: 9px; padding: 8px 11px; color: #7a4d12; margin: 9px 0 !important;
         }
 
-        .dims { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+        .dims { display: flex; gap: 7px; flex-wrap: wrap; margin: 9px 0; }
         .dim {
-          border: 1px solid #c9b48a; border-radius: 8px; padding: 4px 8px;
+          border: 1px solid #c9b48a; border-radius: 8px; padding: 5px 9px;
           font-size: 12px; background: #fff;
         }
         .dim b { color: #7a4d12; }
         .chip { border: 1px solid #c9b48a; border-radius: 999px; padding: 4px 13px; background:#fff; font-size: 12.5px; }
         /* 配圖 */
         .fig { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px;
-          border: 1px solid #d9c8a4; border-radius: 12px; background: #fff; padding: 8px 12px; margin: 6px 0 2px; }
+          border: 1px solid #d9c8a4; border-radius: 12px; background: #fff; padding: 11px 12px; margin: 10px 0 3px; }
         .fig-pill { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #c9b48a;
           border-radius: 999px; padding: 3px 10px; font-size: 12.5px; font-weight: 700; background: #faf4e8; color: #5c451f; }
         .fig-card { display: inline-flex; align-items: center; justify-content: center; width: 27px; height: 37px;
