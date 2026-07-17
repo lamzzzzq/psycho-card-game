@@ -177,22 +177,6 @@ export default function RulesPage() {
           .rtitle .rt-main { font-size: 21px; white-space: normal; }
           .rtitle .rt-sub { font-size: 14px; white-space: normal; }
           .qrbox svg { width: 52px !important; height: 52px !important; }
-          /* 配圖在手機也擠成一行(縮小卡片/字號/間距 + 不換行)。僅螢幕預覽,列印 A4 不受影響 */
-          /* 手機:標籤保留;內容盒縮到 30px 對齊;放寬容許橫向滾動(弄寬一點)避免擠壓 */
-          .fig { flex-wrap: nowrap; gap: 5px; padding: 9px 8px; overflow-x: auto; justify-content: flex-start; }
-          .fig-op { height: 30px; font-size: 12px; }
-          .fig .chip { height: 30px; }
-          .fig-grp > :first-child { min-height: 30px; }
-          .fig-card { width: 22px; height: 30px; font-size: 11px; }
-          .fig-grp small { font-size: 9px; }
-          .fig-set { padding: 3px 5px; gap: 4px; letter-spacing: 1px; }
-          .fig-num { padding: 0 4px; font-size: 9.5px; }
-          .fig-grp { gap: 2px; }
-          .fig-grp small { font-size: 8px; }
-          .fig-op { font-size: 11px; }
-          .fig .chip, .chip { padding: 3px 7px; font-size: 10px; }
-          .fig-pill { padding: 2px 5px; font-size: 10px; gap: 2px; }
-          .fig-cap { font-size: 9px; }
         }
 
         /* 章節：單欄，節間拉開間距填滿版面 */
@@ -237,6 +221,21 @@ export default function RulesPage() {
         .fig-cap { text-align: center; font-size: 11px; color: #6b5a3e; margin: 3px 0 0; }
         .fig-grp { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; }
         .fig-grp small { font-size: 10.5px; color: #6b5a3e; }
+
+        /* 手機:配圖整體壓小,一行裝下(含最長英文標籤),不換行、標籤保留。
+           必須放在基礎 .fig 規則「之後」——否則同優先級被後面的基礎規則覆蓋(之前 nowrap 失效就是這原因)。 */
+        @media (max-width: 640px) {
+          .fig { flex-wrap: nowrap; gap: 3px; padding: 9px 5px; }
+          .fig-card { width: 18px; height: 26px; font-size: 9.5px; }
+          .fig-op { height: 26px; font-size: 11px; }
+          .fig .chip { height: 26px; padding: 3px 7px; font-size: 9.5px; }
+          .fig-grp > :first-child { min-height: 26px; }
+          .fig-set { padding: 2px 5px; gap: 3px; letter-spacing: 0.5px; }
+          .fig-num { padding: 0 3px; font-size: 9px; }
+          .fig-pill { padding: 2px 5px; font-size: 9.5px; gap: 2px; }
+          .fig-grp small { font-size: 8px; white-space: nowrap; }
+          .fig-cap { font-size: 9px; }
+        }
 
         @media print {
           .no-print { display: none !important; }
