@@ -122,7 +122,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '👥 聯機與勝負規則',
-        body: '・人數彈性：聯機支援 2–4 名玩家；單機固定 4 人（你 + 3 個 AI）。\n・斷線 / 退出處理：有人點擊「退出對局」後，該座位會永久跳過（顯示 🚪 已退出），不影響剩餘玩家繼續切磋；若退到只剩 1 人，該玩家直接躺贏！\n・防作弊機制：同一個學號無法同時進入兩個活動房間。\n・逾時提醒：回合超時 60 秒未操作，系統會每分鐘彈窗提醒。\n・無人胡牌怎麼辦？如果打滿約定圈數仍無人食胡，則按以下順序判定勝負：',
+        body: '・人數彈性：聯機支援 2–4 名玩家；單機固定 4 人（你 + 3 個 AI）。\n・斷線 / 退出處理：有人點擊「退出對局」後，該座位會永久跳過（顯示 🚪 已退出），不影響剩餘玩家繼續切磋；若退到只剩 1 人，該玩家直接躺贏！\n・防作弊機制：同一個學號無法同時進入兩個活動房間。\n・逾時提醒：回合超時 60 秒未操作，系統會每分鐘彈窗溫馨提醒。\n・無人胡牌怎麼辦？如果打滿約定圈數仍無人食胡，則按以下順序判定勝負：\n已歸檔維度數（多者勝）→ 剩餘手牌張數（少者勝）',
       },
     ] as ReadonlyArray<{ title: string; body: string; hint?: string }>,
 
@@ -415,7 +415,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '👥 Online & Results Rules',
-        body: '・Flexible player count: online supports 2–4 players; single player is fixed at 4 (you + 3 AI).\n・Disconnect / leave: after someone taps "Leave", that seat is permanently skipped (shows 🚪 Left) and the remaining players keep going; if only 1 player remains, that player simply wins!\n・Anti-cheat: the same student ID cannot enter two active rooms at once.\n・Idle nudge: if a turn goes 60 seconds without action, the system pops a reminder every minute.\n・What if no one wins? If the agreed rounds run out with no Win, the result is decided in the following order:',
+        body: '・Flexible player count: online supports 2–4 players; single player is fixed at 4 (you + 3 AI).\n・Disconnect / leave: after someone taps "Leave", that seat is permanently skipped (shows 🚪 Left) and the remaining players keep going; if only 1 player remains, that player simply wins!\n・Anti-cheat: the same student ID cannot enter two active rooms at once.\n・Idle nudge: if a turn goes 60 seconds without action, the system pops a friendly reminder every minute.\n・What if no one wins? If the agreed rounds run out with no Win, the result is decided in this order:\nmost archived dimensions wins → if tied, fewer remaining hand cards wins.',
       },
     ] as ReadonlyArray<{ title: string; body: string; hint?: string }>,
 

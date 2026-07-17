@@ -1133,9 +1133,9 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
         </DiagramFrame>
       );
 
-    case 5: // 聯機與勝負：無人胡 → 比已歸檔維度數排名
+    case 5: // 聯機與勝負：無人胡 → 比已歸檔維度數排名（排名文字已在卡片正文，框內只留示意）
       return (
-        <DiagramFrame caption={s.dgScoringCaption}>
+        <DiagramFrame>
           <span className="text-base">🥇</span>
           <span className="flex gap-0.5"><DonePill label="O" /><DonePill label="C" /><DonePill label="E" /></span>
           <Sym>›</Sym>
