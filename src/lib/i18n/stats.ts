@@ -5,7 +5,7 @@
 export const STATS_T = {
   zh: {
     loading: '加載統計數據…',
-    back: '← 返回首頁',
+    back: '← 返回主頁',
     title: '數據統計',
     subtitle: '參與者出勤與對戰記錄的歸檔卷宗。',
     participantsChip: (n: number) => `${n} 名參與者`,

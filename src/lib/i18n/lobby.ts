@@ -6,7 +6,7 @@ export const LOBBY_T = {
       title: '請先完成人格測評',
       body: '完整人格刻度會決定你在牌局中的歸檔目標。',
       startAssess: '開始測評',
-      backHome: '← 返回首頁',
+      backHome: '← 返回主頁',
     },
     backHome: '← 返回主頁',
     title: '單人遊戲',

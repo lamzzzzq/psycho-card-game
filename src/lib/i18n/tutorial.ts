@@ -8,7 +8,7 @@ export const TUTORIAL_T = {
     eyebrow: 'Tutorial',
     title: '人格麻將 · Big Five · 教學',
     rulesHardcopy: '規則 Hardcopy',
-    backHome: '返回首頁',
+    backHome: '返回主頁',
 
     // ── 主 CTA ──
     ctaTitle: '先看流程，再進引導實戰打一局',

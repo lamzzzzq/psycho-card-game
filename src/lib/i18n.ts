@@ -73,7 +73,7 @@ export const STRINGS = {
     assessment: {
       eyebrow: 'Persona Reading',
       title: '抽取你的人格原型',
-      intro: '每一道陳述題都像翻開一張隱喻牌面。你給出的傾向，會在結尾匯聚成五維人格圖譜，並影響後續牌局目標。',
+      intro: '每道題都像翻開一張隱喻牌面。請憑第一直覺選擇，你的答案將匯聚成專屬的「五維人格圖譜」，並直接決定接下來的「胡牌目標」。',
       gateTitle: '輸入學號',
       gateHint: '學號用於記錄你的測評結果，方便課堂統計。',
       gatePlaceholder: '例如 17094905G',
@@ -86,7 +86,7 @@ export const STRINGS = {
       dupOverwrite: '重新測評',
       restoring: '讀取中…',
       restoreFailed: '讀取不到舊記錄（可能尚未同步或後端未就緒）。請改用「重新測評」。',
-      backHome: '回到主頁',
+      backHome: '返回主頁',
       studentLabel: '學號',
       changeStudent: '更換',
       loading: '加載中…',
@@ -140,7 +140,7 @@ export const STRINGS = {
       cardsUnit: '張',
       declaredPrefix: '申報',
       playAgain: '再來一局',
-      backHome: '返回首頁',
+      backHome: '返回主頁',
       // Penalty banners
       penaltyLockoutFull: '你被罰停一回合 — 下次輪到你時自動跳過，期間無法參與碰/食胡',
       penaltyLockoutShort: '罰停一回合 · 輪到你時跳過 · 不可碰/胡',
@@ -319,7 +319,7 @@ export const STRINGS = {
     },
     pvpLobby: {
       loading: '加載中…',
-      backHome: '← 返回首頁',
+      backHome: '← 返回主頁',
       title: '聯機對戰',
       intro: '創建房間或輸入房間碼加入，與真實玩家同桌博弈',
       stillInRoomPrefix: '你還在房間 ',
@@ -407,7 +407,7 @@ export const STRINGS = {
     },
     results: {
       loading: '加載中…',
-      backHome: '回到主頁',
+      backHome: '返回主頁',
       notAssessed: '尚未完成測評',
       startAssess: '開始測評',
       title: '你的大五人格模型畫像',
@@ -454,7 +454,7 @@ export const STRINGS = {
     assessment: {
       eyebrow: 'Persona Reading',
       title: 'Draw Your Persona Archetype',
-      intro: 'Each statement is like turning over a metaphorical card. Your tendencies converge into a five-factor portrait that shapes your goals at the table.',
+      intro: 'Each question is like turning over a metaphorical card. Go with your first instinct — your answers converge into your own “five-factor personality profile,” which directly sets your “winning targets” for the game ahead.',
       gateTitle: 'Enter Student ID',
       gateHint: 'Your student ID records your assessment result for class statistics.',
       gatePlaceholder: 'e.g. 17094905G',
