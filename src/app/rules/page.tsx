@@ -178,8 +178,11 @@ export default function RulesPage() {
           .rtitle .rt-sub { font-size: 14px; white-space: normal; }
           .qrbox svg { width: 52px !important; height: 52px !important; }
           /* 配圖在手機也擠成一行(縮小卡片/字號/間距 + 不換行)。僅螢幕預覽,列印 A4 不受影響 */
-          .fig { flex-wrap: nowrap; gap: 4px; padding: 8px 6px 22px; }
+          .fig { flex-wrap: nowrap; gap: 5px; padding: 9px 6px; }
+          .fig-op { height: 28px; font-size: 12px; }
           .fig-card { width: 20px; height: 28px; font-size: 10px; }
+          /* 手機隱藏卡下小標籤(太寬會擠/重疊);圖例只留卡片一行,下方 caption 仍解釋 */
+          .fig-grp small { display: none; }
           .fig-set { padding: 3px 5px; gap: 4px; letter-spacing: 1px; }
           .fig-num { padding: 0 4px; font-size: 9.5px; }
           .fig-grp { gap: 2px; }
@@ -214,9 +217,10 @@ export default function RulesPage() {
         }
         .dim b { color: #7a4d12; }
         .chip { border: 1px solid #c9b48a; border-radius: 999px; padding: 4px 13px; background:#fff; font-size: 12.5px; }
-        /* 配圖。padding-bottom 加大給絕對定位的標籤留空間 */
-        .fig { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px;
-          border: 1px solid #d9c8a4; border-radius: 12px; background: #fff; padding: 12px 12px 28px; margin: 10px 0 3px; }
+        /* 配圖。頂部對齊:各列(卡片+標籤)按最寬撐開,標籤正常排列絕不重疊;
+           +/= 用等卡高的盒子垂直居中 → 落在卡片中線。 */
+        .fig { display: flex; align-items: flex-start; justify-content: center; flex-wrap: wrap; gap: 10px;
+          border: 1px solid #d9c8a4; border-radius: 12px; background: #fff; padding: 11px 12px; margin: 10px 0 3px; }
         .fig-pill { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #c9b48a;
           border-radius: 999px; padding: 3px 10px; font-size: 12.5px; font-weight: 700; background: #faf4e8; color: #5c451f; }
         .fig-card { display: inline-flex; align-items: center; justify-content: center; width: 27px; height: 37px;
@@ -224,11 +228,10 @@ export default function RulesPage() {
         .fig-set { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #c9a258;
           border-radius: 8px; padding: 4px 9px; background: #f3e6c8; color: #7a4d12; font-weight: 700; letter-spacing: 2px; }
         .fig-num { background: #c89b5d; color: #20170c; border-radius: 999px; padding: 0 6px; font-size: 12px; }
-        .fig-op { color: #7a4d12; font-weight: 700; font-size: 15px; }
+        .fig-op { display: inline-flex; align-items: center; height: 37px; color: #7a4d12; font-weight: 700; font-size: 15px; }
         .fig-cap { text-align: center; font-size: 11px; color: #6b5a3e; margin: 3px 0 0; }
-        .fig-grp { position: relative; display: inline-flex; flex-direction: column; align-items: center; }
-        .fig-grp small { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%);
-          white-space: nowrap; font-size: 10.5px; color: #6b5a3e; }
+        .fig-grp { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; }
+        .fig-grp small { font-size: 10.5px; color: #6b5a3e; }
 
         @media print {
           .no-print { display: none !important; }
