@@ -25,24 +25,32 @@ export default function RulesPage() {
   const fitRef = useRef<HTMLDivElement>(null);
 
   // 把固定 210mm 的 A4 等比縮放到可用寬度（像 PDF 預覽）。
-  // 用 CSS zoom（不是 transform）：zoom 會連同「佈局高度」一起縮，內容多長都完整顯示、
-  // 超過一頁就自動往下延（列印自動分頁），不會被裁；也不需手動算容器高度。
-  // 只在「寬度」變化時重設 → Safari 上下滑動（只改高度）不會觸發，畫面不抽搐。
+  // 用 transform:scale（不是 zoom）——zoom 在 iOS Safari 上不可靠，會導致內容按窄屏重排。
+  // transform 跨瀏覽器一致；容器高度手動設為 a4.offsetHeight*scale 以收起縮放留白。
+  // 雙 ResizeObserver：觀察 fit(寬度變才重算 scale) + a4(內容高度變才更新容器高，例如字體載入)。
+  // 滾動只改視窗高度、不改 fit 寬度與 a4 內容高 → 不觸發重算，畫面不抽搐。
   useEffect(() => {
     const a4 = a4Ref.current;
     const fit = fitRef.current;
     if (!a4 || !fit) return;
     let lastW = -1;
+    let scale = 1;
     const apply = () => {
       const w = fit.clientWidth;
-      if (w <= 0 || w === lastW) return;
-      lastW = w;
-      (a4.style as CSSStyleDeclaration & { zoom?: string }).zoom = String(Math.min(1, w / A4_WIDTH_PX));
+      if (w <= 0) return;
+      if (w !== lastW) {
+        lastW = w;
+        scale = Math.min(1, w / A4_WIDTH_PX);
+        a4.style.transform = `scale(${scale})`;
+      }
+      fit.style.height = `${a4.offsetHeight * scale}px`;
     };
     apply();
-    const ro = new ResizeObserver(apply);
-    ro.observe(fit);
-    return () => ro.disconnect();
+    const roFit = new ResizeObserver(apply);
+    roFit.observe(fit);
+    const roA4 = new ResizeObserver(apply);
+    roA4.observe(a4);
+    return () => { roFit.disconnect(); roA4.disconnect(); };
   }, [locale, hydrated]);
 
   // 單個內容區塊 → JSX
@@ -167,12 +175,14 @@ export default function RulesPage() {
           font-weight: 600;
         }
 
-        /* 縮放容器：寬度鋪滿；用 zoom 縮放 A4（連佈局一起縮，內容完整、不裁） */
-        .a4-fit { width: 100%; max-width: 210mm; }
+        /* 縮放容器：寬度鋪滿；transform:scale 縮 A4，flex 置中、overflow 收起縮放留白 */
+        .a4-fit { width: 100%; max-width: 210mm; display: flex; justify-content: center; overflow: hidden; }
         .a4 {
           position: relative;
+          transform-origin: top center;
           width: 210mm;
           min-height: 297mm;
+          flex: none;
           background: #fbf8f1;
           color: #2a241b;
           box-shadow: 0 12px 40px rgba(0,0,0,0.35);
@@ -240,8 +250,8 @@ export default function RulesPage() {
           .rules-screen { background: #fff; padding: 0; }
           /* 打印時：不再固定 210mm（會超出可打印區被裁），改 width:auto 填滿 @page 內容區，
              所有邊距交給 @page，內容寬度 = A4 - 邊距，永不右側溢出被裁 */
-          .a4-fit { max-width: none; width: auto; }
-          .a4 { box-shadow: none; zoom: 1 !important; width: auto; min-height: 0; padding: 0; }
+          .a4-fit { max-width: none; width: auto; height: auto !important; overflow: visible; display: block; }
+          .a4 { box-shadow: none; transform: none !important; width: auto; min-height: 0; padding: 0; }
           /* 第四節「碰與食胡」起始換頁：第1頁=頁首+一二三，第2頁=四五六 */
           .rsec.pg-break { break-before: page; }
           @page { size: A4; margin: 12mm 10mm; } /* 上下12 左右10，頁腳/頁邊空間 */
