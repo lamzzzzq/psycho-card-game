@@ -188,10 +188,12 @@ export default function RulesPage() {
           box-shadow: 0 12px 40px rgba(0,0,0,0.35);
           padding: 9mm 9mm 11mm;
           box-sizing: border-box;
-          font-family: ui-sans-serif, "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+          /* 拉丁字體打頭、中文字體回退：英文標點(連字符/破折號/撇號)用正確的拉丁字形，
+             中文字自動落到 PingFang，不再出現又高又寬的中文標點。 */
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, "PingFang TC", "PingFang SC", "Microsoft JhengHei", "Noto Sans SC", sans-serif;
           line-height: 1.55;
         }
-        .a4 .serif { font-family: ui-serif, "Songti TC", Georgia, serif; }
+        .a4 .serif { font-family: ui-serif, Georgia, "Songti TC", "Songti SC", serif; }
 
         /* 頁首：flex — 標題+副標左上角，QR+網址右上角(貼右邊)。align-items:flex-start
            讓頁首高度包住較高的 QR 塊，網址永遠在分割線「上方」，不會掉到線下。 */
@@ -200,8 +202,9 @@ export default function RulesPage() {
           border-bottom: 2px solid #c89b5d; padding-bottom: 12px; margin-bottom: 16px;
         }
         .title-wrap { min-width: 0; }
-        .qrbox { flex: none; text-align: right; }
-        .qrbox .cap { font-size: 10px; color: #6b5d44; margin-top: 3px; line-height: 1.3; }
+        /* flex column + align-items:flex-end 強制 QR 與網址都貼右邊(text-align 對 svg 不生效) */
+        .qrbox { flex: none; display: flex; flex-direction: column; align-items: flex-end; }
+        .qrbox .cap { font-size: 10px; color: #6b5d44; margin-top: 3px; line-height: 1.3; text-align: right; }
         .a4 h1 { font-size: 30px; margin: 2px 0 0; letter-spacing: 2px; color: #1c1812; line-height: 1.1; }
         .a4 .eyebrow { font-size: 12px; letter-spacing: 6px; color: #7a4d12; margin: 0; }
         .a4 .sub { font-size: 13px; color: #6b5d44; margin: 6px 0 0; }
@@ -267,7 +270,6 @@ export default function RulesPage() {
         <div className="a4" ref={a4Ref}>
           <div className="head">
             <div className="title-wrap">
-              {locale === 'en' && <p className="eyebrow serif">PSYCHO CARD</p>}
               <h1 className="serif">{s.title}</h1>
               <p className="sub">{s.subtitle}</p>
             </div>
