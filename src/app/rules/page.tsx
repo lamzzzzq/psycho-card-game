@@ -24,23 +24,36 @@ export default function RulesPage() {
   const a4Ref = useRef<HTMLDivElement>(null);
   const fitRef = useRef<HTMLDivElement>(null);
 
-  // 把固定 210mm 的 A4 等比縮放到可用寬度（像 PDF 預覽）
+  // 把固定 210mm 的 A4 等比縮放到可用寬度（像 PDF 預覽）。
+  // ⚠️ 只在「寬度」變化時重算：Safari 上下滑動會因地址欄收放而觸發 resize（只改高度），
+  // 若每次都重設 transform/height 會逐幀重排 → 畫面抽搐閃爍。用 ResizeObserver + 寬度守衛避開。
   useEffect(() => {
     const a4 = a4Ref.current;
     const fit = fitRef.current;
     if (!a4 || !fit) return;
+    let lastW = -1;
+    let raf = 0;
     const apply = () => {
       const avail = fit.clientWidth;
+      if (avail <= 0 || avail === lastW) return; // 寬度沒變（例如滑動）→ 跳過，不重排
+      lastW = avail;
       const scale = Math.min(1, avail / A4_WIDTH_PX);
       a4.style.transform = `scale(${scale})`;
       fit.style.height = `${a4.offsetHeight * scale}px`;
     };
-    apply();
-    const t = window.setTimeout(apply, 200); // 等字體/佈局穩定再算一次
-    window.addEventListener('resize', apply);
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(apply);
+    };
+    schedule();
+    const ro = new ResizeObserver(schedule);
+    ro.observe(fit);
+    // 字體/佈局穩定後強制再算一次（此時高度可能變了但寬度沒變）
+    const t = window.setTimeout(() => { lastW = -1; apply(); }, 250);
     return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
       window.clearTimeout(t);
-      window.removeEventListener('resize', apply);
     };
   }, [locale, hydrated]);
 
