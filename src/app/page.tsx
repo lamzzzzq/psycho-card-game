@@ -42,8 +42,9 @@ export default function Home() {
   }, [hydrated]);
 
   return (
-    // 移动端：内容从顶部流动 + 底部留白给 sticky CTA 栏；桌面：垂直居中。
-    <div className="flex flex-1 flex-col items-center px-5 pt-20 pb-40 sm:px-6 sm:pt-24 lg:justify-center lg:pb-10 lg:pt-10">
+    // 移动端：内容从顶部流动 + 充足底部留白，保证页脚能滚动到固定 CTA 栏上方完整显示
+    // （iOS Safari 动态地址栏会吃掉底部空间，留白不足时页脚会被卡在栏后滑不上来）；桌面：垂直居中。
+    <div className="flex flex-1 flex-col items-center px-5 pt-20 pb-56 sm:px-6 sm:pt-24 lg:justify-center lg:pb-10 lg:pt-10">
       {/* 语言切换：覆盖持久化缓存，随时切回中文/英文（不必手动改 ?lang=） */}
       <div className="psy-serif fixed left-4 top-4 z-40 [transform:translateZ(0)] flex items-center gap-0.5 rounded-full border border-[var(--psy-border)] bg-[#fdf9f0] p-0.5 text-xs shadow-[var(--psy-shadow)] sm:left-8 sm:top-8">
         {(['zh', 'en'] as const).map((l) => (
@@ -159,10 +160,7 @@ export default function Home() {
         loc={loc}
       />
 
-      {/* 手机端底部有固定 CTA 栏,页脚会被切一半 → 仅桌面显示(桌面 CTA 为静态,页脚自然排在其下) */}
-      <div className="hidden w-full lg:block">
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 }
