@@ -42,7 +42,7 @@ export const LOBBY_T = {
     },
     backHome: '← Back home',
     title: 'Single Player',
-    subtitle: 'Set the match parameters and step into the mind game.',
+    subtitle: 'Set your parameters and prepare for the personality battle.',
     difficultyLabel: 'AI difficulty',
     difficultyOptions: [
       { label: 'Easy', desc: 'plays on instinct' },
@@ -58,9 +58,9 @@ export const LOBBY_T = {
     ],
     revealLabel: 'Reveal difficulty',
     revealOptions: [
-      { label: 'Open', desc: 'All tags public (default)' },
-      { label: 'Half', desc: 'View 4 cards each turn, kept revealed' },
-      { label: 'Hidden', desc: 'View 2 cards each turn, not kept' },
+      { label: 'Open', desc: 'All personality tendencies public (Default)' },
+      { label: 'Semi-Open', desc: 'View 4 cards each turn, kept revealed' },
+      { label: 'Hidden', desc: 'View 2 cards each turn, kept private' },
     ],
     opponentsLabel: 'opponents',
     start: 'Start Match',

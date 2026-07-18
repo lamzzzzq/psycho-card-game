@@ -20,7 +20,7 @@ export function Footer() {
           href={APSS_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="no-underline text-[var(--psy-ink-soft)] transition hover:text-[var(--psy-ink)]"
+          className="font-normal text-[var(--psy-muted)] underline decoration-[rgba(154,116,72,0.28)] underline-offset-2 transition hover:text-[var(--psy-ink-soft)]"
         >
           {f.link}
         </a>

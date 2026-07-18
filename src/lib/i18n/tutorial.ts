@@ -9,7 +9,7 @@ export const TUTORIAL_T = {
     title: '人格麻將 · Big Five · 教學',
     titleMain: '人格麻將',
     titleSub: 'Big Five 教學',
-    rulesHardcopy: '規則 Hardcopy',
+    rulesHardcopy: '紙質規則',
     backHome: '返回主頁',
 
     // ── 主 CTA ──
@@ -310,7 +310,7 @@ export const TUTORIAL_T = {
     title: 'Personalities Mahjong · Big Five · Tutorial',
     titleMain: 'Personalities Mahjong',
     titleSub: 'Big Five Tutorial',
-    rulesHardcopy: 'Rules Hardcopy',
+    rulesHardcopy: 'Rules (Hardcopy)',
     backHome: 'Back to Home',
 
     // ── Main CTA ──
@@ -347,8 +347,8 @@ export const TUTORIAL_T = {
     // ── Start flow guide ──
     flowEyebrow: 'Getting Started',
     flowTitle: 'From Home to First Hand',
-    tabPvp: 'Online Match',
-    tabSolo: 'Single Player',
+    tabPvp: 'Multiplayer Mode',
+    tabSolo: 'Solo Mode',
     prevStep: 'Previous',
     nextStep: 'Next',
 
