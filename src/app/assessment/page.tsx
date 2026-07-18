@@ -236,9 +236,10 @@ export default function AssessmentPage() {
           </p>
         </div>
 
-        <div className="flex items-center justify-between gap-3">
+        {/* 移动端：竖向堆叠（各占一行、不乱换行），桌面：横向 justify-between。 */}
+        <div className="flex flex-col gap-1.5 text-xs text-[var(--psy-muted)] sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           {/* 暴露當前學號，並提供更換入口（更換 = 清空學號回到輸入頁） */}
-          <span className="text-xs text-[var(--psy-muted)]">
+          <span>
             {t.studentLabel}：
             <span className="ml-1 font-medium text-[var(--psy-ink-soft)]">{studentId}</span>
             <button
@@ -250,7 +251,7 @@ export default function AssessmentPage() {
           </span>
           <button
             onClick={() => setShowManualInput(!showManualInput)}
-            className="text-xs text-[var(--psy-muted)] transition underline decoration-[rgba(150,118,78,0.3)] underline-offset-4 hover:text-[var(--psy-ink-soft)]"
+            className="self-start whitespace-nowrap text-[var(--psy-muted)] transition underline decoration-[rgba(150,118,78,0.3)] underline-offset-4 hover:text-[var(--psy-ink-soft)] sm:self-auto"
           >
             {showManualInput ? t.backToAssess : t.skipToManual}
           </button>
