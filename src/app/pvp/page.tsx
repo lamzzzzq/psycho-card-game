@@ -237,9 +237,9 @@ export default function PvpLobbyPage() {
           >
             {t.backHome}
           </button>
-          <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">
+          <h1 className="psy-serif whitespace-nowrap text-[1.55rem] leading-tight text-[var(--psy-ink)] sm:whitespace-normal sm:text-6xl sm:leading-none">
             {t.title}
-            <span className="ml-2 align-baseline text-2xl font-semibold text-[var(--psy-accent)] sm:ml-3 sm:text-3xl">· Big Five</span>
+            <span className="ml-2 align-baseline text-base font-semibold text-[var(--psy-accent)] sm:ml-3 sm:text-3xl">· Big Five</span>
           </h1>
           <p className="text-base leading-7 text-[var(--psy-ink-soft)]">
             {t.intro}
