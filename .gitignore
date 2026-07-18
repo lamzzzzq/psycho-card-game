@@ -40,3 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .gstack/
+
+# brand logo 生成產物（可由 brand/scripts/ 重新生成，體積大不入庫；PNG 尤其忽略）
+brand/generated/
+public/brand/generated/
