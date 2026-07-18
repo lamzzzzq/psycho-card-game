@@ -451,7 +451,8 @@ export default function PvpLobbyPage() {
 
             <div className="space-y-2">
               <p className="psy-eyebrow text-[10px]">{t.revealLabel}</p>
-              <div className="grid grid-cols-3 gap-2">
+              {/* 移动端单列(整行,标签不再被挤到两行);sm+ 三列 */}
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {([
                   { id: 'open', name: t.revealOpenName, sub: t.revealOpenSub },
                   { id: 'half', name: t.revealHalfName, sub: t.revealHalfSub },

@@ -154,7 +154,8 @@ export default function LobbyPage() {
 
           <div className="space-y-2">
             <p className="psy-eyebrow text-[10px]">{s.revealLabel}</p>
-            <div className="grid grid-cols-3 gap-2">
+            {/* 移动端单列(整行,标签不再被挤到两行);sm+ 三列 */}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {revealOptions.map((opt) => (
                 <button
                   key={opt.value}
