@@ -40,9 +40,8 @@ export const STRINGS = {
     common: {
       tutorial: '玩法教學',
       footer: {
-        prefix: '© 2026 香港理工大學 ',
-        link: '應用社會科學系',
-        suffix: ' · 本網站僅供教學與研究用途',
+        line1: '© 2026 香港理工大學應用社會科學系 · 本網站僅供教學與研究用途',
+        line2: '項目負責人：許沛鴻教授 · 電郵：bryant-p-h.hui[at]polyu.edu.hk',
       },
     },
     home: {
@@ -421,9 +420,8 @@ export const STRINGS = {
     common: {
       tutorial: 'How to Play',
       footer: {
-        prefix: '© 2026 ',
-        link: 'Department of Applied Social Sciences (APSS), The Hong Kong Polytechnic University',
-        suffix: ' · For educational and research use only',
+        line1: '© 2026 Department of Applied Social Sciences, The Hong Kong Polytechnic University · For educational and research use only',
+        line2: 'Project Leader: Prof. Bryant Hui · Email: bryant-p-h.hui[at]polyu.edu.hk',
       },
     },
     home: {
