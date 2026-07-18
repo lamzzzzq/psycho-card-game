@@ -159,7 +159,10 @@ export default function Home() {
         loc={loc}
       />
 
-      <Footer />
+      {/* 手机端底部有固定 CTA 栏,页脚会被切一半 → 仅桌面显示(桌面 CTA 为静态,页脚自然排在其下) */}
+      <div className="hidden w-full lg:block">
+        <Footer />
+      </div>
     </div>
   );
 }
