@@ -99,7 +99,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '開始對戰',
-        body: '設定好後點「開始對戰」直接進入牌桌。單機固定是你 + 3 個 AI，流程與聯機一致：抽牌、查看、歸檔、棄牌、響應別人棄牌。',
+        body: '設定好後點「開始對戰」直接進入牌桌。單機固定是你 + 3 個 AI，流程與聯機一致：抽牌、查看、歸檔、棄牌、應對對手棄牌。',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -315,7 +315,7 @@ export const TUTORIAL_T = {
 
     // ── Main CTA ──
     ctaTitle: 'See the flow first, then play Guided Practice',
-    ctaBody: 'It walks you through, step by step: setup (solo/online), the quiz, room flow, viewing your hand, Pong, and Win.',
+    ctaBody: 'The system walks you through step-by-step: setup (Solo/Multiplayer), personality assessment, room flow, viewing cards, pong, and hu (win).',
     ctaButton: '▶ Enter Guided Practice',
 
     // ── Concept cards section title ──
@@ -356,25 +356,25 @@ export const TUTORIAL_T = {
     pvpFlow: [
       {
         title: 'Start the Assessment',
-        body: 'On your first visit the home page has just one entry: "Start Assessment". Complete the personality assessment first — your scores decide how many cards each dimension will need later.',
+        body: 'On your first visit, the home page features only a single entry point: "Start Assessment". Complete this initial evaluation first—your scores will determine how many cards each dimension requires later.',
       },
       {
-        title: 'Enter Your Student ID',
-        body: 'Before the questions, enter your student ID once. It records your assessment result for class statistics.',
-        note: 'The student ID is entered only this once — online and single-player both carry it over automatically, no need to type it again.',
+        title: 'Enter Student ID',
+        body: 'Enter your student ID just once before starting. This links your assessment results to your profile for class analytics.',
+        note: 'Your student ID is entered only this once—it will automatically sync for both solo and multiplayer modes, so you never have to re-enter it.',
       },
       {
-        title: 'View Your Personality Profile',
-        body: 'After the questions you reach "Your Personality Profile": a five-dimension radar chart plus per-dimension scores. The bottom of this page is where "Online Match / Single Player / Retest" live.',
-        note: 'Your assessment scores set each dimension\'s target count and also your starting hand size (= the sum of the five targets − 1), so every player has a different opening and path to a Win.',
+        title: 'View Your Personality Portrait',
+        body: 'After finishing the questions, you will see "Your Personality Portrait": a radar chart of your five dimensions along with your specific scores. The entry points for "Solo Match / Multiplayer Match / Retake Assessment" are located at the bottom of this page.',
+        note: 'Your assessment scores determine the target card count for each dimension, which also sets your starting hand size (calculated as the sum of all five target counts minus one). Consequently, every player begins with a unique opening scale and a distinct path to a Win.',
       },
       {
-        title: 'Enter Online Match',
-        body: 'Tap "Online Match" on the profile page. Your student ID is carried over from the assessment; create or join a room and set max players, rounds, and reveal difficulty.',
+        title: 'Enter Multiplayer Match',
+        body: 'Tap "Multiplayer Match" on the Portrait page. Your student ID is automatically carried over from the assessment. You can then create or join a room, where you can set the maximum player count, game rounds, and reveal difficulty.',
       },
       {
         title: 'Start the Match',
-        body: 'The host creates a room, gets a room code, and shares it for others to join; once everyone is in, the host taps "Start Match" to enter the table. Open by default (all personalities public) — the host can switch to Half or Hidden.',
+        body: 'The host creates a room, receives a room code, and shares it with other players to join. Once everyone has arrived, the host taps "Start Match" to enter the table. The game defaults to an Open setting (all players\' personalities are fully public), though the host can switch this to Semi-Open or Hidden.',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -382,25 +382,25 @@ export const TUTORIAL_T = {
     soloFlow: [
       {
         title: 'Start the Assessment',
-        body: 'On your first visit the home page has just one entry: "Start Assessment". Complete the personality assessment first — your scores decide how many cards each dimension will need later.',
+        body: 'On your first visit, the home page features only a single entry point: "Start Assessment". Complete this initial evaluation first—your scores will determine how many cards each dimension requires later.',
       },
       {
-        title: 'Enter Your Student ID',
-        body: 'Before the questions, enter your student ID once. It records your assessment result for class statistics.',
-        note: 'The student ID is entered only this once — online and single-player both carry it over automatically, no need to type it again.',
+        title: 'Enter Student ID',
+        body: 'Enter your student ID just once before starting. This links your assessment results to your profile for class analytics.',
+        note: 'Your student ID is entered only this once—it will automatically sync for both solo and multiplayer modes, so you never have to re-enter it.',
       },
       {
-        title: 'View Your Personality Profile',
-        body: 'After the questions you reach "Your Personality Profile": a five-dimension radar chart plus per-dimension scores. The bottom of this page is where "Online Match / Single Player / Retest" live.',
-        note: 'Your assessment scores set each dimension\'s target count and also your starting hand size (= the sum of the five targets − 1), so every player has a different opening and path to a Win.',
+        title: 'View Your Personality Portrait',
+        body: 'After finishing the questions, you will see "Your Personality Portrait": a radar chart of your five dimensions along with your specific scores. The entry points for "Solo Match / Multiplayer Match / Retake Assessment" are located at the bottom of this page.',
+        note: 'Your assessment scores determine the target card count for each dimension, which also sets your starting hand size (calculated as the sum of all five target counts minus one). Consequently, every player begins with a unique opening scale and a distinct path to a Win.',
       },
       {
-        title: 'Enter Single Player',
-        body: 'Tap "Single Player" on the profile page to open the battle lobby. Set the AI difficulty, rounds, and view difficulty, and check the three AI opponent profiles.',
+        title: 'Enter Solo Match',
+        body: 'Tap "Solo Match" on the Portrait page to enter the match lobby. Here, you can configure the AI difficulty, total game rounds, and reveal difficulty, as well as review the profiles of your three AI opponents.',
       },
       {
         title: 'Start the Match',
-        body: 'Once set, tap "Start Match" to go straight to the table. Single player is always you + 3 AI, and the flow matches online play: draw, view, declare, discard, and respond to others\' discards.',
+        body: 'Once configured, tap "Start Match" to head straight to the table. Solo mode features you against 3 AI opponents, following the exact same gameplay loop as multiplayer: draw, view, declare, discard, and respond to opponents\' discards.',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -579,16 +579,16 @@ export const TUTORIAL_T = {
     shotSolo: 'Single Player',
     shotStudentId: 'Student ID',
     shotStartAssessBtn: 'Start Assessment',
-    shotHomeHint: 'The only entry on first visit',
+    shotHomeHint: 'The sole entry point on your first visit',
     shotStudentIdTitle: 'Enter Student ID',
     shotStudentIdPlaceholder: 'e.g. 17094905G',
-    shotStudentIdOnce: 'Entered only once, ever',
-    shotPortraitTitle: 'Your Personality Profile',
-    shotRetest: 'Retest',
+    shotStudentIdOnce: 'One-time setup only',
+    shotPortraitTitle: 'Your Personality Portrait',
+    shotRetest: 'Retake Assessment',
     shotMaxPlayersLabel: 'Max Players',
     shotMaxPlayers: ['2P', '3P', '4P'] as readonly string[],
     shotRevealLabel: 'Reveal',
-    shotReveals: ['Open', 'Half', 'Hidden'] as readonly string[],
+    shotReveals: ['Open', 'Semi-Open', 'Hidden'] as readonly string[],
     shotAiDifficultyLabel: 'AI Difficulty',
     shotRoundsLabel: 'Rounds',
     shotOpponentLabel: 'Opponents',
@@ -603,6 +603,6 @@ export const TUTORIAL_T = {
     shotAiOpponents: ['Brian', 'Prof. Chen', 'Lin'] as readonly string[],
     shotAiOpponentLabel: 'AI opponent',
     // Merged sandbox CTA (bottom of the flow guide)
-    sandboxCtaLead: 'Got the flow? Enter Guided Practice and play a hands-on round',
+    sandboxCtaLead: 'Got the flow? Enter "Guided Practice" and play a hands-on round!',
   },
 } as const;

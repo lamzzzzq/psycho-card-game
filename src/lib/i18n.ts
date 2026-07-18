@@ -451,8 +451,8 @@ export const STRINGS = {
     },
     assessment: {
       eyebrow: 'Persona Reading',
-      title: 'Draw Your Persona Archetype',
-      intro: 'Each question is like turning over a metaphorical card. Go with your first instinct — your answers converge into your own "five-factor personality profile," which directly sets your "winning targets" for the game ahead.',
+      title: 'Discover Your Personality Archetype',
+      intro: 'Each question reveals a metaphorical card. Follow your first instinct—your choices will shape your unique "Big Five Personality Portrait," directly determining your "Winning Targets" for the match ahead.',
       gateTitle: 'Enter Student ID',
       gateHint: 'Your student ID records your assessment result for class statistics.',
       gatePlaceholder: 'e.g. 17094905G',
