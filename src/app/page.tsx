@@ -9,7 +9,7 @@ import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { QUESTIONS } from '@/data/questions';
 import { Footer } from '@/components/shared/Footer';
 import { DeckSelectModal } from '@/components/shared/DeckSelectModal';
-import { renderCjkPhrases } from '@/lib/renderCjk';
+import { renderCjkKeep } from '@/lib/renderCjk';
 
 export default function Home() {
   const router = useRouter();
@@ -72,7 +72,7 @@ export default function Home() {
               {t.title}
             </h1>
             <p className="max-w-xl text-base leading-7 text-[var(--psy-ink-soft)] sm:text-lg sm:leading-8 lg:max-w-none lg:whitespace-nowrap">
-              {renderCjkPhrases(t.intro, loc)}
+              {renderCjkKeep(t.intro, ['人格測評', '心理線索', '卡牌對戰', '一起', '自己', '牌桌', '別人'], loc)}
             </p>
           </div>
 

@@ -31,3 +31,26 @@ export function renderCjkPhrases(text: string, locale: 'zh' | 'en' = 'zh'): Reac
     <span key={i} style={{ whiteSpace: 'nowrap' }}>{p}</span>
   ));
 }
+
+/**
+ * 正文按正常中文換行（逐字，永不孤行），只把指定的關鍵詞包成 nowrap 防止拆開。
+ * 用於較長的副標題：整句/整短語 nowrap 在窄屏會把短句擠成孤行（如「把人格測評、」
+ * 獨佔一行），而純逐字換行又可能把「自己」「牌桌」拆到兩行。此法兩者兼顧：
+ * 正文可在任意字換行填滿每一行，只有列表中的詞受保護。terms 需按出現順序無重疊。
+ */
+export function renderCjkKeep(
+  text: string,
+  terms: string[],
+  locale: 'zh' | 'en' = 'zh',
+): ReactNode {
+  if (locale === 'en' || terms.length === 0) return text;
+  const esc = terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const re = new RegExp(`(${esc.join('|')})`, 'g');
+  return text.split(re).map((seg, i) =>
+    i % 2 === 1 ? (
+      <span key={i} style={{ whiteSpace: 'nowrap' }}>{seg}</span>
+    ) : (
+      seg
+    ),
+  );
+}

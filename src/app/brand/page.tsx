@@ -107,6 +107,26 @@ const ROUND_SIX_FOUR_DIRECTIONS = [
     variants: ['种子与根', '单枝新芽', '根系延展', '三叶 Ψ', '陶土珊瑚枝', '藤蔓穿行', '竖向芽序', '叶片负形', '极简新芽'],
   },
 ] as const;
+const HIVE_REFINEMENTS = [
+  {
+    id: 'core',
+    src: '/brand/generated/round6-four-directions/hive/refinements/hive-06-refined-core.png',
+    title: 'A · 网站主调',
+    note: '暖金主块 + 墨色锚点 + 柔绿/陶土点缀，直接取自首页的按钮、正文与状态色；识别最强，也最像现有产品。',
+  },
+  {
+    id: 'paper',
+    src: '/brand/generated/round6-four-directions/hive/refinements/hive-06-refined-paper.png',
+    title: 'B · 内容卡调',
+    note: '暖砂、深金、象牙与柔绿降低饱和度，贴近首页四张象牙内容卡；适合想让 Logo 更安静、学术感更强的方向。',
+  },
+  {
+    id: 'warm',
+    src: '/brand/generated/round6-four-directions/hive/refinements/hive-06-refined-warm.png',
+    title: 'C · 暖色强调',
+    note: '暖金与陶土拉开主次，墨色只保留为压舱；更适合活动入口、分享图或需要更高情绪能量的场景。',
+  },
+] as const;
 const MAIN_LOGO_PLACEMENTS = [
   { name: 'Homepage 首屏', use: '完整品牌露出', desc: '使用暖牌底板 Logo + 人格麻將 / Personalities Mahjong 字标，是最完整的品牌出现方式。' },
   { name: 'Top Navigation', use: '全站导航', desc: '使用轻量象牙底板 Logo，放在品牌名左侧；所有一级页面保持一致。' },
@@ -790,6 +810,21 @@ export default function BrandPage() {
                   <h3 className="psy-serif mt-1 text-xl font-semibold text-[var(--psy-ink)] sm:text-2xl">{direction.title}</h3>
                   <p className="mt-1 text-[13px] leading-6 text-[var(--psy-ink-soft)]">{direction.note}</p>
                 </div>
+                {direction.id === 'hive' && (
+                  <div className="mb-5 rounded-[1.2rem] border border-[rgba(195,154,82,0.38)] bg-[rgba(195,154,82,0.08)] p-3 sm:p-4">
+                    <div className="mb-3">
+                      <p className="psy-eyebrow text-[9px]">Focused Refinement · HIVE 06</p>
+                      <h4 className="psy-serif mt-1 text-lg font-semibold text-[var(--psy-ink)]">保留不规则蜂巢重心，修正 Ψ 的中心、圆角与拼缝</h4>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      {HIVE_REFINEMENTS.map((refinement) => (
+                        <LogoProposalCard key={refinement.id} label={`HIVE 06 · ${refinement.id.toUpperCase()}`} title={refinement.title} note={refinement.note}>
+                          <LogoPng src={refinement.src} alt={`${refinement.title} refined honeycomb logo`} />
+                        </LogoProposalCard>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {direction.variants.map((title, index) => {
                     const no = String(index + 1).padStart(2, '0');

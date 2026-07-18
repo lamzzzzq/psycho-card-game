@@ -9,7 +9,7 @@ export const TUTORIAL_T = {
     title: '人格麻將 · Big Five · 教學',
     titleMain: '人格麻將',
     titleSub: 'Big Five 教學',
-    rulesHardcopy: '紙質規則',
+    rulesHardcopy: '規則手冊 (可列印)',
     backHome: '返回主頁',
 
     // ── 主 CTA ──
@@ -310,7 +310,7 @@ export const TUTORIAL_T = {
     title: 'Personalities Mahjong · Big Five · Tutorial',
     titleMain: 'Personalities Mahjong',
     titleSub: 'Big Five Tutorial',
-    rulesHardcopy: 'Rules (Hardcopy)',
+    rulesHardcopy: 'Rules (Printable)',
     backHome: 'Back to Home',
 
     // ── Main CTA ──
