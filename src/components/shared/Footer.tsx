@@ -14,7 +14,17 @@ export function Footer() {
   return (
     <footer className="mt-8 w-full px-6 py-6 text-center text-[11px] leading-5 text-[var(--psy-muted)]">
       <p>{f.line1}</p>
-      <p className="mt-1">{f.line2}</p>
+      <p className="mt-1">{f.leader}</p>
+      {/* 邮箱单独一行,地址用显式 mailto → 下划线只落在地址上,标签不加;并阻止 iOS 把整段自动识别成链接 */}
+      <p className="mt-1">
+        {f.emailLabel}
+        <a
+          href={`mailto:${f.email}`}
+          className="whitespace-nowrap underline decoration-[rgba(150,118,78,0.4)] underline-offset-2 transition hover:text-[var(--psy-ink-soft)]"
+        >
+          {f.email}
+        </a>
+      </p>
     </footer>
   );
 }
