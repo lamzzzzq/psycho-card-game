@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
@@ -68,9 +69,19 @@ export default function Home() {
       >
         <div className="space-y-5 sm:space-y-6">
           <div className="space-y-3">
-            <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">
-              {t.title}
-            </h1>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Image
+                src="/brand/logo/hive-psi-mark.png"
+                alt="人格麻將品牌標誌"
+                width={72}
+                height={72}
+                priority
+                className="h-14 w-14 shrink-0 rounded-2xl sm:h-[4.5rem] sm:w-[4.5rem]"
+              />
+              <h1 className="psy-serif text-5xl leading-none text-[var(--psy-ink)] sm:text-6xl">
+                {t.title}
+              </h1>
+            </div>
             <p className="max-w-xl text-base leading-7 text-[var(--psy-ink-soft)] sm:text-lg sm:leading-8 lg:max-w-none lg:whitespace-nowrap">
               {renderCjkKeep(t.intro, ['人格測評', '心理線索', '卡牌對戰', '一起', '自己', '牌桌', '別人'], loc)}
             </p>
