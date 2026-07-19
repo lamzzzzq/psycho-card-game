@@ -138,9 +138,9 @@ export const TUTORIAL_T = {
     guideLabel: '指引',
 
     // ── 沙盒：頭部 ──
-    sandboxLabel: '交互式沙盒',
+    sandboxLabel: '交互式引導實戰',
     sandboxReset: '重新開始',
-    sandboxExit: '退出沙盒',
+    sandboxExit: '退出引導實戰',
 
     // ── 沙盒：牌桌標籤 ──
     publicArchiveLabel: '公開歸檔：',
@@ -208,7 +208,7 @@ export const TUTORIAL_T = {
 
     // ── 沙盒：caption（按 scene）──
     captionStart: '這是你的開局：手牌裏有多種人格描述和一張知識牌。你需要先抽牌，再決定要查看、歸檔還是棄牌。',
-    captionViewing: '看牌難度不同，每回合能看幾張、看完是否保留也不同：半公開每回合看 4 張，看過的永久保留（直到打出）；隱藏每回合看 2 張（最難），看完下一輪就重置、不保留。本示範用最難的「隱藏」——先點上方高亮的「查看 2 張」開始。',
+    captionViewing: '看牌難度不同，每回合可查看張數與保留機制也不同：\n・半公開：每回合可看 4 張，看過的牌將永久保留（直至打出）。\n・隱藏（最高難度）：每回合僅可看 2 張，且下一輪隨即重置、不作保留。\n本次示範採用最核心的「隱藏」模式——請先點擊上方高亮的「查看 2 張」開始體驗。',
     captionViewPicking: (n: number) =>
       n >= 2
         ? '兩張都看過了！點高亮的「完成查看」繼續。'
@@ -418,11 +418,11 @@ export const TUTORIAL_T = {
       },
       {
         title: '🔄 The Basic Loop: Draw ➔ Discard',
-        body: '❶ Draw\nOn your turn, first draw 1 card from the deck. Now you can view your hand, choose to archive (Pong), or get ready to discard.\n🔍 Core mechanic: how many hand cards can you see? It depends on the host\'s "reveal difficulty":\n・Open (default): fully public! Your hand + all discards show their dimension tags directly, no viewing needed.\n・Half: view up to 4 hand cards each turn (once viewed, shown permanently); discards not shown.\n・Hidden: view only 2 each turn, auto-reset after a round (turned back over); discards not shown.\n❷ Discard\nPick 1 unwanted card from your hand into the middle "discard pile". This card opens a few-second "psychological read window", during which other players may decide whether to grab it to "Pong" or "Win".',
+        body: '❶ Draw\nOn your turn, first draw 1 card from the deck. Now you can view your hand, choose to archive (Pong), or get ready to discard.\n🔍 Core mechanic: how many hand cards can you see? It depends on the host\'s "reveal difficulty":\n・Open (default): fully public! Your hand + all discards show their dimension tags directly, no viewing needed.\n・Semi-Open: view up to 4 hand cards each turn (once viewed, shown permanently); discards not shown.\n・Hidden: view only 2 each turn, auto-reset after a round (turned back over); discards not shown.\n❷ Discard\nPick 1 unwanted card from your hand into the middle "discard pile". This card opens a few-second "psychological read window", during which other players may decide whether to grab it to "Pong" or "Win".',
       },
       {
         title: '⚡ Two Core Actions: Pong & Win',
-        body: '🀄 Pong (public archive)\nWhen a dimension reaches your target count, you can declare "Pong" to lock (archive) that dimension.\n・Self-draw Pong: on your own turn, from "hand + the just-drawn card", pick the same-dimension cards matching the target count and archive them. (Once per turn)\n・Claim Pong (grab): within another player\'s "read window", if your same-dimension count is "just 1 short" of the target, you can instantly grab that discard to complete the archive! (First-come)\n⚠️ The system won\'t tell you which dimension is ready! All 5 dimension buttons light up; you must count the counts and dimensions yourself. Pick or place wrong and you get "Frozen"!\n🏆 Win (declare victory)\nWhen your archived dimensions + hand + the current judged card perfectly complete all target counts for the 5 dimensions:\n・Self-draw Win: you draw the final key card on your own turn.\n・Claim Win: someone discards the last card you need — intercept it directly!\n⚠️ Called Win without counting right? A failed judgment brings a harsh Frozen penalty!',
+        body: '🀄 Pong (public archive)\nWhen a dimension reaches your target count, you can declare "Pong" to lock (archive) that dimension.\n・Self-draw Pong: on your own turn, from "hand + the just-drawn card", pick the same-dimension cards matching the target count and archive them. (Once per turn)\n・Intercept Pong (grab): within another player\'s "read window", if your same-dimension count is "just 1 short" of the target, you can instantly grab that discard to complete the archive! (First-come)\n⚠️ The system won\'t tell you which dimension is ready! All 5 dimension buttons light up; you must count the counts and dimensions yourself. Pick or place wrong and you get "Frozen"!\n🏆 Win (declare victory)\nWhen your archived dimensions + hand + the current judged card perfectly complete all target counts for the 5 dimensions:\n・Self-draw Win: you draw the final key card on your own turn.\n・Intercept Win: someone discards the last card you need — intercept it directly!\n⚠️ Called Win without counting right? A failed judgment brings a harsh Frozen penalty!',
       },
       {
         title: '🚫 Penalty: Frozen',
@@ -439,12 +439,12 @@ export const TUTORIAL_T = {
     guideLabel: 'Guide',
 
     // ── Sandbox: header ──
-    sandboxLabel: 'Interactive Sandbox',
+    sandboxLabel: 'Interactive Guided Practice',
     sandboxReset: 'Restart',
-    sandboxExit: 'Exit Sandbox',
+    sandboxExit: 'Exit Guided Practice',
 
     // ── Sandbox: table labels ──
-    publicArchiveLabel: 'Declared:',
+    publicArchiveLabel: 'Public File:',
     archiveNone: '(none yet)',
     archiveSetSuffix: (name: string, count: number) => `${name} ×${count}`,
     drawPileClick: 'Tap to draw ↓',
@@ -456,7 +456,7 @@ export const TUTORIAL_T = {
     btnHu: 'Win',
     btnViewTwo: 'View 2',
     btnContinueJudge: 'Done viewing',
-    revealHalfNote: 'Half · view 4 · kept',
+    revealHalfNote: 'Semi-Open · view 4 · kept',
     revealHiddenNote: 'Hidden · view 2 · not kept (this demo)',
     btnSelfPong: 'Self-draw Pong',
     btnCancel: 'Cancel',
@@ -470,17 +470,17 @@ export const TUTORIAL_T = {
     btnFinishTutorial: 'Finish tutorial',
 
     // ── Sandbox: intro overlay ──
-    introTitle: 'First: the "Targets" board',
-    introBody: 'Each dimension has a required count — you must collect that many cards to "Pong" the set and lock it in publicly. The count comes from your assessment score, differs per dimension, and the bigger the number the harder. Here are this demo\'s targets:',
-    introBtn: 'Start the lesson',
+    introTitle: 'Check Your "Winning Targets" First',
+    introBody: 'Each personality trait has a required count — you must collect that exact number of cards to "Pong" the set and lock it in publicly. The targets are determined by your assessment score and vary across traits; the higher the number, the more challenging it is to complete. Here are the targets for this demo:',
+    introBtn: 'Start Lesson',
 
     // ── Sandbox: target board + operation banner ──
     targetBoardLabel: 'Targets',
     opSelfPong: 'Self-draw Pong',
-    opClaim: 'Claim Pong',
+    opClaim: 'Intercept Pong',
     opHu: 'Win',
     toastPongDone: 'Self-draw Pong complete!',
-    toastClaimDone: 'Claim Pong complete!',
+    toastClaimDone: 'Intercept Pong complete!',
     toastHuDone: 'You win! 🏆',
 
     // ── Sandbox: self-draw Pong dimension pick ──
@@ -508,8 +508,8 @@ export const TUTORIAL_T = {
     cardsCountSuffix: (n: number) => `${n} cards`,
 
     // ── Sandbox: captions (by scene) ──
-    captionStart: 'This is your opening: your hand has several personality descriptions and 1 Knowledge card. You must draw first, then decide whether to view, declare, or discard.',
-    captionViewing: 'Reveal difficulty changes how many you can view per turn AND whether they stay revealed: Half lets you view 4 each turn and they stay revealed for good (until played); Hidden lets you view 2 (the hardest) but they reset next round — not kept. This demo uses the hardest — Hidden — so tap the highlighted "View 2" above to start.',
+    captionStart: 'This is your opening hand: it contains various personality descriptions and one Knowledge Card. You must draw first, then decide whether to view, declare, or discard.',
+    captionViewing: 'Reveal difficulty dictates how many cards you can view per turn and whether they remain visible:\n・Semi-Open: Allows you to view 4 cards each turn, and they remain permanently revealed until played.\n・Hidden (Hardest): Allows you to view only 2 cards, which reset next round and are not kept.\nThis demo utilizes the advanced Hidden mode — tap the highlighted "View 2" above to begin.',
     captionViewPicking: (n: number) =>
       n >= 2
         ? 'You\'ve seen both! Tap the highlighted "Done viewing" to continue.'
@@ -521,16 +521,16 @@ export const TUTORIAL_T = {
     captionPongPicking: (name: string, cnt: number, sel: number) =>
       `Select exactly ${cnt} "${name}" cards from your hand (the highlighted ones; ${sel}/${cnt} selected).`,
     captionPongFailed: 'A failure reveals the cards you wrongly bet and freezes you for one turn (your next turn is auto-skipped). Tap "Continue" to return to card-picking.',
-    captionPongSuccess: 'Self-draw Pong complete! 4 cards are locked in the declared area. Now tap a hand card to discard and end the turn.',
+    captionPongSuccess: 'Self-draw Pong successful! 4 cards are now locked into your public file. Tap a card in your hand to discard and end your turn.',
     captionDiscardConfirm: 'Discard this one? Tap "Discard" to end the turn, or "Cancel" to pick another.',
     captionClaimWindow: (name: string, sel: number) =>
       `The read window after someone discards: pick 2 highlighted "${name}" cards, plus that discard to form a set (${name} target is 3), then tap "Pong" (${sel}/2 selected).`,
-    captionClaimWindowFallback: 'This is the read window after someone discards. You can Claim Pong, or Win if you have already met every target.',
-    captionClaimSuccess: 'A Claim Pong also forms a declaration. Next, a demo of "Win".',
+    captionClaimWindowFallback: 'This is the read window after someone discards. You can Intercept Pong, or Win if you have already met every target.',
+    captionClaimSuccess: 'An Intercept Pong also forms a public file. Next up, a demo of "Win" (Declaring Victory).',
     captionHuDemo: 'Win is the victory button, used only when all targets are complete. Failure is costly, so do not use it for trial and error.',
     captionHuWindow: (name: string) =>
-      `You have declared 4 dimensions and only "${name}" is left. The opponent\'s discard is judged as "${name}" — exactly the dimension you needed. Tap the highlighted "Win" to declare victory.`,
-    captionHuSuccess: 'You win! All 5 dimensions are complete.',
+      `You have filed 4 dimensions and only need "${name}" to win. The opponent\'s discard is verified as "${name}" — exactly the final dimension you need. Tap the highlighted "Win" to declare victory!`,
+    captionHuSuccess: 'Winning card claimed! All 5 dimensions are complete — you win!',
     captionDiscardPicking: 'Tap the card to discard.',
     captionDone: 'Your turn is over. Next, simulate the "Pong / Win" window after someone else discards.',
 
@@ -539,27 +539,27 @@ export const TUTORIAL_T = {
     fbViewTwo: 'This turn you viewed 2 cards: one Conscientiousness, one Neuroticism. In Hidden mode viewed cards reset next round — not kept; in a real game only the 2 you pick are revealed.',
     fbViewStart: 'Tap the 2 highlighted cards below to reveal their true dimensions.',
     fbViewPicked: 'One revealed. Now tap the other highlighted card.',
-    fbViewDone: 'Both viewed. In Hidden mode you see only 2 per turn and they reset next round (not kept); in Half mode you\'d view 4 per turn and they stay revealed for good.',
+    fbViewDone: 'Both viewed. In Hidden mode you see only 2 per turn and they reset next round (not kept); in Semi-Open mode you\'d view 4 per turn and they stay revealed for good.',
     fbFinishView: 'You know the just-drawn card can complete a set. Now, a demo of Self-draw Pong.',
-    fbOpenPong: 'Self-draw Pong needs you to fix a dimension first. Hint: your hand has 4 "Neuroticism" cards — choose it.',
+    fbOpenPong: 'A Self-draw Pong requires you to select a personality dimension first. Hint: your hand has 4 "Neuroticism" cards — choose it.',
     fbChooseDim: (name: string, cnt: number) => `Chose "${name}". Now select exactly ${cnt} "${name}" cards from your hand.`,
-    fbPongSuccess: 'Declared. The 4 cards enter the open declaration area; after declaring you must immediately discard 1 card.',
+    fbPongSuccess: 'Successfully filed. 4 cards have entered your public file area; you must discard 1 card immediately after filing.',
     fbPongFailWrongCount: (selected: number, cnt: number) => `You selected ${selected}, but it must be exactly ${cnt}`,
     fbPongFailWrongDim: (name: string) => `Your selection includes non-"${name}" cards (Knowledge cards count as no dimension)`,
     fbPongFail: (reason: string) =>
       `Self-draw Pong failed: ${reason}. In a real game you would be frozen for one turn (your next turn auto-skipped) and the cards you wrongly bet would be revealed.`,
     fbContinueAfterFail: (name: string, cnt: number) => `This time try selecting only the ${cnt} "${name}" cards (the highlighted ones).`,
     fbPickDiscard: 'Discard done. Now switching to how you respond with "Pong / Win" when someone else discards.',
-    fbOpenClaimDim: (name: string) => `An opponent discarded a card. Like Self-draw Pong, first choose the dimension to declare — pick the highlighted "${name}".`,
+    fbOpenClaimDim: (name: string) => `An opponent discarded a card. Intercept Pong similarly requires you to select your file dimension first — select the highlighted "${name}".`,
     captionClaimDim: (name: string) =>
       `The read window after a discard: just like Self-draw Pong, first tap the highlighted "${name}" to choose the dimension.`,
     fbOpenClaim: (name: string) => `An opponent discarded a "${name}" card. Pick 2 "${name}" cards from your hand, plus this discard to complete a set.`,
     fbClaimFail: (name: string, picked: number) =>
-      `Claim Pong needs exactly 2 "${name}" cards in hand (selected ${picked}). In a real game a wrong pick fails and freezes you for one turn.`,
-    fbClaimSuccess: 'Claim Pong succeeded. You completed a declaration using 2 same-type cards from your hand + the opponent\'s discard.',
+      `Intercept Pong needs exactly 2 "${name}" cards in hand (selected ${picked}). In a real game a wrong pick fails and freezes you for one turn.`,
+    fbClaimSuccess: 'Intercept Pong successful! You completed a public file using 2 matching cards from your hand + the opponent\'s discard.',
     fbShowHu: 'Win declares victory: press it when all 5 dimensions are complete. Pressing it by mistake reveals your whole hand and freezes you.',
     fbWrongDimHint: (name: string) => `This isn\'t "${name}". Mixing dimensions fails the Pong — pick only "${name}".`,
-    fbEnterHu: (name: string) => `Win lesson: you\'ve declared 4 dimensions and only "${name}" is left.`,
+    fbEnterHu: (name: string) => `Winning Tutorial: you have filed 4 dimensions and only need one final set of "${name}".`,
     fbHuSuccess: 'You win! All 5 dimensions complete — victory declared.',
 
     // ── Sandbox: Win window + gap label ──

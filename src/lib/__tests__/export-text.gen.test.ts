@@ -97,7 +97,7 @@ const MERGE_GROUPS: MergeGroup[] = [
   { key: 'assessment.progress', parts: ['assessment.progressPrefix', 'assessment.progressSuffix'],
     zh: '當前正在抽取 {維度} 維度的人格線索。', en: 'Currently drawing clues for the {dimension} dimension.' },
   { key: 'game.declaredLine', parts: ['game.declaredPrefix', 'game.declaredSuffix', 'game.remainingPrefix', 'game.cardsUnit'],
-    zh: '申報 {N} 組 · 剩餘 {M} 張', en: 'Declared {N} sets · left {M} cards' },
+    zh: '申報 {N} 組 · 剩餘 {M} 張', en: 'Public File {N} sets · left {M} cards' },
   { key: 'game.toastSelfPong', parts: ['game.toastSelfPongPrefix', 'game.toastDoneSuffix'],
     zh: '自摸碰！{維度} 完成！', en: 'Self-draw Pong! {dimension} done!' },
   { key: 'game.toastPong', parts: ['game.toastPongPrefix', 'game.toastDoneSuffix'],

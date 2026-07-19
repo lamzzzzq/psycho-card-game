@@ -272,7 +272,8 @@ function createReducer(s: TutStrings, dimName: DimName) {
       };
     case 'commit-hu':
       if (state.scene !== 'hu-window') return state;
-      return { ...state, scene: 'hu-success', feedback: { tone: 'success', text: s.fbHuSuccess } };
+      // 食胡：指引欄已宣告勝利，旁白框重複同義句 → 去掉黃框旁白，避免重複。
+      return { ...state, scene: 'hu-success', feedback: null };
     case 'reset':
       return initialState;
     default:
@@ -900,7 +901,7 @@ function InteractiveSandbox({
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.22 }}
-            className="text-base font-medium leading-7 text-[var(--psy-ink)] sm:text-lg sm:leading-8"
+            className="whitespace-pre-line text-base font-medium leading-7 text-[var(--psy-ink)] sm:text-lg sm:leading-8"
           >
             {captionByScene[state.scene]}
           </motion.p>

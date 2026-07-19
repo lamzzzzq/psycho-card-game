@@ -43,7 +43,7 @@ export const STRINGS = {
         line1: '© 2026 香港理工大學應用社會科學系 · 本網站僅供教學與研究用途',
         leader: '項目負責人：許沛鴻教授',
         emailLabel: '電郵：',
-        email: 'bryant-p-h.hui@polyu.edu.hk',
+        email: 'bryant-p-h.hui[at]polyu.edu.hk',
       },
     },
     home: {
@@ -425,7 +425,7 @@ export const STRINGS = {
         line1: '© 2026 Department of Applied Social Sciences, The Hong Kong Polytechnic University · For educational and research use only',
         leader: 'Project Leader: Prof. Bryant Hui',
         emailLabel: 'Email: ',
-        email: 'bryant-p-h.hui@polyu.edu.hk',
+        email: 'bryant-p-h.hui[at]polyu.edu.hk',
       },
     },
     home: {
@@ -521,7 +521,7 @@ export const STRINGS = {
       declaredSuffix: 'sets',
       remainingPrefix: 'left',
       cardsUnit: 'cards',
-      declaredPrefix: 'Declared',
+      declaredPrefix: 'Public File',
       playAgain: 'Play Again',
       backHome: 'Back to Home',
       // Penalty banners
