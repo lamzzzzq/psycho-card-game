@@ -337,11 +337,11 @@ export const TUTORIAL_T = {
     dgKnowledgeCaption: 'No dimension · safe discard',
     dgCardPersona: 'Personality card',
     dgCardKnowledge: 'Knowledge card',
-    dgCanArchive: 'archivable',
-    dgCantArchive: 'not archivable',
-    dgTwoTypesCaption: 'Colored = archivable    Grey ⓘ = safe discard',
+    dgCanArchive: 'Fileable',
+    dgCantArchive: 'Cannot be filed',
+    dgTwoTypesCaption: 'Colored = fileable    Grey ⓘ = safe discard',
     dgExitCaption: 'Leave → seat skipped for good',
-    dgScoringCaption: 'No win → rank by declared dimensions',
+    dgScoringCaption: 'No win → rank by filed dimensions',
     directStartAssess: 'Go Straight to Assessment',
 
     // ── Start flow guide ──
@@ -407,31 +407,31 @@ export const TUTORIAL_T = {
     // ── STEPS ──
     steps: [
       {
-        title: '🎯 Ultimate Goal: Publicly Archive All 5 Dimensions!',
-        body: 'Your goal is to collect and "publicly archive" all 5 Big Five dimensions (OCEAN); the first to finish wins!\nNote: how many cards each dimension needs depends on your own assessment score at the start. So everyone\'s "path to a win (target counts)" is different!\nExample: your targets might be O needs 3, C needs 4, E needs 2, A needs 5, N needs 4.',
-        hint: 'Starting-hand formula: your starting hand size = the sum of the 5 dimension targets − 1 (that one missing card must be completed via "Pong" or "Win").',
+        title: '🎯 Ultimate Goal: Publicly File All 5 Dimensions!',
+        body: 'Your goal is to collect and "publicly file" all 5 Big Five personality dimensions (OCEAN). The first player to complete their profile wins!\nNote: The number of cards required for each dimension depends entirely on your initial psychological assessment score. This means every player\'s "path to victory (target counts)" is completely unique!\nExample: your targets might be O needs 3, C needs 4, E needs 2, A needs 5, N needs 4.',
+        hint: 'Starting-hand formula: your starting hand size = the sum of the 5 dimension targets − 1. That 1 missing card must be completed later through a "Self-draw Pong", "Intercept Pong", or your final "Win"!',
       },
       {
         title: '🃏 Know the Cards',
-        body: 'The deck has only two kinds of cards, easy to tell apart:\n・Personality cards (colored): carry a specific dimension tag — your core cards for archiving (reaching a target count).\n・Knowledge cards (grey / uncolored): psychology terms and definitions. They have no dimension and cannot be archived.',
-        hint: 'Handy tip: discard them the moment you draw one (safe, no giveaway); watching when opponents play them also probes their style!',
+        body: 'The deck contains only two types of cards, making them incredibly easy to tell apart:\n・Personality cards (colored): carry a specific dimension tag — these are your core cards used for filing and reaching your target counts.\n・Knowledge cards (grey / uncolored): printed with psychology terms and definitions. They have no dimension attributes and cannot be filed.',
+        hint: 'Strategy tip: discard knowledge cards as soon as you draw them to stay safe without giving away your hand strategy. You can also watch when your opponents discard their knowledge cards to read their playing style!',
       },
       {
         title: '🔄 The Basic Loop: Draw ➔ Discard',
-        body: '❶ Draw\nOn your turn, first draw 1 card from the deck. Now you can view your hand, choose to archive (Pong), or get ready to discard.\n🔍 Core mechanic: how many hand cards can you see? It depends on the host\'s "reveal difficulty":\n・Open (default): fully public! Your hand + all discards show their dimension tags directly, no viewing needed.\n・Semi-Open: view up to 4 hand cards each turn (once viewed, shown permanently); discards not shown.\n・Hidden: view only 2 each turn, auto-reset after a round (turned back over); discards not shown.\n❷ Discard\nPick 1 unwanted card from your hand into the middle "discard pile". This card opens a few-second "psychological read window", during which other players may decide whether to grab it to "Pong" or "Win".',
+        body: '❶ Draw\nOn your turn, first draw 1 card from the deck. Now you can view your hand, choose to file your cards, or get ready to discard.\n🔍 Core mechanic: how many cards in your hand can you see? It depends on the host\'s chosen "Reveal Difficulty":\n・Open (Default): fully public! Your hand and all discarded cards show their dimension tags directly — no viewing required.\n・Semi-Open: view up to 4 cards in your hand each turn (once viewed, they remain permanently revealed); discards do not show tags.\n・Hidden: view only 2 cards each turn, which automatically reset (turn back over) after a round; discards do not show tags.\n❷ Discard\nPick 1 unwanted card from your hand and play it into the central "discard". This discard opens a brief, few-second "psychological read window", during which other players can decide whether to seize it for an "Intercept Pong" or a final "Win".',
       },
       {
         title: '⚡ Two Core Actions: Pong & Win',
-        body: '🀄 Pong (public archive)\nWhen a dimension reaches your target count, you can declare "Pong" to lock (archive) that dimension.\n・Self-draw Pong: on your own turn, from "hand + the just-drawn card", pick the same-dimension cards matching the target count and archive them. (Once per turn)\n・Intercept Pong (grab): within another player\'s "read window", if your same-dimension count is "just 1 short" of the target, you can instantly grab that discard to complete the archive! (First-come)\n⚠️ The system won\'t tell you which dimension is ready! All 5 dimension buttons light up; you must count the counts and dimensions yourself. Pick or place wrong and you get "Frozen"!\n🏆 Win (declare victory)\nWhen your archived dimensions + hand + the current judged card perfectly complete all target counts for the 5 dimensions:\n・Self-draw Win: you draw the final key card on your own turn.\n・Intercept Win: someone discards the last card you need — intercept it directly!\n⚠️ Called Win without counting right? A failed judgment brings a harsh Frozen penalty!',
+        body: '🀄 Pong (public file)\nWhen a dimension\'s cards reach your target count, you can declare "Pong" to lock (file) that dimension.\n・Self-draw Pong: on your own turn, use the cards from your "hand + the just-drawn card" to select the matching-dimension cards that meet your target count, then file them. (Limited to once per turn)\n・Intercept Pong (grab): within another player\'s "read window", if your card count for a specific dimension is "just 1 short" of its target, you can instantly seize that discard to complete your file! (First-come, first-served)\n⚠️ The system will not tell you which dimension is ready! All 5 dimension buttons will light up; you must count the cards and verify the dimensions yourself. Select or place them incorrectly, and you will be "Frozen"!\n🏆 Win (declare victory)\nWhen your filed dimensions + your current hand + the current judged card perfectly complete the target counts for all 5 dimensions:\n・Self-draw Win: you draw the final key card on your own turn.\n・Intercept Win: an opponent discards the exact final card you need — intercept it directly to claim victory!\n⚠️ Declaring a Win without counting correctly? A failed judgment carries a harsh "Frozen" penalty!',
       },
       {
         title: '🚫 Penalty: Frozen',
-        body: 'If you fail a "Pong / self-draw Pong / Win", you receive these penalties:\n・Frozen one turn: your next turn is auto-skipped (no draw, no discard).\n・Forced reveal: the failed Pong cards (or your "whole hand" on a failed Win) are immediately shown to everyone.\n・Locked out: while frozen you cannot join others\' discard judgments (cannot Pong or Win).\n・Public shame badge: a big "⛔ Frozen" mark hangs on your avatar.',
+        body: 'If you fail a "Self-draw Pong", "Intercept Pong", or a "Win" declaration, you will receive the following penalties:\n・Frozen for one turn: your next turn is automatically skipped (no drawing, no discarding).\n・Forced reveal: the cards involved in the failed Pong (or your "entire hand" if you failed a Win) must be immediately revealed to all players.\n・Locked out: while frozen, you cannot participate in anyone else\'s "read window" (meaning you cannot Intercept Pong or declare a Win).\n・Public shame badge: a massive "⛔ Frozen" indicator will be slapped onto your avatar.',
         hint: 'Tip: one slip hands your opponent a turn — look carefully and count clearly before you act!',
       },
       {
         title: '👥 Online & Results Rules',
-        body: '・Flexible player count: online supports 2–4 players; single player is fixed at 4 (you + 3 AI).\n・Disconnect / leave: after someone taps "Leave", that seat is permanently skipped (shows 🚪 Left) and the remaining players keep going; if only 1 player remains, that player simply wins!\n・Anti-cheat: the same student ID cannot enter two active rooms at once.\n・Idle nudge: if a turn goes 60 seconds without action, the system pops a friendly reminder every minute.\n・What if no one wins? If the agreed rounds run out with no Win, the result is decided in this order:\nmost archived dimensions wins → if tied, fewer remaining hand cards wins.',
+        body: '・Flexible player count: Multiplayer matches support 2–4 players; Solo mode is fixed at 4 players (you + 3 AI).\n・Disconnect / quit: Once a player taps "Leave", their seat is permanently skipped (displays 🚪 Left) while the remaining players continue. If only 1 player remains in the room, that player wins automatically!\n・Anti-cheat: the same student ID cannot enter two active rooms at once.\n・Idle nudge: if a turn goes 60 seconds without action, the system pops a friendly reminder every minute.\n・What if no one wins? If the agreed rounds run out with no Win, the result is decided in this order:\nMost filed dimensions wins ➔ If tied, fewer remaining hand cards wins.',
       },
     ] as ReadonlyArray<{ title: string; body: string; hint?: string }>,
 
