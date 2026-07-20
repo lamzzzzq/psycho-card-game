@@ -10,22 +10,23 @@ import { useHydrated } from '@/stores/useHydration';
 import { QuestionCard } from '@/components/assessment/QuestionCard';
 import { LikertScore, BigFiveScores, DIMENSIONS } from '@/types';
 import { saveAssessmentResult, checkStudentIdExists, restoreAssessmentScores } from '@/lib/assessment-record';
-import { normalizeStudentId, isValidStudentId, STUDENT_ID_LENGTH, clamp } from '@/lib/utils';
+import { clamp } from '@/lib/utils';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
+import { useAuthSession } from '@/lib/useAuthSession';
 
 // 題目嚴格按 IPIP-50 文件「correct order」排列，不打亂。
 export default function AssessmentPage() {
   const router = useRouter();
   const hydrated = useHydrated();
   const { studentId, setStudentId, answers, setAnswer, calculateScores, setManualScores, getProgress, bigFiveScores, retaking } = useAssessmentStore();
-  const [studentIdInput, setStudentIdInput] = useState('');
-  const [checkingId, setCheckingId] = useState(false);
-  const [dupWarn, setDupWarn] = useState(false); // 学号重复：展示 恢复 / 覆盖 两个选择
+  // 身份改由登录态提供：store 的学号来自 session（profiles），不再手输。
+  const { loading: authLoading, userId, studentId: sessionStudentId } = useAuthSession();
   const [restoring, setRestoring] = useState(false);
   const [restoreError, setRestoreError] = useState(false);
-  // 「更換學號」：只强制显示 gate 让用户重输，不清空持久化的旧学号。
-  // 只有在 gate 里真正提交了新学号才 commit——否则（没做任何操作就退出）旧学号登录记录保留。
-  const [changingId, setChangingId] = useState(false);
+  // gate：登录 + 从 session 同步学号后，查一次重，决定「恢復記錄 / 重新測評」。
+  const [dupChecked, setDupChecked] = useState(false); // 查重是否已完成
+  const [recordExists, setRecordExists] = useState(false); // 该学号是否已有记录
+  const [entryStarted, setEntryStarted] = useState(false); // 用户已决定开始（无记录/选了重新測評）
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualScores, setManualInputScores] = useState<BigFiveScores>({ O: 3.0, C: 3.0, E: 3.0, A: 3.0, N: 3.0 });
@@ -51,6 +52,32 @@ export default function AssessmentPage() {
     };
   }, []);
 
+  // 需登录：登录态就绪后仍未登录 → 跳到登录页。
+  useEffect(() => {
+    if (!authLoading && !userId) router.replace('/login');
+  }, [authLoading, userId, router]);
+
+  // 从 session 同步学号进 store（store 学号必须来自登录态；顺带覆盖匿名旧 session 残留的脏学号）。
+  useEffect(() => {
+    if (sessionStudentId && sessionStudentId !== studentId) setStudentId(sessionStudentId);
+  }, [sessionStudentId, studentId, setStudentId]);
+
+  // 查重（仅一次）：登录就绪 + 学号已从 session 同步进 store + 非重测 + 无旧分数。
+  // 用 sessionStudentId 校验，确保查的是登录学号而非匿名残留脏学号。
+  useEffect(() => {
+    if (authLoading || !userId) return;
+    if (!studentId || studentId !== sessionStudentId) return;
+    if (retaking || bigFiveScores || dupChecked) return;
+    let active = true;
+    (async () => {
+      const exists = await checkStudentIdExists(studentId);
+      if (!active) return;
+      setRecordExists(exists);
+      setDupChecked(true);
+    })();
+    return () => { active = false; };
+  }, [authLoading, userId, studentId, sessionStudentId, retaking, bigFiveScores, dupChecked]);
+
   // Wait for hydration
   if (!hydrated) {
     return (
@@ -65,74 +92,59 @@ export default function AssessmentPage() {
     return null;
   }
 
-  // 學號 gate：先收集學號，raw 答案按學號存。changingId=更換學號時强制重入（旧学号仍在背景保留）。
-  if (!studentId || changingId) {
-    const normalized = normalizeStudentId(studentIdInput);
-    const idValid = isValidStudentId(studentIdInput);
+  // 需登录：加载中 / 未登录（正跳转 /login）→ 居中加载态。
+  if (authLoading || !userId) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
-        <div className="w-full max-w-md space-y-3">
-          <button
-            onClick={() => router.push('/')}
-            className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
-          >
-            ← {t.backHome}
-          </button>
-          <motion.div
-            initial={false}
-            animate={{ opacity: 1 }}
-            className="psy-panel psy-etched w-full space-y-6 rounded-[1.7rem] p-8 text-center"
-          >
-          <div className="space-y-3">
-            <h1 className="psy-serif text-2xl text-[var(--psy-ink)]">{t.gateTitle}</h1>
-            <p className="mx-auto max-w-sm text-sm leading-7 text-[var(--psy-ink-soft)]">
-              {t.gateHint}
-            </p>
+      <div className="flex flex-1 items-center justify-center">
+        <p className="psy-serif text-[var(--psy-muted)]">{t.loading}</p>
+      </div>
+    );
+  }
+
+  // 入口 gate（非重测时）：学号从 session 同步 + 查重完成前显示 checking；有旧记录则给「恢復/重測」选择。
+  if (!retaking && !entryStarted) {
+    // 学号尚未从 session 同步进 store，或查重未完成 → checking（带返回主頁）。
+    if (!studentId || studentId !== sessionStudentId || !dupChecked) {
+      return (
+        <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
+          <div className="w-full max-w-md space-y-3">
+            <button
+              onClick={() => router.push('/')}
+              className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
+            >
+              ← {t.backHome}
+            </button>
+            <div className="psy-panel psy-etched w-full rounded-[1.7rem] p-8 text-center">
+              <p className="psy-serif text-[var(--psy-muted)]">{t.gateChecking}</p>
+            </div>
           </div>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!idValid || checkingId) return;
-              // 已提示过重复 → 用户坚持，直接放行
-              if (dupWarn) {
-                setStudentId(normalized);
-                setChangingId(false);
-                return;
-              }
-              // 首次：查重；重复则提示等待二次确认，不重复则直接进入
-              setCheckingId(true);
-              const exists = await checkStudentIdExists(normalized);
-              setCheckingId(false);
-              if (exists) {
-                setDupWarn(true);
-              } else {
-                setStudentId(normalized);
-                setChangingId(false);
-              }
-            }}
-            className="space-y-4"
-          >
-            <input
-              type="text"
-              autoFocus
-              maxLength={STUDENT_ID_LENGTH}
-              value={studentIdInput}
-              onChange={(e) => {
-                // 大小写归一 + 去空白 + 截到 9 位（17094905g → 17094905G）
-                setStudentIdInput(normalizeStudentId(e.target.value).slice(0, STUDENT_ID_LENGTH));
-                if (dupWarn) setDupWarn(false); // 改了学号 → 重新查重
-              }}
-              placeholder={t.gatePlaceholder}
-              className="psy-input text-center text-lg tracking-[0.15em]"
-              style={{ borderColor: dupWarn ? 'rgba(201,96,63,0.55)' : undefined }}
-            />
-            {dupWarn ? (
-              <p className="text-xs leading-5 text-[var(--psy-accent)]">{t.dupWarn}</p>
-            ) : studentIdInput.length > 0 && !idValid ? (
-              <p className="text-xs leading-5 text-[var(--psy-muted)]">{t.idLenHint}</p>
-            ) : null}
-            {dupWarn ? (
-              // 已有记录：恢复(拉回旧分数直接进报告) / 覆盖(重新测评)
+        </div>
+      );
+    }
+    // 已有记录：恢復(拉回旧分数直接进报告) / 重新測評(覆盖)。学号只读、不可更換。
+    if (recordExists) {
+      return (
+        <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
+          <div className="w-full max-w-md space-y-3">
+            <button
+              onClick={() => router.push('/')}
+              className="text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
+            >
+              ← {t.backHome}
+            </button>
+            <motion.div
+              initial={false}
+              animate={{ opacity: 1 }}
+              className="psy-panel psy-etched w-full space-y-6 rounded-[1.7rem] p-8 text-center"
+            >
+              <div className="space-y-3">
+                <h1 className="psy-serif text-2xl text-[var(--psy-ink)]">{t.gateRecordFound}</h1>
+                <p className="text-sm text-[var(--psy-muted)]">
+                  {t.studentLabel}：
+                  <span className="ml-1 font-medium text-[var(--psy-ink-soft)]">{studentId}</span>
+                </p>
+                <p className="mx-auto max-w-sm text-xs leading-6 text-[var(--psy-accent)]">{t.dupWarn}</p>
+              </div>
               <div className="space-y-2">
                 <button
                   type="button"
@@ -140,11 +152,9 @@ export default function AssessmentPage() {
                   onClick={async () => {
                     setRestoreError(false);
                     setRestoring(true);
-                    const scores = await restoreAssessmentScores(normalized);
+                    const scores = await restoreAssessmentScores(studentId);
                     setRestoring(false);
                     if (scores) {
-                      setStudentId(normalized);
-                      setChangingId(false);
                       setManualScores(scores); // 标记完成 + 写入分数（本地）
                       router.push('/results');
                     } else {
@@ -157,7 +167,7 @@ export default function AssessmentPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setStudentId(normalized); setChangingId(false); }}
+                  onClick={() => setEntryStarted(true)}
                   className="psy-btn psy-btn-ghost psy-serif w-full py-3 font-semibold"
                 >
                   {t.dupOverwrite}
@@ -166,20 +176,12 @@ export default function AssessmentPage() {
                   <p className="text-xs leading-5 text-[var(--psy-danger)]">{t.restoreFailed}</p>
                 )}
               </div>
-            ) : (
-              <button
-                type="submit"
-                disabled={!idValid || checkingId}
-                className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                {checkingId ? t.gateChecking : t.gateStart}
-              </button>
-            )}
-          </form>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
+    // 无记录 → 直接进题目（无需额外点击），继续往下渲染。
   }
 
   const total = QUESTIONS.length;
@@ -236,19 +238,8 @@ export default function AssessmentPage() {
           </p>
         </div>
 
-        {/* 移动端：竖向堆叠（各占一行、不乱换行），桌面：横向 justify-between。 */}
-        <div className="flex flex-col gap-1.5 text-xs text-[var(--psy-muted)] sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          {/* 暴露當前學號，並提供更換入口（更換 = 清空學號回到輸入頁） */}
-          <span>
-            {t.studentLabel}：
-            <span className="ml-1 font-medium text-[var(--psy-ink-soft)]">{studentId}</span>
-            <button
-              onClick={() => { setChangingId(true); setStudentIdInput(''); setDupWarn(false); }}
-              className="ml-2 underline decoration-[rgba(150,118,78,0.3)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
-            >
-              {t.changeStudent}
-            </button>
-          </span>
+        {/* 學號來自登录态，不再暴露更換入口；保留「手動填分」入口。 */}
+        <div className="flex flex-col gap-1.5 text-xs text-[var(--psy-muted)] sm:flex-row sm:items-center sm:justify-end sm:gap-3">
           <button
             onClick={() => setShowManualInput(!showManualInput)}
             className="self-start whitespace-nowrap text-[var(--psy-muted)] transition underline decoration-[rgba(150,118,78,0.3)] underline-offset-4 hover:text-[var(--psy-ink-soft)] sm:self-auto"
