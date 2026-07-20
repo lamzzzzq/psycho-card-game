@@ -38,6 +38,27 @@ export const AUTH_T = {
     vPwdMismatch: '兩次輸入的密碼不一致。',
     vEmail: '請輸入有效的信箱。',
 
+    // ── 账号页 ──
+    accountTitle: '我的帳號',
+    identityLabel: '學號',
+    identityReadonlyHint: '學號是你的帳號，不可更改。',
+    recoveryEmailSectionTitle: '找回密碼信箱',
+    saveEmail: '儲存信箱',
+    emailSaved: '已更新',
+    emailUnverified: '未驗證',
+    changePasswordTitle: '修改密碼',
+    newPassword: '新密碼',
+    confirmNewPassword: '確認新密碼',
+    updatePassword: '更新密碼',
+    passwordUpdated: '密碼已更新',
+    myPersonalityTitle: '我的人格',
+    viewReport: '查看完整報告',
+    notAssessedYet: '你還沒做過測評。',
+    goAssess: '去測評',
+    logout: '登出',
+    backHome: '← 返回首頁',
+    loadingAccount: '載入中…',
+
     // ── 错误码 → 提示 ──
     err: {
       invalid_student_id: '學號格式不對（需 9 位）。',
@@ -87,6 +108,27 @@ export const AUTH_T = {
     vPwdLen: 'Password must be at least 6 characters.',
     vPwdMismatch: 'The two passwords do not match.',
     vEmail: 'Please enter a valid email.',
+
+    // ── account page ──
+    accountTitle: 'My Account',
+    identityLabel: 'Student ID',
+    identityReadonlyHint: 'Your student ID is your account and cannot be changed.',
+    recoveryEmailSectionTitle: 'Recovery Email',
+    saveEmail: 'Save Email',
+    emailSaved: 'Updated',
+    emailUnverified: 'Unverified',
+    changePasswordTitle: 'Change Password',
+    newPassword: 'New password',
+    confirmNewPassword: 'Confirm new password',
+    updatePassword: 'Update Password',
+    passwordUpdated: 'Password updated',
+    myPersonalityTitle: 'My Personality',
+    viewReport: 'View full report',
+    notAssessedYet: "You haven't taken the assessment yet.",
+    goAssess: 'Take it',
+    logout: 'Log Out',
+    backHome: '← Back to Home',
+    loadingAccount: 'Loading…',
 
     // ── error code → message ──
     err: {
