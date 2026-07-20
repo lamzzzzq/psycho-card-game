@@ -10,6 +10,7 @@ import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { QUESTIONS } from '@/data/questions';
 import { Footer } from '@/components/shared/Footer';
 import { DeckSelectModal } from '@/components/shared/DeckSelectModal';
+import { AccountChip } from '@/components/shared/AccountChip';
 import { renderCjkKeep } from '@/lib/renderCjk';
 
 export default function Home() {
@@ -57,12 +58,16 @@ export default function Home() {
           </button>
         ))}
       </div>
-      <button
-        onClick={() => setDeckModalFor('tutorial')}
-        className="psy-btn psy-btn-accent psy-serif fixed right-4 top-4 z-40 px-4 py-2 text-sm font-semibold sm:right-8 sm:top-8"
-      >
-        {c.tutorial}
-      </button>
+      {/* 右上角：账号入口徽标（登入/头像下拉） + 玩法教學 */}
+      <div className="fixed right-4 top-4 z-40 flex items-center gap-2 sm:right-8 sm:top-8">
+        <AccountChip />
+        <button
+          onClick={() => setDeckModalFor('tutorial')}
+          className="psy-btn psy-btn-accent psy-serif px-4 py-2 text-sm font-semibold"
+        >
+          {c.tutorial}
+        </button>
+      </div>
       <motion.div
         initial={false}
         animate={{ opacity: 1, y: 0 }}

@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { useHydrated } from '@/stores/useHydration';
 import { useLocaleStore } from '@/lib/i18n';
 import { STATS_T } from '@/lib/i18n/stats';
+import { useAuthSession } from '@/lib/useAuthSession';
 
 // 一行 = 一人一局（game_participants 關聯 game_sessions）。
 // 真相源 schema：supabase/migrations/0001_game_records.sql。
@@ -53,6 +54,8 @@ function csvEscape(v: unknown): string {
 
 export default function StatsPage() {
   const router = useRouter();
+  // 需登录：数据统计仅登录用户可见（身份由登录态提供）。
+  const { loading: authLoading, userId } = useAuthSession();
   // SSR/首屏用 zh 与服务端一致，hydrate 后切到持久化/?lang 的语言，避免 mismatch。
   const hydrated = useHydrated();
   const locale = useLocaleStore((st) => st.locale);
@@ -83,6 +86,11 @@ export default function StatsPage() {
     }
     fetchData();
   }, []);
+
+  // 需登录：登录态就绪后仍未登录 → 跳到登录页。
+  useEffect(() => {
+    if (!authLoading && !userId) router.replace('/login');
+  }, [authLoading, userId, router]);
 
   // 真人行（排除 AI）
   const humanRows = useMemo(() => rows.filter((r) => !r.is_ai && r.student_id), [rows]);
@@ -155,6 +163,15 @@ export default function StatsPage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  // 需登录：加载中 / 未登录（正跳转 /login）→ 居中加载态。
+  if (authLoading || !userId) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">{s.loading}</p>
+      </div>
+    );
   }
 
   if (loading) {

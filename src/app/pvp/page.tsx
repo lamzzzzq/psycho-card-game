@@ -20,6 +20,7 @@ import { DEFAULT_AVATAR } from '@/data/avatars';
 import { AvatarPicker } from '@/components/pvp/AvatarPicker';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { renderCjk } from '@/lib/renderCjk';
+import { useAuthSession } from '@/lib/useAuthSession';
 
 // name 为 null 时用 t[nameKey]；subtitle 走 t[subKey]（locale 翻译）。
 const DECK_OPTIONS: { id: DeckId; name: string | null; nameKey?: 'deckCpaiName' | 'deckHexacoName'; subKey: 'deckBigFiveSub' | 'deckHexacoSub' | 'deckCpaiSub'; locked: boolean }[] = [
@@ -38,27 +39,20 @@ export default function PvpLobbyPage() {
   const t = STRINGS[locale].pvpLobby;
   const { player, setPlayer } = usePlayerStore();
   const { bigFiveScores, setManualScores, studentId: assessedStudentId, setStudentId: persistStudentId } = useAssessmentStore();
+  // 身份改由登录态提供：学号来自 session（profiles），不再手输。
+  const { loading: authLoading, userId, studentId: sessionStudentId } = useAuthSession();
 
   const [tab, setTab] = useState<Tab>('create');
-  const [studentId, setStudentId] = useState(player?.studentId ?? '');
-  const [studentIdConfirm, setStudentIdConfirm] = useState('');
 
-  // 只信任「合法 9 位」的已测评学号。旧版本可能存了 <9 位的非法学号（规则上线前），
-  // 这种不能锁定、也不能跳过校验，必须强制重输。
-  const validAssessedId = isValidStudentId(assessedStudentId ?? '');
-
-  // 自愈：名下挂着非法旧学号 → 清掉（解绑），逼用户重输合法 9 位。分数(bigFiveScores)保留。
+  // 需登录：登录态就绪后仍未登录 → 跳到登录页。
   useEffect(() => {
-    if (assessedStudentId && !validAssessedId) persistStudentId('');
-  }, [assessedStudentId, validAssessedId]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!authLoading && !userId) router.replace('/login');
+  }, [authLoading, userId, router]);
 
-  // 做过且合法测评 → 学号已固定，自动预填(含确认)，免得重输。
+  // 从 session 同步学号进 assessment store（学号真相源=登录态），保证「有分数→有学号」一致。
   useEffect(() => {
-    if (validAssessedId && assessedStudentId && !studentId) {
-      setStudentId(assessedStudentId);
-      setStudentIdConfirm(assessedStudentId);
-    }
-  }, [assessedStudentId, validAssessedId]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (sessionStudentId && sessionStudentId !== assessedStudentId) persistStudentId(sessionStudentId);
+  }, [sessionStudentId, assessedStudentId, persistStudentId]);
   const [avatar, setAvatar] = useState(player?.avatar ?? DEFAULT_AVATAR);
   const [joinCode, setJoinCode] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(3);
@@ -141,8 +135,17 @@ export default function PvpLobbyPage() {
     );
   }
 
-  // 合法已测评学号优先（锁定态真相源）；否则用手输的。旧非法值不参与。
-  const effectiveStudentId = normalizeStudentId((validAssessedId ? assessedStudentId : studentId) || '');
+  // 需登录：加载中 / 未登录（正跳转 /login）/ 学号尚未从 session 读到 → 居中加载态。
+  if (authLoading || !userId || !sessionStudentId) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="psy-serif text-[var(--psy-muted)]">{t.loading}</p>
+      </div>
+    );
+  }
+
+  // 学号固定来自登录态（session/profiles），不再手输。
+  const effectiveStudentId = normalizeStudentId(sessionStudentId || '');
 
   async function ensurePlayer() {
     const sid = effectiveStudentId;
@@ -178,8 +181,6 @@ export default function PvpLobbyPage() {
 
   async function handleCreate() {
     if (!effectiveStudentId) { setError(t.enterStudentId); return; }
-    if (!validAssessedId && !isValidStudentId(studentId)) { setError(t.idLen); return; }
-    if (!validAssessedId && normalizeStudentId(studentId) !== normalizeStudentId(studentIdConfirm)) { setError(t.idMismatch); return; }
     setLoading(true);
     setError('');
     try {
@@ -200,8 +201,6 @@ export default function PvpLobbyPage() {
 
   async function handleJoin() {
     if (!effectiveStudentId) { setError(t.enterStudentId); return; }
-    if (!validAssessedId && !isValidStudentId(studentId)) { setError(t.idLen); return; }
-    if (!validAssessedId && normalizeStudentId(studentId) !== normalizeStudentId(studentIdConfirm)) { setError(t.idMismatch); return; }
     if (joinCode.length !== 4) { setError(t.enter4Code); return; }
     setLoading(true);
     setError('');
@@ -220,8 +219,6 @@ export default function PvpLobbyPage() {
       setLoading(false);
     }
   }
-
-  const idMismatch = studentIdConfirm.length > 0 && studentIdConfirm !== studentId;
 
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-10">
@@ -273,34 +270,12 @@ export default function PvpLobbyPage() {
         <section className="psy-panel psy-etched space-y-4 rounded-[1.6rem] p-6">
           <p className="psy-eyebrow text-[10px]">{t.playerInfo}</p>
           <div className="space-y-3">
-            {validAssessedId ? (
-              // 做过测评 + 学号合法 → 已校验，锁定只读，不重输/不会输错。（旧非法值不锁，强制重输）
-              <div className="psy-input flex items-center gap-2" style={{ cursor: 'default' }}>
-                <span className="psy-eyebrow shrink-0 text-[10px]">{t.studentLabel}</span>
-                <span className="psy-serif text-[var(--psy-ink)]">{assessedStudentId}</span>
-                <span className="ml-auto text-[11px] text-[var(--psy-muted)]">🔒</span>
-              </div>
-            ) : (
-              <>
-                <input
-                  className="psy-input"
-                  placeholder={t.studentIdPlaceholder}
-                  value={studentId}
-                  onChange={(e) => setStudentId(normalizeStudentId(e.target.value).slice(0, 9))}
-                  maxLength={9}
-                />
-                <input
-                  className={`psy-input ${idMismatch ? 'is-error' : ''}`}
-                  placeholder={t.studentIdConfirmPlaceholder}
-                  value={studentIdConfirm}
-                  onChange={(e) => setStudentIdConfirm(normalizeStudentId(e.target.value).slice(0, 9))}
-                  maxLength={9}
-                />
-                {idMismatch && (
-                  <p className="text-xs text-[var(--psy-danger)]">{t.idMismatch}</p>
-                )}
-              </>
-            )}
+            {/* 学号来自登录态（session/profiles），固定只读，不可手输/更换。 */}
+            <div className="psy-input flex items-center gap-2" style={{ cursor: 'default' }}>
+              <span className="psy-eyebrow shrink-0 text-[10px]">{t.studentLabel}</span>
+              <span className="psy-serif text-[var(--psy-ink)]">{effectiveStudentId}</span>
+              <span className="ml-auto text-[11px] text-[var(--psy-muted)]">🔒</span>
+            </div>
           </div>
 
           <AvatarPicker value={avatar} onChange={setAvatar} />

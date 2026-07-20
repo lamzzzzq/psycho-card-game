@@ -10,6 +10,8 @@ import { AUTH_T } from '@/lib/i18n/auth';
 import { useAuthSession } from '@/lib/useAuthSession';
 import { supabase } from '@/lib/supabase';
 import { signOutUser, MIN_PASSWORD } from '@/lib/auth';
+import { AvatarPicker } from '@/components/pvp/AvatarPicker';
+import { DEFAULT_AVATAR } from '@/data/avatars';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -20,7 +22,7 @@ export default function AccountPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = AUTH_T[locale];
 
-  const { loading, userId, studentId, recoveryEmail, recoveryEmailVerified } = useAuthSession();
+  const { loading, userId, studentId, recoveryEmail, recoveryEmailVerified, avatar } = useAuthSession();
 
   // 未登录 → 去登录页
   useEffect(() => {
@@ -34,6 +36,16 @@ export default function AccountPage() {
   useEffect(() => {
     if (recoveryEmail) setEmail(recoveryEmail);
   }, [recoveryEmail]);
+
+  // ── 头像（emoji）──
+  const [avatarValue, setAvatarValue] = useState(DEFAULT_AVATAR);
+  useEffect(() => {
+    if (avatar) setAvatarValue(avatar);
+  }, [avatar]);
+  async function saveAvatar(next: string) {
+    setAvatarValue(next); // 乐观更新
+    await supabase.from('profiles').update({ avatar: next }).eq('id', userId!);
+  }
 
   async function saveEmail(e: FormEvent) {
     e.preventDefault();
@@ -82,8 +94,6 @@ export default function AccountPage() {
     );
   }
 
-  const initial = (studentId ?? '?').charAt(0).toUpperCase();
-
   return (
     <main className="mx-auto min-h-dvh w-full max-w-[560px] px-6 py-10">
       <Link href="/" className="text-sm text-[var(--psy-muted)] underline-offset-2 hover:underline">
@@ -96,16 +106,22 @@ export default function AccountPage() {
         transition={{ duration: 0.35 }}
         className="mt-6 space-y-5"
       >
-        {/* 顶部身份 */}
+        {/* 顶部身份：emoji 头像 + 学号 */}
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--psy-accent)] text-xl font-semibold text-white">
-            {initial}
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[var(--psy-surface)] text-3xl">
+            {avatarValue}
           </div>
           <div>
             <h1 className="psy-serif text-xl font-semibold text-[var(--psy-ink)]">{t.accountTitle}</h1>
             <p className="mt-0.5 text-sm tracking-[0.12em] text-[var(--psy-muted)]">{studentId}</p>
           </div>
         </div>
+
+        {/* 选择头像 */}
+        <section className="psy-card rounded-2xl p-5">
+          <h2 className="mb-3 text-sm font-semibold text-[var(--psy-ink)]">{t.chooseAvatarTitle}</h2>
+          <AvatarPicker value={avatarValue} onChange={saveAvatar} />
+        </section>
 
         {/* 账号：学号只读 */}
         <section className="psy-card space-y-2 rounded-2xl p-5">

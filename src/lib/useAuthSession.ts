@@ -12,6 +12,7 @@ export type AuthSession = {
   studentId: string | null;
   recoveryEmail: string | null;
   recoveryEmailVerified: boolean;
+  avatar: string | null;
 };
 
 const EMPTY: AuthSession = {
@@ -20,6 +21,7 @@ const EMPTY: AuthSession = {
   studentId: null,
   recoveryEmail: null,
   recoveryEmailVerified: false,
+  avatar: null,
 };
 
 export function useAuthSession(): AuthSession {
@@ -35,7 +37,7 @@ export function useAuthSession(): AuthSession {
       }
       const { data } = await supabase
         .from('profiles')
-        .select('student_id, recovery_email, recovery_email_verified')
+        .select('student_id, recovery_email, recovery_email_verified, avatar')
         .eq('id', userId)
         .maybeSingle();
       if (!active) return;
@@ -45,6 +47,7 @@ export function useAuthSession(): AuthSession {
         studentId: data?.student_id ?? null,
         recoveryEmail: data?.recovery_email ?? null,
         recoveryEmailVerified: data?.recovery_email_verified ?? false,
+        avatar: data?.avatar ?? null,
       });
     }
 

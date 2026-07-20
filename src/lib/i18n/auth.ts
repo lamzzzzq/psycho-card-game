@@ -38,8 +38,15 @@ export const AUTH_T = {
     vPwdMismatch: '兩次輸入的密碼不一致。',
     vEmail: '請輸入有效的信箱。',
 
+    // ── 账号入口徽标（各页右上角）──
+    login: '登入',
+    menuSettings: '設置',
+    menuLogout: '退出登入',
+
     // ── 账号页 ──
     accountTitle: '我的帳號',
+    chooseAvatarTitle: '選擇頭像',
+    avatarSaved: '頭像已更新',
     identityLabel: '學號',
     identityReadonlyHint: '學號是你的帳號，不可更改。',
     recoveryEmailSectionTitle: '找回密碼信箱',
@@ -109,8 +116,15 @@ export const AUTH_T = {
     vPwdMismatch: 'The two passwords do not match.',
     vEmail: 'Please enter a valid email.',
 
+    // ── account chip (top-right on every page) ──
+    login: 'Log In',
+    menuSettings: 'Settings',
+    menuLogout: 'Log Out',
+
     // ── account page ──
     accountTitle: 'My Account',
+    chooseAvatarTitle: 'Choose Avatar',
+    avatarSaved: 'Avatar updated',
     identityLabel: 'Student ID',
     identityReadonlyHint: 'Your student ID is your account and cannot be changed.',
     recoveryEmailSectionTitle: 'Recovery Email',
