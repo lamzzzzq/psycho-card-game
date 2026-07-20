@@ -318,6 +318,20 @@ function InteractiveSandbox({
   const archived = state.chosenDim ? DIMENSION_META[state.chosenDim] : N;
   const claimed = state.claimDim ? DIMENSION_META[state.claimDim] : DIMENSION_META.A;
 
+  // 底部指引欄高度隨 caption/feedback 長短變化。用固定 mb 預留會出現「大窟窿」
+  // （指引欄比預留值矮時，露出未被覆蓋的空白）或內容被欄蓋住。改為實測欄高動態預留。
+  const guideRef = useRef<HTMLDivElement>(null);
+  const [guidePad, setGuidePad] = useState(176);
+  useEffect(() => {
+    const el = guideRef.current;
+    if (!el) return;
+    const update = () => setGuidePad(el.offsetHeight + 16);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const op = opOf(state.scene);
   const pongNeed = state.chosenDim ? SANDBOX_TARGETS[state.chosenDim] : 4;
   const successToast =
@@ -476,7 +490,8 @@ function InteractiveSandbox({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.3 }}
-      className="psy-panel psy-etched relative z-40 rounded-[1.8rem] p-5 pb-8 sm:p-7 sm:pb-8 mb-44"
+      className="psy-panel psy-etched relative z-40 rounded-[1.8rem] p-5 pb-8 sm:p-7 sm:pb-8"
+      style={{ marginBottom: guidePad }}
     >
       {/* 面板頭（「交互式沙盒」標籤 + 重置/退出鏈接行）已刪：太佔縱向空間，
           重置/退出按鈕合併進了頁頭標題行（見父組件 mode==='sandbox' 分支）。 */}
@@ -890,7 +905,7 @@ function InteractiveSandbox({
 
     {/* 固定在視窗底部、永遠可見的指引欄。做大做醒目（佔更多空間、強對比）。
         渲染在 motion.div 之外，避免 framer transform 祖先讓 fixed 失效。 */}
-    <div className="fixed inset-x-0 bottom-0 z-50 [transform:translateZ(0)] border-t-2 border-[rgba(154,116,72,0.36)] bg-[linear-gradient(180deg,#fdf8f1,#eaddc4)] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(96,72,38,0.18)]">
+    <div ref={guideRef} className="fixed inset-x-0 bottom-0 z-50 [transform:translateZ(0)] border-t-2 border-[rgba(154,116,72,0.36)] bg-[linear-gradient(180deg,#fdf8f1,#eaddc4)] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(96,72,38,0.18)]">
       <div className="mx-auto max-w-3xl space-y-2.5">
         <div className="flex items-start gap-3">
           <span className="psy-serif mt-0.5 shrink-0 rounded-full bg-[var(--psy-accent)] px-3 py-1 text-[11px] font-bold tracking-[0.2em] text-[#1a1206]">
