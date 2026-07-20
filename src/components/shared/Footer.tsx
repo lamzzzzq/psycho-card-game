@@ -16,12 +16,10 @@ export function Footer() {
       <p>{f.line1}</p>
       <p className="mt-1">{f.leader}</p>
       {/* 邮箱单独一行。老板要求用 [at] 防爬虫（不写真 @、不做 mailto，iOS 也不会自动识别成链接），
-          地址外套一个框框（边框+圆角）代替下划线做视觉强调。 */}
-      <p className="mt-1 flex flex-wrap items-center justify-center gap-1">
-        <span>{f.emailLabel}</span>
-        <span className="whitespace-nowrap rounded-md border border-[var(--psy-border)] bg-[#fdf9f0] px-2 py-0.5 text-[var(--psy-ink-soft)]">
-          {f.email}
-        </span>
+          纯文本、不加框、不加下划线。 */}
+      <p className="mt-1">
+        {f.emailLabel}
+        <span className="whitespace-nowrap">{f.email}</span>
       </p>
     </footer>
   );
