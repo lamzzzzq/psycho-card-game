@@ -1,26 +1,25 @@
-// Edge Function: register —— 学号注册（方案 A：学号登录 + 合成邮箱）。2026-07-20。
+// Edge Function: register —— 学号注册（方案 A：学号登录 + 合成邮箱 + 注册时邮箱验证码）。
+// 2026-07-21 更新：要求先通过 send-verify-code 拿到邮箱验证码，注册时校验，通过则 recovery_email_verified=true。
 //
-// 前端只收集 { student_id, password, recovery_email }，POST 到这里。
-// 本函数用 service_role（Supabase 自动注入，绕过 RLS）：
-//   1. 服务端再校验一遍学号(9位) / 密码(≥6) / 邮箱格式
-//   2. 学号查重（profiles.student_id 唯一）
-//   3. admin.createUser(合成邮箱, 密码, email_confirm:true)  —— 合成邮箱 = <学号>@stu.personalitiesmahjong.com
-//   4. 写 profiles（recovery_email 先存为未验证）
-//   5. 第 4 步失败则回滚删掉刚建的 auth 用户，避免孤儿账号
+// 前端传 { student_id, password, recovery_email, code }。本函数(service_role)：
+//   1. 服务端校验学号(9)/密码(≥6)/邮箱格式
+//   2. 校验邮箱验证码（email_verify_codes：邮箱匹配 + 未过期 + 次数未超 + 哈希一致）
+//   3. 学号查重
+//   4. admin.createUser(合成邮箱, 密码, email_confirm:true)
+//   5. 写 profiles（recovery_email_verified=true），删掉验证码行
+//   6. 失败回滚删用户，避免孤儿
 //
-// 注：recovery_email 此时 verified=false。找回密码功能本身不要求先验证；
-// 「验证找回邮箱」是后续增强，届时用 Resend 发验证信。
-//
-// 部署：Supabase Dashboard → Edge Functions → Deploy new function，名字填 register，粘贴本文件。
+// 部署：Dashboard → Edge Functions → register → 粘贴本文件重新 Deploy。
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-const EMAIL_DOMAIN = 'stu.personalitiesmahjong.com'; // 合成邮箱域名（纯占位、不收信）
+const EMAIL_DOMAIN = 'stu.personalitiesmahjong.com';
 const STUDENT_ID_LENGTH = 9;
 const MIN_PASSWORD = 6;
+const MAX_CODE_ATTEMPTS = 5;
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -31,20 +30,18 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
 function json(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
-  });
+  return new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 }
-
-// 与前端 normalizeStudentId 一致：去空白 + 全大寫（大小写不分）
 function normalizeStudentId(raw: string): string {
   return raw.replace(/\s+/g, '').toUpperCase();
 }
 function isEmail(s: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+async function sha256(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 Deno.serve(async (req) => {
@@ -61,47 +58,56 @@ Deno.serve(async (req) => {
   const studentId = normalizeStudentId(String(body.student_id ?? ''));
   const password = String(body.password ?? '');
   const recoveryEmail = String(body.recovery_email ?? '').trim().toLowerCase();
+  const code = String(body.code ?? '').trim();
 
-  // ── 服务端校验（前端也会校一遍，这里是最后一道） ──
   if (studentId.length !== STUDENT_ID_LENGTH) return json(400, { error: 'invalid_student_id' });
   if (password.length < MIN_PASSWORD) return json(400, { error: 'weak_password' });
   if (!isEmail(recoveryEmail)) return json(400, { error: 'invalid_email' });
+  if (!/^\d{6}$/.test(code)) return json(400, { error: 'invalid_code' });
 
-  const syntheticEmail = `${studentId.toLowerCase()}@${EMAIL_DOMAIN}`;
-
-  // ── 学号查重 ──
-  const { data: existing, error: checkErr } = await admin
-    .from('profiles')
-    .select('id')
+  // ── 校验邮箱验证码 ──
+  const { data: vc } = await admin
+    .from('email_verify_codes')
+    .select('email, code_hash, expires_at, attempts')
     .eq('student_id', studentId)
     .maybeSingle();
-  if (checkErr) return json(500, { error: 'check_failed', detail: checkErr.message });
+  if (!vc) return json(400, { error: 'code_not_found' });
+  if (vc.attempts >= MAX_CODE_ATTEMPTS) return json(400, { error: 'code_locked' });
+  if (new Date(vc.expires_at).getTime() < Date.now()) return json(400, { error: 'code_expired' });
+  if (vc.email !== recoveryEmail) return json(400, { error: 'code_email_mismatch' });
+  const codeHash = await sha256(`${studentId}:${code}`);
+  if (codeHash !== vc.code_hash) {
+    await admin.from('email_verify_codes').update({ attempts: vc.attempts + 1 }).eq('student_id', studentId);
+    return json(400, { error: 'invalid_code' });
+  }
+
+  // ── 学号查重 ──
+  const { data: existing } = await admin.from('profiles').select('id').eq('student_id', studentId).maybeSingle();
   if (existing) return json(409, { error: 'student_id_taken' });
 
-  // ── 建 auth 用户（合成邮箱，直接标记已确认） ──
+  // ── 建 auth 用户 ──
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
-    email: syntheticEmail,
+    email: `${studentId.toLowerCase()}@${EMAIL_DOMAIN}`,
     password,
     email_confirm: true,
     user_metadata: { student_id: studentId },
   });
-  if (createErr || !created?.user) {
-    // 合成邮箱已存在等 → 视为学号已注册
-    return json(409, { error: 'account_exists', detail: createErr?.message });
-  }
+  if (createErr || !created?.user) return json(409, { error: 'account_exists', detail: createErr?.message });
 
-  // ── 写 profile（失败则回滚删用户，防孤儿） ──
+  // ── 写 profile（邮箱已验证），失败回滚 ──
   const { error: profErr } = await admin.from('profiles').insert({
     id: created.user.id,
     student_id: studentId,
     recovery_email: recoveryEmail,
-    recovery_email_verified: false,
+    recovery_email_verified: true,
   });
   if (profErr) {
     await admin.auth.admin.deleteUser(created.user.id);
-    // 唯一索引撞车 = 并发下学号被别人抢先注册
     return json(409, { error: 'student_id_taken', detail: profErr.message });
   }
+
+  // 清掉验证码
+  await admin.from('email_verify_codes').delete().eq('student_id', studentId);
 
   return json(200, { ok: true, student_id: studentId });
 });

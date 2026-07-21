@@ -15,36 +15,49 @@ export function syntheticEmail(studentId: string): string {
 
 export type AuthResult = { ok: true } | { ok: false; error: string };
 
-// 注册：调 register Edge Function。错误码见函数：
-//   invalid_student_id | weak_password | invalid_email | student_id_taken | account_exists | ...
+// 从 functions.invoke 的错误里取出后端返回的错误码
+async function readFnError(error: unknown): Promise<string> {
+  let code = 'request_failed';
+  try {
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === 'function') {
+      const b = (await ctx.json()) as { error?: string };
+      if (b?.error) code = b.error;
+    }
+  } catch {
+    /* 读不出就用兜底码 */
+  }
+  return code;
+}
+
+// 发送邮箱验证码（注册第一步）。错误码：invalid_student_id | invalid_email | student_id_taken | send_failed | ...
+export async function sendVerifyCode(studentId: string, email: string): Promise<AuthResult> {
+  const { data, error } = await supabase.functions.invoke('send-verify-code', {
+    body: { student_id: normalizeStudentId(studentId), email: email.trim().toLowerCase() },
+  });
+  if (error) return { ok: false, error: await readFnError(error) };
+  if ((data as { ok?: boolean })?.ok) return { ok: true };
+  return { ok: false, error: (data as { error?: string })?.error ?? 'unknown' };
+}
+
+// 注册（第二步）：带验证码。错误码见 register 函数：
+//   invalid_* | weak_password | code_* | invalid_code | student_id_taken | account_exists | ...
 export async function registerStudent(input: {
   studentId: string;
   password: string;
   recoveryEmail: string;
+  code: string;
 }): Promise<AuthResult> {
   const { data, error } = await supabase.functions.invoke('register', {
     body: {
       student_id: normalizeStudentId(input.studentId),
       password: input.password,
       recovery_email: input.recoveryEmail.trim().toLowerCase(),
+      code: input.code.trim(),
     },
   });
 
-  if (error) {
-    // 非 2xx：supabase-js 把 Response 放在 error.context，从 body 里取错误码
-    let code = 'request_failed';
-    try {
-      const ctx = (error as { context?: Response }).context;
-      if (ctx && typeof ctx.json === 'function') {
-        const body = (await ctx.json()) as { error?: string };
-        if (body?.error) code = body.error;
-      }
-    } catch {
-      /* 读不出 body 就用兜底码 */
-    }
-    return { ok: false, error: code };
-  }
-
+  if (error) return { ok: false, error: await readFnError(error) };
   if ((data as { ok?: boolean })?.ok) return { ok: true };
   return { ok: false, error: (data as { error?: string })?.error ?? 'unknown' };
 }

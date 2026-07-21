@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { useLocaleStore } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 import { AUTH_T } from '@/lib/i18n/auth';
-import { registerStudent, signInWithStudentId, MIN_PASSWORD } from '@/lib/auth';
+import { sendVerifyCode, registerStudent, signInWithStudentId, MIN_PASSWORD } from '@/lib/auth';
 import { normalizeStudentId, STUDENT_ID_LENGTH } from '@/lib/utils';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -19,10 +19,12 @@ export default function RegisterPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = AUTH_T[locale];
 
+  const [step, setStep] = useState<'info' | 'code'>('info');
   const [studentId, setStudentId] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -32,30 +34,48 @@ export default function RegisterPage() {
   const pwdOk = password.length >= MIN_PASSWORD;
   const matchOk = password === confirm;
   const emailOk = EMAIL_RE.test(email.trim());
-  const canSubmit = idOk && pwdOk && matchOk && emailOk && !busy;
+  const infoOk = idOk && pwdOk && matchOk && emailOk;
+  const codeOk = /^\d{6}$/.test(code.trim());
 
-  async function onSubmit(e: FormEvent) {
+  // 第一步：校验信息 → 发验证码 → 进入第二步
+  async function onSendCode(e: FormEvent) {
     e.preventDefault();
     setError('');
-    // 前端即时校验（服务端还会再校一遍）
     if (!idOk) return setError(t.vIdLen);
     if (!pwdOk) return setError(t.vPwdLen);
     if (!matchOk) return setError(t.vPwdMismatch);
     if (!emailOk) return setError(t.vEmail);
-
     setBusy(true);
-    const res = await registerStudent({ studentId, password, recoveryEmail: email });
+    const res = await sendVerifyCode(studentId, email);
+    setBusy(false);
+    if (!res.ok) return setError(t.err[res.error] ?? t.err.unknown);
+    setStep('code');
+  }
+
+  // 第二步：带验证码注册 → 自动登录
+  async function onRegister(e: FormEvent) {
+    e.preventDefault();
+    setError('');
+    if (!codeOk) return setError(t.err.invalid_code);
+    setBusy(true);
+    const res = await registerStudent({ studentId, password, recoveryEmail: email, code });
     if (!res.ok) {
       setBusy(false);
-      setError(t.err[res.error] ?? t.err.unknown);
-      return;
+      return setError(t.err[res.error] ?? t.err.unknown);
     }
-    // 注册成功 → 自动登录 → 回首页
     setSuccess(true);
     const login = await signInWithStudentId(studentId, password);
     setBusy(false);
     if (login.ok) router.push('/');
-    else setError(t.err.invalid_credentials); // 极少数：建号成功但登录失败，让用户去登录页
+    else setError(t.err.invalid_credentials);
+  }
+
+  async function onResend() {
+    setError('');
+    setBusy(true);
+    const res = await sendVerifyCode(studentId, email);
+    setBusy(false);
+    if (!res.ok) setError(t.err[res.error] ?? t.err.unknown);
   }
 
   return (
@@ -69,95 +89,144 @@ export default function RegisterPage() {
         <h1 className="psy-serif text-center text-2xl font-semibold text-[var(--psy-ink)]">
           {t.registerTitle}
         </h1>
-        <p className="mt-2 text-center text-sm leading-6 text-[var(--psy-muted)]">
-          {t.registerSubtitle}
-        </p>
 
-        <form onSubmit={onSubmit} className="mt-8 space-y-4">
-          {/* 学号 */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-[var(--psy-muted)]">{t.studentIdLabel}</label>
-            <input
-              type="text"
-              inputMode="text"
-              autoComplete="username"
-              maxLength={STUDENT_ID_LENGTH}
-              value={studentId}
-              onChange={(e) => setStudentId(normalizeStudentId(e.target.value).slice(0, STUDENT_ID_LENGTH))}
-              placeholder={t.studentIdPlaceholder}
-              className="psy-input w-full text-center text-lg tracking-[0.15em]"
-            />
-          </div>
+        {step === 'info' ? (
+          <>
+            <p className="mt-2 text-center text-sm leading-6 text-[var(--psy-muted)]">{t.registerSubtitle}</p>
+            <form onSubmit={onSendCode} className="mt-8 space-y-4">
+              {/* 学号 */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-[var(--psy-muted)]">{t.studentIdLabel}</label>
+                <input
+                  type="text"
+                  autoComplete="username"
+                  maxLength={STUDENT_ID_LENGTH}
+                  value={studentId}
+                  onChange={(e) => setStudentId(normalizeStudentId(e.target.value).slice(0, STUDENT_ID_LENGTH))}
+                  placeholder={t.studentIdPlaceholder}
+                  className="psy-input w-full text-center text-lg tracking-[0.15em]"
+                />
+              </div>
 
-          {/* 密码 */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-[var(--psy-muted)]">{t.passwordLabel}</label>
+              {/* 密码 */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-[var(--psy-muted)]">{t.passwordLabel}</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd((v) => !v)}
+                    className="text-xs text-[var(--psy-muted)] underline-offset-2 hover:underline"
+                  >
+                    {showPwd ? t.hide : t.show}
+                  </button>
+                </div>
+                <input
+                  type={showPwd ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t.passwordPlaceholder}
+                  className="psy-input w-full"
+                />
+              </div>
+
+              {/* 确认密码 */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-[var(--psy-muted)]">{t.confirmPasswordLabel}</label>
+                <input
+                  type={showPwd ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder={t.confirmPasswordPlaceholder}
+                  className="psy-input w-full"
+                />
+              </div>
+
+              {/* 找回邮箱 */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-[var(--psy-muted)]">{t.recoveryEmailLabel}</label>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t.recoveryEmailPlaceholder}
+                  className="psy-input w-full"
+                />
+                <p className="text-[11px] leading-4 text-[var(--psy-muted)]">{t.recoveryEmailHint}</p>
+              </div>
+
+              {error && <p className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
+
+              <button
+                type="submit"
+                disabled={!infoOk || busy}
+                className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {busy ? t.processing : t.sendCodeBtn}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-[var(--psy-muted)]">
+              {t.haveAccount}{' '}
+              <Link href="/login" className="font-medium text-[var(--psy-accent)] underline-offset-2 hover:underline">
+                {t.goLogin}
+              </Link>
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="mt-2 text-center text-sm leading-6 text-[var(--psy-muted)]">{t.codeSentHint}</p>
+            <p className="mt-1 text-center text-xs text-[var(--psy-muted)]">{email}</p>
+            <form onSubmit={onRegister} className="mt-8 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-[var(--psy-muted)]">{t.codeLabel}</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder={t.codePlaceholder}
+                  className="psy-input w-full text-center text-2xl tracking-[0.5em]"
+                />
+              </div>
+
+              {error && <p className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
+              {success && !error && (
+                <p className="text-xs leading-5 text-[var(--psy-accent)]">{t.registerSuccess}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={!codeOk || busy}
+                className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {busy ? t.processing : t.registerBtn}
+              </button>
+            </form>
+
+            <div className="mt-5 flex items-center justify-between text-sm">
               <button
                 type="button"
-                onClick={() => setShowPwd((v) => !v)}
-                className="text-xs text-[var(--psy-muted)] underline-offset-2 hover:underline"
+                onClick={() => { setStep('info'); setError(''); setCode(''); }}
+                className="text-[var(--psy-muted)] underline-offset-2 hover:underline"
               >
-                {showPwd ? t.hide : t.show}
+                {t.editInfo}
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={onResend}
+                className="text-[var(--psy-accent)] underline-offset-2 hover:underline disabled:opacity-40"
+              >
+                {t.resendCode}
               </button>
             </div>
-            <input
-              type={showPwd ? 'text' : 'password'}
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={t.passwordPlaceholder}
-              className="psy-input w-full"
-            />
-          </div>
-
-          {/* 确认密码 */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-[var(--psy-muted)]">{t.confirmPasswordLabel}</label>
-            <input
-              type={showPwd ? 'text' : 'password'}
-              autoComplete="new-password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder={t.confirmPasswordPlaceholder}
-              className="psy-input w-full"
-            />
-          </div>
-
-          {/* 找回邮箱 */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-[var(--psy-muted)]">{t.recoveryEmailLabel}</label>
-            <input
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t.recoveryEmailPlaceholder}
-              className="psy-input w-full"
-            />
-            <p className="text-[11px] leading-4 text-[var(--psy-muted)]">{t.recoveryEmailHint}</p>
-          </div>
-
-          {error && <p className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
-          {success && !error && (
-            <p className="text-xs leading-5 text-[var(--psy-accent)]">{t.registerSuccess}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {busy ? t.processing : t.registerBtn}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-[var(--psy-muted)]">
-          {t.haveAccount}{' '}
-          <Link href="/login" className="font-medium text-[var(--psy-accent)] underline-offset-2 hover:underline">
-            {t.goLogin}
-          </Link>
-        </p>
+          </>
+        )}
       </motion.div>
     </main>
   );

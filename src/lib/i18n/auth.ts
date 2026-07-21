@@ -23,6 +23,13 @@ export const AUTH_T = {
     haveAccount: '已經有帳號？',
     goLogin: '去登入',
     registerSuccess: '註冊成功，正在為你登入…',
+    // 注册两步（邮箱验证码）
+    sendCodeBtn: '發送驗證碼',
+    codeLabel: '驗證碼',
+    codePlaceholder: '郵件裡的 6 位數字',
+    codeSentHint: '驗證碼已寄到你的信箱，查收後在下面輸入（也看看垃圾郵件夾）。',
+    resendCode: '重新發送',
+    editInfo: '返回修改',
 
     // ── 登入 ──
     loginTitle: '登入',
@@ -91,6 +98,13 @@ export const AUTH_T = {
       invalid_credentials: '學號或密碼不對。',
       request_failed: '請求失敗，請檢查網路後重試。',
       unknown: '出了點問題，請稍後重試。',
+      // 验证码
+      send_failed: '驗證碼寄送失敗，請稍後重試。',
+      code_not_found: '尚未取得驗證碼，請先發送。',
+      code_locked: '驗證碼錯誤次數過多，請重新發送。',
+      code_expired: '驗證碼已過期，請重新發送。',
+      code_email_mismatch: '信箱與發碼時不一致，請重新發送。',
+      invalid_code: '驗證碼不對，請檢查後重試。',
     } as Record<string, string>,
   },
 
@@ -116,6 +130,13 @@ export const AUTH_T = {
     haveAccount: 'Already have an account?',
     goLogin: 'Log in',
     registerSuccess: 'Registered! Signing you in…',
+    // registration two-step (email code)
+    sendCodeBtn: 'Send Code',
+    codeLabel: 'Verification Code',
+    codePlaceholder: '6-digit code from email',
+    codeSentHint: 'A code has been sent to your email. Enter it below (check spam too).',
+    resendCode: 'Resend',
+    editInfo: 'Edit info',
 
     // ── login ──
     loginTitle: 'Log In',
@@ -184,6 +205,13 @@ export const AUTH_T = {
       invalid_credentials: 'Wrong student ID or password.',
       request_failed: 'Request failed. Check your connection and try again.',
       unknown: 'Something went wrong. Please try again later.',
+      // verification code
+      send_failed: 'Failed to send code. Please try again.',
+      code_not_found: 'No code yet. Please send one first.',
+      code_locked: 'Too many wrong attempts. Please resend.',
+      code_expired: 'Code expired. Please resend.',
+      code_email_mismatch: 'Email differs from when the code was sent. Please resend.',
+      invalid_code: 'Wrong code. Please check and try again.',
     } as Record<string, string>,
   },
 } as const;
