@@ -9,7 +9,7 @@ import { useHydrated } from '@/stores/useHydration';
 import { AUTH_T } from '@/lib/i18n/auth';
 import { useAuthSession } from '@/lib/useAuthSession';
 import { supabase } from '@/lib/supabase';
-import { signOutUser, MIN_PASSWORD } from '@/lib/auth';
+import { signOutUser, MIN_PASSWORD, sendEmailChangeCode, verifyEmailChange } from '@/lib/auth';
 import { AvatarPicker } from '@/components/pvp/AvatarPicker';
 import { DEFAULT_AVATAR } from '@/data/avatars';
 
@@ -29,13 +29,19 @@ export default function AccountPage() {
     if (!loading && !userId) router.replace('/login');
   }, [loading, userId, router]);
 
-  // ── 找回邮箱编辑 ──
+  // ── 找回邮箱（改邮箱需验证码）──
   const [email, setEmail] = useState('');
+  const [emailStep, setEmailStep] = useState<'idle' | 'code'>('idle');
+  const [emailCode, setEmailCode] = useState('');
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailMsg, setEmailMsg] = useState('');
+  const [verified, setVerified] = useState(false);
   useEffect(() => {
     if (recoveryEmail) setEmail(recoveryEmail);
   }, [recoveryEmail]);
+  useEffect(() => {
+    setVerified(recoveryEmailVerified);
+  }, [recoveryEmailVerified]);
 
   // ── 头像（emoji）──
   const [avatarValue, setAvatarValue] = useState(DEFAULT_AVATAR);
@@ -47,18 +53,32 @@ export default function AccountPage() {
     await supabase.from('profiles').update({ avatar: next }).eq('id', userId!);
   }
 
-  async function saveEmail(e: FormEvent) {
+  // 第一步：发码到（新）邮箱
+  async function sendEmailCode(e: FormEvent) {
     e.preventDefault();
     setEmailMsg('');
     const next = email.trim().toLowerCase();
     if (!EMAIL_RE.test(next)) return setEmailMsg(t.vEmail);
     setEmailBusy(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({ recovery_email: next, recovery_email_verified: false })
-      .eq('id', userId!);
+    const res = await sendEmailChangeCode(next);
     setEmailBusy(false);
-    setEmailMsg(error ? t.err.unknown : t.emailSaved);
+    if (!res.ok) return setEmailMsg(t.err[res.error] ?? t.err.unknown);
+    setEmailStep('code');
+  }
+
+  // 第二步：验码 → 邮箱更新为已验证
+  async function confirmEmailCode(e: FormEvent) {
+    e.preventDefault();
+    setEmailMsg('');
+    if (!/^\d{6}$/.test(emailCode.trim())) return setEmailMsg(t.err.invalid_code);
+    setEmailBusy(true);
+    const res = await verifyEmailChange(email, emailCode);
+    setEmailBusy(false);
+    if (!res.ok) return setEmailMsg(t.err[res.error] ?? t.err.unknown);
+    setVerified(true);
+    setEmailStep('idle');
+    setEmailCode('');
+    setEmailMsg(t.emailSaved);
   }
 
   // ── 改密码 ──
@@ -130,32 +150,70 @@ export default function AccountPage() {
           <p className="text-[11px] leading-4 text-[var(--psy-muted)]">{t.identityReadonlyHint}</p>
         </section>
 
-        {/* 找回邮箱 */}
+        {/* 找回邮箱（改邮箱需验证码）*/}
         <section className="psy-card rounded-2xl p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-[var(--psy-ink)]">{t.recoveryEmailSectionTitle}</h2>
-            {!recoveryEmailVerified && (
-              <span className="rounded-full bg-[var(--psy-bg)] px-2 py-0.5 text-[11px] text-[var(--psy-muted)]">
-                {t.emailUnverified}
-              </span>
-            )}
-          </div>
-          <form onSubmit={saveEmail} className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t.recoveryEmailPlaceholder}
-              className="psy-input flex-1"
-            />
-            <button
-              type="submit"
-              disabled={emailBusy}
-              className="psy-btn psy-btn-ghost psy-serif whitespace-nowrap px-5 py-2.5 font-semibold disabled:opacity-40"
+            <span
+              className={`rounded-full bg-[var(--psy-bg)] px-2 py-0.5 text-[11px] ${verified ? 'text-[var(--psy-accent)]' : 'text-[var(--psy-muted)]'}`}
             >
-              {emailBusy ? t.processing : t.saveEmail}
-            </button>
-          </form>
+              {verified ? t.emailVerified : t.emailUnverified}
+            </span>
+          </div>
+
+          {emailStep === 'idle' ? (
+            <form onSubmit={sendEmailCode} className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (verified) setVerified(false); // 改了邮箱 → 需重新验证
+                }}
+                placeholder={t.recoveryEmailPlaceholder}
+                className="psy-input flex-1"
+              />
+              <button
+                type="submit"
+                disabled={emailBusy}
+                className="psy-btn psy-btn-ghost psy-serif whitespace-nowrap px-5 py-2.5 font-semibold disabled:opacity-40"
+              >
+                {emailBusy ? t.processing : t.sendCodeBtn}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={confirmEmailCode} className="mt-3 space-y-2">
+              <p className="text-xs leading-5 text-[var(--psy-muted)]">
+                {t.emailChangeCodeHint} <span className="text-[var(--psy-ink-soft)]">{email}</span>
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={emailCode}
+                  onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder={t.codePlaceholder}
+                  className="psy-input flex-1 text-center tracking-[0.4em]"
+                />
+                <button
+                  type="submit"
+                  disabled={emailBusy}
+                  className="psy-btn psy-btn-accent psy-serif whitespace-nowrap px-5 py-2.5 font-semibold disabled:opacity-40"
+                >
+                  {emailBusy ? t.processing : t.verifyAndSave}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setEmailStep('idle'); setEmailMsg(''); setEmailCode(''); }}
+                className="text-xs text-[var(--psy-muted)] underline-offset-2 hover:underline"
+              >
+                {t.editInfo}
+              </button>
+            </form>
+          )}
+
           {emailMsg && (
             <p
               className={`mt-2 text-xs ${emailMsg === t.emailSaved ? 'text-[var(--psy-accent)]' : 'text-[var(--psy-danger)]'}`}

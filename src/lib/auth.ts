@@ -79,6 +79,26 @@ export async function signOutUser(): Promise<void> {
   await supabase.auth.signOut();
 }
 
+// /account 改找回邮箱：发码到新邮箱（认证态）
+export async function sendEmailChangeCode(email: string): Promise<AuthResult> {
+  const { data, error } = await supabase.functions.invoke('change-recovery-email', {
+    body: { action: 'send', email: email.trim().toLowerCase() },
+  });
+  if (error) return { ok: false, error: await readFnError(error) };
+  if ((data as { ok?: boolean })?.ok) return { ok: true };
+  return { ok: false, error: (data as { error?: string })?.error ?? 'unknown' };
+}
+
+// /account 改找回邮箱：验码 → 更新为已验证
+export async function verifyEmailChange(email: string, code: string): Promise<AuthResult> {
+  const { data, error } = await supabase.functions.invoke('change-recovery-email', {
+    body: { action: 'verify', email: email.trim().toLowerCase(), code: code.trim() },
+  });
+  if (error) return { ok: false, error: await readFnError(error) };
+  if ((data as { ok?: boolean })?.ok) return { ok: true };
+  return { ok: false, error: (data as { error?: string })?.error ?? 'unknown' };
+}
+
 // 忘记密码：请求把重置链接发到该学号账号的找回邮箱。
 // 防枚举：无论学号是否存在，函数都返回成功，前端统一提示「若存在则已发送」。
 export async function requestPasswordRecovery(studentId: string): Promise<void> {
