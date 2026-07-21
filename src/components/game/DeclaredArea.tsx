@@ -124,20 +124,30 @@ export function DeclaredArea({
         {declaredSets.length === 0 ? (
           <p className="text-sm text-[var(--psy-muted)]">{t.noArchiveDone}</p>
         ) : (
-          <div className="flex flex-col gap-2.5">
+          // 内联展开（移动弹窗 / 结算页）：与桌面一致——每维度标题 + 卡片图（可点看详情）
+          <div className="space-y-4">
             {declaredSets.map((set) => (
-              <button
-                key={set.dimension}
-                type="button"
-                onClick={() => set.cards[0] && setDetailCard(set.cards[0])}
-                className="flex items-center gap-2 text-left"
-                aria-label={`${t.viewWord}: ${dimName(set.dimension)}`}
-              >
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: '#c89b5d' }} />
-                <span className="text-sm font-medium text-[var(--psy-accent)]">
-                  {dimName(set.dimension)} · {set.cards.length} {t.cardsUnit}
-                </span>
-              </button>
+              <div key={set.dimension}>
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: '#c89b5d' }} />
+                  <span className="text-sm font-medium text-[var(--psy-accent)]">
+                    {dimName(set.dimension)} · {set.cards.length} {t.cardsUnit}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {set.cards.map((card) => (
+                    <button
+                      key={card.id}
+                      type="button"
+                      onClick={() => setDetailCard(card)}
+                      className="rounded-[1rem] transition hover:-translate-y-1 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--psy-accent)]"
+                      aria-label={`${t.viewWord}: ${card.text}`}
+                    >
+                      <TarotCard {...cardToTarotProps(card, locale)} width={56} />
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
