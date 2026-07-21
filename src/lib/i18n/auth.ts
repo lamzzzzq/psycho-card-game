@@ -32,6 +32,21 @@ export const AUTH_T = {
     goRegister: '去註冊',
     forgotPassword: '忘記密碼？',
 
+    // ── 忘記密碼 ──
+    forgotTitle: '找回密碼',
+    forgotSubtitle: '輸入你的學號，我們會把重設連結寄到你註冊時填的找回信箱。',
+    forgotBtn: '寄送重設連結',
+    forgotSent: '若這個學號有帳號，重設連結已寄到它的找回信箱，請查收（也看看垃圾郵件夾）。',
+    backToLogin: '← 返回登入',
+
+    // ── 重設密碼（點郵件連結後）──
+    resetTitle: '設定新密碼',
+    resetSubtitle: '為你的帳號設定一個新密碼。',
+    resetBtn: '更新密碼',
+    resetDone: '密碼已更新，正在帶你去登入…',
+    resetInvalid: '連結無效或已過期，請重新申請找回密碼。',
+    resetChecking: '正在驗證連結…',
+
     // ── 前端即时校验 ──
     vIdLen: '學號需為 9 位。',
     vPwdLen: '密碼至少 6 位。',
@@ -109,6 +124,21 @@ export const AUTH_T = {
     noAccount: 'No account yet?',
     goRegister: 'Register',
     forgotPassword: 'Forgot password?',
+
+    // ── forgot password ──
+    forgotTitle: 'Reset Password',
+    forgotSubtitle: "Enter your student ID. We'll email a reset link to the recovery email on file.",
+    forgotBtn: 'Send Reset Link',
+    forgotSent: 'If this student ID has an account, a reset link has been sent to its recovery email. Check your inbox (and spam).',
+    backToLogin: '← Back to login',
+
+    // ── reset password (after clicking the email link) ──
+    resetTitle: 'Set New Password',
+    resetSubtitle: 'Set a new password for your account.',
+    resetBtn: 'Update Password',
+    resetDone: 'Password updated. Taking you to login…',
+    resetInvalid: 'This link is invalid or expired. Please request a new reset.',
+    resetChecking: 'Verifying link…',
 
     // ── client-side validation ──
     vIdLen: 'Student ID must be 9 characters.',

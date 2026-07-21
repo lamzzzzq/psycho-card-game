@@ -66,6 +66,14 @@ export async function signOutUser(): Promise<void> {
   await supabase.auth.signOut();
 }
 
+// 忘记密码：请求把重置链接发到该学号账号的找回邮箱。
+// 防枚举：无论学号是否存在，函数都返回成功，前端统一提示「若存在则已发送」。
+export async function requestPasswordRecovery(studentId: string): Promise<void> {
+  await supabase.functions.invoke('password-recovery', {
+    body: { student_id: normalizeStudentId(studentId) },
+  });
+}
+
 // 取当前登录用户的学号（从 profiles 读；未登录返回 null）
 export async function getCurrentStudentId(): Promise<string | null> {
   const { data: sess } = await supabase.auth.getSession();
