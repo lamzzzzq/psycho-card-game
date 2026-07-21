@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
@@ -9,6 +9,10 @@ import { useHydrated } from '@/stores/useHydration';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { LOBBY_T } from '@/lib/i18n/lobby';
 import { renderCjk } from '@/lib/renderCjk';
+import { useAuthSession } from '@/lib/useAuthSession';
+import { useProfileAvatar } from '@/stores/useProfileAvatar';
+import { AvatarPicker } from '@/components/pvp/AvatarPicker';
+import { DEFAULT_AVATAR } from '@/data/avatars';
 
 // 人格牌堆入口（与联机建房一致）：单机固定用 Big Five 测评分数，另两套即将上线。
 const DECKS = [
@@ -34,6 +38,14 @@ export default function LobbyPage() {
   const [difficulty, setDifficulty] = useState<AIDifficulty>('easy');
   const [totalRounds, setTotalRounds] = useState(10);
   const [revealDifficulty, setRevealDifficulty] = useState<RevealDifficulty>('open');
+
+  // 学号（登录态）+ 头像（共享 store，与 /account、PVP 互通）
+  const { userId, studentId } = useAuthSession();
+  const { avatar: sharedAvatar, load: loadAvatar, setAvatar: saveSharedAvatar } = useProfileAvatar();
+  useEffect(() => {
+    if (userId) void loadAvatar(userId);
+  }, [userId, loadAvatar]);
+  const avatar = sharedAvatar ?? DEFAULT_AVATAR;
 
   if (!bigFiveScores) {
     return (
@@ -96,6 +108,16 @@ export default function LobbyPage() {
           </h1>
           <p className="text-base leading-7 text-[var(--psy-ink-soft)]">{s.subtitle}</p>
         </div>
+
+        {/* 玩家信息：学号（登录态）+ 头像（与 profile 互通），交互同联机 */}
+        <section className="psy-panel psy-etched space-y-4 rounded-[1.6rem] p-6">
+          {studentId && (
+            <p className="text-sm text-[var(--psy-ink-soft)]">
+              {p.studentLabel}：<span className="psy-serif tracking-[0.06em] text-[var(--psy-ink)]">{studentId}</span>
+            </p>
+          )}
+          <AvatarPicker value={avatar} onChange={(next) => { if (userId) void saveSharedAvatar(userId, next); }} />
+        </section>
 
         {/* 对手档案：结构上对应联机的「玩家信息」面板（先给上下文，再设置参数） */}
         <section className="psy-panel psy-etched space-y-4 rounded-[1.6rem] p-6">

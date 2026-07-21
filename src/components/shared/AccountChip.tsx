@@ -9,6 +9,7 @@ import { useLocaleStore } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 import { AUTH_T } from '@/lib/i18n/auth';
 import { useAuthSession } from '@/lib/useAuthSession';
+import { useProfileAvatar } from '@/stores/useProfileAvatar';
 import { signOutUser } from '@/lib/auth';
 
 export function AccountChip() {
@@ -17,9 +18,15 @@ export function AccountChip() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = AUTH_T[locale];
 
-  const { loading, userId, studentId, recoveryEmail, avatar } = useAuthSession();
+  const { loading, userId, studentId, recoveryEmail } = useAuthSession();
+  const { avatar: sharedAvatar, load: loadAvatar } = useProfileAvatar();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  // 载入共享头像（各页互通）
+  useEffect(() => {
+    if (userId) void loadAvatar(userId);
+  }, [userId, loadAvatar]);
 
   // 点击外部 / Escape 关闭下拉
   useEffect(() => {
@@ -53,7 +60,7 @@ export function AccountChip() {
     );
   }
 
-  const face = avatar ?? '🙂';
+  const face = sharedAvatar ?? '🙂';
 
   return (
     <div ref={ref} className="relative">

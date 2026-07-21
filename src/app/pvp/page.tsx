@@ -20,6 +20,7 @@ import { DIMENSION_META } from '@/data/dimensions';
 import { QUESTIONS } from '@/data/questions';
 import { DEFAULT_AVATAR } from '@/data/avatars';
 import { AvatarPicker } from '@/components/pvp/AvatarPicker';
+import { useProfileAvatar } from '@/stores/useProfileAvatar';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { renderCjk } from '@/lib/renderCjk';
 import { useAuthSession } from '@/lib/useAuthSession';
@@ -55,7 +56,12 @@ export default function PvpLobbyPage() {
   useEffect(() => {
     if (sessionStudentId && sessionStudentId !== assessedStudentId) persistStudentId(sessionStudentId);
   }, [sessionStudentId, assessedStudentId, persistStudentId]);
-  const [avatar, setAvatar] = useState(player?.avatar ?? DEFAULT_AVATAR);
+  // 头像走共享 store（与 /account 互通：改一处各页立即同步）
+  const { avatar: sharedAvatar, load: loadAvatar, setAvatar: saveSharedAvatar } = useProfileAvatar();
+  useEffect(() => {
+    if (userId) void loadAvatar(userId);
+  }, [userId, loadAvatar]);
+  const avatar = sharedAvatar ?? DEFAULT_AVATAR;
   const [joinCode, setJoinCode] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(4);
   const [totalRounds, setTotalRounds] = useState(10);
@@ -294,8 +300,11 @@ export default function PvpLobbyPage() {
         )}
 
         <section className="psy-panel psy-etched space-y-4 rounded-[1.6rem] p-6">
-          {/* 学号来自登录态，不再显示/输入。这里只留头像 + 测评状态。 */}
-          <AvatarPicker value={avatar} onChange={setAvatar} />
+          {/* 学号来自登录态：纯文本展示，不可输入 */}
+          <p className="text-sm text-[var(--psy-ink-soft)]">
+            {t.studentLabel}：<span className="psy-serif tracking-[0.06em] text-[var(--psy-ink)]">{effectiveStudentId}</span>
+          </p>
+          <AvatarPicker value={avatar} onChange={(next) => { if (userId) void saveSharedAvatar(userId, next); }} />
 
           {bigFiveScores ? (
             <div className="psy-chip">

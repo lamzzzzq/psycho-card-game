@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { signOutUser, signInWithStudentId, MIN_PASSWORD, sendEmailChangeCode, verifyEmailChange } from '@/lib/auth';
 import { AvatarPicker } from '@/components/pvp/AvatarPicker';
 import { DEFAULT_AVATAR } from '@/data/avatars';
+import { useProfileAvatar } from '@/stores/useProfileAvatar';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -22,7 +23,7 @@ export default function AccountPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = AUTH_T[locale];
 
-  const { loading, userId, studentId, recoveryEmail, recoveryEmailVerified, avatar } = useAuthSession();
+  const { loading, userId, studentId, recoveryEmail, recoveryEmailVerified } = useAuthSession();
 
   // 未登录 → 去登录页
   useEffect(() => {
@@ -50,14 +51,14 @@ export default function AccountPage() {
     setVerified(recoveryEmailVerified);
   }, [recoveryEmailVerified]);
 
-  // ── 头像（emoji）──
-  const [avatarValue, setAvatarValue] = useState(DEFAULT_AVATAR);
+  // ── 头像（共享 store：profiles.avatar 真相源，各页互通）──
+  const { avatar: sharedAvatar, load: loadAvatar, setAvatar: saveSharedAvatar } = useProfileAvatar();
   useEffect(() => {
-    if (avatar) setAvatarValue(avatar);
-  }, [avatar]);
+    if (userId) void loadAvatar(userId);
+  }, [userId, loadAvatar]);
+  const avatarValue = sharedAvatar ?? DEFAULT_AVATAR;
   async function saveAvatar(next: string) {
-    setAvatarValue(next); // 乐观更新
-    await supabase.from('profiles').update({ avatar: next }).eq('id', userId!);
+    if (userId) await saveSharedAvatar(userId, next);
   }
 
   // 第一步：发码到（新）邮箱
