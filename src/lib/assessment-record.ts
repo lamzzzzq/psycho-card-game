@@ -76,8 +76,12 @@ export async function saveAssessmentResult(
   try {
     const sid = studentId?.trim();
     if (!sid) return;
+    // 绑定到登录账号：写入 user_id（= 当前登录用户）。测评/PVP 均已登录门禁，故正常有值。
+    const { data: sess } = await supabase.auth.getSession();
+    const userId = sess.session?.user.id ?? null;
     const { error } = await supabase.from('assessment_results').insert({
       student_id: sid,
+      user_id: userId,
       device_token: getOrCreateDeviceToken(),
       source,
       answers,                              // jsonb：{ "1": 4, ..., "50": 5 }（IPIP-50，50 题；手动填分为空 {}）
