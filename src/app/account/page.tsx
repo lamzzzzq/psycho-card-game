@@ -159,17 +159,9 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* 选择头像 */}
+        {/* 头像（点击展开选择；顶部已显示学号，不再重复「學號」区）*/}
         <section className="psy-card rounded-2xl p-5">
-          <h2 className="mb-3 text-sm font-semibold text-[var(--psy-ink)]">{t.chooseAvatarTitle}</h2>
           <AvatarPicker value={avatarValue} onChange={saveAvatar} />
-        </section>
-
-        {/* 账号：学号只读 */}
-        <section className="psy-card space-y-2 rounded-2xl p-5">
-          <label className="text-xs font-medium text-[var(--psy-muted)]">{t.identityLabel}</label>
-          <p className="text-lg tracking-[0.14em] text-[var(--psy-ink)]">{studentId}</p>
-          <p className="text-[11px] leading-4 text-[var(--psy-muted)]">{t.identityReadonlyHint}</p>
         </section>
 
         {/* 找回邮箱（改邮箱需验证码）*/}
@@ -186,7 +178,11 @@ export default function AccountPage() {
           {emailStep === 'idle' ? (
             <form onSubmit={sendEmailCode} className="mt-3 flex flex-col gap-2 sm:flex-row">
               <input
+                name="email"
                 type="email"
+                autoComplete="email"
+                spellCheck={false}
+                aria-label={t.recoveryEmailSectionTitle}
                 disabled={emailBusy}
                 value={email}
                 onChange={(e) => {
@@ -211,9 +207,13 @@ export default function AccountPage() {
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <input
+                  name="code"
                   type="text"
                   inputMode="numeric"
+                  autoComplete="one-time-code"
+                  spellCheck={false}
                   maxLength={6}
+                  aria-label={t.codeLabel}
                   disabled={emailBusy}
                   value={emailCode}
                   onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -241,6 +241,7 @@ export default function AccountPage() {
 
           {emailMsg && (
             <p
+              role="status"
               className={`mt-2 text-xs ${emailMsg === t.emailSaved ? 'text-[var(--psy-accent)]' : 'text-[var(--psy-danger)]'}`}
             >
               {emailMsg}
@@ -253,8 +254,10 @@ export default function AccountPage() {
           <h2 className="text-sm font-semibold text-[var(--psy-ink)]">{t.changePasswordTitle}</h2>
           <form onSubmit={updatePassword} className="mt-3 space-y-2">
             <input
+              name="current-password"
               type="password"
               autoComplete="current-password"
+              aria-label={t.currentPassword}
               disabled={pwdBusy}
               value={curPwd}
               onChange={(e) => setCurPwd(e.target.value)}
@@ -262,8 +265,10 @@ export default function AccountPage() {
               className="psy-input w-full"
             />
             <input
+              name="new-password"
               type="password"
               autoComplete="new-password"
+              aria-label={t.newPassword}
               disabled={pwdBusy}
               value={pwd}
               onChange={(e) => setPwd(e.target.value)}
@@ -271,8 +276,10 @@ export default function AccountPage() {
               className="psy-input w-full"
             />
             <input
+              name="confirm-password"
               type="password"
               autoComplete="new-password"
+              aria-label={t.confirmNewPassword}
               disabled={pwdBusy}
               value={pwd2}
               onChange={(e) => setPwd2(e.target.value)}
@@ -289,6 +296,7 @@ export default function AccountPage() {
           </form>
           {pwdMsg && (
             <p
+              role="status"
               className={`mt-2 text-xs ${pwdMsg === t.passwordUpdated ? 'text-[var(--psy-accent)]' : 'text-[var(--psy-danger)]'}`}
             >
               {pwdMsg}

@@ -294,16 +294,7 @@ export default function PvpLobbyPage() {
         )}
 
         <section className="psy-panel psy-etched space-y-4 rounded-[1.6rem] p-6">
-          <p className="psy-eyebrow text-[10px]">{t.playerInfo}</p>
-          <div className="space-y-3">
-            {/* 学号来自登录态（session/profiles），固定只读，不可手输/更换。 */}
-            <div className="psy-input flex items-center gap-2" style={{ cursor: 'default' }}>
-              <span className="psy-eyebrow shrink-0 text-[10px]">{t.studentLabel}</span>
-              <span className="psy-serif text-[var(--psy-ink)]">{effectiveStudentId}</span>
-              <span className="ml-auto text-[11px] text-[var(--psy-muted)]">🔒</span>
-            </div>
-          </div>
-
+          {/* 学号来自登录态，不再显示/输入。这里只留头像 + 测评状态。 */}
           <AvatarPicker value={avatar} onChange={setAvatar} />
 
           {bigFiveScores ? (

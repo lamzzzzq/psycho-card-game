@@ -27,31 +27,18 @@ export function AvatarPicker({ value, onChange, label }: AvatarPickerProps) {
 
   return (
     <div className="space-y-2">
-      <p className="psy-eyebrow text-[10px]">{labelText}</p>
-
-      <div className="flex items-stretch gap-3">
-        {/* 左：大頭像預覽，點擊展開 */}
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          aria-label={labelText}
-          className="psy-tile flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.1rem] transition hover:scale-[1.03]"
-        >
-          <span className="text-4xl leading-none sm:text-5xl">{value}</span>
-        </button>
-
-        {/* 右：提示 + 箭頭，填滿剩餘寬度 */}
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          className="psy-tile flex flex-1 items-center justify-between px-4 py-3 text-sm transition"
-        >
-          <span className="text-[var(--psy-ink-soft)]">{open ? (en ? 'Collapse' : '收起頭像選擇') : (en ? 'Tap to choose avatar' : '點擊選擇頭像')}</span>
-          <span className={`text-xs text-[var(--psy-muted)] transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
-        </button>
-      </div>
+      {/* 收起態：一行緊湊控件（頭像 + 提示 + 箭頭），點擊展開 */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label={labelText}
+        className="psy-tile flex w-full items-center gap-3 px-4 py-3 text-sm transition"
+      >
+        <span className="text-3xl leading-none">{value}</span>
+        <span className="text-[var(--psy-ink-soft)]">{open ? (en ? 'Collapse' : '收起') : labelText}</span>
+        <span className={`ml-auto text-xs text-[var(--psy-muted)] transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
+      </button>
 
       {/* 展開：頂部分類 tab + 當前分類網格 */}
       {open && (
