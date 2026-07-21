@@ -56,7 +56,7 @@ export default function PvpLobbyPage() {
   const [avatar, setAvatar] = useState(player?.avatar ?? DEFAULT_AVATAR);
   const [joinCode, setJoinCode] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(3);
-  const [totalRounds, setTotalRounds] = useState(5);
+  const [totalRounds, setTotalRounds] = useState(10);
   const [deck, setDeck] = useState<DeckId>('big-five');
   const [difficulty, setDifficulty] = useState<RevealDifficulty>('open');
   const [loading, setLoading] = useState(false);
@@ -412,7 +412,7 @@ export default function PvpLobbyPage() {
             <div className="space-y-2">
               <p className="psy-eyebrow text-[10px]">{t.rounds}</p>
               <div className="grid grid-cols-4 gap-2">
-                {[0, 3, 5, 10].map((n) => (
+                {[5, 10, 15, 0].map((n) => (
                   <button
                     key={n}
                     onClick={() => setTotalRounds(n)}

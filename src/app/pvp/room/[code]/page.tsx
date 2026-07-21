@@ -35,7 +35,7 @@ export default function RoomWaitPage() {
   const [error, setError] = useState('');
   const [starting, setStarting] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [settings, setSettings] = useState<RoomSettings>({ maxPlayers: 3, totalRounds: 5 });
+  const [settings, setSettings] = useState<RoomSettings>({ maxPlayers: 3, totalRounds: 10 });
 
   const handleCopyCode = useCallback(async () => {
     try {
