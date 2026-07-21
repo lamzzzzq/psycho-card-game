@@ -225,7 +225,7 @@ export default function RegisterPage() {
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder={t.codePlaceholder}
-                  className="psy-input w-full text-center text-2xl tracking-[0.5em]"
+                  className="psy-input w-full text-center text-2xl tracking-[0.2em]"
                 />
               </div>
 

@@ -218,7 +218,7 @@ export default function AccountPage() {
                   value={emailCode}
                   onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder={t.codePlaceholder}
-                  className="psy-input flex-1 text-center tracking-[0.4em]"
+                  className="psy-input flex-1 text-center tracking-[0.2em]"
                 />
                 <button
                   type="submit"

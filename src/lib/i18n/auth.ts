@@ -27,7 +27,7 @@ export const AUTH_T = {
     // 注册两步（邮箱验证码）
     sendCodeBtn: '發送驗證碼',
     codeLabel: '驗證碼',
-    codePlaceholder: '郵件裡的 6 位數字',
+    codePlaceholder: '請輸入 6 位數字',
     codeSentHint: '驗證碼已寄到你的信箱，查收後在下面輸入（也看看垃圾郵件夾）。',
     resendCode: '重新發送',
     editInfo: '返回修改',
@@ -143,7 +143,7 @@ export const AUTH_T = {
     // registration two-step (email code)
     sendCodeBtn: 'Send Code',
     codeLabel: 'Verification Code',
-    codePlaceholder: '6-digit code from email',
+    codePlaceholder: 'Enter the 6-digit code',
     codeSentHint: 'A code has been sent to your email. Enter it below (check spam too).',
     resendCode: 'Resend',
     editInfo: 'Edit info',
