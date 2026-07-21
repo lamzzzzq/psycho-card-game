@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AVATAR_EMOJIS } from '@/data/avatars';
+import { AVATAR_GROUPS } from '@/data/avatars';
 import { useLocaleStore } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 
@@ -54,29 +54,37 @@ export function AvatarPicker({ value, onChange, label }: AvatarPickerProps) {
           className="psy-panel max-h-60 overflow-y-auto rounded-[1rem] p-2"
           style={{ borderColor: 'rgba(200,155,93,0.18)' }}
         >
-          <div className="grid grid-cols-8 gap-1 sm:grid-cols-10">
-            {AVATAR_EMOJIS.map((emoji) => {
-              const active = value === emoji;
-              return (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => {
-                    onChange(emoji);
-                    setOpen(false);
-                  }}
-                  aria-pressed={active}
-                  title={emoji}
-                  className={`flex aspect-square items-center justify-center rounded-md text-xl leading-none transition hover:scale-110 ${
-                    active ? 'ring-2 ring-[var(--psy-accent)] scale-110' : ''
-                  }`}
-                  style={{ backgroundColor: active ? 'rgba(200,155,93,0.18)' : 'rgba(255,255,255,0.03)' }}
-                >
-                  {emoji}
-                </button>
-              );
-            })}
-          </div>
+          {AVATAR_GROUPS.map((group) => (
+            <div key={group.key} className="mb-1">
+              {/* 分類小標題：滾動時吸頂 */}
+              <p className="psy-eyebrow sticky top-0 z-10 -mx-2 mb-1 bg-[var(--psy-surface)] px-3 py-1 text-[10px] text-[var(--psy-muted)]">
+                {en ? group.label.en : group.label.zh}
+              </p>
+              <div className="grid grid-cols-8 gap-1 sm:grid-cols-10">
+                {group.emojis.map((emoji) => {
+                  const active = value === emoji;
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => {
+                        onChange(emoji);
+                        setOpen(false);
+                      }}
+                      aria-pressed={active}
+                      title={emoji}
+                      className={`flex aspect-square items-center justify-center rounded-md text-xl leading-none transition hover:scale-110 ${
+                        active ? 'ring-2 ring-[var(--psy-accent)] scale-110' : ''
+                      }`}
+                      style={{ backgroundColor: active ? 'rgba(200,155,93,0.18)' : 'rgba(255,255,255,0.03)' }}
+                    >
+                      {emoji}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
