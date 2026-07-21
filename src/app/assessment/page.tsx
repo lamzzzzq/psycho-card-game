@@ -9,10 +9,12 @@ import { DIMENSION_META } from '@/data/dimensions';
 import { useHydrated } from '@/stores/useHydration';
 import { QuestionCard } from '@/components/assessment/QuestionCard';
 import { LikertScore, BigFiveScores, DIMENSIONS } from '@/types';
-import { saveAssessmentResult, checkStudentIdExists, restoreAssessmentScores } from '@/lib/assessment-record';
+import { saveAssessmentResult, checkStudentIdExists, restoreAssessmentScores, retryPendingAssessmentSaves } from '@/lib/assessment-record';
 import { clamp } from '@/lib/utils';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
+import { AUTH_T } from '@/lib/i18n/auth';
 import { useAuthSession } from '@/lib/useAuthSession';
+import { signOutUser } from '@/lib/auth';
 
 // 題目嚴格按 IPIP-50 文件「correct order」排列，不打亂。
 export default function AssessmentPage() {
@@ -57,6 +59,11 @@ export default function AssessmentPage() {
     if (!authLoading && !userId) router.replace('/login');
   }, [authLoading, userId, router]);
 
+  // 补传上次没写进去的测评行（session 失效时落在 localStorage 的缓冲）。
+  useEffect(() => {
+    if (!authLoading && userId) void retryPendingAssessmentSaves();
+  }, [authLoading, userId]);
+
   // 从 session 同步学号进 store（store 学号必须来自登录态；顺带覆盖匿名旧 session 残留的脏学号）。
   useEffect(() => {
     if (sessionStudentId && sessionStudentId !== studentId) setStudentId(sessionStudentId);
@@ -97,6 +104,25 @@ export default function AssessmentPage() {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p className="psy-serif text-[var(--psy-muted)]">{t.loading}</p>
+      </div>
+    );
+  }
+
+  // 登录了但 profiles 行缺失（孤儿账号/后台删行）→ sessionStudentId 恒为 null，
+  // 下面的 gate 会永远卡在 checking。给「重新登入」出口而不是无限转圈。
+  if (!authLoading && userId && !sessionStudentId) {
+    const ta = AUTH_T[locale];
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
+        <div className="psy-panel psy-etched w-full max-w-md space-y-4 rounded-[1.7rem] p-8 text-center">
+          <p className="text-sm leading-6 text-[var(--psy-danger)]">{ta.profileMissing}</p>
+          <button
+            onClick={async () => { await signOutUser(); router.replace('/login'); }}
+            className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold"
+          >
+            {ta.reloginBtn}
+          </button>
+        </div>
       </div>
     );
   }

@@ -9,7 +9,7 @@ import { useHydrated } from '@/stores/useHydration';
 import { AUTH_T } from '@/lib/i18n/auth';
 import { useAuthSession } from '@/lib/useAuthSession';
 import { supabase } from '@/lib/supabase';
-import { signOutUser, MIN_PASSWORD, sendEmailChangeCode, verifyEmailChange } from '@/lib/auth';
+import { signOutUser, signInWithStudentId, MIN_PASSWORD, sendEmailChangeCode, verifyEmailChange } from '@/lib/auth';
 import { AvatarPicker } from '@/components/pvp/AvatarPicker';
 import { DEFAULT_AVATAR } from '@/data/avatars';
 
@@ -36,6 +36,13 @@ export default function AccountPage() {
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailMsg, setEmailMsg] = useState('');
   const [verified, setVerified] = useState(false);
+  // 发码冷却（后端按学号 60s 限流，按钮如实倒计时）
+  const [emailCooldown, setEmailCooldown] = useState(0);
+  useEffect(() => {
+    if (emailCooldown <= 0) return;
+    const timer = setInterval(() => setEmailCooldown((s) => s - 1), 1000);
+    return () => clearInterval(timer);
+  }, [emailCooldown]);
   useEffect(() => {
     if (recoveryEmail) setEmail(recoveryEmail);
   }, [recoveryEmail]);
@@ -63,6 +70,7 @@ export default function AccountPage() {
     const res = await sendEmailChangeCode(next);
     setEmailBusy(false);
     if (!res.ok) return setEmailMsg(t.err[res.error] ?? t.err.unknown);
+    setEmailCooldown(60);
     setEmailStep('code');
   }
 
@@ -82,6 +90,7 @@ export default function AccountPage() {
   }
 
   // ── 改密码 ──
+  const [curPwd, setCurPwd] = useState('');
   const [pwd, setPwd] = useState('');
   const [pwd2, setPwd2] = useState('');
   const [pwdBusy, setPwdBusy] = useState(false);
@@ -92,10 +101,23 @@ export default function AccountPage() {
     setPwdMsg('');
     if (pwd.length < MIN_PASSWORD) return setPwdMsg(t.vPwdLen);
     if (pwd !== pwd2) return setPwdMsg(t.vPwdMismatch);
+    if (!studentId) return setPwdMsg(t.err.unknown);
     setPwdBusy(true);
+    // 先验目前密码：防共用电脑上被人直接改密接管账号
+    const check = await signInWithStudentId(studentId, curPwd);
+    if (!check.ok) {
+      setPwdBusy(false);
+      return setPwdMsg(t.err.wrong_current_password);
+    }
     const { error } = await supabase.auth.updateUser({ password: pwd });
+    if (error) {
+      setPwdBusy(false);
+      return setPwdMsg(t.err.unknown);
+    }
+    // 吊销其它设备的会话（本机保留）；失败不阻塞
+    await supabase.auth.signOut({ scope: 'others' });
     setPwdBusy(false);
-    if (error) return setPwdMsg(t.err.unknown);
+    setCurPwd('');
     setPwd('');
     setPwd2('');
     setPwdMsg(t.passwordUpdated);
@@ -165,6 +187,7 @@ export default function AccountPage() {
             <form onSubmit={sendEmailCode} className="mt-3 flex flex-col gap-2 sm:flex-row">
               <input
                 type="email"
+                disabled={emailBusy}
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -175,10 +198,10 @@ export default function AccountPage() {
               />
               <button
                 type="submit"
-                disabled={emailBusy}
+                disabled={emailBusy || emailCooldown > 0}
                 className="psy-btn psy-btn-ghost psy-serif whitespace-nowrap px-5 py-2.5 font-semibold disabled:opacity-40"
               >
-                {emailBusy ? t.processing : t.sendCodeBtn}
+                {emailBusy ? t.processing : emailCooldown > 0 ? `${t.sendCodeBtn} (${emailCooldown}s)` : t.sendCodeBtn}
               </button>
             </form>
           ) : (
@@ -191,6 +214,7 @@ export default function AccountPage() {
                   type="text"
                   inputMode="numeric"
                   maxLength={6}
+                  disabled={emailBusy}
                   value={emailCode}
                   onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder={t.codePlaceholder}
@@ -206,8 +230,9 @@ export default function AccountPage() {
               </div>
               <button
                 type="button"
+                disabled={emailBusy}
                 onClick={() => { setEmailStep('idle'); setEmailMsg(''); setEmailCode(''); }}
-                className="text-xs text-[var(--psy-muted)] underline-offset-2 hover:underline"
+                className="text-xs text-[var(--psy-muted)] underline-offset-2 hover:underline disabled:opacity-40"
               >
                 {t.editInfo}
               </button>
@@ -229,7 +254,17 @@ export default function AccountPage() {
           <form onSubmit={updatePassword} className="mt-3 space-y-2">
             <input
               type="password"
+              autoComplete="current-password"
+              disabled={pwdBusy}
+              value={curPwd}
+              onChange={(e) => setCurPwd(e.target.value)}
+              placeholder={t.currentPassword}
+              className="psy-input w-full"
+            />
+            <input
+              type="password"
               autoComplete="new-password"
+              disabled={pwdBusy}
               value={pwd}
               onChange={(e) => setPwd(e.target.value)}
               placeholder={t.newPassword}
@@ -238,6 +273,7 @@ export default function AccountPage() {
             <input
               type="password"
               autoComplete="new-password"
+              disabled={pwdBusy}
               value={pwd2}
               onChange={(e) => setPwd2(e.target.value)}
               placeholder={t.confirmNewPassword}

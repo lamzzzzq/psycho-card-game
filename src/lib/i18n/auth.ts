@@ -23,6 +23,7 @@ export const AUTH_T = {
     haveAccount: '已經有帳號？',
     goLogin: '去登入',
     registerSuccess: '註冊成功，正在為你登入…',
+    registeredGoLogin: '註冊成功！自動登入沒有成功，請用剛設定的密碼登入。',
     // 注册两步（邮箱验证码）
     sendCodeBtn: '發送驗證碼',
     codeLabel: '驗證碼',
@@ -79,6 +80,7 @@ export const AUTH_T = {
     verifyAndSave: '驗證並儲存',
     emailChangeCodeHint: '驗證碼已寄到新信箱，輸入以完成綁定。',
     changePasswordTitle: '修改密碼',
+    currentPassword: '目前密碼',
     newPassword: '新密碼',
     confirmNewPassword: '確認新密碼',
     updatePassword: '更新密碼',
@@ -90,6 +92,8 @@ export const AUTH_T = {
     logout: '登出',
     backHome: '← 返回首頁',
     loadingAccount: '載入中…',
+    profileMissing: '帳號資料異常，請登出後重新登入；若持續發生請聯絡我們。',
+    reloginBtn: '重新登入',
 
     // ── 错误码 → 提示 ──
     err: {
@@ -108,6 +112,8 @@ export const AUTH_T = {
       code_expired: '驗證碼已過期，請重新發送。',
       code_email_mismatch: '信箱與發碼時不一致，請重新發送。',
       invalid_code: '驗證碼不對，請檢查後重試。',
+      too_many_requests: '發送太頻繁，請稍候再試。',
+      wrong_current_password: '目前密碼不對。',
     } as Record<string, string>,
   },
 
@@ -133,6 +139,7 @@ export const AUTH_T = {
     haveAccount: 'Already have an account?',
     goLogin: 'Log in',
     registerSuccess: 'Registered! Signing you in…',
+    registeredGoLogin: 'Registered! Auto sign-in failed — please log in with the password you just set.',
     // registration two-step (email code)
     sendCodeBtn: 'Send Code',
     codeLabel: 'Verification Code',
@@ -189,6 +196,7 @@ export const AUTH_T = {
     verifyAndSave: 'Verify & Save',
     emailChangeCodeHint: 'A code was sent to the new email. Enter it to confirm.',
     changePasswordTitle: 'Change Password',
+    currentPassword: 'Current password',
     newPassword: 'New password',
     confirmNewPassword: 'Confirm new password',
     updatePassword: 'Update Password',
@@ -200,6 +208,8 @@ export const AUTH_T = {
     logout: 'Log Out',
     backHome: '← Back to Home',
     loadingAccount: 'Loading…',
+    profileMissing: 'Account data error. Please log out and log in again; contact us if it persists.',
+    reloginBtn: 'Log in again',
 
     // ── error code → message ──
     err: {
@@ -218,6 +228,8 @@ export const AUTH_T = {
       code_expired: 'Code expired. Please resend.',
       code_email_mismatch: 'Email differs from when the code was sent. Please resend.',
       invalid_code: 'Wrong code. Please check and try again.',
+      too_many_requests: 'Too many requests. Please wait a moment and try again.',
+      wrong_current_password: 'Current password is wrong.',
     } as Record<string, string>,
   },
 } as const;

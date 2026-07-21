@@ -9,7 +9,9 @@ import { useHydrated } from '@/stores/useHydration';
 import { usePvpStore } from '@/stores/usePvpStore';
 import { upsertPlayer, createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerActiveRoom, STALE_ROOM_MS } from '@/lib/room-api';
 import { retryPendingSaves } from '@/lib/game-record';
-import { saveAssessmentResult, checkStudentIdExists } from '@/lib/assessment-record';
+import { saveAssessmentResult, checkStudentIdExists, retryPendingAssessmentSaves } from '@/lib/assessment-record';
+import { AUTH_T } from '@/lib/i18n/auth';
+import { signOutUser } from '@/lib/auth';
 import { normalizeStudentId, isValidStudentId, clamp } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { PlayerInfo, DeckId } from '@/types/pvp';
@@ -71,6 +73,11 @@ export default function PvpLobbyPage() {
   useEffect(() => {
     void retryPendingSaves();
   }, []);
+
+  // 補傳上次沒寫進去的測評行（session 失效時落在 localStorage 的緩衝；需登錄態）
+  useEffect(() => {
+    if (!authLoading && userId) void retryPendingAssessmentSaves();
+  }, [authLoading, userId]);
 
   useEffect(() => {
     if (!player) return;
@@ -135,7 +142,26 @@ export default function PvpLobbyPage() {
     );
   }
 
-  // 需登录：加载中 / 未登录（正跳转 /login）/ 学号尚未从 session 读到 → 居中加载态。
+  // 登录了但 profiles 行缺失（孤儿账号/后台删行）→ sessionStudentId 恒为 null，
+  // 不能无限 loading，给「重新登入」出口。
+  if (!authLoading && userId && !sessionStudentId) {
+    const ta = AUTH_T[locale];
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
+        <div className="psy-panel psy-etched w-full max-w-md space-y-4 rounded-[1.7rem] p-8 text-center">
+          <p className="text-sm leading-6 text-[var(--psy-danger)]">{ta.profileMissing}</p>
+          <button
+            onClick={async () => { await signOutUser(); router.replace('/login'); }}
+            className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold"
+          >
+            {ta.reloginBtn}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 需登录：加载中 / 未登录（正跳转 /login）→ 居中加载态。
   if (authLoading || !userId || !sessionStudentId) {
     return (
       <div className="flex flex-1 items-center justify-center">

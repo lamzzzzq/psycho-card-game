@@ -35,12 +35,19 @@ export function useAuthSession(): AuthSession {
         if (active) setState({ ...EMPTY });
         return;
       }
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('student_id, recovery_email, recovery_email_verified, avatar')
         .eq('id', userId)
         .maybeSingle();
       if (!active) return;
+      if (error) {
+        // 网络抖动/瞬时失败 ≠ profiles 行不存在：保留上一份数据，只收掉 loading。
+        // 清成 null 会误触发测评/PVP 的「帳號資料異常」gate（TOKEN_REFRESHED 每小时
+        // 都会重新 load 一次，答题中途一次抖动就把人踢出去）。
+        setState((prev) => ({ ...prev, loading: false, userId }));
+        return;
+      }
       setState({
         loading: false,
         userId,

@@ -12,6 +12,16 @@ import { signOutUser, MIN_PASSWORD } from '@/lib/auth';
 
 type Phase = 'checking' | 'ready' | 'invalid' | 'done';
 
+// 只認 recovery 流程：沒帶 token 直接進來（含已登錄用戶誤入）一律 invalid，
+// 不讓普通登錄態走「改密→強制登出」。放在模塊頂層同步求值 —— supabase client
+// 的 detectSessionInUrl 建完會話就 replaceState 清 hash，useState initializer
+// 可能已經來不及讀到；模塊求值搶在那條異步鏈之前。
+const HAD_TOKEN =
+  typeof window !== 'undefined' &&
+  (window.location.hash.includes('type=recovery') ||
+    window.location.hash.includes('access_token') ||
+    new URLSearchParams(window.location.search).has('code'));
+
 export default function ResetPasswordPage() {
   const router = useRouter();
   const hydrated = useHydrated();
@@ -19,29 +29,34 @@ export default function ResetPasswordPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = AUTH_T[locale];
 
-  const [phase, setPhase] = useState<Phase>('checking');
+  const [phase, setPhase] = useState<Phase>(HAD_TOKEN ? 'checking' : 'invalid');
   const [pwd, setPwd] = useState('');
   const [pwd2, setPwd2] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   // 郵件連結帶 recovery token；supabase client(detectSessionInUrl) 會自動建立臨時會話並觸發事件。
+  // 帶 token 但事件在訂閱前被消費時，兜底用「已有會話」放行；弱網放寬到 8s 再下 invalid 結論。
   useEffect(() => {
+    if (!HAD_TOKEN) return;
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
         setPhase('ready');
       }
     });
-    // 兜底：稍等後檢查有沒有會話（連結無效/過期則 invalid）
     const timer = setTimeout(async () => {
       const { data } = await supabase.auth.getSession();
       setPhase((p) => (p === 'checking' ? (data.session ? 'ready' : 'invalid') : p));
-    }, 2500);
+    }, 8000);
     return () => {
       sub.subscription.unsubscribe();
       clearTimeout(timer);
     };
   }, []);
+
+  // 服務端預渲染讀不到 hash（HAD_TOKEN=false → invalid），帶 token 的客戶端首渲染
+  // 是 checking —— hydrate 前統一顯示 checking，避免 hydration mismatch。
+  const shownPhase: Phase = hydrated ? phase : 'checking';
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -73,11 +88,11 @@ export default function ResetPasswordPage() {
           {t.resetTitle}
         </h1>
 
-        {phase === 'checking' && (
+        {shownPhase === 'checking' && (
           <p className="mt-6 text-center text-sm text-[var(--psy-muted)]">{t.resetChecking}</p>
         )}
 
-        {phase === 'invalid' && (
+        {shownPhase === 'invalid' && (
           <>
             <p className="mt-4 text-center text-sm leading-6 text-[var(--psy-danger)]">{t.resetInvalid}</p>
             <p className="mt-6 text-center text-sm">
@@ -88,11 +103,11 @@ export default function ResetPasswordPage() {
           </>
         )}
 
-        {phase === 'done' && (
+        {shownPhase === 'done' && (
           <p className="mt-6 text-center text-sm leading-6 text-[var(--psy-accent)]">{t.resetDone}</p>
         )}
 
-        {phase === 'ready' && (
+        {shownPhase === 'ready' && (
           <>
             <p className="mt-2 text-center text-sm leading-6 text-[var(--psy-muted)]">{t.resetSubtitle}</p>
             <form onSubmit={onSubmit} className="mt-8 space-y-3">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -29,6 +29,15 @@ export default function RegisterPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  // 注册成功但自动登录失败：提示改用刚设的密码去登录（不能报「學號或密碼不對」误导）。
+  const [loginFallback, setLoginFallback] = useState(false);
+  // 发码冷却（后端同样按学号 60s 限流，这里让按钮如实倒计时）。
+  const [cooldown, setCooldown] = useState(0);
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => setCooldown((s) => s - 1), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const idOk = normalizeStudentId(studentId).length === STUDENT_ID_LENGTH;
   const pwdOk = password.length >= MIN_PASSWORD;
@@ -49,6 +58,7 @@ export default function RegisterPage() {
     const res = await sendVerifyCode(studentId, email);
     setBusy(false);
     if (!res.ok) return setError(t.err[res.error] ?? t.err.unknown);
+    setCooldown(60);
     setStep('code');
   }
 
@@ -65,9 +75,15 @@ export default function RegisterPage() {
     }
     setSuccess(true);
     const login = await signInWithStudentId(studentId, password);
-    setBusy(false);
-    if (login.ok) router.push('/');
-    else setError(t.err.invalid_credentials);
+    if (login.ok) {
+      setBusy(false);
+      router.push('/');
+    } else {
+      // 账号已建成、码已销毁 —— 再点註冊/重發只会得到误导性错误，
+      // 保持 busy 锁住入口，提示后带去登录页。
+      setLoginFallback(true);
+      setTimeout(() => router.replace('/login'), 1800);
+    }
   }
 
   async function onResend() {
@@ -75,7 +91,8 @@ export default function RegisterPage() {
     setBusy(true);
     const res = await sendVerifyCode(studentId, email);
     setBusy(false);
-    if (!res.ok) setError(t.err[res.error] ?? t.err.unknown);
+    if (!res.ok) return setError(t.err[res.error] ?? t.err.unknown);
+    setCooldown(60);
   }
 
   return (
@@ -101,6 +118,7 @@ export default function RegisterPage() {
                   type="text"
                   autoComplete="username"
                   maxLength={STUDENT_ID_LENGTH}
+                  disabled={busy}
                   value={studentId}
                   onChange={(e) => setStudentId(normalizeStudentId(e.target.value).slice(0, STUDENT_ID_LENGTH))}
                   placeholder={t.studentIdPlaceholder}
@@ -123,6 +141,7 @@ export default function RegisterPage() {
                 <input
                   type={showPwd ? 'text' : 'password'}
                   autoComplete="new-password"
+                  disabled={busy}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t.passwordPlaceholder}
@@ -136,6 +155,7 @@ export default function RegisterPage() {
                 <input
                   type={showPwd ? 'text' : 'password'}
                   autoComplete="new-password"
+                  disabled={busy}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder={t.confirmPasswordPlaceholder}
@@ -149,6 +169,7 @@ export default function RegisterPage() {
                 <input
                   type="email"
                   autoComplete="email"
+                  disabled={busy}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t.recoveryEmailPlaceholder}
@@ -187,6 +208,7 @@ export default function RegisterPage() {
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   maxLength={6}
+                  disabled={busy}
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder={t.codePlaceholder}
@@ -196,7 +218,9 @@ export default function RegisterPage() {
 
               {error && <p className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
               {success && !error && (
-                <p className="text-xs leading-5 text-[var(--psy-accent)]">{t.registerSuccess}</p>
+                <p className="text-xs leading-5 text-[var(--psy-accent)]">
+                  {loginFallback ? t.registeredGoLogin : t.registerSuccess}
+                </p>
               )}
 
               <button
@@ -211,18 +235,19 @@ export default function RegisterPage() {
             <div className="mt-5 flex items-center justify-between text-sm">
               <button
                 type="button"
+                disabled={busy}
                 onClick={() => { setStep('info'); setError(''); setCode(''); }}
-                className="text-[var(--psy-muted)] underline-offset-2 hover:underline"
+                className="text-[var(--psy-muted)] underline-offset-2 hover:underline disabled:opacity-40"
               >
                 {t.editInfo}
               </button>
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || cooldown > 0}
                 onClick={onResend}
                 className="text-[var(--psy-accent)] underline-offset-2 hover:underline disabled:opacity-40"
               >
-                {t.resendCode}
+                {cooldown > 0 ? `${t.resendCode} (${cooldown}s)` : t.resendCode}
               </button>
             </div>
           </>

@@ -19,6 +19,8 @@ const FROM = 'Personalities Mahjong <noreply@personalitiesmahjong.com>';
 const RESET_REDIRECT = 'https://personalitiesmahjong.com/reset-password';
 const EMAIL_DOMAIN = 'stu.personalitiesmahjong.com';
 const STUDENT_ID_LENGTH = 9;
+const SEND_COOLDOWN_MS = 60_000;
+const DAILY_SEND_CAP = 10;
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -38,6 +40,34 @@ function json(status: number, body: unknown): Response {
 }
 function normalizeStudentId(raw: string): string {
   return raw.replace(/\s+/g, '').toUpperCase();
+}
+
+// 发送节流：60s 冷却 + 每日上限（key = '<用途>:<学号>'，表见 0020_email_send_limits.sql）。
+// 读-改-写非原子，并发下可能多放行一两次 —— 对防邮件轰炸/烧配额足够。
+// 表读失败（如 migration 未跑）放行并记日志：限流失效好过发信全挂。
+async function allowSend(key: string): Promise<boolean> {
+  const now = Date.now();
+  const today = new Date(now).toISOString().slice(0, 10);
+  const { data, error: selErr } = await admin
+    .from('email_send_limits')
+    .select('last_sent_at, day, day_count')
+    .eq('key', key)
+    .maybeSingle();
+  if (selErr) {
+    console.warn('[send-limit] read failed, allowing', selErr.message);
+    return true;
+  }
+  if (data) {
+    if (now - new Date(data.last_sent_at).getTime() < SEND_COOLDOWN_MS) return false;
+    if (data.day === today && data.day_count >= DAILY_SEND_CAP) return false;
+  }
+  await admin.from('email_send_limits').upsert({
+    key,
+    last_sent_at: new Date(now).toISOString(),
+    day: today,
+    day_count: data && data.day === today ? data.day_count + 1 : 1,
+  }, { onConflict: 'key' });
+  return true;
 }
 
 function emailHtml(link: string): string {
@@ -67,6 +97,10 @@ Deno.serve(async (req) => {
   const studentId = normalizeStudentId(String(body.student_id ?? ''));
   // 学号格式不对：也返回通用成功（不泄露），直接结束
   if (studentId.length !== STUDENT_ID_LENGTH) return json(200, { ok: true });
+
+  // 限流：60s 冷却 + 每日上限。超限也返回通用成功（不能让 429 变成「该学号存在」的探针），
+  // 只是静默不发信。
+  if (!(await allowSend(`recovery:${studentId}`))) return json(200, { ok: true });
 
   // 查 recovery_email
   const { data: profile } = await admin

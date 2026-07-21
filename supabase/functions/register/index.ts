@@ -44,6 +44,18 @@ async function sha256(text: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+// 按合成邮箱找 auth 用户（GoTrue admin 没有按邮箱查询的接口，翻页找；课堂规模够用）
+async function findUserIdByEmail(email: string): Promise<string | null> {
+  for (let page = 1; page <= 10; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) return null;
+    const hit = data.users.find((u) => u.email?.toLowerCase() === email);
+    if (hit) return hit.id;
+    if (data.users.length < 200) return null;
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });
@@ -86,23 +98,49 @@ Deno.serve(async (req) => {
   if (existing) return json(409, { error: 'student_id_taken' });
 
   // ── 建 auth 用户 ──
+  const synthEmail = `${studentId.toLowerCase()}@${EMAIL_DOMAIN}`;
+  let userId: string;
+  let createdFresh = true;
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
-    email: `${studentId.toLowerCase()}@${EMAIL_DOMAIN}`,
+    email: synthEmail,
     password,
     email_confirm: true,
     user_metadata: { student_id: studentId },
   });
-  if (createErr || !created?.user) return json(409, { error: 'account_exists', detail: createErr?.message });
+  if (created?.user) {
+    userId = created.user.id;
+  } else {
+    // profiles 查无此学号、createUser 却撞邮箱重复 → 之前注册半途失败留下的孤儿
+    // auth 用户（写 profile 失败且 deleteUser 回滚也失败 / 函数中途崩溃）。
+    // 不自愈的话该学号永远 account_exists 又登不进去。自愈：找到孤儿 →
+    // 重设为本次密码 → 走下面补写 profile，完成注册。
+    const dup =
+      createErr &&
+      ((createErr as { code?: string }).code === 'email_exists' ||
+        /already|registered|exists/i.test(createErr.message ?? ''));
+    if (!dup) return json(409, { error: 'account_exists', detail: createErr?.message });
+    const orphanId = await findUserIdByEmail(synthEmail);
+    if (!orphanId) return json(409, { error: 'account_exists', detail: createErr?.message });
+    const { data: orphanProfile } = await admin.from('profiles').select('id').eq('id', orphanId).maybeSingle();
+    if (orphanProfile) return json(409, { error: 'account_exists' }); // 有 profile = 真已注册（学号查重竞态兜底）
+    const { error: pwErr } = await admin.auth.admin.updateUserById(orphanId, {
+      password,
+      user_metadata: { student_id: studentId },
+    });
+    if (pwErr) return json(500, { error: 'unknown', detail: pwErr.message });
+    userId = orphanId;
+    createdFresh = false;
+  }
 
   // ── 写 profile（邮箱已验证），失败回滚 ──
   const { error: profErr } = await admin.from('profiles').insert({
-    id: created.user.id,
+    id: userId,
     student_id: studentId,
     recovery_email: recoveryEmail,
     recovery_email_verified: true,
   });
   if (profErr) {
-    await admin.auth.admin.deleteUser(created.user.id);
+    if (createdFresh) await admin.auth.admin.deleteUser(userId);
     return json(409, { error: 'student_id_taken', detail: profErr.message });
   }
 
