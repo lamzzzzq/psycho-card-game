@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Serif_SC, Noto_Sans_SC } from "next/font/google";
 import "./globals.css";
 import { LocaleSync } from "@/components/shared/LocaleSync";
+import { SessionGuard } from "@/components/shared/SessionGuard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -66,6 +67,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-[var(--psy-bg)] text-[var(--psy-ink)]">
         <LocaleSync />
+        <SessionGuard />
         {children}
       </body>
     </html>

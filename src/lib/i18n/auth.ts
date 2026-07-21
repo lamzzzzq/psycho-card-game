@@ -40,6 +40,13 @@ export const AUTH_T = {
     goRegister: '去註冊',
     forgotPassword: '忘記密碼？',
 
+    // ── 单会话：其它设备登入冲突 ──
+    sessionConflictTitle: '此帳號已在其他裝置登入',
+    sessionConflictBody: '繼續登入會把這個帳號在其他裝置上登出。要繼續嗎？',
+    sessionContinue: '繼續登入',
+    sessionCancel: '取消',
+    sessionKicked: '此帳號在其他裝置登入，你已被登出。',
+
     // ── 忘記密碼 ──
     forgotTitle: '找回密碼',
     forgotSubtitle: '輸入你的學號，我們會把重設連結寄到你註冊時填的找回信箱。',
@@ -155,6 +162,13 @@ export const AUTH_T = {
     noAccount: 'No account yet?',
     goRegister: 'Register',
     forgotPassword: 'Forgot password?',
+
+    // ── single session: logged-in-elsewhere conflict ──
+    sessionConflictTitle: 'Already logged in on another device',
+    sessionConflictBody: 'Continuing will log this account out on the other device. Continue?',
+    sessionContinue: 'Continue',
+    sessionCancel: 'Cancel',
+    sessionKicked: 'This account was logged in on another device, so you were signed out.',
 
     // ── forgot password ──
     forgotTitle: 'Reset Password',

@@ -4,6 +4,10 @@
 
 import { supabase } from '@/lib/supabase';
 import { normalizeStudentId } from '@/lib/utils';
+import { getDeviceToken } from '@/lib/deviceToken';
+
+// 单会话：「其它设备近期活跃」的判定窗口（心跳每 60s，窗口略大于 2 个心跳）
+const ACTIVE_WINDOW_MS = 150_000;
 
 const EMAIL_DOMAIN = 'stu.personalitiesmahjong.com';
 export const MIN_PASSWORD = 6;
@@ -77,6 +81,51 @@ export async function signInWithStudentId(
 
 export async function signOutUser(): Promise<void> {
   await supabase.auth.signOut();
+}
+
+// ── 单会话 ──
+
+// 当前登录用户 id（未登录 null）
+export async function currentUserId(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user.id ?? null;
+}
+
+// 登录冲突检测：是否有「其它设备近期活跃」占用该账号
+export async function isSessionActiveElsewhere(userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('profiles')
+    .select('active_device, active_at')
+    .eq('id', userId)
+    .maybeSingle();
+  if (!data?.active_device || !data.active_at) return false;
+  if (data.active_device === getDeviceToken()) return false;
+  return Date.now() - new Date(data.active_at).getTime() < ACTIVE_WINDOW_MS;
+}
+
+// 占用会话（把 active_device 设为本机 + 刷新时间）
+export async function claimSession(userId: string): Promise<void> {
+  await supabase
+    .from('profiles')
+    .update({ active_device: getDeviceToken(), active_at: new Date().toISOString() })
+    .eq('id', userId);
+}
+
+// 心跳：仍是本机 → 刷新时间返回 ok；被别的设备顶了 → 'taken_over'
+export async function heartbeatSession(userId: string): Promise<'ok' | 'taken_over'> {
+  const { data } = await supabase
+    .from('profiles')
+    .select('active_device')
+    .eq('id', userId)
+    .maybeSingle();
+  if (data && data.active_device && data.active_device !== getDeviceToken()) {
+    return 'taken_over';
+  }
+  await supabase
+    .from('profiles')
+    .update({ active_device: getDeviceToken(), active_at: new Date().toISOString() })
+    .eq('id', userId);
+  return 'ok';
 }
 
 // /account 改找回邮箱：发码到新邮箱（认证态）
