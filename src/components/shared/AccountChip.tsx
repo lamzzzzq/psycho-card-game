@@ -21,14 +21,21 @@ export function AccountChip() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // 点击外部关闭下拉
+  // 点击外部 / Escape 关闭下拉
   useEffect(() => {
     if (!open) return;
     function onDown(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
     document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
   // 加载中不占位（避免闪烁）
@@ -53,6 +60,8 @@ export function AccountChip() {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label={t.accountTitle}
+        aria-haspopup="menu"
+        aria-expanded={open}
         className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[var(--psy-surface)] text-2xl shadow-[var(--psy-shadow)] transition hover:border-[var(--psy-accent)]"
       >
         {face}

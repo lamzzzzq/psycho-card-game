@@ -51,6 +51,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#f4edd9", // = --psy-bg，让手机浏览器状态栏/工具栏与页面同色
 };
 
 export default function RootLayout({

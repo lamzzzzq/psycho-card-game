@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
 
         {sent ? (
           <>
-            <p className="mt-4 text-center text-sm leading-6 text-[var(--psy-accent)]">{t.forgotSent}</p>
+            <p role="status" className="mt-4 text-center text-sm leading-6 text-[var(--psy-accent)]">{t.forgotSent}</p>
             <p className="mt-6 text-center text-sm">
               <Link href="/login" className="text-[var(--psy-muted)] underline-offset-2 hover:underline">
                 {t.backToLogin}
@@ -56,10 +56,13 @@ export default function ForgotPasswordPage() {
             <p className="mt-2 text-center text-sm leading-6 text-[var(--psy-muted)]">{t.forgotSubtitle}</p>
             <form onSubmit={onSubmit} className="mt-8 space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-[var(--psy-muted)]">{t.studentIdLabel}</label>
+                <label htmlFor="forgot-student-id" className="text-xs font-medium text-[var(--psy-muted)]">{t.studentIdLabel}</label>
                 <input
+                  id="forgot-student-id"
+                  name="username"
                   type="text"
                   autoComplete="username"
+                  spellCheck={false}
                   maxLength={STUDENT_ID_LENGTH}
                   value={studentId}
                   onChange={(e) => setStudentId(normalizeStudentId(e.target.value).slice(0, STUDENT_ID_LENGTH))}

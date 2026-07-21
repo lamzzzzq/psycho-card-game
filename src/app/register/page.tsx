@@ -113,10 +113,13 @@ export default function RegisterPage() {
             <form onSubmit={onSendCode} className="mt-8 space-y-4">
               {/* 学号 */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-[var(--psy-muted)]">{t.studentIdLabel}</label>
+                <label htmlFor="reg-student-id" className="text-xs font-medium text-[var(--psy-muted)]">{t.studentIdLabel}</label>
                 <input
+                  id="reg-student-id"
+                  name="username"
                   type="text"
                   autoComplete="username"
+                  spellCheck={false}
                   maxLength={STUDENT_ID_LENGTH}
                   disabled={busy}
                   value={studentId}
@@ -129,7 +132,7 @@ export default function RegisterPage() {
               {/* 密码 */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-[var(--psy-muted)]">{t.passwordLabel}</label>
+                  <label htmlFor="reg-password" className="text-xs font-medium text-[var(--psy-muted)]">{t.passwordLabel}</label>
                   <button
                     type="button"
                     onClick={() => setShowPwd((v) => !v)}
@@ -139,6 +142,8 @@ export default function RegisterPage() {
                   </button>
                 </div>
                 <input
+                  id="reg-password"
+                  name="new-password"
                   type={showPwd ? 'text' : 'password'}
                   autoComplete="new-password"
                   disabled={busy}
@@ -151,8 +156,10 @@ export default function RegisterPage() {
 
               {/* 确认密码 */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-[var(--psy-muted)]">{t.confirmPasswordLabel}</label>
+                <label htmlFor="reg-confirm" className="text-xs font-medium text-[var(--psy-muted)]">{t.confirmPasswordLabel}</label>
                 <input
+                  id="reg-confirm"
+                  name="confirm-password"
                   type={showPwd ? 'text' : 'password'}
                   autoComplete="new-password"
                   disabled={busy}
@@ -165,10 +172,13 @@ export default function RegisterPage() {
 
               {/* 找回邮箱 */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-[var(--psy-muted)]">{t.recoveryEmailLabel}</label>
+                <label htmlFor="reg-email" className="text-xs font-medium text-[var(--psy-muted)]">{t.recoveryEmailLabel}</label>
                 <input
+                  id="reg-email"
+                  name="email"
                   type="email"
                   autoComplete="email"
+                  spellCheck={false}
                   disabled={busy}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -178,7 +188,7 @@ export default function RegisterPage() {
                 <p className="text-[11px] leading-4 text-[var(--psy-muted)]">{t.recoveryEmailHint}</p>
               </div>
 
-              {error && <p className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
+              {error && <p role="alert" className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
 
               <button
                 type="submit"
@@ -202,11 +212,14 @@ export default function RegisterPage() {
             <p className="mt-1 text-center text-xs text-[var(--psy-muted)]">{email}</p>
             <form onSubmit={onRegister} className="mt-8 space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-[var(--psy-muted)]">{t.codeLabel}</label>
+                <label htmlFor="reg-code" className="text-xs font-medium text-[var(--psy-muted)]">{t.codeLabel}</label>
                 <input
+                  id="reg-code"
+                  name="code"
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
+                  spellCheck={false}
                   maxLength={6}
                   disabled={busy}
                   value={code}
@@ -216,9 +229,9 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {error && <p className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
+              {error && <p role="alert" className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
               {success && !error && (
-                <p className="text-xs leading-5 text-[var(--psy-accent)]">
+                <p role="status" className="text-xs leading-5 text-[var(--psy-accent)]">
                   {loginFallback ? t.registeredGoLogin : t.registerSuccess}
                 </p>
               )}

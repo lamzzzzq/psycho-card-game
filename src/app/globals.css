@@ -185,6 +185,14 @@ body > * {
     background 140ms ease;
 }
 
+/* iOS Safari 聚焦 <16px 的输入框会强制放大页面（登入/注册每点一个框就缩放跳动）——
+   手机端字号提到 16px 抑制自动缩放，桌面保持 14px 不变。 */
+@media (max-width: 640px) {
+  .psy-input {
+    font-size: 1rem;
+  }
+}
+
 .psy-input::placeholder {
   color: var(--psy-muted);
 }

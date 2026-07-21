@@ -113,6 +113,9 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       const idx = (discardedBy + offset) % playerCount;
       const latestGame = get().game;
       if (!latestGame || latestGame.phase !== 'claim-window') return;
+      // 窗口身份校验：delay 期间旧窗口可能已关、新窗口已开（人类极快碰→弃牌）。
+      // 只查 phase 会把上一张弃牌算出的 decision 用到新窗口上 —— 必须同一张 pendingDiscard。
+      if (latestGame.pendingDiscard?.id !== pendingCard.id) return;
 
       const player = latestGame.players[idx];
       if (player.isHuman) continue;
@@ -126,6 +129,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       await delay(400);
       const currentGame = get().game;
       if (!currentGame || currentGame.phase !== 'claim-window') return;
+      if (currentGame.pendingDiscard?.id !== pendingCard.id) return;
 
       if (decision.shouldPong && (decision as any).dimension && (decision as any).handCardIds) {
         set({ game: pongCard(currentGame, idx, (decision as any).dimension, (decision as any).handCardIds) });
@@ -148,6 +152,18 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     // drawnCard=null (bug #7). Skip the hu/draw steps and pick a discard
     // directly from hand.
     if (game.phase === 'discarding' && !game.drawnCard) {
+      // 碰完即胡：碰成功后手牌恰好 = 剩余目标总和，这是 hand-only 检查唯一可能为真的时刻
+      //（站立手牌恒 = 剩余目标总和 − 1）。不查的话 AI 会把能胡的局白白弃牌错过。
+      const pongHu = makeAIHuDecision(currentPlayer, game.settings.aiDifficulty);
+      if (pongHu.shouldHu) {
+        await delay(pongHu.thinkingMs);
+        const s = get().game;
+        if (!s || s.phase !== 'discarding' || s.currentPlayerIndex !== game.currentPlayerIndex) return;
+        const afterHu = attemptHu(s, s.currentPlayerIndex);
+        set({ game: afterHu });
+        if (afterHu.phase === 'game-over') return;
+        // hu 失败（竞态才可能）→ 引擎让它留在 discarding，继续把欠的牌弃掉
+      }
       const decision = makeAIDecision(currentPlayer, currentPlayer.hand[0], game.settings.aiDifficulty, {
         discardPile: game.discardPile,
         actionLog: game.actionLog,
@@ -168,7 +184,32 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       return;
     }
 
-    // AI Hu check
+    // 兜底续跑：若上次 executeAITurn 在 draw 之后、discard 之前中断（异常/热重载），
+    // 状态残留在 phase='ai-turn' + drawnCard —— 下面所有分支都会直接 return（含页面
+    // 的隐藏兜底按钮），游戏永久停在「思考中」。这里接上 hu 检查 + discard 步骤。
+    if (game.phase === 'ai-turn' && game.drawnCard) {
+      const resumeHu = makeAIHuDecision(currentPlayer, game.settings.aiDifficulty, game.drawnCard);
+      if (resumeHu.shouldHu) {
+        const afterHu = attemptHu(game, game.currentPlayerIndex);
+        set({ game: afterHu });
+        if (afterHu.phase === 'game-over') return;
+        if (!get().game?.drawnCard) return; // hu 失败已让位
+      }
+      const decision = makeAIDecision(currentPlayer, game.drawnCard, game.settings.aiDifficulty, {
+        discardPile: game.discardPile,
+        actionLog: game.actionLog,
+        currentRound: game.currentRound,
+        totalRounds: game.settings.totalRounds,
+      });
+      await delay(decision.thinkingMs);
+      const latestResume = get().game;
+      if (!latestResume || !latestResume.drawnCard) return;
+      set({ game: discardCard(latestResume, decision.cardToDiscard.id) });
+      return;
+    }
+
+    // AI Hu check（摸牌前）：站立手牌恒 = 剩余目标总和 − 1，这里几乎必假 ——
+    // 真正的自摸胡点在下面摸牌之后。保留仅作为不变量被打破时的防御。
     const huDecision = makeAIHuDecision(currentPlayer, game.settings.aiDifficulty);
     if (huDecision.shouldHu) {
       await delay(huDecision.thinkingMs);
@@ -192,6 +233,20 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     if (!drawnCard) return;
 
     const playerAfterDraw = afterDraw.players[afterDraw.currentPlayerIndex];
+
+    // 自摸胡：把刚摸的 drawnCard 一起算（attemptHu 的 pool 本来就含 drawnCard）。
+    // 摸牌前的 hand-only 检查数学上永假，这里才是 AI 唯一真实的胡点。
+    const postDrawHu = makeAIHuDecision(playerAfterDraw, afterDraw.settings.aiDifficulty, drawnCard);
+    if (postDrawHu.shouldHu) {
+      await delay(postDrawHu.thinkingMs);
+      const stateForHu = get().game;
+      if (!stateForHu || stateForHu.drawnCard?.id !== drawnCard.id) return;
+      const afterHu = attemptHu(stateForHu, stateForHu.currentPlayerIndex);
+      set({ game: afterHu });
+      if (afterHu.phase === 'game-over') return;
+      if (!get().game?.drawnCard) return; // hu 失败（竞态才可能）已让位
+    }
+
     const decision = makeAIDecision(playerAfterDraw, drawnCard, afterDraw.settings.aiDifficulty, {
       discardPile: afterDraw.discardPile,
       actionLog: afterDraw.actionLog,

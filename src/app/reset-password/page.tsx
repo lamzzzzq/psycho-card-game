@@ -104,7 +104,7 @@ export default function ResetPasswordPage() {
         )}
 
         {shownPhase === 'done' && (
-          <p className="mt-6 text-center text-sm leading-6 text-[var(--psy-accent)]">{t.resetDone}</p>
+          <p role="status" className="mt-6 text-center text-sm leading-6 text-[var(--psy-accent)]">{t.resetDone}</p>
         )}
 
         {shownPhase === 'ready' && (
@@ -112,22 +112,26 @@ export default function ResetPasswordPage() {
             <p className="mt-2 text-center text-sm leading-6 text-[var(--psy-muted)]">{t.resetSubtitle}</p>
             <form onSubmit={onSubmit} className="mt-8 space-y-3">
               <input
+                name="new-password"
                 type="password"
                 autoComplete="new-password"
+                aria-label={t.newPassword}
                 value={pwd}
                 onChange={(e) => setPwd(e.target.value)}
                 placeholder={t.newPassword}
                 className="psy-input w-full"
               />
               <input
+                name="confirm-password"
                 type="password"
                 autoComplete="new-password"
+                aria-label={t.confirmNewPassword}
                 value={pwd2}
                 onChange={(e) => setPwd2(e.target.value)}
                 placeholder={t.confirmNewPassword}
                 className="psy-input w-full"
               />
-              {error && <p className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
+              {error && <p role="alert" className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
               <button
                 type="submit"
                 disabled={busy}

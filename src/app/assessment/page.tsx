@@ -41,8 +41,9 @@ export default function AssessmentPage() {
 
   // 已完成測評則跳到結果頁（放 effect 裡，避免 render 期調 router.push）。
   // 重测中(retaking)即使有旧 bigFiveScores 也留在本页答题，不弹回结果。
+  // replace 而非 push：push 会造成 /results 按返回键 → 本页挂载 → 又 push 回去的死循环。
   useEffect(() => {
-    if (bigFiveScores && !retaking) router.push('/results');
+    if (bigFiveScores && !retaking) router.replace('/results');
   }, [bigFiveScores, retaking, router]);
 
   // 离开测评页时若仍在「重测中」（= 没答完）→ 作废本次重测，保留旧报告。
@@ -214,14 +215,15 @@ export default function AssessmentPage() {
   const safeIndex = Math.min(currentIndex, total - 1);
   const question = QUESTIONS[safeIndex];
   const progress = getProgress();
-  const isLast = safeIndex === total - 1;
 
   const handleSelect = (score: LikertScore) => {
     setAnswer(question.id, score);
 
     setTimeout(() => {
+      // 答满即结算，不要求「停在第 50 题上作答」—— 否则先答完第 50 题、再回头
+      // 补漏题的用户凑满 50/50 时只会推进 index，永远触发不了结算（页面无提交按钮兜底）。
       const currentProgress = useAssessmentStore.getState().getProgress();
-      if (isLast && currentProgress >= total) {
+      if (currentProgress >= total) {
         const scores = calculateScores();
         // 答完即把「答案 + 分數」寫成一行（非阻塞，失敗不影響流程）
         const sid = useAssessmentStore.getState().studentId;

@@ -29,15 +29,19 @@ export interface AIHuDecision {
   thinkingMs: number;
 }
 
+// extraCard = 刚摸到的牌（自摸胡时与 hand 分开存）。站立手牌数恒 = 剩余目标总和 − 1
+// （开局 sum−1，抽+弃净 0，碰 −N 同时目标 −N），所以不带 extraCard 的检查只在
+// 碰成功后（手牌恰好 = 剩余目标总和）可能为真 —— 摸牌后的检查必须把 drawnCard 传进来。
 export function makeAIHuDecision(
   player: Player,
-  difficulty: AIDifficulty
+  difficulty: AIDifficulty,
+  extraCard?: GameCard | null
 ): AIHuDecision {
   const targets = getTargetCounts(player.bigFiveScores);
   const declaredDims = getDeclaredDimensions(player);
 
   const handByDim: Record<Dimension, number> = { O: 0, C: 0, E: 0, A: 0, N: 0 };
-  for (const card of player.hand) {
+  for (const card of [...player.hand, ...(extraCard ? [extraCard] : [])]) {
     if (isPersonalityCard(card)) {
       handByDim[card.dimension]++;
     }
@@ -214,7 +218,8 @@ function hardAI(cards: GameCard[], player: Player, context: AIContext): AIDecisi
     const needed = targets[card.dimension];
     const have = handByDim[card.dimension];
     const progressBonus = have >= needed ? -0.5 : (have / needed) * 3;
-    const defensiveValue = opponentStrongDims.has(card.dimension) ? -0.3 : 0;
+    // 防守 = 对手在收集的维度更值得【留住】（keep 分调高），压低会变成优先喂牌
+    const defensiveValue = opponentStrongDims.has(card.dimension) ? 0.5 : 0;
 
     return { card, score: needed + progressBonus + defensiveValue };
   });

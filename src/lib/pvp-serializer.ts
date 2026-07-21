@@ -69,6 +69,15 @@ export function serializeGameState(state: RawGameState, viewerPlayerId: string |
   // are already handled (broadcast everything, client-side visibility gate).
   const includeDrawnCard = viewerPlayerId === '__all__' || isCurrentViewer;
 
+  // draw action 的 card = 抽到的牌内容，只有本人可见。UI 本就不显示
+  // （GameLog「Draw never exposes card contents」），但 payload 原样广播
+  // 等于把对手的手牌增量发给全桌 —— devtools 里能逐张还原。按 viewer 抹掉。
+  const actionLog = (state.actionLog ?? []).map((a) =>
+    a.type === 'draw' && a.card && viewerPlayerId !== '__all__' && a.playerId !== viewerPlayerId
+      ? { ...a, card: undefined }
+      : a
+  );
+
   return {
     phase: state.phase,
     players: serializedPlayers,
@@ -76,7 +85,7 @@ export function serializeGameState(state: RawGameState, viewerPlayerId: string |
     discardPile: state.discardPile ?? [],
     currentPlayerIndex: state.currentPlayerIndex,
     currentRound: state.currentRound,
-    actionLog: state.actionLog ?? [],
+    actionLog,
     drawnCard: includeDrawnCard ? state.drawnCard : null,
     pendingDiscard: state.pendingDiscard,
     discardedByIndex: state.discardedByIndex,

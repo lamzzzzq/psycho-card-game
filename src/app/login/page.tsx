@@ -54,10 +54,13 @@ export default function LoginPage() {
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
           {/* 学号 */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-[var(--psy-muted)]">{t.studentIdLabel}</label>
+            <label htmlFor="login-student-id" className="text-xs font-medium text-[var(--psy-muted)]">{t.studentIdLabel}</label>
             <input
+              id="login-student-id"
+              name="username"
               type="text"
               autoComplete="username"
+              spellCheck={false}
               maxLength={STUDENT_ID_LENGTH}
               value={studentId}
               onChange={(e) => setStudentId(normalizeStudentId(e.target.value).slice(0, STUDENT_ID_LENGTH))}
@@ -69,7 +72,7 @@ export default function LoginPage() {
           {/* 密码 */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-[var(--psy-muted)]">{t.passwordLabel}</label>
+              <label htmlFor="login-password" className="text-xs font-medium text-[var(--psy-muted)]">{t.passwordLabel}</label>
               <button
                 type="button"
                 onClick={() => setShowPwd((v) => !v)}
@@ -79,6 +82,8 @@ export default function LoginPage() {
               </button>
             </div>
             <input
+              id="login-password"
+              name="password"
               type={showPwd ? 'text' : 'password'}
               autoComplete="current-password"
               value={password}
@@ -88,7 +93,7 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && <p className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
+          {error && <p role="alert" className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
 
           <button
             type="submit"

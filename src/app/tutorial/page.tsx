@@ -407,7 +407,10 @@ function InteractiveSandbox({
               : inDiscard
               ? !isDrawn
               : false;
-            const dimmed = handActive ? !relevant && !lifted : true;
+            // 食胡课豁免：enter-hu 特意 revealedIds=HU_HAND「揭開讓玩家看清」，
+            // 不能一边翻牌一边把整排手牌压到 0.32 透明度。
+            const inHu = state.scene === 'hu-window' || state.scene === 'hu-success';
+            const dimmed = inHu ? false : handActive ? !relevant && !lifted : true;
             return (
               <motion.div
                 key={c.id}

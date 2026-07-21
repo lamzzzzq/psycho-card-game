@@ -272,6 +272,11 @@ export function getDeclaredDimensions(player: Player): Set<Dimension> {
 
 // Hu (胡) — attempt to declare ALL remaining undeclared dimensions at once
 export function attemptHu(state: GameState, playerIndex: number): GameState {
+  // 終局守衛：其餘 action 都有 phase 檢查，唯獨 hu 沒有 —— PVP 下遲到的
+  // hu action-request（最後一輪 claim 超時 finalize / last-standing 判勝的
+  // 同一瞬間）會走到 hu-fail 分支把 phase 改回 'drawing'、winner 清空，
+  // 已寫入 DB 的終局被廣播「復活」成殭屍續局。
+  if (state.phase === 'game-over') return state;
   const player = state.players[playerIndex];
   // Penalized players are frozen out of all claim actions (pong / hu /
   // skip) until their own turn auto-skips AND the original block-discarder
@@ -380,6 +385,20 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
         actionLog: [...state.actionLog, action],
       };
       return allClaimersResponded(nextState) ? finalizeClaimWindow(nextState) : nextState;
+    }
+
+    // 碰成功後（phase='discarding'、drawnCard=null、還欠一張棄牌）的 hu-fail：
+    // 不能走下面的「立即讓位」—— 那樣欠的棄牌永遠沒棄，該玩家站立手牌從此
+    // 永久 +1（打破「手牌 = 剩餘目標總和 − 1」不變量，之後他摸牌前就能合法胡）。
+    // 改為：吃罰停標記，但留在 discarding 把欠的那張棄完，回合經正常棄牌流程讓位。
+    // 代價：這次棄牌會提前清掉 frozenUntilOwnDiscard（skipNextTurn/extraSkip 仍在），
+    // 罰停略輕於正常路徑，但好過結構性多一張牌。
+    if (!state.drawnCard && state.phase === 'discarding') {
+      return {
+        ...state,
+        players: newPlayers,
+        actionLog: [...state.actionLog, action],
+      };
     }
 
     // Own-turn hu-fail: 立即結束本回合 + 罰停下一輪 + 鎖定 claim windows
@@ -596,6 +615,16 @@ export function pongCard(
       pongerId: p.id,
       skipNextTurn: p.skipNextTurn,
       frozenUntilOwnDiscard: p.frozenUntilOwnDiscard,
+    });
+    return state;
+  }
+
+  // 已表態（跳過/胡敗）者不能回頭再碰 —— skipPong 有這道守衛而這裡沒有，
+  // PVP 直調 pongCard 時 skip 後的亂序/重放消息可繞回來碰。
+  if (state.claimResponses.includes(state.players[pongerIndex].id)) {
+    console.warn('[pong-silent] #4 already-responded', {
+      pongerIndex,
+      pongerId: state.players[pongerIndex].id,
     });
     return state;
   }
@@ -1067,7 +1096,8 @@ export function markPlayerLeft(state: GameState, playerId: string): GameState {
     next.currentPlayerIndex === idx
   ) {
     // Mid-turn leave (e.g. they had drawn but not yet discarded). Move
-    // on cleanly.
+    // on cleanly. 已摸未棄的那張牌回棄牌堆 —— 直接置 null 會讓它從全部
+    // 牌池蒸發（摸牌堆耗盡重洗時永久缺失）。
     const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
       idx,
       next.currentRound,
@@ -1078,6 +1108,7 @@ export function markPlayerLeft(state: GameState, playerId: string): GameState {
       ...next,
       currentPlayerIndex: nextPlayerIndex,
       currentRound: nextRound,
+      discardPile: next.drawnCard ? [...next.discardPile, next.drawnCard] : next.discardPile,
       drawnCard: null,
       phase: isGameOver ? 'game-over' : 'drawing',
       winner: isGameOver ? getRankings(next.players)[0]?.id ?? null : next.winner,
