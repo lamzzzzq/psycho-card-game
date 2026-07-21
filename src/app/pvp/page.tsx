@@ -55,7 +55,7 @@ export default function PvpLobbyPage() {
   }, [sessionStudentId, assessedStudentId, persistStudentId]);
   const [avatar, setAvatar] = useState(player?.avatar ?? DEFAULT_AVATAR);
   const [joinCode, setJoinCode] = useState('');
-  const [maxPlayers, setMaxPlayers] = useState(3);
+  const [maxPlayers, setMaxPlayers] = useState(4);
   const [totalRounds, setTotalRounds] = useState(10);
   const [deck, setDeck] = useState<DeckId>('big-five');
   const [difficulty, setDifficulty] = useState<RevealDifficulty>('open');
