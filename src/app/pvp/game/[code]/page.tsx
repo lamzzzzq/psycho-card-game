@@ -228,10 +228,15 @@ export default function PvpGamePage() {
     // (rawGameState lives only on host). Broadcast 'room-dissolved' so all
     // clients exit cleanly instead of staring at a frozen table forever.
     const gameInProgress = gs && gs.phase !== 'game-over';
-    if (isHost && gameInProgress) {
-      // 中途退出：先把當前對局存成「中斷局」(winner=null)，再解散。
-      // 只有 host 有 rawGameState，所以這是唯一能保住中斷數據的時機。
-      try { usePvpStore.getState().persistInterruptedGame(); } catch {}
+    if (isHost) {
+      // host 退出一律解散（無論局是否已結束）：架構無 host 遷移；且終局路徑會把
+      // 房間置回 'waiting' 供「再來一局」—— host 走人後留着，對手點「再來一局」
+      // 會進 host_id 指向已離場者的房，永遠「等待房主開始」。
+      if (gameInProgress) {
+        // 中途退出：先把當前對局存成「中斷局」(winner=null)，再解散。
+        // 只有 host 有 rawGameState，所以這是唯一能保住中斷數據的時機。
+        try { usePvpStore.getState().persistInterruptedGame(); } catch {}
+      }
       try { send({ type: 'room-dissolved' }); } catch {}
       const rId = room?.id;
       if (rId) {

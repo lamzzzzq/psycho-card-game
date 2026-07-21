@@ -95,7 +95,7 @@ export function AccountChip() {
             onClick={() => setOpen(false)}
             className="block px-4 py-3 text-sm text-[var(--psy-ink)] transition hover:bg-[var(--psy-surface-strong)]"
           >
-            ⚙️ {t.menuSettings}
+            {t.menuSettings}
           </Link>
 
           <button
@@ -105,7 +105,7 @@ export function AccountChip() {
             }}
             className="block w-full px-4 py-3 text-left text-sm text-[var(--psy-ink)] transition hover:bg-[var(--psy-surface-strong)]"
           >
-            ↩ {t.menuLogout}
+            {t.menuLogout}
           </button>
         </div>
       )}

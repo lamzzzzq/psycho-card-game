@@ -328,7 +328,11 @@ export const usePvpStore = create<PvpStore>()(
 
           case 'room-dissolved':
             get().unsubscribeRoom();
-            window.location.href = '/pvp';
+            // 終局後 host 退出也會解散（見 handleAbandonRoom）：此時對手正在看
+            // 結算頁，不硬跳走；房間已 'ended'，「再來一局」會在 room 頁被擋。
+            if (get().gameState?.phase !== 'game-over') {
+              window.location.href = '/pvp';
+            }
             break;
 
           case 'settings-changed':

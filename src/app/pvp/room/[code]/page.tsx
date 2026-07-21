@@ -70,6 +70,13 @@ export default function RoomWaitPage() {
           return;
         }
 
+        // 已解散（host 退出時置 'ended'）：擋住「再來一局」進無主房。
+        if (roomData.status !== 'waiting') {
+          setError(t.roomNotExist);
+          setLoading(false);
+          return;
+        }
+
         // status === 'waiting' — 此時才安全清舊 gameState 準備新一局。
         usePvpStore.setState({ gameState: null, rawGameState: null });
 
