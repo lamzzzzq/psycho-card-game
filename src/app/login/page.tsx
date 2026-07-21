@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { useLocaleStore } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 import { AUTH_T } from '@/lib/i18n/auth';
+import { AuthTopBar } from '@/components/shared/AuthTopBar';
 import { signInWithStudentId } from '@/lib/auth';
 import { normalizeStudentId, STUDENT_ID_LENGTH } from '@/lib/utils';
 
@@ -38,6 +39,7 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-6 py-12">
+      <AuthTopBar />
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

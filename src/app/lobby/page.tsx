@@ -117,6 +117,11 @@ export default function LobbyPage() {
             </p>
           )}
           <AvatarPicker value={avatar} onChange={(next) => { if (userId) void saveSharedAvatar(userId, next); }} />
+          {/* 单机进得来即已完成测评（未完成会被上面的 needAssess 挡住），与联机一致展示 */}
+          <div className="psy-chip">
+            <span className="text-[var(--psy-success)]">✓</span>
+            <span>{p.assessDone}</span>
+          </div>
         </section>
 
         {/* 对手档案：结构上对应联机的「玩家信息」面板（先给上下文，再设置参数） */}

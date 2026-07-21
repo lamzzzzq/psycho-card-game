@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { useLocaleStore } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 import { AUTH_T } from '@/lib/i18n/auth';
+import { AuthTopBar } from '@/components/shared/AuthTopBar';
 import { supabase } from '@/lib/supabase';
 import { signOutUser, MIN_PASSWORD } from '@/lib/auth';
 
@@ -78,6 +79,7 @@ export default function ResetPasswordPage() {
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-6 py-12">
+      <AuthTopBar />
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
