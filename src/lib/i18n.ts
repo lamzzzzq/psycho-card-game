@@ -283,6 +283,7 @@ export const STRINGS = {
       pongTip3: '混入其他人格牌會受罰',
       pongCannotClaim: '你暫時無法用這張牌完成歸檔。',
       pongSelectedCandidates: '張候選牌',
+      pongNeedPrefix: '需湊',
       pongSkip: '暫不歸檔',
       pongSelectFirst: '請先點擊手牌選擇同維度卡',
       // Card.tsx badges
@@ -666,6 +667,7 @@ export const STRINGS = {
       pongTip3: 'Mixing in other traits is penalized',
       pongCannotClaim: 'You cannot complete a file with this card yet.',
       pongSelectedCandidates: 'candidate cards',
+      pongNeedPrefix: 'Need',
       pongSkip: 'Not now',
       pongSelectFirst: 'Tap hand cards of the same dimension first',
       // Card.tsx badges

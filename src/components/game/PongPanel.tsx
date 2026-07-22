@@ -66,6 +66,8 @@ export function PongPanel({
   if (!isPersonalityCard(pendingCard)) return null;
 
   const pendingDim = pendingCard.dimension;
+  // 需從手牌選的張數 = 該維度目標張數 − 1（待判讀的這張弃牌補足最後 1 張）。
+  const handNeeded = Math.max(0, targets[pendingDim] - 1);
 
   return (
     <motion.div
@@ -121,14 +123,21 @@ export function PongPanel({
         })}
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-between">
-        <div className="text-xs text-[var(--psy-ink-soft)]">
-          {selectedCardIds.length > 0 && (
-            <>{t.selectedPrefix} <span className="font-medium text-[var(--psy-accent-strong)]">{selectedCardIds.length}</span> {t.pongSelectedCandidates}</>
+      {/* Actions —— 未選牌時左側顯示「先選手牌」引導 + 歸檔鈕禁用（防止空點被罰，
+          測試者反饋：不知道要先選牌就點 File → 被罰停）；選了之後顯示「需 N · 已選 M」進度。 */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 text-xs leading-snug text-[var(--psy-ink-soft)]">
+          {selectedCardIds.length === 0 ? (
+            <span className="font-medium text-[var(--psy-accent-strong)]">{t.pongSelectFirst}</span>
+          ) : (
+            <>
+              {t.pongNeedPrefix} <span className="font-semibold text-[var(--psy-ink)]">{handNeeded}</span> {t.pongSelectedCandidates}
+              {' · '}
+              {t.selectedPrefix} <span className={`font-medium ${selectedCardIds.length === handNeeded ? 'text-[var(--psy-success)]' : 'text-[var(--psy-accent-strong)]'}`}>{selectedCardIds.length}</span>
+            </>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex shrink-0 gap-2">
           <button
             onClick={onSkip}
             className="rounded-full border px-3 py-1.5 text-[11px] font-medium transition sm:px-4 sm:py-2 sm:text-xs"
@@ -140,7 +149,12 @@ export function PongPanel({
           >
             {t.pongSkip}
           </button>
-          <button onClick={() => onClaim(pendingDim, selectedCardIds)} className="psy-btn psy-btn-accent px-3 py-1.5 text-[11px] font-bold sm:px-4 sm:py-2 sm:text-xs">
+          <button
+            onClick={() => onClaim(pendingDim, selectedCardIds)}
+            disabled={selectedCardIds.length === 0}
+            title={selectedCardIds.length === 0 ? t.pongNeedSelect : undefined}
+            className="psy-btn psy-btn-accent px-3 py-1.5 text-[11px] font-bold disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:py-2 sm:text-xs"
+          >
             {t.archiveJudge}
           </button>
         </div>

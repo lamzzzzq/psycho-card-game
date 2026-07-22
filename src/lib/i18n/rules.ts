@@ -5,7 +5,7 @@
 // 區塊型別：段落 / 條列 / 警告 / 小標題 / 提示框
 export type RuleBlock = { t: 'p' | 'li' | 'warn' | 'sub' | 'tip'; text: string };
 // 章節：title + 可選配圖（goal 目標張數圖 / flow 摸→出流程 / pong 碰湊組圖）+ 內容區塊
-export type RuleSection = { title: string; fig?: 'goal' | 'flow' | 'pong'; blocks: readonly RuleBlock[] };
+export type RuleSection = { title: string; fig?: 'goal' | 'flow' | 'pong' | 'cards'; blocks: readonly RuleBlock[] };
 
 export const RULES_T = {
   zh: {
@@ -34,6 +34,11 @@ export const RULES_T = {
     figHand: '你的手牌',
     figIncoming: '抽到／別人棄的',
     figLocked: '鎖定一組',
+    figCardPersona: '人格牌',
+    figCardKnowledge: '知識牌',
+    figCanArchive: '可歸檔',
+    figCantArchive: '不可歸檔',
+    figCardsCap: '人格牌（有顏色）用來湊維度、公開歸檔；知識牌（灰色）不能歸檔，安全棄掉即可',
 
     sections: [
       {
@@ -48,6 +53,7 @@ export const RULES_T = {
       },
       {
         title: '🃏 二、認識卡牌',
+        fig: 'cards',
         blocks: [
           { t: 'p', text: '牌堆中只有兩類牌，非常好認：' },
           { t: 'li', text: '人格描述牌（有顏色）：帶有特定人格維度的標籤，是你用來歸檔（湊張數）的核心牌。' },
@@ -140,6 +146,11 @@ export const RULES_T = {
     figHand: 'Your hand',
     figIncoming: 'Drawn / discarded',
     figLocked: 'Locked set',
+    figCardPersona: 'Personality',
+    figCardKnowledge: 'Knowledge',
+    figCanArchive: 'Can file',
+    figCantArchive: "Can't file",
+    figCardsCap: 'Personality cards (colored) build dimensions and file openly; Knowledge cards (grey) can’t be filed — safe to discard',
 
     sections: [
       {
@@ -154,6 +165,7 @@ export const RULES_T = {
       },
       {
         title: '🃏 2. Know the Cards',
+        fig: 'cards',
         blocks: [
           { t: 'p', text: 'The deck contains only two types of cards, making them incredibly easy to tell apart:' },
           { t: 'li', text: 'Personality cards (colored): carry a specific dimension tag — these are your core cards used for filing and reaching your target counts.' },

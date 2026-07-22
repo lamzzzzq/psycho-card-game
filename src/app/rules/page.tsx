@@ -63,6 +63,26 @@ export default function RulesPage() {
         </>
       );
     }
+    if (fig === 'cards') {
+      return (
+        <>
+          <div className="fig">
+            <span className="fig-grp">
+              <span className="fig-card">E</span>
+              <small>{s.figCardPersona}</small>
+              <small style={{ color: '#3f9d5a', fontWeight: 700 }}>✓ {s.figCanArchive}</small>
+            </span>
+            <span className="fig-op">vs</span>
+            <span className="fig-grp">
+              <span className="fig-card" style={{ background: '#f1ece2', border: '1px dashed rgba(154,116,72,0.45)', color: '#9a8c74' }}>ⓘ</span>
+              <small>{s.figCardKnowledge}</small>
+              <small style={{ color: '#9a8c74', fontWeight: 700 }}>✕ {s.figCantArchive}</small>
+            </span>
+          </div>
+          <div className="fig-cap">{s.figCardsCap}</div>
+        </>
+      );
+    }
     if (fig === 'flow') {
       return (
         <div className="fig">
