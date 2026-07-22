@@ -105,6 +105,12 @@ export default function RegisterPage() {
         transition={{ duration: 0.35 }}
         className="w-full max-w-sm"
       >
+        <Link
+          href="/"
+          className="mb-5 inline-block text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
+        >
+          {t.backHome}
+        </Link>
         <h1 className="psy-serif text-center text-2xl font-semibold text-[var(--psy-ink)]">
           {t.registerTitle}
         </h1>
