@@ -46,27 +46,32 @@ export default function Home() {
     // 移动端：内容从顶部流动 + 充足底部留白，保证页脚能滚动到固定 CTA 栏上方完整显示
     // （iOS Safari 动态地址栏会吃掉底部空间，留白不足时页脚会被卡在栏后滑不上来）；桌面：垂直居中。
     <div className="flex flex-1 flex-col items-center px-5 pt-20 pb-56 sm:px-6 sm:pt-24 lg:justify-center lg:pb-10 lg:pt-10">
-      {/* 语言切换：覆盖持久化缓存，随时切回中文/英文（不必手动改 ?lang=） */}
-      <div className="psy-serif fixed left-4 top-4 z-40 [transform:translateZ(0)] flex items-center gap-0.5 rounded-full border border-[var(--psy-border)] bg-[#fdf9f0] p-0.5 text-xs shadow-[var(--psy-shadow)] sm:left-8 sm:top-8">
-        {(['zh', 'en'] as const).map((l) => (
+      {/* 顶栏：左语言切换 + 右账号/教學。单行 flex items-center 保证两侧垂直居中对齐
+          （原来左右各自 fixed top-4，高度不同 → 只对齐顶边、中心错位）。
+          透明外栏 pointer-events-none，子元素 auto，避免中间空白挡住下方点击。 */}
+      <div className="pointer-events-none fixed inset-x-0 top-4 z-40 [transform:translateZ(0)] flex items-center justify-between px-4 sm:top-8 sm:px-8">
+        {/* 语言切换：覆盖持久化缓存，随时切回中文/英文（不必手动改 ?lang=） */}
+        <div className="psy-serif pointer-events-auto flex items-center gap-0.5 rounded-full border border-[var(--psy-border)] bg-[#fdf9f0] p-0.5 text-xs shadow-[var(--psy-shadow)]">
+          {(['zh', 'en'] as const).map((l) => (
+            <button
+              key={l}
+              onClick={() => setLocale(l)}
+              className={`rounded-full px-2.5 py-1 transition ${loc === l ? 'bg-[var(--psy-accent-soft)] text-[var(--psy-accent)]' : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'}`}
+            >
+              {l === 'zh' ? '中' : 'EN'}
+            </button>
+          ))}
+        </div>
+        {/* 右上角：账号入口徽标（登入/头像下拉） + 玩法教學 */}
+        <div className="pointer-events-auto flex items-center gap-2">
+          <AccountChip />
           <button
-            key={l}
-            onClick={() => setLocale(l)}
-            className={`rounded-full px-2.5 py-1 transition ${loc === l ? 'bg-[var(--psy-accent-soft)] text-[var(--psy-accent)]' : 'text-[var(--psy-muted)] hover:text-[var(--psy-ink-soft)]'}`}
+            onClick={() => setDeckModalFor('tutorial')}
+            className="psy-btn psy-btn-accent psy-serif px-4 py-2 text-sm font-semibold"
           >
-            {l === 'zh' ? '中' : 'EN'}
+            {c.tutorial}
           </button>
-        ))}
-      </div>
-      {/* 右上角：账号入口徽标（登入/头像下拉） + 玩法教學 */}
-      <div className="fixed right-4 top-4 z-40 flex items-center gap-2 sm:right-8 sm:top-8">
-        <AccountChip />
-        <button
-          onClick={() => setDeckModalFor('tutorial')}
-          className="psy-btn psy-btn-accent psy-serif px-4 py-2 text-sm font-semibold"
-        >
-          {c.tutorial}
-        </button>
+        </div>
       </div>
       <motion.div
         initial={false}
