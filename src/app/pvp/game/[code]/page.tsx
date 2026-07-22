@@ -959,11 +959,11 @@ export default function PvpGamePage() {
                   <div className="w-24 rounded-xl ring-1 ring-[rgba(200,155,93,0.35)]">
                     <TarotCard
                       text={gameState.pendingDiscard.text}
-                      textEn={isPersonalityCard(gameState.pendingDiscard) ? gameState.pendingDiscard.textEn : undefined}
+                      textEn={gameState.pendingDiscard.textEn}
                       dimension={isPersonalityCard(gameState.pendingDiscard) ? gameState.pendingDiscard.dimension : undefined}
                       revealedDimension={revealDifficulty === 'open' && isPersonalityCard(gameState.pendingDiscard) ? gameState.pendingDiscard.dimension : null}
                       isDummy={!isPersonalityCard(gameState.pendingDiscard)}
-                      description={isPersonalityCard(gameState.pendingDiscard) ? undefined : gameState.pendingDiscard.definition}
+                      description={isPersonalityCard(gameState.pendingDiscard) ? undefined : (locale === 'en' ? (gameState.pendingDiscard.definitionEn ?? gameState.pendingDiscard.definition) : gameState.pendingDiscard.definition)}
                       imageSrc={isPersonalityCard(gameState.pendingDiscard) ? `/cards/${gameState.pendingDiscard.imageId ?? gameState.pendingDiscard.id}.webp` : undefined}
                       locale={locale}
                       fluid

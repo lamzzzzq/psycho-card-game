@@ -166,11 +166,11 @@ export function PlayerHand({
               >
                 <TarotCard
                   text={card.text}
-                  textEn={isPersonalityCard(card) ? card.textEn : undefined}
+                  textEn={card.textEn}
                   dimension={isPersonalityCard(card) ? card.dimension : undefined}
                   imageSrc={isPersonalityCard(card) ? `/cards/${card.imageId ?? card.id}.webp` : undefined}
                   isDummy={!isPersonalityCard(card)}
-                  description={isPersonalityCard(card) ? undefined : card.definition}
+                  description={isPersonalityCard(card) ? undefined : (locale === 'en' ? (card.definitionEn ?? card.definition) : card.definition)}
                   selected={isSelected}
                   revealedDimension={revealed}
                   locale={locale}

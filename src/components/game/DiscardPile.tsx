@@ -305,7 +305,7 @@ export function DiscardPile({
             </div>
             <div className="space-y-3">
               <p className="psy-eyebrow text-[10px]">{t.personaDesc}</p>
-              <p className="psy-serif text-xl leading-9 text-[var(--psy-ink)]">{detailCard.text}</p>
+              <p className="psy-serif text-xl leading-9 text-[var(--psy-ink)]">{locale === 'en' ? (detailCard.textEn ?? detailCard.text) : detailCard.text}</p>
               {!isPersonalityCard(detailCard) && detailCard.definition && (
                 <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">{locale === 'en' ? (detailCard.definitionEn ?? detailCard.definition) : detailCard.definition}</p>
               )}

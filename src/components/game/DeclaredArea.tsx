@@ -101,7 +101,7 @@ export function DeclaredArea({
           <div className="space-y-4">
             <div>
               <p className="psy-eyebrow text-[10px]">{t.personaDesc}</p>
-              <p className="mt-2 psy-serif text-xl leading-9 text-[var(--psy-ink)]">{detailCard.text}</p>
+              <p className="mt-2 psy-serif text-xl leading-9 text-[var(--psy-ink)]">{locale === 'en' ? (detailCard.textEn ?? detailCard.text) : detailCard.text}</p>
             </div>
             <div
               className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold"
