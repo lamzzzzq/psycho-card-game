@@ -109,6 +109,7 @@ export function makeAIPongDecision(
       if (Math.random() < 0.5) return { shouldPong: false };
       return { shouldPong: true, dimension: pendingDim, handCardIds };
     case 'medium':
+      if (Math.random() < 0.3) return { shouldPong: false };
       return { shouldPong: true, dimension: pendingDim, handCardIds };
     case 'hard':
       return { shouldPong: true, dimension: pendingDim, handCardIds };
