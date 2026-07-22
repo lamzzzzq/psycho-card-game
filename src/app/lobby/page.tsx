@@ -71,7 +71,7 @@ export default function LobbyPage() {
   }
 
   const handleStart = () => {
-    initGame(bigFiveScores, { totalRounds, aiDifficulty: difficulty, revealDifficulty });
+    initGame(bigFiveScores, { totalRounds, aiDifficulty: difficulty, revealDifficulty }, avatar);
     router.push('/game');
   };
 

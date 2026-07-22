@@ -115,6 +115,38 @@ export function makeAIPongDecision(
   }
 }
 
+// AI 自摸碰决策 —— 本回合已抽牌（pool = 手牌 + drawnCard），
+// 若某个未申报维度的同维度牌已达目标张数 → 自摸碰锁定该维度。
+export interface AISelfPongDecision {
+  shouldPong: boolean;
+  dimension?: Dimension;
+  cardIds?: number[];
+}
+
+export function makeAISelfPongDecision(
+  player: Player,
+  drawnCard: GameCard | null,
+  difficulty: AIDifficulty
+): AISelfPongDecision {
+  // easy 有概率放过（弱一点，保留原先难度手感）
+  if (difficulty === 'easy' && Math.random() < 0.4) return { shouldPong: false };
+
+  const targets = getTargetCounts(player.bigFiveScores);
+  const declaredDims = getDeclaredDimensions(player);
+  const pool: GameCard[] = [...player.hand, ...(drawnCard ? [drawnCard] : [])];
+
+  // 找第一个可锁定的未申报维度（能碰就碰：锁维度总是好的）
+  for (const d of DIMENSIONS) {
+    if (declaredDims.has(d)) continue;
+    const dimCards = pool.filter((c) => isPersonalityCard(c) && c.dimension === d);
+    if (dimCards.length >= targets[d]) {
+      const cardIds = dimCards.slice(0, targets[d]).map((c) => c.id);
+      return { shouldPong: true, dimension: d, cardIds };
+    }
+  }
+  return { shouldPong: false };
+}
+
 // AI discard decision
 export function makeAIDecision(
   player: Player,

@@ -35,7 +35,8 @@ function createPlayer(
 
 export function initializeGame(
   humanScores: BigFiveScores,
-  settings: GameSettings
+  settings: GameSettings,
+  humanAvatar: string = '🧑'
 ): GameState {
   const aiScoresList = AI_PERSONAS.map(() => generateAIScores());
   const allScores = [humanScores, ...aiScoresList];
@@ -44,7 +45,7 @@ export function initializeGame(
   const { hands, remaining } = dealCardsVariable(deck, allScores);
 
   const players: Player[] = [
-    createPlayer('human', '你', '🧑', hands[0], true, humanScores, 'You'),
+    createPlayer('human', '你', humanAvatar, hands[0], true, humanScores, 'You'),
     ...AI_PERSONAS.map((persona, i) =>
       createPlayer(persona.id as PlayerId, persona.name, persona.avatar, hands[i + 1], false, aiScoresList[i], persona.nameEn)
     ),

@@ -13,13 +13,13 @@ import {
   getPlayerScore,
   getRankings,
 } from '@/lib/game-logic';
-import { makeAIDecision, makeAIHuDecision, makeAIPongDecision } from '@/lib/ai-engine';
+import { makeAIDecision, makeAIHuDecision, makeAIPongDecision, makeAISelfPongDecision } from '@/lib/ai-engine';
 import { delay } from '@/lib/utils';
 
 interface GameStore {
   game: GameState | null;
 
-  initGame: (humanScores: BigFiveScores, settings: GameSettings) => void;
+  initGame: (humanScores: BigFiveScores, settings: GameSettings, humanAvatar?: string) => void;
 
   // Turn actions
   playerHu: () => void;
@@ -42,8 +42,8 @@ interface GameStore {
 export const useGameStore = create<GameStore>()((set, get) => ({
   game: null,
 
-  initGame: (humanScores, settings) => {
-    set({ game: initializeGame(humanScores, settings) });
+  initGame: (humanScores, settings, humanAvatar) => {
+    set({ game: initializeGame(humanScores, settings, humanAvatar) });
   },
 
   playerHu: () => {
@@ -151,10 +151,11 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     // After a successful pong the ponger lands in phase='discarding' with
     // drawnCard=null (bug #7). Skip the hu/draw steps and pick a discard
     // directly from hand.
-    if (game.phase === 'discarding' && !game.drawnCard) {
+    if (game.phase === 'discarding') {
       // 碰完即胡：碰成功后手牌恰好 = 剩余目标总和，这是 hand-only 检查唯一可能为真的时刻
       //（站立手牌恒 = 剩余目标总和 − 1）。不查的话 AI 会把能胡的局白白弃牌错过。
-      const pongHu = makeAIHuDecision(currentPlayer, game.settings.aiDifficulty);
+      // drawnCard 存在时（自摸碰只用手牌、drawnCard 未用）也走这里：把 drawnCard 计入胡/弃。
+      const pongHu = makeAIHuDecision(currentPlayer, game.settings.aiDifficulty, game.drawnCard);
       if (pongHu.shouldHu) {
         await delay(pongHu.thinkingMs);
         const s = get().game;
@@ -164,7 +165,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
         if (afterHu.phase === 'game-over') return;
         // hu 失败（竞态才可能）→ 引擎让它留在 discarding，继续把欠的牌弃掉
       }
-      const decision = makeAIDecision(currentPlayer, currentPlayer.hand[0], game.settings.aiDifficulty, {
+      const decision = makeAIDecision(currentPlayer, game.drawnCard ?? currentPlayer.hand[0], game.settings.aiDifficulty, {
         discardPile: game.discardPile,
         actionLog: game.actionLog,
         currentRound: game.currentRound,
@@ -173,12 +174,14 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       await delay(decision.thinkingMs);
       const latest = get().game;
       if (!latest || latest.phase !== 'discarding') return;
-      // makeAIDecision's cardToDiscard may be the drawnCard stand-in —
-      // pick any card from hand if it isn't actually in hand.
-      const handIds = new Set(currentPlayer.hand.map((c) => c.id));
-      const cardId = handIds.has(decision.cardToDiscard.id)
+      // cardToDiscard 可能是 drawnCard 或手牌；取一个真实存在的 id 弃掉。
+      const validIds = new Set([
+        ...currentPlayer.hand.map((c) => c.id),
+        ...(game.drawnCard ? [game.drawnCard.id] : []),
+      ]);
+      const cardId = validIds.has(decision.cardToDiscard.id)
         ? decision.cardToDiscard.id
-        : currentPlayer.hand[0]?.id;
+        : (currentPlayer.hand[0]?.id ?? game.drawnCard?.id);
       if (cardId == null) return;
       set({ game: discardCard(latest, cardId) });
       return;
@@ -245,6 +248,24 @@ export const useGameStore = create<GameStore>()((set, get) => ({
       set({ game: afterHu });
       if (afterHu.phase === 'game-over') return;
       if (!get().game?.drawnCard) return; // hu 失败（竞态才可能）已让位
+    }
+
+    // 自摸碰：不能一把胡时，若手牌+drawnCard 有未申报维度达标 → 碰锁定，随后续跑（碰完即胡 + 弃牌）
+    const selfPong = makeAISelfPongDecision(playerAfterDraw, drawnCard, afterDraw.settings.aiDifficulty);
+    if (selfPong.shouldPong && selfPong.dimension && selfPong.cardIds) {
+      await delay(600 + Math.random() * 400);
+      const sp = get().game;
+      if (sp && sp.phase === 'discarding' && sp.drawnCard?.id === drawnCard.id && sp.currentPlayerIndex === game.currentPlayerIndex) {
+        const afterPong = selfPongCard(sp, sp.currentPlayerIndex, selfPong.dimension, selfPong.cardIds);
+        if (afterPong !== sp) {
+          set({ game: afterPong });
+          // 自摸碰直接胡 / 空手兜底已推进 → 不续跑；仍在 discarding 且仍本人 → 续跑弃牌（走上面 discarding 分支）
+          if (afterPong.phase === 'discarding' && afterPong.currentPlayerIndex === game.currentPlayerIndex) {
+            await get().executeAITurn();
+          }
+          return;
+        }
+      }
     }
 
     const decision = makeAIDecision(playerAfterDraw, drawnCard, afterDraw.settings.aiDifficulty, {
