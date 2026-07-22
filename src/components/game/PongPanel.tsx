@@ -92,7 +92,7 @@ export function PongPanel({
         <div className="flex-1 space-y-3 text-[11px] text-[var(--psy-ink-soft)] sm:text-xs">
           <div>
             <p className="psy-serif text-base text-[var(--psy-ink)] sm:text-lg">{discardedByName} {t.pongClueDiscarded}</p>
-            <p className="mt-1 text-[var(--psy-ink-soft)]">{pendingCard.text}</p>
+            <p className="mt-1 text-[var(--psy-ink-soft)]">{locale === 'en' ? (pendingCard.textEn ?? pendingCard.text) : pendingCard.text}</p>
           </div>
           <div className="rounded-xl border border-[rgba(154,116,72,0.16)] bg-[rgba(253,248,241,0.78)] px-3 py-2">
             <p className="font-medium text-[var(--psy-ink)]">{t.pongCanClaim}</p>

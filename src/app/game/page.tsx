@@ -118,7 +118,8 @@ export default function GamePage() {
 
   const { shakeControls, flashControls, pops } = useGameFeedback(
     game?.actionLog ?? [],
-    game?.players ?? []
+    game?.players ?? [],
+    locale
   );
 
   // Your-turn banner: fires each time the turn becomes the human's (index 0)
@@ -952,7 +953,15 @@ export default function GamePage() {
       {/* Game Over */}
       {game.phase === 'game-over' && (
         <GameOverModal
-          players={game.players}
+          players={game.players.map((p) => ({
+            id: p.id,
+            name: p.name,
+            avatar: p.avatar,
+            declaredSets: p.declaredSets,
+            remainingCards: p.hand.length,
+            isYou: p.isHuman,
+          }))}
+          winnerId={game.winner ?? getRankings(game.players)[0]?.id ?? null}
           onPlayAgain={() => {
             // 原地重開局：手動清本地查看狀態，避免 half 檔把上一局看過的牌 id 帶進新局
             // （turn-reset effect 在「新局 round/玩家 index 未變」時可能不觸發，兜不住）。

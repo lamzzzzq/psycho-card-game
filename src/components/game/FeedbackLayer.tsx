@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useAnimationControls } from 'framer-motion';
 import { GameAction, PlayerId } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
-import { STRINGS, type Locale } from '@/lib/i18n';
+import { STRINGS, playerLabel, type Locale } from '@/lib/i18n';
 
 type AnimationControls = ReturnType<typeof useAnimationControls>;
-type MinimalPlayer = { id: string; name: string };
+type MinimalPlayer = { id: string; name: string; nameEn?: string };
 
 /**
  * "輪到你 / 該行動了" 的提醒振動：屏幕抖一下 + 设备震动（移动端）。
@@ -55,7 +55,10 @@ export function useGameFeedback(actions: GameAction[], players: MinimalPlayer[],
     prevLenRef.current = actions.length;
     if (!latest) return;
 
-    const nameOf = (id: PlayerId) => players.find((p) => p.id === id)?.name ?? t.playerWord;
+    const nameOf = (id: PlayerId) => {
+      const p = players.find((pl) => pl.id === id);
+      return p ? playerLabel(p, locale) : t.playerWord;
+    };
     const dimNameOf = (meta: typeof DIMENSION_META[keyof typeof DIMENSION_META] | null) =>
       meta ? (locale === 'en' ? meta.nameEn : meta.name) : '';
 
