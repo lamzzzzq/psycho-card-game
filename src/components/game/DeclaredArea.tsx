@@ -19,8 +19,9 @@ interface DeclaredAreaProps {
   overlayZIndex?: number;
   /** 有空间的容器（结算页玩家卡 / 移动弹窗）直接内联展开维度列表，不再套一层「歸檔記錄」卡中卡。 */
   expanded?: boolean;
-  /** expanded 的宽容器变体（结算页玩家卡）：维度分区两列铺满宽度，否则每维独占一行
-      会在宽面板里留大片右侧空白、纵向拉到一屏放不下。移动弹窗等窄容器不要开。 */
+  /** expanded 的宽容器变体（结算页玩家竖排面板）：维度分区响应式 1/2/3 列
+      （窄屏 1、中屏 2、宽屏 3），铺满整宽，避免每维独占一行留大片右侧空白。
+      移动弹窗等窄容器不要开。 */
   wide?: boolean;
 }
 
@@ -129,8 +130,8 @@ export function DeclaredArea({
           <p className="text-sm text-[var(--psy-muted)]">{t.noArchiveDone}</p>
         ) : (
           // 内联展开（移动弹窗 / 结算页）：与桌面一致——每维度标题 + 卡片图（可点看详情）。
-          // wide（结算页宽面板）：维度分区 sm 起两列铺满，卡稍收小保证 4 張的维度不折行。
-          <div className={wide ? 'grid gap-x-5 gap-y-4 sm:grid-cols-2' : 'space-y-4'}>
+          // wide（结算页竖排面板）：维度分区响应式 1/2/3 列（窄1中2宽3），卡稍收小保证 4 張的维度不折行。
+          <div className={wide ? 'grid gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-3' : 'space-y-4'}>
             {declaredSets.map((set) => (
               <div key={set.dimension}>
                 <div className="mb-2 flex items-center gap-2">

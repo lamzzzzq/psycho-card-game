@@ -44,7 +44,7 @@ export function GameOverModal({ players, onPlayAgain, onBackToLobby, locale = 'z
           </p>
         </div>
 
-        <div className="grid items-start gap-4 md:grid-cols-2">
+        <div className="space-y-4">
           {ranked.map((player, i) => {
             const declaredCount = player.declaredSets.length;
             const medals = ['🥇', '🥈', '🥉', ''];
