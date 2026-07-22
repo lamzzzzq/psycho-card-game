@@ -78,7 +78,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-6 py-12">
+    <main className="flex min-h-dvh flex-col items-center px-6 pt-14 pb-12 sm:pt-20">
       <AuthTopBar />
       <motion.div
         initial={{ opacity: 0, y: 12 }}
