@@ -134,7 +134,7 @@ export default function LobbyPage() {
                 key={persona.id}
                 className="flex items-center gap-3 rounded-[1.1rem] border border-[var(--psy-border)] bg-[var(--psy-card-content)] px-3 py-3 text-left"
               >
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[var(--psy-accent-soft)] text-2xl">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center text-3xl">
                   {persona.avatar}
                 </div>
                 <div className="min-w-0">
