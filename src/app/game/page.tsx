@@ -19,7 +19,7 @@ import { useLocaleStore, STRINGS, playerLabel } from '@/lib/i18n';
 import { DIMENSION_META } from '@/data/dimensions';
 import { DIMENSIONS, Dimension, GameCard } from '@/types';
 import { getTargetCounts } from '@/lib/scoring';
-import { getDeclaredDimensions } from '@/lib/game-logic';
+import { getDeclaredDimensions, getRankings } from '@/lib/game-logic';
 import { PlayerHand } from '@/components/game/PlayerHand';
 import { OpponentHand } from '@/components/game/OpponentHand';
 import { DrawPile } from '@/components/game/DrawPile';

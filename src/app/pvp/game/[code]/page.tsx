@@ -33,6 +33,7 @@ import { DrawPile } from '@/components/game/DrawPile';
 import { DiscardPile } from '@/components/game/DiscardPile';
 import { GameLog } from '@/components/game/GameLog';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
+import { GameOverModal } from '@/components/game-results/GameOverModal';
 import { TarotCard } from '@/components/game/TarotCard';
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
@@ -584,51 +585,24 @@ export default function PvpGamePage() {
   // 把最新 canDraw 同步到 ref，給 early-return 前定義的 handleDrawPileHover 用。
   canDrawRef.current = canDraw;
 
-  // Game over screen
+  // Game over screen — 与单机共用 GameOverModal（归档 declaredSets 是公开信息，
+  // PVP 序列化已发全桌）。onPlayAgain 走回 room 页开新局；onBackToLobby 回主页。
   if (gameState.winner) {
-    const winner = gameState.players.find(p => p.id === gameState.winner);
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-center space-y-6">
-          <div className="text-6xl">{gameState.winner === myId ? '🏆' : '😯'}</div>
-          <h1 className="psy-serif text-3xl text-[var(--psy-ink)]">
-            {gameState.winner === myId ? t.youWin : `${winner?.name ?? t.opponent} ${t.winSuffix}`}
-          </h1>
-          <div className="space-y-2">
-            {/* 名次排序與引擎 getRankings 同款：歸檔多者前，手牌少者前（此前按座位序標 #1-#4 會誤導）。
-                winner 置頂：正常終局 winner 本就是第一名（無影響）；「僅剩一人獲勝」結局
-                （markPlayerLeft last-standing）繞過 getRankings 定 winner，不置頂會與標題矛盾。 */}
-            {[...gameState.players]
-              .sort((a, b) =>
-                ((b.id === gameState.winner ? 1 : 0) - (a.id === gameState.winner ? 1 : 0)) ||
-                (b.declaredSets.length - a.declaredSets.length) ||
-                (a.handCount - b.handCount))
-              .map((p, i) => (
-              <div key={p.id} className="flex items-center justify-center gap-3 text-sm">
-                <span className="text-[var(--psy-muted)]">#{i + 1}</span>
-                <span className={p.id === gameState.winner ? 'psy-serif font-medium text-[var(--psy-accent)]' : 'text-[var(--psy-ink-soft)]'}>
-                  {p.name}
-                </span>
-                <span className="text-[var(--psy-muted)]">{t.declaredPrefix} {p.declaredSets.length} {t.declaredSuffix} · {t.remainingPrefix} {p.handCount} {t.cardsUnit}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-center gap-3">
-            <button
-              onClick={() => router.replace(`/pvp/room/${code}`)}
-              className="psy-btn psy-btn-accent px-6 py-2.5 font-medium"
-            >
-              {t.playAgain}
-            </button>
-            <button
-              onClick={() => router.replace('/')}
-              className="psy-btn psy-btn-ghost px-6 py-2.5 text-sm"
-            >
-              {t.backHome}
-            </button>
-          </div>
-        </div>
-      </div>
+      <GameOverModal
+        players={gameState.players.map((p) => ({
+          id: p.id,
+          name: p.name,
+          avatar: p.avatar,
+          declaredSets: (p.declaredSets ?? []) as DeclaredSet[],
+          remainingCards: p.handCount,
+          isYou: p.id === myId,
+        }))}
+        winnerId={gameState.winner}
+        onPlayAgain={() => router.replace(`/pvp/room/${code}`)}
+        onBackToLobby={() => router.replace('/')}
+        locale={locale}
+      />
     );
   }
 
