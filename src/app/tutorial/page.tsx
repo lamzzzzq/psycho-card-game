@@ -910,8 +910,8 @@ function InteractiveSandbox({
         渲染在 motion.div 之外，避免 framer transform 祖先讓 fixed 失效。 */}
     <div ref={guideRef} className="fixed inset-x-0 bottom-0 z-50 [transform:translateZ(0)] border-t-2 border-[rgba(154,116,72,0.36)] bg-[linear-gradient(180deg,#fdf8f1,#eaddc4)] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(96,72,38,0.18)]">
       <div className="mx-auto max-w-3xl space-y-2.5">
-        <div className="flex items-start gap-3">
-          <span className="psy-serif mt-0.5 shrink-0 rounded-full bg-[var(--psy-accent)] px-3 py-1 text-[11px] font-bold tracking-[0.2em] text-[#1a1206]">
+        <div className="space-y-2">
+          <span className="psy-serif inline-block rounded-full bg-[var(--psy-accent)] px-3 py-1 text-[11px] font-bold tracking-[0.2em] text-[#1a1206]">
             {s.guideLabel}
           </span>
           <motion.p
