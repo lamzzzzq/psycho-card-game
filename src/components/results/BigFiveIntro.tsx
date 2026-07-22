@@ -23,7 +23,7 @@ export function BigFiveIntro({ locale }: { locale: Locale }) {
         {isEn ? 'The Big Five Personality Model (OCEAN)' : '大五人格模型（Big Five Personality Model；OCEAN）'}
       </h2>
 
-      <p className="text-[15px] leading-7 text-[var(--psy-ink-soft)] sm:leading-8">
+      <p className="text-pretty text-[15px] leading-7 text-[var(--psy-ink-soft)] sm:leading-8">
         {isEn ? (
           <>
             <strong>The Big Five Personality Model (OCEAN)</strong> is one of the most widely accepted
@@ -59,7 +59,7 @@ export function BigFiveIntro({ locale }: { locale: Locale }) {
         ))}
       </div>
 
-      <p className="text-[15px] leading-7 text-[var(--psy-ink-soft)] sm:leading-8">
+      <p className="text-pretty text-[15px] leading-7 text-[var(--psy-ink-soft)] sm:leading-8">
         {isEn ? (
           <>
             In this game, you will get to know your <strong>Big Five personality</strong> better. Your
