@@ -12,7 +12,7 @@ export function Footer() {
   const f = STRINGS[locale].common.footer;
 
   return (
-    <footer className="mt-8 w-full px-6 py-6 text-center text-[11px] leading-5 text-[var(--psy-muted)]">
+    <footer className="mx-auto mt-8 w-full max-w-5xl py-6 text-center text-[11px] leading-5 text-[var(--psy-muted)]">
       <p>{f.line1}</p>
       <p className="mt-1">{f.leader}</p>
       {/* 邮箱单独一行。老板要求用 [at] 防爬虫（不写真 @、不做 mailto，iOS 也不会自动识别成链接），
