@@ -8,6 +8,7 @@ import { useLocaleStore } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 import { AUTH_T } from '@/lib/i18n/auth';
 import { AuthTopBar } from '@/components/shared/AuthTopBar';
+import { PasswordInput } from '@/components/shared/PasswordInput';
 import { sendVerifyCode, registerStudent, signInWithStudentId, MIN_PASSWORD } from '@/lib/auth';
 import { normalizeStudentId, STUDENT_ID_LENGTH } from '@/lib/utils';
 
@@ -26,7 +27,6 @@ export default function RegisterPage() {
   const [confirm, setConfirm] = useState('');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
-  const [showPwd, setShowPwd] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -139,42 +139,31 @@ export default function RegisterPage() {
 
               {/* 密码 */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="reg-password" className="text-xs font-medium text-[var(--psy-muted)]">{t.passwordLabel}</label>
-                  <button
-                    type="button"
-                    onClick={() => setShowPwd((v) => !v)}
-                    className="text-xs text-[var(--psy-muted)] underline-offset-2 hover:underline"
-                  >
-                    {showPwd ? t.hide : t.show}
-                  </button>
-                </div>
-                <input
+                <label htmlFor="reg-password" className="text-xs font-medium text-[var(--psy-muted)]">{t.passwordLabel}</label>
+                <PasswordInput
                   id="reg-password"
                   name="new-password"
-                  type={showPwd ? 'text' : 'password'}
                   autoComplete="new-password"
                   disabled={busy}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t.passwordPlaceholder}
-                  className="psy-input w-full"
+                  locale={locale}
                 />
               </div>
 
               {/* 确认密码 */}
               <div className="space-y-1.5">
                 <label htmlFor="reg-confirm" className="text-xs font-medium text-[var(--psy-muted)]">{t.confirmPasswordLabel}</label>
-                <input
+                <PasswordInput
                   id="reg-confirm"
                   name="confirm-password"
-                  type={showPwd ? 'text' : 'password'}
                   autoComplete="new-password"
                   disabled={busy}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder={t.confirmPasswordPlaceholder}
-                  className="psy-input w-full"
+                  locale={locale}
                 />
               </div>
 

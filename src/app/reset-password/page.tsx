@@ -8,6 +8,7 @@ import { useLocaleStore } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 import { AUTH_T } from '@/lib/i18n/auth';
 import { AuthTopBar } from '@/components/shared/AuthTopBar';
+import { PasswordInput } from '@/components/shared/PasswordInput';
 import { supabase } from '@/lib/supabase';
 import { signOutUser, MIN_PASSWORD } from '@/lib/auth';
 
@@ -119,25 +120,23 @@ export default function ResetPasswordPage() {
           <>
             <p className="mt-3 text-center text-sm leading-6 text-[var(--psy-muted)]">{t.resetSubtitle}</p>
             <form onSubmit={onSubmit} className="mt-12 space-y-6">
-              <input
+              <PasswordInput
                 name="new-password"
-                type="password"
                 autoComplete="new-password"
-                aria-label={t.newPassword}
+                ariaLabel={t.newPassword}
                 value={pwd}
                 onChange={(e) => setPwd(e.target.value)}
                 placeholder={t.newPassword}
-                className="psy-input w-full"
+                locale={locale}
               />
-              <input
+              <PasswordInput
                 name="confirm-password"
-                type="password"
                 autoComplete="new-password"
-                aria-label={t.confirmNewPassword}
+                ariaLabel={t.confirmNewPassword}
                 value={pwd2}
                 onChange={(e) => setPwd2(e.target.value)}
                 placeholder={t.confirmNewPassword}
-                className="psy-input w-full"
+                locale={locale}
               />
               {error && <p role="alert" className="text-xs leading-5 text-[var(--psy-danger)]">{error}</p>}
               <button

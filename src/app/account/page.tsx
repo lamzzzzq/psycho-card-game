@@ -13,6 +13,7 @@ import { signOutUser, signInWithStudentId, MIN_PASSWORD, sendEmailChangeCode, ve
 import { AvatarPicker } from '@/components/pvp/AvatarPicker';
 import { DEFAULT_AVATAR } from '@/data/avatars';
 import { useProfileAvatar } from '@/stores/useProfileAvatar';
+import { PasswordInput } from '@/components/shared/PasswordInput';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -254,38 +255,35 @@ export default function AccountPage() {
         <section className="psy-card rounded-2xl p-5">
           <h2 className="text-sm font-semibold text-[var(--psy-ink)]">{t.changePasswordTitle}</h2>
           <form onSubmit={updatePassword} className="mt-3 space-y-2">
-            <input
+            <PasswordInput
               name="current-password"
-              type="password"
               autoComplete="current-password"
-              aria-label={t.currentPassword}
+              ariaLabel={t.currentPassword}
               disabled={pwdBusy}
               value={curPwd}
               onChange={(e) => setCurPwd(e.target.value)}
               placeholder={t.currentPassword}
-              className="psy-input w-full"
+              locale={locale}
             />
-            <input
+            <PasswordInput
               name="new-password"
-              type="password"
               autoComplete="new-password"
-              aria-label={t.newPassword}
+              ariaLabel={t.newPassword}
               disabled={pwdBusy}
               value={pwd}
               onChange={(e) => setPwd(e.target.value)}
               placeholder={t.newPassword}
-              className="psy-input w-full"
+              locale={locale}
             />
-            <input
+            <PasswordInput
               name="confirm-password"
-              type="password"
               autoComplete="new-password"
-              aria-label={t.confirmNewPassword}
+              ariaLabel={t.confirmNewPassword}
               disabled={pwdBusy}
               value={pwd2}
               onChange={(e) => setPwd2(e.target.value)}
               placeholder={t.confirmNewPassword}
-              className="psy-input w-full"
+              locale={locale}
             />
             <button
               type="submit"

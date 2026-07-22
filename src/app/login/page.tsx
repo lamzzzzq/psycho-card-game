@@ -8,6 +8,7 @@ import { useLocaleStore } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 import { AUTH_T } from '@/lib/i18n/auth';
 import { AuthTopBar } from '@/components/shared/AuthTopBar';
+import { PasswordInput } from '@/components/shared/PasswordInput';
 import { signInWithStudentId, isSessionActiveElsewhere, claimSession, signOutUser, currentUserId } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { normalizeStudentId, STUDENT_ID_LENGTH } from '@/lib/utils';
@@ -21,7 +22,6 @@ export default function LoginPage() {
 
   const [studentId, setStudentId] = useState('');
   const [password, setPassword] = useState('');
-  const [showPwd, setShowPwd] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // 单会话：其它设备已登入 → 弹确认「继续会顶掉对方」
@@ -126,25 +126,15 @@ export default function LoginPage() {
 
           {/* 密码 */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label htmlFor="login-password" className="text-xs font-medium text-[var(--psy-muted)]">{t.passwordLabel}</label>
-              <button
-                type="button"
-                onClick={() => setShowPwd((v) => !v)}
-                className="text-xs text-[var(--psy-muted)] underline-offset-2 hover:underline"
-              >
-                {showPwd ? t.hide : t.show}
-              </button>
-            </div>
-            <input
+            <label htmlFor="login-password" className="text-xs font-medium text-[var(--psy-muted)]">{t.passwordLabel}</label>
+            <PasswordInput
               id="login-password"
               name="password"
-              type={showPwd ? 'text' : 'password'}
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={t.passwordPlaceholder}
-              className="psy-input w-full"
+              locale={locale}
             />
           </div>
 
