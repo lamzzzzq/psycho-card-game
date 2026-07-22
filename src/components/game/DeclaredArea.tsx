@@ -19,6 +19,9 @@ interface DeclaredAreaProps {
   overlayZIndex?: number;
   /** 有空间的容器（结算页玩家卡 / 移动弹窗）直接内联展开维度列表，不再套一层「歸檔記錄」卡中卡。 */
   expanded?: boolean;
+  /** expanded 的宽容器变体（结算页玩家卡）：维度分区两列铺满宽度，否则每维独占一行
+      会在宽面板里留大片右侧空白、纵向拉到一屏放不下。移动弹窗等窄容器不要开。 */
+  wide?: boolean;
 }
 
 export function DeclaredArea({
@@ -29,6 +32,7 @@ export function DeclaredArea({
   targets,
   overlayZIndex,
   expanded = false,
+  wide = false,
 }: DeclaredAreaProps) {
   const t = STRINGS[locale].game;
   const dimName = (d: PersonalityCard['dimension']) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name);
@@ -124,8 +128,9 @@ export function DeclaredArea({
         {declaredSets.length === 0 ? (
           <p className="text-sm text-[var(--psy-muted)]">{t.noArchiveDone}</p>
         ) : (
-          // 内联展开（移动弹窗 / 结算页）：与桌面一致——每维度标题 + 卡片图（可点看详情）
-          <div className="space-y-4">
+          // 内联展开（移动弹窗 / 结算页）：与桌面一致——每维度标题 + 卡片图（可点看详情）。
+          // wide（结算页宽面板）：维度分区 sm 起两列铺满，卡稍收小保证 4 張的维度不折行。
+          <div className={wide ? 'grid gap-x-5 gap-y-4 sm:grid-cols-2' : 'space-y-4'}>
             {declaredSets.map((set) => (
               <div key={set.dimension}>
                 <div className="mb-2 flex items-center gap-2">
@@ -134,7 +139,7 @@ export function DeclaredArea({
                     {dimName(set.dimension)} · {set.cards.length} {t.cardsUnit}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className={`flex flex-wrap ${wide ? 'gap-1.5' : 'gap-2'}`}>
                   {set.cards.map((card) => (
                     <button
                       key={card.id}
@@ -143,7 +148,7 @@ export function DeclaredArea({
                       className="rounded-[1rem] transition hover:-translate-y-1 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--psy-accent)]"
                       aria-label={`${t.viewWord}: ${card.text}`}
                     >
-                      <TarotCard {...cardToTarotProps(card, locale)} width={56} />
+                      <TarotCard {...cardToTarotProps(card, locale)} width={wide ? 52 : 56} />
                     </button>
                   ))}
                 </div>
