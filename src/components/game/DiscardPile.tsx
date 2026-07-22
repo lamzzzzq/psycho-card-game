@@ -182,7 +182,7 @@ export function DiscardPile({
                 />
               </>
             )}
-            <span className="psy-serif relative text-sm tracking-[0.2em] text-[var(--psy-muted)] sm:text-base">{t.discardPileName}</span>
+            <span className="psy-serif relative text-xs tracking-[0.2em] text-[var(--psy-muted)] sm:text-base">{t.discardPileName}</span>
           </div>
         )}
         <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">{t.discardedCount} {count} {t.cardsUnit}</span>
