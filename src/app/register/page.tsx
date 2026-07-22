@@ -107,7 +107,7 @@ export default function RegisterPage() {
       >
         <Link
           href="/"
-          className="mb-5 inline-block text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
+          className="mb-10 inline-block text-sm text-[var(--psy-muted)] underline decoration-[rgba(200,155,93,0.28)] underline-offset-4 transition hover:text-[var(--psy-ink-soft)]"
         >
           {t.backHome}
         </Link>
@@ -117,8 +117,8 @@ export default function RegisterPage() {
 
         {step === 'info' ? (
           <>
-            <p className="mt-2 text-center text-sm leading-6 text-[var(--psy-muted)]">{t.registerSubtitle}</p>
-            <form onSubmit={onSendCode} className="mt-8 space-y-4">
+            <p className="mt-3 text-center text-sm leading-6 text-[var(--psy-muted)]">{t.registerSubtitle}</p>
+            <form onSubmit={onSendCode} className="mt-12 space-y-6">
               {/* 学号 */}
               <div className="space-y-1.5">
                 <label htmlFor="reg-student-id" className="text-xs font-medium text-[var(--psy-muted)]">{t.studentIdLabel}</label>
@@ -216,9 +216,9 @@ export default function RegisterPage() {
           </>
         ) : (
           <>
-            <p className="mt-2 text-center text-sm leading-6 text-[var(--psy-muted)]">{t.codeSentHint}</p>
+            <p className="mt-3 text-center text-sm leading-6 text-[var(--psy-muted)]">{t.codeSentHint}</p>
             <p className="mt-1 text-center text-xs text-[var(--psy-muted)]">{email}</p>
-            <form onSubmit={onRegister} className="mt-8 space-y-4">
+            <form onSubmit={onRegister} className="mt-12 space-y-6">
               <div className="space-y-1.5">
                 <label htmlFor="reg-code" className="text-xs font-medium text-[var(--psy-muted)]">{t.codeLabel}</label>
                 <input
