@@ -16,6 +16,7 @@ import {
   turnNudge,
 } from '@/components/game/FeedbackLayer';
 import { FlyingCard } from '@/components/game/FlyingCard';
+import { HowToPlayButton } from '@/components/game/HowToPlayButton';
 import { supabase } from '@/lib/supabase';
 import { leaveRoom, leaveAllRooms, updateRoomStatus } from '@/lib/room-api';
 import { retryPendingSaves, removePendingInterrupted } from '@/lib/game-record';
@@ -678,13 +679,16 @@ export default function PvpGamePage() {
       ))}
 
       {/* Top bar: exit button */}
-      <div className="mb-1 flex shrink-0 items-center justify-between sm:mb-2">
-        <button
-          onClick={() => setExitConfirmOpen(true)}
-          className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-1 text-[10px] text-[var(--psy-muted)] shadow-[0_8px_18px_rgba(96,72,38,0.1)] transition hover:border-[rgba(220,80,80,0.4)] hover:text-[var(--psy-danger)] sm:text-[11px]"
-        >
-          {t.leaveGame}
-        </button>
+      <div className="mb-1 flex shrink-0 items-center justify-between gap-2 sm:mb-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setExitConfirmOpen(true)}
+            className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-1 text-[10px] text-[var(--psy-muted)] shadow-[0_8px_18px_rgba(96,72,38,0.1)] transition hover:border-[rgba(220,80,80,0.4)] hover:text-[var(--psy-danger)] sm:text-[11px]"
+          >
+            {t.leaveGame}
+          </button>
+          <HowToPlayButton locale={locale} />
+        </div>
         <span className="psy-serif text-[10px] uppercase tracking-[0.32em] text-[var(--psy-muted)] sm:text-[11px]">
           {t.roomTitlePrefix} {code}
         </span>

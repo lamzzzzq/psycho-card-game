@@ -31,6 +31,7 @@ import { PongPanel } from '@/components/game/PongPanel';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
+import { HowToPlayButton } from '@/components/game/HowToPlayButton';
 
 interface FlyingAnim {
   id: number;
@@ -462,9 +463,7 @@ export default function GamePage() {
         >
           {tg.leaveGame}
         </button>
-        <span className="psy-serif text-[10px] uppercase tracking-[0.32em] text-[var(--psy-muted)] sm:text-[11px]">
-          {STRINGS[locale].home.title}
-        </span>
+        <HowToPlayButton locale={locale} />
       </div>
 
       {/* Exit confirmation modal */}
