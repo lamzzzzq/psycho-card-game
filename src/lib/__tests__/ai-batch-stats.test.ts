@@ -10,9 +10,9 @@
  * 跑法：npx vitest run src/lib/__tests__/ai-batch-stats.test.ts
  */
 import { describe, it, expect } from 'vitest';
-import { drawCard, discardCard, attemptHu, pongCard, skipPong } from '../game-logic';
+import { drawCard, discardCard, attemptHu, pongCard, skipPong, selfPongCard } from '../game-logic';
 import { createShuffledDeck, dealCardsVariable } from '../card-engine';
-import { makeAIDecision, makeAIHuDecision, makeAIPongDecision } from '../ai-engine';
+import { makeAIDecision, makeAIHuDecision, makeAIPongDecision, makeAISelfPongDecision } from '../ai-engine';
 import { generateAIScores } from '../scoring';
 import type { GameState, Player, AIDifficulty, GameCard } from '@/types';
 
@@ -111,6 +111,18 @@ function runOneGame(playerCount: number, difficulty: AIDifficulty, seed: number)
           if (hu.shouldHu) {
             state = attemptHu(state, state.currentPlayerIndex);
             break;
+          }
+          // 自摸碰（锁维度）：与线上 executeAITurn 一致——抽牌后不能一把胡时尝试自摸碰。
+          // 用 `afterPong !== state` 判断是否真生效（一回合只能一次，第二次会被 selfPongUsedThisTurn
+          // 拒、返回原 state → 不算 bug，落到弃牌）。生效则 continue 回顶重判(hu/弃牌)。
+          const sp = makeAISelfPongDecision(cur, state.drawnCard, difficulty);
+          if (sp.shouldPong && sp.dimension && sp.cardIds) {
+            const afterPong = selfPongCard(state, state.currentPlayerIndex, sp.dimension, sp.cardIds);
+            if (afterPong !== state) {
+              state = afterPong;
+              conserve(`after self-pong #${actions}`);
+              continue;
+            }
           }
         } else {
           const hu = makeAIHuDecision(cur, difficulty);
