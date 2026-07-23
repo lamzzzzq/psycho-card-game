@@ -38,6 +38,8 @@ export default function AccountPage() {
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailMsg, setEmailMsg] = useState('');
   const [verified, setVerified] = useState(false);
+  // 已验证时默认只读显示邮箱；点「更改信箱」才进入编辑+验证流程
+  const [emailEditing, setEmailEditing] = useState(false);
   // 发码冷却（后端按学号 60s 限流，按钮如实倒计时）
   const [emailCooldown, setEmailCooldown] = useState(0);
   useEffect(() => {
@@ -87,8 +89,19 @@ export default function AccountPage() {
     if (!res.ok) return setEmailMsg(t.err[res.error] ?? t.err.unknown);
     setVerified(true);
     setEmailStep('idle');
+    setEmailEditing(false);
     setEmailCode('');
     setEmailMsg(t.emailSaved);
+  }
+
+  // 取消更改：还原为已保存的邮箱 + 回到只读
+  function cancelEmailEdit() {
+    setEmailEditing(false);
+    setEmailStep('idle');
+    setEmailCode('');
+    setEmailMsg('');
+    if (recoveryEmail) setEmail(recoveryEmail);
+    setVerified(recoveryEmailVerified);
   }
 
   // ── 改密码 ──
@@ -177,31 +190,54 @@ export default function AccountPage() {
             </span>
           </div>
 
-          {emailStep === 'idle' ? (
-            <form onSubmit={sendEmailCode} className="mt-3 flex flex-col gap-2 sm:flex-row">
-              <input
-                name="email"
-                type="email"
-                autoComplete="email"
-                spellCheck={false}
-                aria-label={t.recoveryEmailSectionTitle}
-                disabled={emailBusy}
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (verified) setVerified(false); // 改了邮箱 → 需重新验证
-                }}
-                placeholder={t.recoveryEmailPlaceholder}
-                className="psy-input flex-1"
-              />
+          {verified && !emailEditing ? (
+            // 已验证 → 只读显示 + 「更改信箱」按钮（想换绑再进编辑+验证）
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <span className="min-w-0 truncate text-sm text-[var(--psy-ink)]">{email}</span>
               <button
-                type="submit"
-                disabled={emailBusy || emailCooldown > 0}
-                className="psy-btn psy-btn-ghost psy-serif whitespace-nowrap px-5 py-2.5 font-semibold disabled:opacity-40"
+                type="button"
+                onClick={() => { setEmailEditing(true); setEmailMsg(''); }}
+                className="psy-btn psy-btn-ghost psy-serif shrink-0 whitespace-nowrap px-4 py-2 text-sm font-semibold"
               >
-                {emailBusy ? t.processing : emailCooldown > 0 ? `${t.sendCodeBtn} (${emailCooldown}s)` : t.sendCodeBtn}
+                {t.changeEmail}
               </button>
-            </form>
+            </div>
+          ) : emailStep === 'idle' ? (
+            <>
+              <form onSubmit={sendEmailCode} className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <input
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  spellCheck={false}
+                  aria-label={t.recoveryEmailSectionTitle}
+                  disabled={emailBusy}
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (verified) setVerified(false); // 改了邮箱 → 需重新验证
+                  }}
+                  placeholder={t.recoveryEmailPlaceholder}
+                  className="psy-input flex-1"
+                />
+                <button
+                  type="submit"
+                  disabled={emailBusy || emailCooldown > 0}
+                  className="psy-btn psy-btn-ghost psy-serif whitespace-nowrap px-5 py-2.5 font-semibold disabled:opacity-40"
+                >
+                  {emailBusy ? t.processing : emailCooldown > 0 ? `${t.sendCodeBtn} (${emailCooldown}s)` : t.sendCodeBtn}
+                </button>
+              </form>
+              {emailEditing && (
+                <button
+                  type="button"
+                  onClick={cancelEmailEdit}
+                  className="mt-2 text-xs text-[var(--psy-muted)] underline-offset-2 hover:underline"
+                >
+                  {t.cancelEdit}
+                </button>
+              )}
+            </>
           ) : (
             <form onSubmit={confirmEmailCode} className="mt-3 space-y-2">
               <p className="text-xs leading-5 text-[var(--psy-muted)]">
