@@ -11,6 +11,7 @@ import { QUESTIONS } from '@/data/questions';
 import { Footer } from '@/components/shared/Footer';
 import { DeckSelectModal } from '@/components/shared/DeckSelectModal';
 import { AccountChip } from '@/components/shared/AccountChip';
+import { useAuthSession } from '@/lib/useAuthSession';
 import { renderCjkKeep } from '@/lib/renderCjk';
 
 export default function Home() {
@@ -18,7 +19,12 @@ export default function Home() {
   const hydrated = useHydrated();
   const { bigFiveScores, getProgress } = useAssessmentStore();
   const progress = getProgress();
-  const hasResults = hydrated && bigFiveScores !== null;
+  // 需登录 + 有测评结果才露出「聯機/單機/報告」三入口。
+  // 修 bug：登出后 localStorage 还留着 bigFiveScores → 曾以为 hasResults 就放行，
+  // 让未登录用户直接进单机/报告。现在一律要求已登录（userId 存在）。
+  const { userId } = useAuthSession();
+  const isLoggedIn = !!userId;
+  const hasResults = hydrated && isLoggedIn && bigFiveScores !== null;
   // SSR/首屏用 zh 与服务端一致，hydrate 后切到持久化/?lang 的语言，避免 mismatch。
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);

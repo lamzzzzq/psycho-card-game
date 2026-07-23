@@ -40,12 +40,20 @@ export default function LobbyPage() {
   const [revealDifficulty, setRevealDifficulty] = useState<RevealDifficulty>('open');
 
   // 学号（登录态）+ 头像（共享 store，与 /account、PVP 互通）
-  const { userId, studentId } = useAuthSession();
+  const { loading: authLoading, userId, studentId } = useAuthSession();
   const { avatar: sharedAvatar, load: loadAvatar, setAvatar: saveSharedAvatar } = useProfileAvatar();
   useEffect(() => {
     if (userId) void loadAvatar(userId);
   }, [userId, loadAvatar]);
   const avatar = sharedAvatar ?? DEFAULT_AVATAR;
+
+  // 登录门禁：确认未登录（auth 加载完仍无 userId）→ 跳登录，不渲染单机内容。
+  // 修 bug：登出后 localStorage 仍存 bigFiveScores，光靠下面的 !bigFiveScores 拦不住，
+  // 会让未登录用户直接进单机开局。
+  useEffect(() => {
+    if (!authLoading && !userId) router.replace('/login');
+  }, [authLoading, userId, router]);
+  if (!authLoading && !userId) return null;
 
   if (!bigFiveScores) {
     return (
