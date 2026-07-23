@@ -69,9 +69,18 @@ export function AccountChip() {
         aria-label={t.accountTitle}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[var(--psy-surface)] text-2xl shadow-[var(--psy-shadow)] transition hover:border-[var(--psy-accent)]"
+        className="relative flex h-11 w-11 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[var(--psy-surface)] text-2xl shadow-[var(--psy-shadow)] transition hover:border-[var(--psy-accent)]"
       >
         {face}
+        {/* 右下角设置齿轮：点头像即开设置/退出下拉，齿轮作可视提示 */}
+        <span
+          aria-hidden
+          className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--psy-accent)] text-[#1a1206] shadow-[0_1px_3px_rgba(96,72,38,0.35)] ring-2 ring-[var(--psy-bg)]"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="h-2.5 w-2.5">
+            <path d="M19.14 12.94a7.5 7.5 0 000-1.88l2.03-1.58a.5.5 0 00.12-.64l-1.92-3.32a.5.5 0 00-.6-.22l-2.39.96a7 7 0 00-1.62-.94l-.36-2.54a.5.5 0 00-.5-.42h-3.84a.5.5 0 00-.5.42l-.36 2.54a7 7 0 00-1.62.94l-2.39-.96a.5.5 0 00-.6.22L2.71 8.84a.5.5 0 00.12.64l2.03 1.58a7.5 7.5 0 000 1.88l-2.03 1.58a.5.5 0 00-.12.64l1.92 3.32a.5.5 0 00.6.22l2.39-.96c.5.38 1.05.7 1.62.94l.36 2.54a.5.5 0 00.5.42h3.84a.5.5 0 00.5-.42l.36-2.54a7 7 0 001.62-.94l2.39.96a.5.5 0 00.6-.22l1.92-3.32a.5.5 0 00-.12-.64l-2.03-1.58zM12 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z" />
+          </svg>
+        </span>
       </button>
 
       {open && (
