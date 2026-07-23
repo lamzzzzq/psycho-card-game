@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { DeclaredSet } from '@/types';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
+import { KnowledgeQuiz } from '@/components/game-results/KnowledgeQuiz';
 import { STRINGS, type Locale } from '@/lib/i18n';
 
 // 单机(Player)与 PVP(SerializedPlayer)结构不同——两边各自适配成这个通用结构，
@@ -99,6 +100,9 @@ export function GameOverModal({ players, winnerId, onPlayAgain, onBackToLobby, l
             );
           })}
         </div>
+
+        {/* #8 局末概念小测（可选，激励读知识卡） */}
+        <KnowledgeQuiz locale={locale} />
 
         <div className="mx-auto flex w-full max-w-lg gap-3">
           <button onClick={onPlayAgain} className="psy-btn psy-btn-accent flex-1 py-3 font-medium">
