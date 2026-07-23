@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Noto_Serif_SC, Noto_Sans_SC } from "next/font/google
 import "./globals.css";
 import { LocaleSync } from "@/components/shared/LocaleSync";
 import { SessionGuard } from "@/components/shared/SessionGuard";
+import { BgmPlayer } from "@/components/shared/BgmPlayer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -69,6 +70,7 @@ export default function RootLayout({
         <LocaleSync />
         <SessionGuard />
         {children}
+        <BgmPlayer />
       </body>
     </html>
   );
