@@ -16,7 +16,7 @@ const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
 
 const FROM = 'Personalities Mahjong <noreply@personalitiesmahjong.com>';
-const RESET_REDIRECT = 'https://personalitiesmahjong.com/reset-password';
+const RESET_REDIRECT = 'https://www.personalitiesmahjong.com/reset-password';
 const EMAIL_DOMAIN = 'stu.personalitiesmahjong.com';
 const STUDENT_ID_LENGTH = 9;
 const SEND_COOLDOWN_MS = 60_000;
@@ -118,8 +118,12 @@ Deno.serve(async (req) => {
       options: { redirectTo: RESET_REDIRECT },
     });
 
-    const actionLink = linkData?.properties?.action_link;
-    if (!linkErr && actionLink) {
+    // ⚠️ 防邮件安全网关(如 PolyU「External email」扫描器)预抓取消耗一次性链接：
+    // 不再直接发 Supabase 的 action_link(GET verify 即消耗 token)。改发指向我方页面的
+    // token_hash 链接，由浏览器 JS 主动 verifyOtp 核验——扫描器只做 GET、不跑 JS，不会消耗。
+    const hashedToken = linkData?.properties?.hashed_token;
+    if (!linkErr && hashedToken) {
+      const resetUrl = `${RESET_REDIRECT}?token_hash=${encodeURIComponent(hashedToken)}&type=recovery`;
       // 通过 Resend 发到找回邮箱
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -131,7 +135,7 @@ Deno.serve(async (req) => {
           from: FROM,
           to: profile.recovery_email,
           subject: '重設你的密碼 · Reset your password',
-          html: emailHtml(actionLink),
+          html: emailHtml(resetUrl),
         }),
       }).catch((e) => console.warn('[password-recovery] resend send failed', e));
     } else if (linkErr) {
