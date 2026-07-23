@@ -74,7 +74,7 @@ export function HexacoIntro({ locale }: { locale: Locale }) {
         {isEn ? 'The HEXACO Model' : 'HEXACO 人格模型'}
       </h2>
 
-      <p className="text-pretty text-[15px] leading-7 text-[var(--psy-ink-soft)] sm:leading-8">
+      <p className="text-[15px] leading-7 text-[var(--psy-ink-soft)] sm:leading-8">
         {isEn ? (
           <>
             The <strong>HEXACO</strong> model describes personality using six broad dimensions. The name{' '}
@@ -114,7 +114,7 @@ export function HexacoIntro({ locale }: { locale: Locale }) {
         ))}
       </div>
 
-      <p className="text-pretty text-[15px] leading-7 text-[var(--psy-ink-soft)] sm:leading-8">
+      <p className="text-[15px] leading-7 text-[var(--psy-ink-soft)] sm:leading-8">
         {isEn ? (
           <>
             In this game, you will learn more about your <strong>HEXACO</strong> personality profile. Your

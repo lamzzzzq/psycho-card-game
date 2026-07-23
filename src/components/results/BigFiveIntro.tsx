@@ -62,7 +62,7 @@ export function BigFiveIntro({ locale }: { locale: Locale }) {
         {isEn ? 'The Big Five Model' : '五大人格模型'}
       </h2>
 
-      <p className="text-pretty text-[15px] leading-7 text-[var(--psy-ink-soft)] sm:leading-8">
+      <p className="text-[15px] leading-7 text-[var(--psy-ink-soft)] sm:leading-8">
         {isEn ? (
           <>
             The <strong>Big Five</strong> model describes personality using five broad dimensions,
@@ -101,7 +101,7 @@ export function BigFiveIntro({ locale }: { locale: Locale }) {
         ))}
       </div>
 
-      <p className="text-pretty text-[15px] leading-7 text-[var(--psy-ink-soft)] sm:leading-8">
+      <p className="text-[15px] leading-7 text-[var(--psy-ink-soft)] sm:leading-8">
         {isEn ? (
           <>
             In this game, you will learn more about your <strong>Big Five</strong> personality profile.
