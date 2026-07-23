@@ -330,7 +330,8 @@ body > * {
 :focus-visible {
   outline: 2px solid var(--psy-accent);
   outline-offset: 2px;
-  border-radius: 4px;
+  /* 不再强制 border-radius —— 让每个元素聚焦时保留自身圆角（原来写死 4px 会把圆角
+     输入框/按钮在聚焦瞬间压成方角，box-shadow ring 也跟着变方，很突兀）。 */
 }
 
 button:focus-visible,

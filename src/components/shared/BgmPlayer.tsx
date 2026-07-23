@@ -40,7 +40,7 @@ export function BgmPlayer() {
         aria-label={label}
         aria-pressed={enabled}
         title={label}
-        className="fixed bottom-4 left-4 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[#fdf9f0] text-[var(--psy-muted)] shadow-[var(--psy-shadow)] transition hover:text-[var(--psy-accent-strong)]"
+        className="fixed right-4 top-4 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--psy-border)] bg-[#fdf9f0] text-[var(--psy-muted)] shadow-[var(--psy-shadow)] transition hover:text-[var(--psy-accent-strong)]"
       >
         {enabled ? (
           // volume-on
