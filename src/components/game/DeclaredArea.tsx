@@ -165,9 +165,9 @@ export function DeclaredArea({
   if (isProgressView) {
     return (
       <>
-        <section className="psy-panel psy-etched w-[13rem] rounded-[1.2rem] p-3" aria-label={locale === 'en' ? 'Archive progress' : '歸檔進度'}>
+        <section className="psy-panel psy-etched w-[13rem] rounded-[1.2rem] p-3" aria-label={locale === 'en' ? 'Filing progress' : '歸檔進度'}>
           <div className="mb-2 flex items-center justify-between gap-2">
-            <h3 className="psy-serif text-sm text-[var(--psy-accent)]">{locale === 'en' ? 'Archive progress' : '歸檔進度'}</h3>
+            <h3 className="psy-serif text-sm text-[var(--psy-accent)]">{locale === 'en' ? 'Filing progress' : '歸檔進度'}</h3>
             {declaredSets.length > 0 && <span className="text-[10px] text-[var(--psy-muted)]">{t.viewWord}</span>}
           </div>
           <div className="space-y-1.5">
@@ -180,7 +180,7 @@ export function DeclaredArea({
                   <span className="psy-serif text-[11px] text-[var(--psy-ink)]">{dimName(dimension)}</span>
                   <span className="text-right text-[10px] leading-4">
                     <span className="block text-[var(--psy-muted)]">{locale === 'en' ? `Target ${target}` : `目標 ${target} 張`}</span>
-                    <span className={isDone ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-ink-soft)]'}>{isDone ? (locale === 'en' ? 'Archived' : '已歸檔') : (locale === 'en' ? 'Not archived' : '未歸檔')}</span>
+                    <span className={isDone ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-ink-soft)]'}>{isDone ? (locale === 'en' ? 'Filed' : '已歸檔') : (locale === 'en' ? 'Not filed' : '未歸檔')}</span>
                   </span>
                 </>
               );

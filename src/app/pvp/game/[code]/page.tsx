@@ -904,7 +904,7 @@ export default function PvpGamePage() {
             </div>
             {/* 5 维人格 pill：点击展开该玩家归档（模态居中）；实底加深、字加大，替代原独立人格/归档入口。 */}
             {targets && (
-              <div className="grid grid-cols-5 gap-1.5" aria-label={locale === 'en' ? 'Archive progress' : '歸檔進度'}>
+              <div className="grid grid-cols-5 gap-1.5" aria-label={locale === 'en' ? 'Filing progress' : '歸檔進度'}>
                 {DIMENSIONS.map((d) => {
                   const isDone = declaredDims.has(d);
                   return (
