@@ -10,6 +10,7 @@ import { useHydrated } from '@/stores/useHydration';
 import { AUTH_T } from '@/lib/i18n/auth';
 import { useAuthSession } from '@/lib/useAuthSession';
 import { useProfileAvatar } from '@/stores/useProfileAvatar';
+import { useBgm } from '@/stores/useBgm';
 import { signOutUser } from '@/lib/auth';
 
 export function AccountChip() {
@@ -20,6 +21,8 @@ export function AccountChip() {
 
   const { loading, userId, studentId, recoveryEmail } = useAuthSession();
   const { avatar: sharedAvatar, load: loadAvatar } = useProfileAvatar();
+  const bgmOn = useBgm((s) => s.enabled);
+  const toggleBgm = useBgm((s) => s.toggle);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -113,6 +116,32 @@ export function AccountChip() {
           >
             {t.menuSettings}
           </Link>
+
+          {/* 背景音乐开关（收在菜单里，避免浮动按钮撞底栏）*/}
+          <button
+            onClick={toggleBgm}
+            role="switch"
+            aria-checked={bgmOn}
+            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-[var(--psy-ink)] transition hover:bg-[var(--psy-surface-strong)]"
+          >
+            <span className="flex items-center gap-2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-[var(--psy-muted)]" aria-hidden>
+                <path d="M9 18V5l12-2v13" />
+                <circle cx="6" cy="18" r="3" />
+                <circle cx="18" cy="16" r="3" />
+              </svg>
+              {t.menuBgm}
+            </span>
+            {/* 轨道式开关：开=金色靠右，关=灰色靠左 */}
+            <span
+              aria-hidden
+              className={`relative h-5 w-9 shrink-0 rounded-full transition ${bgmOn ? 'bg-[var(--psy-accent)]' : 'bg-[var(--psy-border)]'}`}
+            >
+              <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${bgmOn ? 'left-[1.125rem]' : 'left-0.5'}`} />
+            </span>
+          </button>
+
+          <div className="h-px bg-[var(--psy-border)]" />
 
           <button
             onClick={async () => {

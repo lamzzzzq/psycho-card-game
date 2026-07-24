@@ -72,6 +72,7 @@ export const AUTH_T = {
     login: '登入',
     menuSettings: '設置',
     menuLogout: '退出登入',
+    menuBgm: '背景音樂',
 
     // ── 账号页 ──
     accountTitle: '我的帳號',
@@ -197,6 +198,7 @@ export const AUTH_T = {
     login: 'Log In',
     menuSettings: 'Settings',
     menuLogout: 'Log Out',
+    menuBgm: 'Background music',
 
     // ── account page ──
     accountTitle: 'My Account',
