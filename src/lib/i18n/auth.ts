@@ -18,7 +18,7 @@ export const AUTH_T = {
     confirmPasswordPlaceholder: '再輸入一次密碼',
     recoveryEmailLabel: '找回密碼用的信箱',
     recoveryEmailPlaceholder: 'you@example.com',
-    recoveryEmailHint: '忘記密碼時，重設連結會寄到這個信箱。請填你常用、真實的信箱。',
+    recoveryEmailHint: '忘記密碼時，驗證碼會寄到這個信箱。請填你常用、真實的信箱。',
     registerBtn: '註冊',
     haveAccount: '已經有帳號？',
     goLogin: '去登入',
@@ -108,12 +108,12 @@ export const AUTH_T = {
 
     // ── 错误码 → 提示 ──
     err: {
-      invalid_student_id: '學號格式不對（需 9 位）。',
+      invalid_student_id: '學號格式錯誤（需 9 位）。',
       weak_password: '密碼太短（至少 6 位）。',
-      invalid_email: '信箱格式不對。',
+      invalid_email: '信箱格式錯誤。',
       student_id_taken: '這個學號已經註冊過了，請直接登入或找回密碼。',
       account_exists: '這個學號已經註冊過了，請直接登入或找回密碼。',
-      invalid_credentials: '學號或密碼不對。',
+      invalid_credentials: '學號或密碼錯誤。',
       request_failed: '請求失敗，請檢查網路後重試。',
       unknown: '出了點問題，請稍後重試。',
       // 验证码
@@ -122,9 +122,9 @@ export const AUTH_T = {
       code_locked: '驗證碼錯誤次數過多，請重新發送。',
       code_expired: '驗證碼已過期，請重新發送。',
       code_email_mismatch: '信箱與發碼時不一致，請重新發送。',
-      invalid_code: '驗證碼不對，請檢查後重試。',
+      invalid_code: '驗證碼錯誤，請檢查後重試。',
       too_many_requests: '發送太頻繁，請稍候再試。',
-      wrong_current_password: '目前密碼不對。',
+      wrong_current_password: '目前密碼錯誤。',
     } as Record<string, string>,
   },
 
@@ -145,7 +145,7 @@ export const AUTH_T = {
     confirmPasswordPlaceholder: 'Re-enter your password',
     recoveryEmailLabel: 'Recovery Email',
     recoveryEmailPlaceholder: 'you@example.com',
-    recoveryEmailHint: 'If you forget your password, the reset link is sent here. Use a real email you check.',
+    recoveryEmailHint: 'If you forget your password, a reset code is sent here. Use a real email you check.',
     registerBtn: 'Register',
     haveAccount: 'Already have an account?',
     goLogin: 'Log in',
