@@ -444,7 +444,7 @@ export const STRINGS = {
         { glyph: '✦', title: 'Self-Assessment', note: 'Take the test first to reveal your own tendencies' },
         { glyph: '◈', title: 'Draw & File', note: 'Collect cards of one personality dimension and file them openly' },
         { glyph: '☽', title: 'Read Your Opponent', note: 'Every card an opponent discards exposes clues to their personality' },
-        { glyph: '◐', title: 'Solo / Multiplayer', note: 'Play solo against AI, or join a virtual table with others anytime' },
+        { glyph: '◐', title: 'Solo / Multiplayer', note: 'Play solo against AI, or join a virtual table with others anywhere' },
       ],
       cardEyebrow: 'PERSONA SPREAD',
       cardArcana: 'ARCANA OF SELF',
