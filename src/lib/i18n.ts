@@ -428,7 +428,7 @@ export const STRINGS = {
   },
   en: {
     common: {
-      tutorial: 'How to Play',
+      tutorial: 'Tutorial',
       footer: {
         line1: '© 2026 Department of Applied Social Sciences, The Hong Kong Polytechnic University · For educational and research use only',
         leader: 'Project Leader: Prof. Bryant Hui',
