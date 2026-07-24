@@ -1052,7 +1052,7 @@ export default function BrandPage() {
               一句话：<strong className="text-[var(--psy-ink)]">把人格测评、心理线索判断与卡牌对战编织在一起——先读懂自己，再在牌桌上读懂别人。</strong>
             </p>
             <p>
-              玩家先完成大五人格（Big Five / OCEAN）测评得到自己的五维画像；这份画像决定牌局里每个维度需要凑齐的「目标张数」。牌桌沿用麻将的「摸牌 / 碰 / 胡」节奏，但每张牌都是一句人格陈述，归档 = 用同维度的牌凑齐一组、公开锁定。对手打出的每一张弃牌都在暴露他的人格倾向——这是「识人破局」的核心乐趣。
+              玩家先完成五大人格（Big Five / OCEAN）测评得到自己的五维画像；这份画像决定牌局里每个维度需要凑齐的「目标张数」。牌桌沿用麻将的「摸牌 / 碰 / 胡」节奏，但每张牌都是一句人格陈述，归档 = 用同维度的牌凑齐一组、公开锁定。对手打出的每一张弃牌都在暴露他的人格倾向——这是「识人破局」的核心乐趣。
             </p>
           </div>
         </Section>
@@ -1079,7 +1079,7 @@ export default function BrandPage() {
         </Section>
 
         {/* Goals */}
-        <Section eyebrow="Goals · 目标" title="用一局麻将学会大五人格">
+        <Section eyebrow="Goals · 目标" title="用一局麻将学会五大人格">
           <div className="grid gap-3 sm:grid-cols-3">
             {[
               { t: '教学工具', d: '香港理工大学应用社会科学系课程用；把抽象的人格理论变成可玩、可讨论的互动体验。' },
@@ -1144,7 +1144,7 @@ export default function BrandPage() {
                 <text x="60" y="74" textAnchor="middle" fontSize="40" fontWeight="700" fill={GOLD_STRONG}>心</text>
               </TileBase>
             </LogoCard>
-            <LogoCard label="A2 · 五维牌" note="牌面是大五雷达——点出「人格」内核">
+            <LogoCard label="A2 · 五维牌" note="牌面是五大雷达——点出「人格」内核">
               <TileBase>
                 <RadarGlyph cx={60} cy={62} r={20} />
               </TileBase>
