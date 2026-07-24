@@ -70,6 +70,11 @@ export const STRINGS = {
       deckModalTitle: '選擇人格模型',
       deckModalSub: '目前提供 Big Five，其餘人格模型即將上線',
       deckModalClose: '關閉',
+      // 「查看報告」选了尚未完成的模型时的提示框
+      reportNotDoneBody: '你還沒做過這個測評，要現在做嗎？',
+      reportComingSoonNote: '此測評即將上線，敬請期待',
+      reportStartNow: '開始測評',
+      reportBack: '返回',
     },
     assessment: {
       eyebrow: 'Persona Reading',
@@ -455,6 +460,11 @@ export const STRINGS = {
       deckModalTitle: 'Select Personality Model',
       deckModalSub: 'Currently featuring the Big Five. Other personality models coming soon.',
       deckModalClose: 'Close',
+      // Prompt shown when picking a not-yet-taken model from "View Report"
+      reportNotDoneBody: "You haven't taken this assessment yet. Do it now?",
+      reportComingSoonNote: 'This assessment is coming soon',
+      reportStartNow: 'Start Assessment',
+      reportBack: 'Back',
     },
     assessment: {
       eyebrow: 'Persona Reading',

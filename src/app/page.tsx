@@ -35,6 +35,26 @@ export default function Home() {
   // 牌堆选择模态：点「玩法教学」或「开始测评」先弹三牌堆入口（仅 Big Five 可选），
   // 选后再去对应页面。deckModalFor 记录去向。
   const [deckModalFor, setDeckModalFor] = useState<'tutorial' | 'assessment' | 'report' | 'pvp' | 'solo' | null>(null);
+  // 「查看報告」按模型分流：选了尚未完成的模型 → 弹「未完成」提示框（记录选的哪个模型）
+  const [reportPrompt, setReportPrompt] = useState<'big-five' | 'hexaco' | 'cpai' | null>(null);
+
+  // 各模型：是否已做出（有测评+报告页）+ 该用户是否已完成 + 展示名。
+  // 目前仅 Big Five 真实存在；HEXACO/CPAI 尚未上线 → 未完成时提示框 CTA 置灰。
+  // 检测源当前用本地 bigFiveScores；后续可换成登入时从 Supabase 拉取的「已完成模型」。
+  const MODEL_NAME: Record<'big-five' | 'hexaco' | 'cpai', string> = { 'big-five': 'Big Five', hexaco: 'HEXACO', cpai: 'CPAI-2' };
+  const modelAvailable = (m: 'big-five' | 'hexaco' | 'cpai') => m === 'big-five';
+  const modelDone = (m: 'big-five' | 'hexaco' | 'cpai') => (m === 'big-five' ? bigFiveScores !== null : false);
+
+  // 选模型后：已完成 → 进该模型报告；未完成 → 关模型窗、开「未完成」提示框
+  function handleReportPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
+    if (modelDone(deckId)) {
+      setDeckModalFor(null);
+      router.push('/results'); // 目前仅 Big Five 有报告页
+      return;
+    }
+    setDeckModalFor(null);
+    setReportPrompt(deckId);
+  }
 
   // 自愈：已完成报告却残留半截答案 = 放弃的重测（unmount 清理可能没触发）。
   // 清掉它，避免主页显示「繼續測評(n/50)」而大厅显示「已完成」的不一致。
@@ -178,8 +198,48 @@ export default function Home() {
           : deckModalFor === 'solo' ? '/lobby'
           : '/assessment'
         )}
+        onPickDeck={deckModalFor === 'report' ? handleReportPick : undefined}
         loc={loc}
       />
+
+      {/* 「查看報告」选了尚未完成的模型 → 未完成提示框（老板流程：已做进报告 / 未做问要不要现在做）。
+          该模型尚未上线时「開始測評」置灰不可点，等测评做好再启用。 */}
+      {reportPrompt && (
+        <div
+          onClick={() => setReportPrompt(null)}
+          className="fixed inset-0 z-[95] flex items-center justify-center bg-[rgba(58,48,32,0.5)] px-5 backdrop-blur-sm"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="psy-panel psy-etched w-full max-w-sm space-y-4 rounded-[1.6rem] p-6 text-center"
+          >
+            <h2 className="psy-serif text-xl text-[var(--psy-ink)]">{MODEL_NAME[reportPrompt]}</h2>
+            <p className="text-sm leading-6 text-[var(--psy-ink-soft)]">{t.reportNotDoneBody}</p>
+            {!modelAvailable(reportPrompt) && (
+              <p className="text-xs text-[var(--psy-muted)]">🔒 {t.reportComingSoonNote}</p>
+            )}
+            <div className="space-y-2 pt-1">
+              <button
+                disabled={!modelAvailable(reportPrompt)}
+                onClick={() => {
+                  const m = reportPrompt;
+                  setReportPrompt(null);
+                  if (m && modelAvailable(m)) router.push('/assessment'); // 目前仅 Big Five 可去答题
+                }}
+                className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {t.reportStartNow}
+              </button>
+              <button
+                onClick={() => setReportPrompt(null)}
+                className="psy-btn psy-btn-ghost psy-serif w-full py-2.5 text-sm font-medium"
+              >
+                {t.reportBack}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

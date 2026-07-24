@@ -22,11 +22,15 @@ export function DeckSelectModal({
   onClose,
   onSelect,
   loc,
+  onPickDeck,
 }: {
   open: boolean;
   onClose: () => void;
   onSelect: () => void;
   loc: Locale;
+  /** 「查看報告」等需按模型分流的场景：传入后所有模型都可点，点击交给调用方按 deckId 判断
+     （已做→进报告 / 未做→弹提示）。不传则维持原行为（仅 Big Five 进流程，HEXACO 走预览）。 */
+  onPickDeck?: (deckId: (typeof DECKS)[number]['id']) => void;
 }) {
   const router = useRouter();
   const p = STRINGS[loc].pvpLobby;
@@ -65,9 +69,11 @@ export function DeckSelectModal({
 
             <div className="grid gap-3">
               {DECKS.map((d) => {
-                // 可点：未锁(Big Five 进入流程) 或 锁但有预览页(HEXACO → /hexaco)。CPAI 完全禁用。
-                const clickable = !d.locked || d.previewHref !== null;
+                // report 流程(onPickDeck)：所有模型都可点，点击交调用方按 deckId 分流。
+                // 否则(原行为)：可点 = 未锁(Big Five 进流程) 或 锁但有预览页(HEXACO → /hexaco)。
+                const clickable = onPickDeck ? true : (!d.locked || d.previewHref !== null);
                 const handleClick = () => {
+                  if (onPickDeck) { onPickDeck(d.id); return; }
                   if (!d.locked) { onSelect(); return; }
                   if (d.previewHref) { onClose(); router.push(d.previewHref); }
                 };
@@ -81,7 +87,7 @@ export function DeckSelectModal({
                   >
                     <div className="flex w-full items-center justify-between gap-2">
                       <span className="psy-serif text-base text-[var(--psy-ink)]">{d.name ?? p[d.nameKey as 'deckCpaiName' | 'deckHexacoName']}</span>
-                      {d.locked && d.previewHref && (
+                      {!onPickDeck && d.locked && d.previewHref && (
                         <span className="shrink-0 text-[10px] font-medium text-[var(--psy-accent)]">{p.deckPreview} →</span>
                       )}
                       {d.locked && !d.previewHref && (
