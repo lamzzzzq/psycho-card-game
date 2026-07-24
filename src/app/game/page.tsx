@@ -32,6 +32,7 @@ import { DeclaredArea } from '@/components/game/DeclaredArea';
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
 import { HowToPlayButton } from '@/components/game/HowToPlayButton';
+import { BgmToggleButton } from '@/components/shared/BgmToggleButton';
 
 interface FlyingAnim {
   id: number;
@@ -463,7 +464,10 @@ export default function GamePage() {
         >
           {tg.leaveGame}
         </button>
-        <HowToPlayButton locale={locale} />
+        <div className="flex items-center gap-2">
+          <BgmToggleButton locale={locale} />
+          <HowToPlayButton locale={locale} />
+        </div>
       </div>
 
       {/* Exit confirmation modal */}

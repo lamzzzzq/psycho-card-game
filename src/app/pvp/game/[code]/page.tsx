@@ -17,6 +17,7 @@ import {
 } from '@/components/game/FeedbackLayer';
 import { FlyingCard } from '@/components/game/FlyingCard';
 import { HowToPlayButton } from '@/components/game/HowToPlayButton';
+import { BgmToggleButton } from '@/components/shared/BgmToggleButton';
 import { supabase } from '@/lib/supabase';
 import { leaveRoom, leaveAllRooms, updateRoomStatus } from '@/lib/room-api';
 import { retryPendingSaves, removePendingInterrupted } from '@/lib/game-record';
@@ -687,6 +688,7 @@ export default function PvpGamePage() {
           >
             {t.leaveGame}
           </button>
+          <BgmToggleButton locale={locale} />
           <HowToPlayButton locale={locale} />
         </div>
         <span className="psy-serif text-[10px] uppercase tracking-[0.32em] text-[var(--psy-muted)] sm:text-[11px]">
