@@ -49,9 +49,10 @@ export const AUTH_T = {
 
     // ── 忘記密碼 ──
     forgotTitle: '找回密碼',
-    forgotSubtitle: '輸入你的學號，我們會把重設連結寄到你註冊時填的找回信箱',
-    forgotBtn: '寄送重設連結',
-    forgotSent: '若這個學號有帳號，重設連結已寄到它的找回信箱，請查收（也看看垃圾郵件夾）。',
+    forgotSubtitle: '輸入你的學號，我們會把 6 位驗證碼寄到你註冊時填的找回信箱',
+    forgotBtn: '寄送驗證碼',
+    forgotSent: '若這個學號有帳號，驗證碼已寄到它的找回信箱，請查收（也看看垃圾郵件夾）。',
+    forgotCodeStepHint: '在下面輸入驗證碼並設定新密碼。',
     backToLogin: '← 返回登入',
 
     // ── 重設密碼（點郵件連結後）──
@@ -175,9 +176,10 @@ export const AUTH_T = {
 
     // ── forgot password ──
     forgotTitle: 'Reset Password',
-    forgotSubtitle: "Enter your student ID. We'll email a reset link to the recovery email on file",
-    forgotBtn: 'Send Reset Link',
-    forgotSent: 'If this student ID has an account, a reset link has been sent to its recovery email. Check your inbox (and spam).',
+    forgotSubtitle: "Enter your student ID. We'll email a 6-digit code to the recovery email on file",
+    forgotBtn: 'Send Code',
+    forgotSent: 'If this student ID has an account, a verification code has been sent to its recovery email. Check your inbox (and spam).',
+    forgotCodeStepHint: 'Enter the code below and set a new password.',
     backToLogin: '← Back to login',
 
     // ── reset password (after clicking the email link) ──

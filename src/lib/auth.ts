@@ -148,12 +148,32 @@ export async function verifyEmailChange(email: string, code: string): Promise<Au
   return { ok: false, error: (data as { error?: string })?.error ?? 'unknown' };
 }
 
-// 忘记密码：请求把重置链接发到该学号账号的找回邮箱。
+// 忘记密码（验证码流程 第一步）：请求把 6 位重置码发到该学号账号的找回邮箱。
 // 防枚举：无论学号是否存在，函数都返回成功，前端统一提示「若存在则已发送」。
 export async function requestPasswordRecovery(studentId: string): Promise<void> {
   await supabase.functions.invoke('password-recovery', {
-    body: { student_id: normalizeStudentId(studentId) },
+    body: { student_id: normalizeStudentId(studentId), action: 'send' },
   });
+}
+
+// 忘记密码（验证码流程 第二步）：带验证码 + 新密码 → 校验后改密。
+// 错误码：invalid_code | code_not_found | code_expired | code_locked | weak_password | ...
+export async function resetPasswordWithCode(
+  studentId: string,
+  code: string,
+  newPassword: string,
+): Promise<AuthResult> {
+  const { data, error } = await supabase.functions.invoke('password-recovery', {
+    body: {
+      student_id: normalizeStudentId(studentId),
+      action: 'verify',
+      code: code.trim(),
+      password: newPassword,
+    },
+  });
+  if (error) return { ok: false, error: await readFnError(error) };
+  if ((data as { ok?: boolean })?.ok) return { ok: true };
+  return { ok: false, error: (data as { error?: string })?.error ?? 'unknown' };
 }
 
 // 取当前登录用户的学号（从 profiles 读；未登录返回 null）
