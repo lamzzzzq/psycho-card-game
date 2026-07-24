@@ -109,8 +109,13 @@ Deno.serve(async (req) => {
     .eq('student_id', studentId)
     .maybeSingle();
 
-  // 有账号 + 有找回邮箱才真正发信；否则静默（防枚举）
-  if (profile?.recovery_email) {
+  // 有账号 + 有找回邮箱才真正发信；否则静默（防枚举）。
+  // 诊断日志（服务端 only，不回给客户端 → 不破坏防枚举）：记录每一步失败原因。
+  if (!profile) {
+    console.warn('[password-recovery] no profile for student_id', studentId);
+  } else if (!profile.recovery_email) {
+    console.warn('[password-recovery] profile has no recovery_email', studentId);
+  } else {
     const syntheticEmail = `${studentId.toLowerCase()}@${EMAIL_DOMAIN}`;
     const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
       type: 'recovery',
@@ -122,10 +127,14 @@ Deno.serve(async (req) => {
     // 不再直接发 Supabase 的 action_link(GET verify 即消耗 token)。改发指向我方页面的
     // token_hash 链接，由浏览器 JS 主动 verifyOtp 核验——扫描器只做 GET、不跑 JS，不会消耗。
     const hashedToken = linkData?.properties?.hashed_token;
-    if (!linkErr && hashedToken) {
+    if (linkErr) {
+      console.warn('[password-recovery] generateLink failed', linkErr.message);
+    } else if (!hashedToken) {
+      console.warn('[password-recovery] generateLink returned no hashed_token', studentId);
+    } else {
       const resetUrl = `${RESET_REDIRECT}?token_hash=${encodeURIComponent(hashedToken)}&type=recovery`;
-      // 通过 Resend 发到找回邮箱
-      await fetch('https://api.resend.com/emails', {
+      // 通过 Resend 发到找回邮箱；检查返回，发失败时记录 Resend 的状态+响应体（对齐 send-verify-code）
+      const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${RESEND_API_KEY}`,
@@ -137,9 +146,18 @@ Deno.serve(async (req) => {
           subject: '重設你的密碼 · Reset your password',
           html: emailHtml(resetUrl),
         }),
-      }).catch((e) => console.warn('[password-recovery] resend send failed', e));
-    } else if (linkErr) {
-      console.warn('[password-recovery] generateLink failed', linkErr.message);
+      }).catch((e) => {
+        console.warn('[password-recovery] resend fetch threw', String(e));
+        return null;
+      });
+      if (!res) {
+        console.warn('[password-recovery] resend send failed (no response)');
+      } else if (!res.ok) {
+        const detail = await res.text().catch(() => '');
+        console.warn('[password-recovery] resend rejected', res.status, detail);
+      } else {
+        console.log('[password-recovery] sent to recovery_email', { studentId, status: res.status });
+      }
     }
   }
 
