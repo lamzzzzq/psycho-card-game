@@ -1,34 +1,53 @@
 'use client';
 
-// 登入即拿结果：登录后（拿到 studentId）若本地没有测评分数，就走 RPC
-// get_scores_by_student_id 从 Supabase 拉回该学号最新一次 Big Five 分数写入 store。
-// 让「是否做过测评」的检测服务端权威 + 跨设备，而不是只靠本机 localStorage。
-// assessment_results 表本身 anon 读不到（防篡改），RPC(SECURITY DEFINER) 只回五维分数。2026-07-24。
+// 登入即拿结果 + 按学号归属核对（防串号）。2026-07-24。
+// 测评分数存在 localStorage(psycho-card-assessment)，是【按浏览器】存的、不按用户。
+// 若不核对，同一浏览器换账号登录会看到上一个人的报告（隐私泄露）。
+// 这里在登录拿到 studentId 后：
+//   1) 本地已有分数但归属 ≠ 当前登录学号（或归属不明）→ 立即清掉（防看到别人的报告）；
+//   2) 当前用户本地无分数 → 走 RPC get_scores_by_student_id 从 Supabase 拉回自己的最新分数。
+// assessment_results 表 anon 读不到（防篡改），RPC(SECURITY DEFINER) 只回五维分数。
 
 import { useEffect, useRef } from 'react';
 import { useAuthSession } from '@/lib/useAuthSession';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { restoreAssessmentScores } from '@/lib/assessment-record';
+import { normalizeStudentId } from '@/lib/utils';
 
 export function AssessmentSync() {
   const { studentId } = useAuthSession();
-  const bigFiveScores = useAssessmentStore((s) => s.bigFiveScores);
-  const setManualScores = useAssessmentStore((s) => s.setManualScores);
-  // 每个学号只尝试一次，避免 TOKEN_REFRESHED / 重渲染反复打 RPC
-  const triedFor = useRef<string | null>(null);
+  // 每个学号只跑一次核对/拉取，避免 TOKEN_REFRESHED / 重渲染反复触发
+  const syncedFor = useRef<string | null>(null);
 
   useEffect(() => {
     if (!studentId) return;
-    if (bigFiveScores) return; // 本机已有分数 → 不覆盖（正在重测等场景交给测评页）
-    if (triedFor.current === studentId) return;
-    triedFor.current = studentId;
-    void restoreAssessmentScores(studentId).then((scores) => {
-      // 拉回期间用户可能已本地测完；再判一次避免覆盖更新的本地结果
-      if (scores && !useAssessmentStore.getState().bigFiveScores) {
-        setManualScores(scores);
-      }
-    });
-  }, [studentId, bigFiveScores, setManualScores]);
+    const norm = normalizeStudentId(studentId);
+    if (!norm) return;
+    if (syncedFor.current === norm) return;
+    syncedFor.current = norm;
+
+    const st = useAssessmentStore.getState();
+    const owner = st.studentId ? normalizeStudentId(st.studentId) : null;
+
+    // 归属核对：本地有分数但不是当前登录用户的（或归属不明）→ 清掉，防串号看到别人的报告。
+    // 正在重测(retaking)也照清——换了人，旧半截重测无意义。
+    if (st.bigFiveScores && owner !== norm) {
+      st.reset();
+    }
+    // 认领为当前用户（reset 不清 studentId，这里显式写正确归属）
+    useAssessmentStore.getState().setStudentId(norm);
+
+    // 当前用户本地无分数（或刚被清）→ 从服务端拉回自己的分数
+    if (!useAssessmentStore.getState().bigFiveScores) {
+      void restoreAssessmentScores(norm).then((scores) => {
+        const cur = useAssessmentStore.getState();
+        // 拉回期间没换人、且仍无分数 → 写入
+        if (scores && normalizeStudentId(cur.studentId ?? '') === norm && !cur.bigFiveScores) {
+          cur.setManualScores(scores);
+        }
+      });
+    }
+  }, [studentId]);
 
   return null;
 }
