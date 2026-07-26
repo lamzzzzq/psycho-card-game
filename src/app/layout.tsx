@@ -5,6 +5,7 @@ import { LocaleSync } from "@/components/shared/LocaleSync";
 import { SessionGuard } from "@/components/shared/SessionGuard";
 import { BgmPlayer } from "@/components/shared/BgmPlayer";
 import { AssessmentSync } from "@/components/shared/AssessmentSync";
+import { HexacoSync } from "@/components/shared/HexacoSync";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -71,6 +72,7 @@ export default function RootLayout({
         <LocaleSync />
         <SessionGuard />
         <AssessmentSync />
+        <HexacoSync />
         {children}
         <BgmPlayer />
       </body>

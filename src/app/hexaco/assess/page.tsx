@@ -4,7 +4,7 @@
 // 答滿 60 題 → 計分寫入 useHexacoStore → 進 /hexaco/results（雷達圖 + 各維度介紹）。
 // HEXACO 不接遊戲引擎，純「測評 → 報告」，故不需登入 gate / 學號 / 手動填分。
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,6 +14,8 @@ import { AuthTopBar } from '@/components/shared/AuthTopBar';
 import { HEXACO_QUESTIONS } from '@/data/hexaco-questions';
 import { LikertScore } from '@/data/hexaco-types';
 import { useHexacoStore } from '@/stores/useHexacoStore';
+import { useAuthSession } from '@/lib/useAuthSession';
+import { saveHexacoResult, retryPendingHexacoSaves } from '@/lib/hexaco-record';
 
 const LIKERT: LikertScore[] = [1, 2, 3, 4, 5];
 const ACCENT = '#c39a52';
@@ -54,12 +56,37 @@ export default function HexacoAssessPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = L[locale];
 
-  const { answers, setAnswer, calculateScores, getProgress, scores } = useHexacoStore();
+  const { answers, setAnswer, calculateScores, getProgress, scores, setStudentId } = useHexacoStore();
+  const { loading: authLoading, userId, studentId: sessionStudentId } = useAuthSession();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const total = HEXACO_QUESTIONS.length;
 
-  if (!hydrated) {
+  // 需登录：登录态就绪后仍未登录 → 跳登录页（与大五一致）。
+  useEffect(() => {
+    if (!authLoading && !userId) router.replace('/login');
+  }, [authLoading, userId, router]);
+
+  // 从 session 同步学号进 store（分数归属来自登录态）。
+  useEffect(() => {
+    if (sessionStudentId && sessionStudentId !== useHexacoStore.getState().studentId) setStudentId(sessionStudentId);
+  }, [sessionStudentId, setStudentId]);
+
+  // 补传上次没写进去的 HEXACO 测评行。
+  useEffect(() => {
+    if (!authLoading && userId) void retryPendingHexacoSaves();
+  }, [authLoading, userId]);
+
+  if (!hydrated || authLoading) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="psy-serif text-[var(--psy-muted)]">…</p>
+      </div>
+    );
+  }
+
+  // 未登录（正跳转 /login）→ 占位。
+  if (!userId) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p className="psy-serif text-[var(--psy-muted)]">…</p>
@@ -74,9 +101,13 @@ export default function HexacoAssessPage() {
   const handleSelect = (score: LikertScore) => {
     setAnswer(question.id, score);
     setTimeout(() => {
-      const done = useHexacoStore.getState().getProgress();
+      const st = useHexacoStore.getState();
+      const done = st.getProgress();
       if (done >= total) {
-        calculateScores();
+        const finalScores = calculateScores();
+        // 答完即把答案 + 六维分数写成一行（非阻塞，失败落缓冲后补传）。
+        const sid = useHexacoStore.getState().studentId;
+        if (sid) void saveHexacoResult(sid, useHexacoStore.getState().answers, finalScores);
         router.push('/hexaco/results');
       } else if (safeIndex < total - 1) {
         setCurrentIndex((i) => Math.min(i + 1, total - 1));
