@@ -23,6 +23,7 @@ export function DeckSelectModal({
   onSelect,
   loc,
   onPickDeck,
+  modelState,
 }: {
   open: boolean;
   onClose: () => void;
@@ -31,10 +32,18 @@ export function DeckSelectModal({
   /** 「查看報告」等需按模型分流的场景：传入后所有模型都可点，点击交给调用方按 deckId 判断
      （已做→进报告 / 未做→弹提示）。不传则维持原行为（仅 Big Five 进流程，HEXACO 走预览）。 */
   onPickDeck?: (deckId: (typeof DECKS)[number]['id']) => void;
+  /** 传入后（配合 onPickDeck）每张卡片右上角显示状态徽标：已完成 / 未作答 / 即将上线。 */
+  modelState?: (deckId: (typeof DECKS)[number]['id']) => 'done' | 'todo' | 'soon';
 }) {
   const router = useRouter();
   const p = STRINGS[loc].pvpLobby;
   const h = STRINGS[loc].home;
+  const en = loc === 'en';
+  const STATE_LABEL = {
+    done: en ? 'Done' : '已完成',
+    todo: en ? 'Not taken' : '未作答',
+    soon: en ? 'Coming soon' : '即將上線',
+  } as const;
 
   return (
     <AnimatePresence>
@@ -87,11 +96,23 @@ export function DeckSelectModal({
                   >
                     <div className="flex w-full items-center justify-between gap-2">
                       <span className="psy-serif text-base text-[var(--psy-ink)]">{d.name ?? p[d.nameKey as 'deckCpaiName' | 'deckHexacoName']}</span>
-                      {!onPickDeck && d.locked && d.previewHref && (
-                        <span className="shrink-0 text-[10px] font-medium text-[var(--psy-accent)]">{p.deckPreview} →</span>
-                      )}
-                      {d.locked && !d.previewHref && (
-                        <span className="shrink-0 text-[10px] text-[var(--psy-muted)]">🔒 {p.comingSoon}</span>
+                      {/* 分流场景（modelState 传入）：显示每模型状态徽标；未作答用强调色引导去测 */}
+                      {modelState ? (() => {
+                        const st = modelState(d.id);
+                        return (
+                          <span className={`shrink-0 text-[10px] font-medium ${st === 'todo' ? 'text-[var(--psy-accent)]' : 'text-[var(--psy-muted)]'}`}>
+                            {st === 'soon' ? '🔒 ' : ''}{STATE_LABEL[st]}{st === 'todo' ? ' →' : ''}
+                          </span>
+                        );
+                      })() : (
+                        <>
+                          {!onPickDeck && d.locked && d.previewHref && (
+                            <span className="shrink-0 text-[10px] font-medium text-[var(--psy-accent)]">{p.deckPreview} →</span>
+                          )}
+                          {d.locked && !d.previewHref && (
+                            <span className="shrink-0 text-[10px] text-[var(--psy-muted)]">🔒 {p.comingSoon}</span>
+                          )}
+                        </>
                       )}
                     </div>
                     <span className="text-xs leading-snug text-[var(--psy-muted)]">{renderCjk(p[d.subKey], loc)}</span>

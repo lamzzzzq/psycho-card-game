@@ -1,7 +1,7 @@
 'use client';
 
-// HEXACO 報告頁：六軸雷達圖 + 六維分數條 + HEXACO 模型介紹（HexacoIntro，逐字官方文案）。
-// 版式對齊大五 /results。無分數（未答完）→ 引導去答題。
+// HEXACO 報告頁：寬版雙欄（雷達圖 + 六維分數條，桌面左右分欄）+ HexacoIntro 模型介紹。
+// 佈局對齊大五 /results（max-w-5xl，lg 兩欄）。HEXACO 純「測評→報告」，底部只給重測/返回。
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -69,9 +69,13 @@ export default function HexacoResultsPage() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col items-center px-5 pb-16 pt-16 sm:px-6 sm:pt-20">
+    <main className="flex min-h-dvh flex-col items-center px-6 pb-16 pt-16 sm:pt-20">
       <AuthTopBar />
-      <div className="w-full max-w-2xl space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-5xl space-y-8"
+      >
         <div className="space-y-3">
           <Link
             href="/"
@@ -79,19 +83,23 @@ export default function HexacoResultsPage() {
           >
             ← {t.back}
           </Link>
-          <h1 className="psy-serif text-3xl leading-tight text-[var(--psy-ink)] md:text-4xl">{t.title}</h1>
+          <h1 className="psy-serif text-4xl leading-none text-[var(--psy-ink)] sm:text-5xl">{t.title}</h1>
           <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">{t.subtitle}</p>
         </div>
 
-        <HexacoRadarChart scores={scores} />
-
-        <div className="space-y-3">
-          {HEXACO_DIMENSIONS.map((d, i) => (
-            <HexacoDimensionBar key={d} dimension={d} score={scores[d]} delay={i * 0.08} />
-          ))}
+        {/* 桌面左右分欄：雷達圖 | 六維分數條（同大五 0.9fr / 1.1fr）。 */}
+        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div className="space-y-4">
+            <HexacoRadarChart scores={scores} />
+          </div>
+          <div className="space-y-4">
+            {HEXACO_DIMENSIONS.map((d, i) => (
+              <HexacoDimensionBar key={d} dimension={d} score={scores[d]} delay={i * 0.12} />
+            ))}
+          </div>
         </div>
 
-        <div className="flex justify-center pt-1">
+        <div className="flex justify-center">
           <button
             onClick={() => { reset(); router.push('/hexaco/assess'); }}
             className="psy-btn psy-btn-ghost psy-serif px-6 py-2.5 text-sm font-medium"
@@ -100,16 +108,11 @@ export default function HexacoResultsPage() {
           </button>
         </div>
 
-        {/* HEXACO 模型介紹（逐字官方文案），與大五結果頁底部 BigFiveIntro 對稱。 */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="border-t border-[var(--psy-border)] pt-8"
-        >
-          <HexacoIntro locale={locale} />
-        </motion.div>
-      </div>
+        <hr className="border-t border-[var(--psy-border)]" />
+
+        {/* HEXACO 模型介紹（逐字官方文案），對稱大五結果頁底部 BigFiveIntro。 */}
+        <HexacoIntro locale={locale} />
+      </motion.div>
     </main>
   );
 }

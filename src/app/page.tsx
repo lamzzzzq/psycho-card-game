@@ -53,9 +53,20 @@ export default function Home() {
   const ASSESS_ROUTE: Record<'big-five' | 'hexaco', string> = { 'big-five': '/assessment', hexaco: '/hexaco/assess' };
   const REPORT_ROUTE: Record<'big-five' | 'hexaco', string> = { 'big-five': '/results', hexaco: '/hexaco/results' };
 
-  // 选模型（「開始測評」/「查看報告」共用）：已完成 → 进该模型报告；未完成但已上线 → 直接去答题；
-  // 未上线(CPAI) → 弹「即将上线」提示框。HEXACO 独立于大五流程，走各自的答题/报告页。
-  function handleModelPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
+  // 模型在选择框里的状态：已完成 done / 已上线未做 todo / 未上线 soon（用于卡片徽标）。
+  const modelState = (m: 'big-five' | 'hexaco' | 'cpai'): 'done' | 'todo' | 'soon' =>
+    m === 'cpai' ? 'soon' : modelDone(m) ? 'done' : 'todo';
+
+  // 「查看報告」：已完成 → 进该模型报告；未完成（含未上线）→ 弹提示框「你還沒做，要現在做嗎？」。
+  // 老板流程：报告入口不该把没测过的人直接丢进 60 题，先明确告知未完成再引导去测。
+  function handleReportPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
+    setDeckModalFor(null);
+    if (deckId !== 'cpai' && modelDone(deckId)) { router.push(REPORT_ROUTE[deckId]); return; }
+    setReportPrompt(deckId);
+  }
+
+  // 「開始測評」：已上线 → 直接进该模型答题（已完成则进报告）；未上线(CPAI) → 弹「即将上线」提示框。
+  function handleAssessPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
     setDeckModalFor(null);
     if (deckId === 'cpai') { setReportPrompt(deckId); return; }
     router.push(modelDone(deckId) ? REPORT_ROUTE[deckId] : ASSESS_ROUTE[deckId]);
@@ -203,7 +214,8 @@ export default function Home() {
           : deckModalFor === 'solo' ? '/lobby'
           : '/assessment'
         )}
-        onPickDeck={deckModalFor === 'report' || deckModalFor === 'assessment' ? handleModelPick : undefined}
+        onPickDeck={deckModalFor === 'report' ? handleReportPick : deckModalFor === 'assessment' ? handleAssessPick : undefined}
+        modelState={deckModalFor === 'report' || deckModalFor === 'assessment' ? modelState : undefined}
         loc={loc}
       />
 
@@ -229,7 +241,7 @@ export default function Home() {
                 onClick={() => {
                   const m = reportPrompt;
                   setReportPrompt(null);
-                  if (m && modelAvailable(m)) router.push('/assessment'); // 目前仅 Big Five 可去答题
+                  if (m && m !== 'cpai' && modelAvailable(m)) router.push(ASSESS_ROUTE[m]); // 去该模型答题
                 }}
                 className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-40"
               >
