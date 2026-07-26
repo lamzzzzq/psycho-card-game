@@ -15,11 +15,15 @@ interface HexacoState {
   answers: Record<number, LikertScore>;
   scores: HexacoScores | null;
   completedAt: string | null;
+  // 正在重测：保留旧 scores（报告不丢）直到新测评完成才覆盖。同大五 useAssessmentStore。
+  retaking: boolean;
 
   setStudentId: (id: string) => void;
   setAnswer: (questionId: number, score: LikertScore) => void;
   calculateScores: () => HexacoScores;
   setRestoredScores: (scores: HexacoScores) => void;
+  startRetake: () => void;
+  cancelRetake: () => void;
   reset: () => void;
   getProgress: () => number;
   isComplete: () => boolean;
@@ -32,6 +36,7 @@ export const useHexacoStore = create<HexacoState>()(
       answers: {},
       scores: null,
       completedAt: null,
+      retaking: false,
 
       setStudentId: (id) => set({ studentId: normalizeStudentId(id) }),
 
@@ -40,14 +45,21 @@ export const useHexacoStore = create<HexacoState>()(
 
       calculateScores: () => {
         const scores = calculateHexacoScores(get().answers, HEXACO_QUESTIONS);
-        set({ scores, completedAt: new Date().toISOString() });
+        set({ scores, completedAt: new Date().toISOString(), retaking: false });
         return scores;
       },
 
       // 从服务端拉回的分数直接写入（不重算），供 HexacoSync 换设备恢复用。
-      setRestoredScores: (scores) => set({ scores, completedAt: new Date().toISOString() }),
+      setRestoredScores: (scores) => set({ scores, completedAt: new Date().toISOString(), retaking: false }),
 
-      reset: () => set({ answers: {}, scores: null, completedAt: null }),
+      // 非破坏式重测：只清答案 + 标记 retaking，保留旧 scores（报告不丢）。
+      // 新测评答完（calculateScores）才覆盖；中途放弃（cancelRetake）旧分数仍在。
+      startRetake: () => set({ answers: {}, completedAt: null, retaking: true }),
+
+      // 未答完就离开 → 作废本次重测：清 retaking + 半截答案，保留旧 scores。
+      cancelRetake: () => set({ retaking: false, answers: {} }),
+
+      reset: () => set({ answers: {}, scores: null, completedAt: null, retaking: false }),
 
       getProgress: () => Object.keys(get().answers).length,
 

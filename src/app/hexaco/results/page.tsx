@@ -42,7 +42,7 @@ export default function HexacoResultsPage() {
   const localeRaw = useLocaleStore((s) => s.locale);
   const locale = hydrated ? localeRaw : 'zh';
   const t = L[locale];
-  const { scores, reset } = useHexacoStore();
+  const { scores, startRetake } = useHexacoStore();
 
   if (!hydrated) {
     return (
@@ -101,7 +101,7 @@ export default function HexacoResultsPage() {
 
         <div className="flex justify-center">
           <button
-            onClick={() => { reset(); router.push('/hexaco/assess'); }}
+            onClick={() => { startRetake(); router.push('/hexaco/assess'); }}
             className="psy-btn psy-btn-ghost psy-serif px-6 py-2.5 text-sm font-medium"
           >
             {t.retake}

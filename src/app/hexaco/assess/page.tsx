@@ -56,11 +56,25 @@ export default function HexacoAssessPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = L[locale];
 
-  const { answers, setAnswer, calculateScores, getProgress, scores, setStudentId } = useHexacoStore();
+  const { answers, setAnswer, calculateScores, getProgress, scores, setStudentId, retaking } = useHexacoStore();
   const { loading: authLoading, userId, studentId: sessionStudentId } = useAuthSession();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const total = HEXACO_QUESTIONS.length;
+
+  // 已完成测评（且非重测）→ 跳报告页（避免停在已填满 60 题的表单上，随手一点触发重复写库）。
+  // replace 而非 push：防 /hexaco/results 按返回键 → 本页挂载 → 又跳回去的死循环。
+  useEffect(() => {
+    if (scores && !retaking) router.replace('/hexaco/results');
+  }, [scores, retaking, router]);
+
+  // 离开测评页时若仍在「重测中」（= 没答完）→ 作废本次重测，保留旧报告。
+  useEffect(() => {
+    return () => {
+      const s = useHexacoStore.getState();
+      if (s.retaking) s.cancelRetake();
+    };
+  }, []);
 
   // 需登录：登录态就绪后仍未登录 → 跳登录页（与大五一致）。
   useEffect(() => {
@@ -93,6 +107,9 @@ export default function HexacoAssessPage() {
       </div>
     );
   }
+
+  // 已完成且非重测：上面的 effect 正 replace 去报告页，先不渲染表单（防随手点触发重复写库）。
+  if (scores && !retaking) return null;
 
   const safeIndex = Math.min(currentIndex, total - 1);
   const question = HEXACO_QUESTIONS[safeIndex];

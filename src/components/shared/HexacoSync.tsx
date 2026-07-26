@@ -27,8 +27,11 @@ export function HexacoSync() {
     const st = useHexacoStore.getState();
     const owner = st.studentId ? normalizeStudentId(st.studentId) : null;
 
-    // 归属核对：本地有分数但不是当前登录用户的（或归属不明）→ 清掉，防串号看到别人的报告。
-    if (st.scores && owner !== norm) {
+    // 归属核对：本地有分数【或半截答案】但不是当前登录用户的（或归属不明）→ 清掉。
+    // 不只看 scores：上一个用户只答了一半(有 answers 无 scores)时，也必须清，
+    // 否则新用户会在 /hexaco/assess 看到别人预填的答案，并把两人答案混着存到新学号名下。
+    const hasLocalData = st.scores !== null || Object.keys(st.answers).length > 0;
+    if (hasLocalData && owner !== norm) {
       st.reset();
     }
     // 认领为当前用户（reset 不清 studentId）
