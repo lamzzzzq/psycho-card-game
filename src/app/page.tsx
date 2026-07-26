@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
+import { useHexacoStore } from '@/stores/useHexacoStore';
 import { useHydrated } from '@/stores/useHydration';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { QUESTIONS } from '@/data/questions';
@@ -18,6 +19,7 @@ export default function Home() {
   const router = useRouter();
   const hydrated = useHydrated();
   const { bigFiveScores, getProgress } = useAssessmentStore();
+  const hexacoScores = useHexacoStore((s) => s.scores);
   const progress = getProgress();
   // 需登录 + 有测评结果才露出「聯機/單機/報告」三入口。
   // 修 bug：登出后 localStorage 还留着 bigFiveScores → 曾以为 hasResults 就放行，
@@ -42,18 +44,21 @@ export default function Home() {
   // 目前仅 Big Five 真实存在；HEXACO/CPAI 尚未上线 → 未完成时提示框 CTA 置灰。
   // 检测源当前用本地 bigFiveScores；后续可换成登入时从 Supabase 拉取的「已完成模型」。
   const MODEL_NAME: Record<'big-five' | 'hexaco' | 'cpai', string> = { 'big-five': 'Big Five', hexaco: 'HEXACO', cpai: 'CPAI-2' };
-  const modelAvailable = (m: 'big-five' | 'hexaco' | 'cpai') => m === 'big-five';
-  const modelDone = (m: 'big-five' | 'hexaco' | 'cpai') => (m === 'big-five' ? bigFiveScores !== null : false);
+  // Big Five 与 HEXACO 均已上线；CPAI 仍未开放。
+  const modelAvailable = (m: 'big-five' | 'hexaco' | 'cpai') => m === 'big-five' || m === 'hexaco';
+  const modelDone = (m: 'big-five' | 'hexaco' | 'cpai') =>
+    m === 'big-five' ? bigFiveScores !== null : m === 'hexaco' ? hexacoScores !== null : false;
 
-  // 选模型后：已完成 → 进该模型报告；未完成 → 关模型窗、开「未完成」提示框
-  function handleReportPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
-    if (modelDone(deckId)) {
-      setDeckModalFor(null);
-      router.push('/results'); // 目前仅 Big Five 有报告页
-      return;
-    }
+  // 各模型的答题页 / 报告页路由（HEXACO 独立于大五流程）。
+  const ASSESS_ROUTE: Record<'big-five' | 'hexaco', string> = { 'big-five': '/assessment', hexaco: '/hexaco/assess' };
+  const REPORT_ROUTE: Record<'big-five' | 'hexaco', string> = { 'big-five': '/results', hexaco: '/hexaco/results' };
+
+  // 选模型（「開始測評」/「查看報告」共用）：已完成 → 进该模型报告；未完成但已上线 → 直接去答题；
+  // 未上线(CPAI) → 弹「即将上线」提示框。HEXACO 独立于大五流程，走各自的答题/报告页。
+  function handleModelPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
     setDeckModalFor(null);
-    setReportPrompt(deckId);
+    if (deckId === 'cpai') { setReportPrompt(deckId); return; }
+    router.push(modelDone(deckId) ? REPORT_ROUTE[deckId] : ASSESS_ROUTE[deckId]);
   }
 
   // 自愈：已完成报告却残留半截答案 = 放弃的重测（unmount 清理可能没触发）。
@@ -198,7 +203,7 @@ export default function Home() {
           : deckModalFor === 'solo' ? '/lobby'
           : '/assessment'
         )}
-        onPickDeck={deckModalFor === 'report' ? handleReportPick : undefined}
+        onPickDeck={deckModalFor === 'report' || deckModalFor === 'assessment' ? handleModelPick : undefined}
         loc={loc}
       />
 
