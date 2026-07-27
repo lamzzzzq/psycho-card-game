@@ -42,7 +42,7 @@ export function DeckSelectModal({
   const STATE_LABEL = {
     done: en ? 'Done' : '已完成',
     todo: en ? 'Not taken' : '未作答',
-    soon: en ? 'Coming soon' : '即將上線',
+    soon: en ? 'Planned' : '規劃中',
   } as const;
 
   return (
