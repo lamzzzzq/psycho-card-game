@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>裝置相容性檢測</title>
+<!--
+  ⚠️ 這一頁刻意寫成純靜態 ES5：不進 React／不經 Next bundle／不用任何新語法。
+     因為它要在「主站已經掛掉」的裝置上還能打開 —— 若它自己用了新語法，
+     使用者連這頁都看不到，就失去診斷意義了。
+     修改時請維持：var / function / 字串拼接，禁用 const let 箭頭函式 模板字串 可選鏈。
+     不在站內任何地方連結，只靠直接網址存取。
+-->
+<style>
+  body{margin:0;padding:18px 16px 60px;background:#efe9db;color:#3a3020;
+       font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;
+       font-size:16px;line-height:1.6;-webkit-text-size-adjust:100%}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:#7a6a4e;font-size:13px;margin:0 0 18px}
+  .verdict{border-radius:12px;padding:14px 16px;margin:0 0 20px;font-size:17px;font-weight:bold;
+           border:2px solid #c8b48a;background:#fdf8f1}
+  .ok{border-color:#6f8f55;background:#eef4e7;color:#3d5a28}
+  .bad{border-color:#b4543f;background:#fbeceb;color:#8c3a28}
+  .verdict small{display:block;font-weight:normal;font-size:13px;margin-top:6px;line-height:1.5}
+  h2{font-size:15px;margin:26px 0 10px;padding-bottom:6px;border-bottom:1px solid #d6c9ab}
+  button{-webkit-appearance:none;appearance:none;display:block;width:100%;margin:0 0 10px;
+         padding:14px 16px;font-size:16px;font-family:inherit;color:#3a3020;
+         background:#fdf8f1;border:2px solid #b9904f;border-radius:10px;cursor:pointer}
+  button:active{background:#f0e4cd}
+  .count{font-size:13px;color:#7a6a4e;margin:-4px 0 14px;padding-left:2px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td{padding:8px 4px;border-bottom:1px solid #ded2b6;vertical-align:top}
+  td.r{text-align:right;white-space:nowrap;font-weight:bold}
+  .yes{color:#3d5a28}
+  .no{color:#8c3a28}
+  .ua{word-break:break-all;font-family:ui-monospace,Menlo,monospace;font-size:12px;
+      background:#fdf8f1;border:1px solid #ded2b6;border-radius:8px;padding:10px;color:#5a4c33}
+  .note{font-size:13px;color:#7a6a4e;margin-top:8px}
+</style>
+</head>
+<body>
+
+<h1>裝置相容性檢測</h1>
+<p class="sub">這一頁不需要任何新技術就能打開。請依序操作，然後把整頁截圖回傳。</p>
+
+<div class="verdict" id="verdict">檢測中…</div>
+
+<h2>① 按鈕能不能按？請三顆都點一下</h2>
+
+<button id="btnA" onclick="hit('A')">第 1 顆（最基本的寫法）</button>
+<div class="count" id="cntA">尚未點擊</div>
+
+<button id="btnB">第 2 顆（一般的寫法）</button>
+<div class="count" id="cntB">尚未點擊</div>
+
+<button id="btnC">第 3 顆（本站正在用的新寫法）</button>
+<div class="count" id="cntC">尚未點擊</div>
+
+<p class="note">若前兩顆有反應、<b>第 3 顆沒反應</b>，就確定是系統版本太舊造成的。</p>
+
+<h2>② 系統支援項目</h2>
+<table id="feat"><tbody></tbody></table>
+
+<h2>③ 裝置資訊</h2>
+<div class="ua" id="ua"></div>
+<button id="btnCopy" style="margin-top:10px">複製上面的資訊</button>
+<div class="count" id="cntCopy"></div>
+
+<!-- ===== 主檢測腳本：全 ES5，任何裝置都跑得動 ===== -->
+<script>
+var clicks = { A: 0, B: 0, C: 0 };
+
+function setText(id, text) {
+  var el = document.getElementById(id);
+  if (el) { el.innerHTML = ''; el.appendChild(document.createTextNode(text)); }
+}
+
+function hit(which) {
+  clicks[which] = clicks[which] + 1;
+  setText('cnt' + which, '✅ 有反應，已點 ' + clicks[which] + ' 次');
+}
+
+// 第 2 顆：標準 addEventListener（ES5）
+var btnB = document.getElementById('btnB');
+if (btnB.addEventListener) {
+  btnB.addEventListener('click', function () { hit('B'); }, false);
+} else if (btnB.attachEvent) {
+  btnB.attachEvent('onclick', function () { hit('B'); });
+}
+
+// ---- 特性偵測 ----
+// 用 new Function 去「解析」而不執行，語法不支援時會在這裡拋 SyntaxError 並被接住。
+function canParse(code) {
+  try { new Function(code); return true; } catch (e) { return false; }
+}
+function cssOK(prop, value) {
+  try { return !!(window.CSS && CSS.supports && CSS.supports(prop, value)); } catch (e) { return false; }
+}
+function storageOK() {
+  try {
+    localStorage.setItem('__compat_probe', '1');
+    localStorage.removeItem('__compat_probe');
+    return true;
+  } catch (e) { return false; }  // iOS 關閉 Cookie／無痕模式會在這裡拋 SecurityError
+}
+
+var checks = [
+  // 這一項就是主站掛掉的關鍵：Next.js 的執行時用了它，Safari 16.4 才支援
+  { name: 'class static 區塊', need: 'iOS 16.4', key: true, ok: canParse('class T{static{}}') },
+  { name: 'Array.toSorted()', need: 'iOS 16.4', ok: typeof Array.prototype.toSorted === 'function' },
+  { name: '正則後行斷言', need: 'iOS 16.4', ok: canParse('/(?<=a)b/') },
+  { name: 'CSS @property', need: 'iOS 16.4', ok: !!(window.CSS && CSS.registerProperty) },
+  { name: 'CSS color-mix()', need: 'iOS 16.2', ok: cssOK('color', 'color-mix(in srgb, red, blue)') },
+  { name: 'CSS 容器查詢', need: 'iOS 16.0', ok: cssOK('container-type', 'inline-size') },
+  { name: 'crypto.randomUUID', need: 'iOS 15.4', ok: !!(window.crypto && crypto.randomUUID) },
+  { name: 'Intl.Segmenter', need: 'iOS 14.1', ok: !!(window.Intl && Intl.Segmenter) },
+  { name: '本機儲存可用', need: '隱私設定', ok: storageOK() }
+];
+
+var tbody = document.getElementById('feat').getElementsByTagName('tbody')[0];
+var i, c, tr, td1, td2;
+for (i = 0; i < checks.length; i++) {
+  c = checks[i];
+  tr = document.createElement('tr');
+  td1 = document.createElement('td');
+  td1.appendChild(document.createTextNode(c.name));
+  var small = document.createElement('div');
+  small.style.fontSize = '12px';
+  small.style.color = '#9a8a68';
+  small.appendChild(document.createTextNode('需要 ' + c.need));
+  td1.appendChild(small);
+  td2 = document.createElement('td');
+  td2.className = 'r ' + (c.ok ? 'yes' : 'no');
+  td2.appendChild(document.createTextNode(c.ok ? '✅ 支援' : '❌ 不支援'));
+  tr.appendChild(td1); tr.appendChild(td2);
+  tbody.appendChild(tr);
+}
+
+// ---- 裝置資訊 ----
+var ua = navigator.userAgent;
+var m = ua.match(/OS (\d+)[_.](\d+)(?:[_.](\d+))?/);
+var iosVer = m ? (m[1] + '.' + m[2] + (m[3] ? '.' + m[3] : '')) : '';
+var info = ua + '\n\n螢幕：' + screen.width + '×' + screen.height +
+           ' @' + (window.devicePixelRatio || 1) + 'x' +
+           '\n語言：' + (navigator.language || '') +
+           (iosVer ? '\n系統版本：iOS ' + iosVer : '') +
+           '\nstatic 區塊：' + (checks[0].ok ? '支援' : '不支援');
+setText('ua', info);
+
+// ---- 結論 ----
+var v = document.getElementById('verdict');
+var head, detail;
+if (checks[0].ok) {
+  v.className = 'verdict ok';
+  head = '✅ 你的裝置支援本站';
+  detail = '系統版本沒問題。如果主站還是按不動，代表是其他原因造成的，請把這頁截圖回傳，我們再查。';
+} else {
+  v.className = 'verdict bad';
+  head = '❌ 系統版本過舊，本站無法運作';
+  detail = '本站需要 iOS 16.4 以上' + (iosVer ? '，你目前是 iOS ' + iosVer : '') +
+           '。網頁會顯示出來，但所有按鈕都按不動，因為程式碼在你的系統上無法執行。' +
+           '請到「設定 → 一般 → 軟體更新」升級系統；若機型已無法再升級（iPhone 7 以前的機型最高只到 iOS 15），' +
+           '請改用其他裝置。';
+}
+v.innerHTML = '';
+v.appendChild(document.createTextNode(head));
+var sm = document.createElement('small');
+sm.appendChild(document.createTextNode(detail));
+v.appendChild(sm);
+
+// ---- 複製 ----
+document.getElementById('btnCopy').onclick = function () {
+  var ok = false;
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = info;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.setSelectionRange(0, ta.value.length);
+    ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch (e) { ok = false; }
+  setText('cntCopy', ok ? '✅ 已複製，可直接貼上傳給我們' : '⚠️ 複製失敗，請直接截圖整頁');
+};
+</script>
+
+<!-- ===== 第 3 顆按鈕：故意用 Safari 16.4 才支援的 class static 區塊 =====
+     單獨一個 script 標籤，所以它若解析失敗，只有這顆按鈕失效，不影響上面的檢測。
+     這正是主站掛掉的原理：一個 chunk 語法不支援 → 整包不執行 → 全站按鈕失效。 -->
+<script>
+class CompatProbe {
+  static { CompatProbe.ready = true; }
+}
+document.getElementById('btnC').addEventListener('click', function () { hit('C'); }, false);
+</script>
+
+</body>
+</html>
