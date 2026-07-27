@@ -1214,15 +1214,18 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
     </div>
   );
 
-  // ② 輸入學號：答題前只輸入一次。
+  // ② 登入：用學號 + 密碼登入（學號就是帳號）。流程改為登入制後不再答題前手動輸入一次。
   const studentId = (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       <div className="psy-serif text-center text-sm text-[var(--psy-ink)]">{s.shotStudentIdTitle}</div>
-      <div className="rounded-xl border border-[rgba(200,155,93,0.4)] bg-[var(--psy-card-content)] px-3 py-3 text-center text-xs text-[var(--psy-muted)]">
+      <div className="rounded-xl border border-[rgba(200,155,93,0.4)] bg-[var(--psy-card-content)] px-3 py-2.5 text-center text-xs text-[var(--psy-muted)]">
         {s.shotStudentIdPlaceholder}
       </div>
+      <div className="rounded-xl border border-[rgba(200,155,93,0.4)] bg-[var(--psy-card-content)] px-3 py-2.5 text-center text-xs text-[var(--psy-muted)]">
+        {s.shotPasswordPlaceholder}
+      </div>
       <div className="rounded-full bg-[rgba(200,155,93,0.28)] px-4 py-2 text-center text-sm font-semibold text-[var(--psy-ink)]">
-        {s.shotStartAssessBtn}
+        {s.shotLoginBtn}
       </div>
       <div className="text-center text-[9px] text-[var(--psy-muted)]">{s.shotStudentIdOnce}</div>
     </div>
