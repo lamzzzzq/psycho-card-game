@@ -47,20 +47,46 @@ export function KnowledgeQuiz({ locale }: { locale: Locale }) {
     setPicked(null);
   };
 
-  // 折叠态：一个不打扰的入口按钮
+  // 折叠态：一个不打扰的入口按钮。
+  // 特色卡：金調漸變 + 角落柔光 + 圖標徽章，刻意做得比周圍素卡更醒目、不與之混同。
   if (!started) {
     return (
-      <div className="rounded-[1.35rem] border border-[rgba(200,155,93,0.24)] bg-[var(--psy-card-content)] p-5 text-center shadow-[0_16px_30px_rgba(96,72,38,0.1)]">
-        <p className="psy-serif text-base text-[var(--psy-ink)]">
+      <div className="relative overflow-hidden rounded-[1.6rem] border border-[rgba(200,155,93,0.42)] bg-[linear-gradient(155deg,#fbf3e2_0%,#f2e4c8_100%)] p-6 text-center shadow-[0_18px_38px_rgba(120,90,50,0.18)]">
+        {/* 角落柔光裝飾 */}
+        <div aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(195,154,82,0.24),transparent_70%)]" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-14 -left-12 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(195,154,82,0.16),transparent_70%)]" />
+
+        {/* 圖標徽章：燈泡（知識/複習） */}
+        <div className="relative mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-[rgba(200,155,93,0.4)] bg-[var(--psy-card-content)] shadow-[0_6px_16px_rgba(120,90,50,0.16),inset_0_1px_0_rgba(255,255,255,0.7)]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-[var(--psy-accent-strong)]" aria-hidden>
+            <path d="M9 18h6" />
+            <path d="M10 22h4" />
+            <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
+          </svg>
+        </div>
+
+        <p className="psy-eyebrow relative text-[10px]">{en ? 'Pop Quiz' : '隨堂小測'}</p>
+        <p className="psy-serif relative mt-1.5 text-xl text-[var(--psy-ink)]">
           {en ? 'Post-Game Psychology Review' : '本局心理學知識複習'}
         </p>
-        <p className="mt-1 text-xs text-[var(--psy-muted)]">
+        <p className="relative mx-auto mt-2 max-w-md text-xs leading-5 text-[var(--psy-ink-soft)]">
           {en ? 'A quick 4-question quiz on your knowledge cards to see how much you remembered.' : '來個 4 題知識卡小測，看看你記住多少。'}
         </p>
+
+        {/* 4 題小圓點提示 */}
+        <div className="relative mt-3 flex items-center justify-center gap-1.5" aria-hidden>
+          {[0, 1, 2, 3].map((i) => (
+            <span key={i} className="h-1.5 w-1.5 rounded-full bg-[rgba(154,116,72,0.4)]" />
+          ))}
+        </div>
+
         <button
           onClick={() => setStarted(true)}
-          className="psy-btn psy-btn-accent psy-serif mt-4 px-6 py-2.5 text-sm font-semibold"
+          className="psy-btn psy-btn-accent psy-serif relative mt-4 inline-flex items-center gap-2 px-7 py-3 text-sm font-semibold shadow-[0_10px_22px_rgba(154,116,72,0.32)]"
         >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden>
+            <path d="M12 2.5l1.7 4.8 4.8 1.7-4.8 1.7L12 15.5l-1.7-4.8L5.5 9l4.8-1.7z" />
+          </svg>
           {en ? 'Start Quiz (1 min)' : '立即測試（1 分鐘）'}
         </button>
       </div>
