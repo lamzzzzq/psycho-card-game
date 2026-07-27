@@ -102,7 +102,7 @@ export function OrnateCard({
     <div className="shrink-0" style={wrapperStyle}>
       <div
         onClick={onClick}
-        className={`relative w-full select-none ${onClick ? 'cursor-pointer transition-transform hover:-translate-y-1' : ''}`}
+        className={`relative w-full select-none ${onClick ? 'cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-1' : ''}`}
         style={{ aspectRatio: '4 / 7', filter: 'drop-shadow(0 22px 30px rgba(96,72,38,0.34))', transform: 'translateZ(0)', opacity: isDummy ? 0.98 : 1 }}
       >
         <svg viewBox="0 0 400 700" width="100%" height="100%" style={{ display: 'block' }}>

@@ -125,7 +125,7 @@ export function TarotCard({
     <div className="shrink-0" style={wrapperStyle}>
       <div
         onClick={onClick}
-        className={`relative w-full select-none ${onClick ? 'cursor-pointer transition-transform hover:-translate-y-1' : ''}`}
+        className={`relative w-full select-none ${onClick ? 'cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-1' : ''}`}
         style={{
           aspectRatio: cardAspect,
           borderRadius: '7cqw',
