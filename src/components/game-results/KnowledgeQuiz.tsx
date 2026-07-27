@@ -97,20 +97,46 @@ export function KnowledgeQuiz({ locale }: { locale: Locale }) {
   if (idx >= questions.length) {
     const good = score >= Math.ceil(questions.length * 0.75);
     return (
-      <div className="rounded-[1.35rem] border border-[rgba(200,155,93,0.24)] bg-[var(--psy-card-content)] p-6 text-center shadow-[0_16px_30px_rgba(96,72,38,0.1)]">
-        <div className="text-4xl">{good ? '🎓' : '📚'}</div>
-        <p className="psy-serif mt-2 text-xl text-[var(--psy-ink)]">
-          {en ? `You got ${score} / ${questions.length}` : `答對 ${score} / ${questions.length} 題`}
+      <div className="relative overflow-hidden rounded-[1.6rem] border border-[rgba(200,155,93,0.42)] bg-[linear-gradient(155deg,#fbf3e2_0%,#f2e4c8_100%)] p-6 text-center shadow-[0_18px_38px_rgba(120,90,50,0.18)]">
+        {/* 角落柔光裝飾（同入口卡） */}
+        <div aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(195,154,82,0.24),transparent_70%)]" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-14 -left-12 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(195,154,82,0.16),transparent_70%)]" />
+
+        {/* 圖標徽章：好成績=獎章，其餘=書本（SVG，替掉 emoji） */}
+        <div className="relative mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-[rgba(200,155,93,0.4)] bg-[var(--psy-card-content)] shadow-[0_6px_16px_rgba(120,90,50,0.16),inset_0_1px_0_rgba(255,255,255,0.7)]">
+          {good ? (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-[var(--psy-accent-strong)]" aria-hidden>
+              <circle cx="12" cy="8" r="6" />
+              <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-[var(--psy-accent-strong)]" aria-hidden>
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+          )}
+        </div>
+
+        <p className="psy-eyebrow relative text-[10px]">{en ? 'Quiz Result' : '測驗結果'}</p>
+        {/* 分數：得分數用強調色放大 */}
+        <p className="psy-serif relative mt-1.5 text-2xl text-[var(--psy-ink)]">
+          {en ? 'You got ' : '答對 '}
+          <span className="text-[var(--psy-accent-strong)]">{score} / {questions.length}</span>
+          {en ? '' : ' 題'}
         </p>
-        <p className="mt-1 text-sm text-[var(--psy-ink-soft)]">
+        <p className="relative mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--psy-ink-soft)]">
           {good
             ? (en ? 'Nicely done — you really know your psychology!' : '厲害，你很懂心理學！')
             : (en ? 'Give the knowledge cards another look next round.' : '下局多留意知識卡上的內容吧～')}
         </p>
         <button
           onClick={reset}
-          className="psy-btn psy-btn-ghost psy-serif mt-4 px-6 py-2 text-sm font-medium"
+          className="psy-btn psy-btn-accent psy-serif relative mt-4 inline-flex items-center gap-2 px-7 py-3 text-sm font-semibold shadow-[0_10px_22px_rgba(154,116,72,0.32)]"
         >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden>
+            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+            <path d="M21 3v6h-6" />
+          </svg>
           {en ? 'Try again' : '再測一次'}
         </button>
       </div>
