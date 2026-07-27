@@ -3,12 +3,14 @@
 // HEXACO 報告頁：寬版雙欄（雷達圖 + 六維分數條，桌面左右分欄）+ HexacoIntro 模型介紹。
 // 佈局對齊大五 /results（max-w-5xl，lg 兩欄）。HEXACO 純「測評→報告」，底部只給重測/返回。
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useHexacoStore } from '@/stores/useHexacoStore';
 import { useHydrated } from '@/stores/useHydration';
 import { useLocaleStore } from '@/lib/i18n';
+import { useAuthSession } from '@/lib/useAuthSession';
 import { HEXACO_DIMENSIONS } from '@/data/hexaco-types';
 import { HexacoRadarChart } from '@/components/results/HexacoRadarChart';
 import { HexacoDimensionBar } from '@/components/results/HexacoDimensionBar';
@@ -43,8 +45,14 @@ export default function HexacoResultsPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = L[locale];
   const { scores, startRetake } = useHexacoStore();
+  const { loading: authLoading, userId } = useAuthSession();
 
-  if (!hydrated) {
+  // 需登录才能看报告：登出/未登入用户不能看到本地残留的 HEXACO 分数（隐私）。
+  useEffect(() => {
+    if (!authLoading && !userId) router.replace('/login');
+  }, [authLoading, userId, router]);
+
+  if (!hydrated || authLoading || !userId) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p className="psy-serif text-[var(--psy-muted)]">{t.loading}</p>

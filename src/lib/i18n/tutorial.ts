@@ -59,8 +59,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '登入 / 註冊帳號',
-        body: '第一次點「開始測評」會請你先登入。用學號註冊帳號並自設密碼（學號就是你的帳號），或直接登入。學號用於記錄你的測評結果、方便課堂統計。',
-        note: '登入一次即可，之後測評、聯機 / 單機都會自動帶入你的學號，無需再填。',
+        body: '當你首次點擊「開始測評」時，系統會提示你登入或註冊帳號。請使用你的學號作為用戶名稱來建立帳號，並設定密碼。使用學號能確保你的測評結果正確連結至課堂數據分析。',
       },
       {
         title: '查看人格畫像',
@@ -85,8 +84,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '登入 / 註冊帳號',
-        body: '第一次點「開始測評」會請你先登入。用學號註冊帳號並自設密碼（學號就是你的帳號），或直接登入。學號用於記錄你的測評結果、方便課堂統計。',
-        note: '登入一次即可，之後測評、聯機 / 單機都會自動帶入你的學號，無需再填。',
+        body: '當你首次點擊「開始測評」時，系統會提示你登入或註冊帳號。請使用你的學號作為用戶名稱來建立帳號，並設定密碼。使用學號能確保你的測評結果正確連結至課堂數據分析。',
       },
       {
         title: '查看人格畫像',
@@ -362,8 +360,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Log In / Register',
-        body: 'The first time you tap "Start Assessment", you\'ll be asked to log in. Register with your student ID and set a password (your student ID is your account), or just log in. Your student ID links your results for class analytics.',
-        note: 'Log in once—your student ID is then carried over automatically for the assessment and both solo and multiplayer modes, so you never re-enter it.',
+        body: 'When you first tap "Start Assessment", you\'ll be prompted to log in or register. Please create an account using your Student ID as your username and set a password. Using your Student ID ensures your results are linked for class analytics.',
       },
       {
         title: 'View Your Personality Portrait',
@@ -388,8 +385,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Log In / Register',
-        body: 'The first time you tap "Start Assessment", you\'ll be asked to log in. Register with your student ID and set a password (your student ID is your account), or just log in. Your student ID links your results for class analytics.',
-        note: 'Log in once—your student ID is then carried over automatically for the assessment and both solo and multiplayer modes, so you never re-enter it.',
+        body: 'When you first tap "Start Assessment", you\'ll be prompted to log in or register. Please create an account using your Student ID as your username and set a password. Using your Student ID ensures your results are linked for class analytics.',
       },
       {
         title: 'View Your Personality Portrait',

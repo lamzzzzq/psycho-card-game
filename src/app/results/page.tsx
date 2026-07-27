@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
@@ -9,6 +10,7 @@ import { DimensionBar } from '@/components/results/DimensionBar';
 import { BigFiveIntro } from '@/components/results/BigFiveIntro';
 import { DIMENSIONS } from '@/types';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
+import { useAuthSession } from '@/lib/useAuthSession';
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -17,8 +19,23 @@ export default function ResultsPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = STRINGS[locale].results;
   const { bigFiveScores, startRetake } = useAssessmentStore();
+  const { loading: authLoading, userId } = useAuthSession();
 
-  if (!hydrated) {
+  // 需登录才能看报告：登出/未登入用户直接访问 /results 不能看到本地残留的分数（隐私）。
+  useEffect(() => {
+    if (!authLoading && !userId) router.replace('/login');
+  }, [authLoading, userId, router]);
+
+  if (!hydrated || authLoading) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="psy-serif text-[var(--psy-muted)]">{t.loading}</p>
+      </div>
+    );
+  }
+
+  // 未登录（正跳转 /login）→ 不渲染报告。
+  if (!userId) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p className="psy-serif text-[var(--psy-muted)]">{t.loading}</p>
