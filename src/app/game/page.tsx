@@ -14,6 +14,7 @@ import {
 } from '@/components/game/FeedbackLayer';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHydrated } from '@/stores/useHydration';
+import { useRequireLogin } from '@/lib/useRequireLogin';
 import { useWakeLock } from '@/stores/useWakeLock';
 import { useLocaleStore, STRINGS, playerLabel } from '@/lib/i18n';
 import { DIMENSION_META } from '@/data/dimensions';
@@ -60,6 +61,7 @@ export default function GamePage() {
   } = useGameStore();
   const { bigFiveScores } = useAssessmentStore();
   const hydrated = useHydrated();
+  const { ready: authReady } = useRequireLogin(); // 未登入 → 跳 /login，防登出后靠本地存档直接进对局
   const localeRaw = useLocaleStore((s) => s.locale);
   const locale = hydrated ? localeRaw : 'zh';
   const tg = STRINGS[locale].game;
@@ -362,6 +364,15 @@ export default function GamePage() {
     setAiRunning(true);
     try { await resolvePongWindow(); } finally { setAiRunning(false); }
   }, [resolvePongWindow, playerSkipPong]);
+
+  // 登录闸：未登入（含登出后）不渲染对局，正跳转 /login。
+  if (!authReady) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="psy-serif text-[var(--psy-muted)]">{tg.loadingShort}</p>
+      </div>
+    );
+  }
 
   if (!game) {
     return (

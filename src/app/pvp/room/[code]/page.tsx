@@ -11,6 +11,7 @@ import { getRoomPlayers, kickPlayer, dissolveRoom, leaveRoom } from '@/lib/room-
 import { Room, RoomSettings } from '@/types/pvp';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
+import { useRequireLogin } from '@/lib/useRequireLogin';
 import { useWakeLock } from '@/stores/useWakeLock';
 
 export default function RoomWaitPage() {
@@ -19,6 +20,7 @@ export default function RoomWaitPage() {
   const router = useRouter();
   const code = params.code as string;
   const hydrated = useHydrated();
+  const { ready: authReady } = useRequireLogin(); // 未登入 → 跳 /login
   const localeRaw = useLocaleStore((s) => s.locale);
   const locale = hydrated ? localeRaw : 'zh';
   const t = STRINGS[locale].pvpRoom;
@@ -203,6 +205,15 @@ export default function RoomWaitPage() {
       setStarting(false);
     }
   }, [room, players, code]);
+
+  // 登录闸：未登入（含登出后）不渲染房间，正跳转 /login。
+  if (!authReady) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">{t.loadingRoom}</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

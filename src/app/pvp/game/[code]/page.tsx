@@ -23,6 +23,7 @@ import { leaveRoom, leaveAllRooms, updateRoomStatus } from '@/lib/room-api';
 import { retryPendingSaves, removePendingInterrupted } from '@/lib/game-record';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
+import { useRequireLogin } from '@/lib/useRequireLogin';
 import { useWakeLock } from '@/stores/useWakeLock';
 
 interface FlyingAnim { id: number; from: { x: number; y: number }; to: { x: number; y: number }; text: string; }
@@ -75,6 +76,7 @@ export default function PvpGamePage() {
   const code = params.code as string;
 
   const hydrated = useHydrated();
+  const { ready: authReady } = useRequireLogin(); // 未登入 → 跳 /login
   const localeRaw = useLocaleStore((s) => s.locale);
   const locale = hydrated ? localeRaw : 'zh';
   const t = STRINGS[locale].game;
@@ -387,6 +389,15 @@ export default function PvpGamePage() {
       return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
     });
   }, []);
+
+  // 登录闸：未登入（含登出后）不渲染对局，正跳转 /login。
+  if (!authReady) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="psy-serif text-[var(--psy-muted)]">{t.waitingToStart}</p>
+      </div>
+    );
+  }
 
   if (!gameState) {
     return (
