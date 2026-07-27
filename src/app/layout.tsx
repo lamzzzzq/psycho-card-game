@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Noto_Serif_SC, Noto_Sans_SC } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Serif_TC, Noto_Sans_TC } from "next/font/google";
 import "./globals.css";
 import { LocaleSync } from "@/components/shared/LocaleSync";
 import { SessionGuard } from "@/components/shared/SessionGuard";
@@ -17,14 +17,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const notoSerifSc = Noto_Serif_SC({
+// ⚠️ 用繁體 TC 字型（Noto Serif/Sans TC），非簡體 SC：
+// UI 文字是繁體，若用 SC 字型檔渲染，標點（，。、）會沉到左下角（簡體排版規範），
+// 港台使用者一眼看出「簡轉繁」廉價感。TC 字型的標點嚴格居中，符合港台規範。
+const notoSerifTc = Noto_Serif_TC({
   variable: "--font-serif-cn",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
 // 非衬线中文（原型用：card-lab/palette 字体探索）。仅暴露 CSS 变量，不改现状。
-const notoSansSc = Noto_Sans_SC({
+const notoSansTc = Noto_Sans_TC({
   variable: "--font-sans-cn",
   subsets: ["latin"],
   weight: ["400", "500", "700", "900"],
@@ -65,8 +68,8 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="zh-CN"
-      className={`${geistSans.variable} ${geistMono.variable} ${notoSerifSc.variable} ${notoSansSc.variable} h-full antialiased`}
+      lang="zh-HK"
+      className={`${geistSans.variable} ${geistMono.variable} ${notoSerifTc.variable} ${notoSansTc.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[var(--psy-bg)] text-[var(--psy-ink)]">
         <LocaleSync />
