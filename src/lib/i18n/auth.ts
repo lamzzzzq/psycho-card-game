@@ -72,7 +72,7 @@ export const AUTH_T = {
     // ── 账号入口徽标（各页右上角）──
     login: '登入',
     menuSettings: '設置',
-    menuLogout: '退出登入',
+    menuLogout: '登出',
     menuBgm: '背景音樂',
 
     // ── 账号页 ──
