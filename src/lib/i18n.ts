@@ -68,7 +68,7 @@ export const STRINGS = {
       reassess: '重新測評',
       report: '我的報告',
       deckModalTitle: '選擇人格模型',
-      deckModalSub: '目前提供 Big Five，其餘人格模型即將上線',
+      deckModalSub: '目前提供 Big Five 與 HEXACO，CPAI 規劃中',
       deckModalClose: '關閉',
       // 「查看報告」选了尚未完成的模型时的提示框
       reportNotDoneBody: '你還沒做過這個測評，要現在做嗎？',
@@ -458,7 +458,7 @@ export const STRINGS = {
       reassess: 'Retake Assessment',
       report: 'My Profile',
       deckModalTitle: 'Select Personality Model',
-      deckModalSub: 'Currently featuring the Big Five. Other personality models coming soon.',
+      deckModalSub: 'Big Five and HEXACO available; CPAI planned.',
       deckModalClose: 'Close',
       // Prompt shown when picking a not-yet-taken model from "View Report"
       reportNotDoneBody: "You haven't taken this assessment yet. Do it now?",
