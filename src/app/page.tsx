@@ -46,8 +46,10 @@ export default function Home() {
   const MODEL_NAME: Record<'big-five' | 'hexaco' | 'cpai', string> = { 'big-five': 'Big Five', hexaco: 'HEXACO', cpai: 'CPAI-2' };
   // Big Five 与 HEXACO 均已上线；CPAI 仍未开放。
   const modelAvailable = (m: 'big-five' | 'hexaco' | 'cpai') => m === 'big-five' || m === 'hexaco';
+  // ⚠️「已完成」必须以登入为前提：登出后 localStorage 仍留着上次的分数，
+  // 若不判 isLoggedIn，模型选择框会对未登入用户误显「Done」（且点进去被 gate 弹回登录，自相矛盾）。
   const modelDone = (m: 'big-five' | 'hexaco' | 'cpai') =>
-    m === 'big-five' ? bigFiveScores !== null : m === 'hexaco' ? hexacoScores !== null : false;
+    !isLoggedIn ? false : m === 'big-five' ? bigFiveScores !== null : m === 'hexaco' ? hexacoScores !== null : false;
 
   // 各模型的答题页 / 报告页路由（HEXACO 独立于大五流程）。
   const ASSESS_ROUTE: Record<'big-five' | 'hexaco', string> = { 'big-five': '/assessment', hexaco: '/hexaco/assess' };
