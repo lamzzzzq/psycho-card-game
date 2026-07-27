@@ -52,16 +52,16 @@ export function KnowledgeQuiz({ locale }: { locale: Locale }) {
     return (
       <div className="rounded-[1.35rem] border border-[rgba(200,155,93,0.24)] bg-[var(--psy-card-content)] p-5 text-center shadow-[0_16px_30px_rgba(96,72,38,0.1)]">
         <p className="psy-serif text-base text-[var(--psy-ink)]">
-          {en ? 'Learned any psychology this round?' : '這局學到心理學了嗎？'}
+          {en ? 'Post-Game Psychology Review' : '本局心理學知識複習'}
         </p>
         <p className="mt-1 text-xs text-[var(--psy-muted)]">
-          {en ? 'A quick 4-question quiz on the knowledge cards.' : '來個 4 題知識卡小測，看看你記住多少。'}
+          {en ? 'A quick 4-question quiz on your knowledge cards to see how much you remembered.' : '來個 4 題知識卡小測，看看你記住多少。'}
         </p>
         <button
           onClick={() => setStarted(true)}
           className="psy-btn psy-btn-accent psy-serif mt-4 px-6 py-2.5 text-sm font-semibold"
         >
-          {en ? 'Test your knowledge' : '測測你記得多少'}
+          {en ? 'Start Quiz (1 min)' : '立即測試（1 分鐘）'}
         </button>
       </div>
     );
