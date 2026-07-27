@@ -396,3 +396,27 @@ a:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .psy-turn-border { animation: none; }
 }
+
+/* ── 桌面版品牌主题光标 ──
+   仅在鼠标设备（hover+fine pointer）生效，触屏/笔不受影响。
+   Safari 对 SVG 光标支持不佳 → 会优雅回退到默认箭头(auto)。 */
+@media (hover: hover) and (pointer: fine) {
+  html {
+    cursor: url('/cursor-arrow.svg') 4 4, auto;
+  }
+  /* 可点击元素保留 pointer 手型 */
+  a, button, [role="button"], summary, label[for],
+  .psy-btn, .psy-tile,
+  input[type="checkbox"], input[type="radio"], select {
+    cursor: pointer;
+  }
+  /* 禁用态仍 not-allowed */
+  button:disabled, [aria-disabled="true"], [disabled], .psy-btn:disabled {
+    cursor: not-allowed;
+  }
+  /* 文本输入用 text 光标 */
+  input[type="text"], input[type="password"], input[type="email"],
+  input[type="number"], input[type="search"], input[type="tel"], textarea {
+    cursor: text;
+  }
+}
