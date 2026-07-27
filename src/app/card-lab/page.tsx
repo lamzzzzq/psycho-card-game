@@ -1,17 +1,66 @@
 'use client';
 
 // 卡面设计沙盒 —— 仅用于预览新塔罗风卡框，不影响正式游戏组件。定稿后再替换 Card.tsx。
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { TarotCard } from '@/components/game/TarotCard';
+import { HexacoCard } from '@/components/game/HexacoCard';
 import { MockGameScene } from '@/components/game/MockGameScene';
 import { QUESTIONS } from '@/data/questions';
 import { KNOWLEDGE_CARDS } from '@/data/dummy-cards';
 import { DIMENSIONS, Dimension } from '@/types';
+import { HEXACO_QUESTIONS } from '@/data/hexaco-questions';
 
 // 每个维度取一题做样本（中英对照）
 const SAMPLES = DIMENSIONS.map((d) => QUESTIONS.find((q) => q.dimension === d)!).filter(Boolean);
 
-export default function CardLabPage() {
+type LabDeck = 'big-five' | 'hexaco';
+
+function DeckTabs({ deck }: { deck: LabDeck }) {
+  const setDeck = (nextDeck: LabDeck) => {
+    window.history.pushState(null, '', `/card-lab?deck=${nextDeck}`);
+  };
+
+  return (
+    <nav aria-label="人格牌堆" className="flex w-fit items-center gap-1 rounded-full border border-[var(--psy-border)] bg-white/60 p-1">
+      {([
+        ['big-five', 'Big Five · 50 張'],
+        ['hexaco', 'HEXACO · 60 張'],
+      ] as const).map(([id, label]) => (
+        <button
+          key={id}
+          type="button"
+          aria-current={deck === id ? 'page' : undefined}
+          onClick={() => setDeck(id)}
+          className={`rounded-full px-4 py-2 text-sm transition ${deck === id ? 'bg-[var(--psy-accent)] font-semibold text-white shadow-sm' : 'text-[var(--psy-ink-soft)] hover:bg-[var(--psy-accent-soft)]'}`}
+        >
+          {label}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+function HexacoGallery({ locale }: { locale: 'zh' | 'en' }) {
+  return (
+    <section className="space-y-3">
+      <h2 className="psy-serif text-lg text-[var(--psy-ink)]">HEXACO 已生成畫廊（60 題）</h2>
+      <p className="text-xs text-[var(--psy-muted)]">HEXACO 圖片固定讀取 <code>public/cards/hexaco/</code>，與 Big Five 的 <code>public/cards/</code> 完全分離。題面長 2～3 倍，改用獨立元件 <code>HexacoCard</code>（拱區收高、底框加大），與 Big Five 的卡面元件完全分離。</p>
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6">
+        {HEXACO_QUESTIONS.map((q) => (
+          <div key={q.id} className="space-y-1 text-center">
+            <HexacoCard text={q.text} textEn={q.textEn} imageSrc={`/cards/hexaco/${q.id}.webp`} locale={locale} fluid />
+            <p className="text-[10px] text-[var(--psy-muted)]">#{q.id} · {q.dimension}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CardLabContent() {
+  const searchParams = useSearchParams();
+  const deck: LabDeck = searchParams.get('deck') === 'hexaco' ? 'hexaco' : 'big-five';
   const [locale, setLocale] = useState<'zh' | 'en'>('zh');
   const [width, setWidth] = useState(200);
 
@@ -20,9 +69,10 @@ export default function CardLabPage() {
       <div className="mx-auto max-w-6xl space-y-10">
         <header className="space-y-2">
           <p className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-ink-soft)]">Card Lab · 沙盒</p>
-          <h1 className="psy-serif text-3xl text-[var(--psy-ink)]">卡面设计预览</h1>
-          <p className="text-sm text-[var(--psy-ink-soft)]">CSS 金色双线框 + 拱形图窗 + 单语文字（跟随用户语言）+ 渐变占位。图片放进 <code>public/cards/</code> 即替换占位。此页不影响游戏。</p>
+          <h1 className="psy-serif text-3xl text-[var(--psy-ink)]">{deck === 'hexaco' ? 'HEXACO 卡面設計預覽' : 'Big Five 卡面設計預覽'}</h1>
+          <p className="text-sm text-[var(--psy-ink-soft)]">CSS 金色雙線框 + 拱形圖窗 + 單語文字（跟隨使用者語言）。兩套牌以獨立目錄與網址分開，此頁不影響遊戲。</p>
           <div className="flex flex-wrap items-center gap-4 pt-2 text-sm">
+            <DeckTabs deck={deck} />
             <span className="flex items-center gap-1 rounded-full border border-[var(--psy-border)] p-1">
               {(['zh', 'en'] as const).map((l) => (
                 <button
@@ -40,6 +90,8 @@ export default function CardLabPage() {
             </label>
           </div>
         </header>
+
+        {deck === 'hexaco' ? <HexacoGallery locale={locale} /> : <>
 
         {/* 真实插画测试（仅 card-lab，用 _lab-sample.webp，不影响游戏） */}
         <section className="space-y-3">
@@ -162,7 +214,16 @@ export default function CardLabPage() {
           </div>
           <p className="text-xs text-[var(--psy-muted)]">注：手牌这么小时英文会很挤——这也是为什么小卡(compact/tiny)计划不显示图、放大时才显示。</p>
         </section>
+        </>}
       </div>
     </div>
+  );
+}
+
+export default function CardLabPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen px-6 py-10 text-sm text-[var(--psy-muted)]">載入卡牌實驗室…</div>}>
+      <CardLabContent />
+    </Suspense>
   );
 }
