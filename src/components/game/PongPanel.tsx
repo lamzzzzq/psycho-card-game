@@ -41,14 +41,10 @@ export function PongPanel({
   // 已归档维度：目标行里划线花掉（用户反馈：已碰过的维度应实时划线提示）。
   const declaredDims = new Set(player.declaredSets.map((s) => s.dimension));
   const dimName = (d: Dimension) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name);
-  // 倒計時初值分兩檔：能歸檔 20s（要看牌思考+選牌，5s 根本來不及——用戶反饋）；
-  // 無法歸檔只有「暫不歸檔」一個選項，5s 快速放行避免拖慢節奏。
-  const [countdown, setCountdown] = useState(() => {
-    if (!isPersonalityCard(pendingCard)) return 5;
-    const dim = pendingCard.dimension;
-    const sameCount = player.hand.filter((c) => isPersonalityCard(c) && c.dimension === dim).length;
-    return sameCount + 1 >= targets[dim] ? 20 : 5;
-  });
+  // 碰牌判讀窗口一律 20s（老板要求：PVP 必須穩定 20s）。與 host 側 CLAIM_WINDOW_MS(20s) 對齊，
+  // 避免 client 端提前(原不可歸檔只給 5s)自動 pass 讓面板早於 20s 消失。
+  // solo 為 autoAdvance=false，此倒計時不跑（玩家自行決定，不超時）。
+  const [countdown, setCountdown] = useState(20);
 
   // Solo play is deliberately player-paced. A network claim window can still
   // use its countdown so an abandoned room does not block the table.
