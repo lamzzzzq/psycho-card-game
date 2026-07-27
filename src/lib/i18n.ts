@@ -809,7 +809,7 @@ export const STRINGS = {
       backHome: 'Back to Home',
       notAssessed: 'Assessment not completed yet',
       startAssess: 'Start Assessment',
-      title: 'Your BIG FIVE Personality Portrait',
+      title: 'Your Big Five Personality Portrait',
       intro: 'This profile is both your psychological portrait and the dimension goals you will aim to complete in the game.',
       pvp: 'Play Multiplayer',
       single: 'Play Solo',
