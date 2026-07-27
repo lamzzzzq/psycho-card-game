@@ -1325,8 +1325,9 @@ function FlowScreenshot({ mode, index, s }: { mode: 'pvp' | 'solo'; index: numbe
   const frame = mode === 'pvp' ? pvpFrames[index] : soloFrames[index];
 
   return (
-    <div className="mx-auto w-full max-w-md rounded-[1.2rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,var(--psy-card),#efe4cf)] p-3 shadow-[0_14px_28px_rgba(96,72,38,0.12)]">
-      <div className="min-h-[12rem] rounded-[1rem] border border-[rgba(154,116,72,0.14)] bg-[linear-gradient(180deg,var(--psy-card-content),#f8f1e4)] p-4 shadow-[inset_0_0_0_1px_rgba(255,250,240,0.62)]">
+    <div className="mx-auto flex h-full w-full max-w-md flex-col rounded-[1.2rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,var(--psy-card),#efe4cf)] p-3 shadow-[0_14px_28px_rgba(96,72,38,0.12)]">
+      {/* flex-1 + justify-center：桌面版卡片被 grid 拉高时，内容（如畫像雷達圖）垂直居中而非钉在顶部 */}
+      <div className="flex min-h-[12rem] flex-1 flex-col justify-center rounded-[1rem] border border-[rgba(154,116,72,0.14)] bg-[linear-gradient(180deg,var(--psy-card-content),#f8f1e4)] p-4 shadow-[inset_0_0_0_1px_rgba(255,250,240,0.62)]">
         {frame}
       </div>
     </div>

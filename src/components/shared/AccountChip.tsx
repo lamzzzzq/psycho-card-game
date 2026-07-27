@@ -11,6 +11,7 @@ import { AUTH_T } from '@/lib/i18n/auth';
 import { useAuthSession } from '@/lib/useAuthSession';
 import { useProfileAvatar } from '@/stores/useProfileAvatar';
 import { useBgm } from '@/stores/useBgm';
+import { BgmToggleButton } from '@/components/shared/BgmToggleButton';
 import { signOutUser } from '@/lib/auth';
 
 export function AccountChip() {
@@ -51,15 +52,19 @@ export function AccountChip() {
   // 加载中不占位（避免闪烁）
   if (loading) return null;
 
-  // 未登录 → 登入按钮
+  // 未登录 → BGM 开关 + 登入按钮。
+  // （BGM 开关平时收在已登录的账号菜单里；未登录也要能静音，否则关不掉音乐。）
   if (!userId) {
     return (
-      <Link
-        href="/login"
-        className="psy-btn psy-btn-ghost psy-serif rounded-full px-5 py-2 text-sm font-semibold"
-      >
-        {t.login}
-      </Link>
+      <div className="flex items-center gap-2">
+        <BgmToggleButton locale={locale} />
+        <Link
+          href="/login"
+          className="psy-btn psy-btn-ghost psy-serif rounded-full px-5 py-2 text-sm font-semibold"
+        >
+          {t.login}
+        </Link>
+      </div>
     );
   }
 
