@@ -13,6 +13,7 @@ interface RawGameState {
   pendingDiscard: GameCard | null;
   discardedByIndex: number;
   winner: string | null;
+  endedByLeave?: boolean;
   claimResponses?: string[];
   settings?: { totalRounds: number; [key: string]: any };
 }
@@ -91,6 +92,7 @@ export function serializeGameState(state: RawGameState, viewerPlayerId: string |
     discardedByIndex: state.discardedByIndex,
     claimResponses: state.claimResponses ?? [],
     winner: state.winner,
+    endedByLeave: state.endedByLeave,
     totalRounds: state.settings?.totalRounds ?? 0,
     revealDifficulty: state.settings?.revealDifficulty ?? 'hidden',
   };

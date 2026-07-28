@@ -1,6 +1,6 @@
 /**
  * Coverage for markPlayerLeft + hasLeft engine integration.
- * Mirrors the user story: "退出即退出，少一人继续打，仅剩 1 人即胜负"
+ * Mirrors the user story: "退出即退出，少一人继续打，仅剩 1 人（房主）即中断局（不判胜负）"
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { markPlayerLeft, skipPenalizedPlayers } from '../game-logic';
@@ -25,13 +25,15 @@ describe('markPlayerLeft', () => {
     expect(twice).toBe(once);
   });
 
-  it('ends the game when only one active player remains, awarding them the win', () => {
+  it('ends the game as an interrupted match (no winner) when only one player remains', () => {
     const state = makeGameState();
     let next = markPlayerLeft(state, 'ai-1');
     next = markPlayerLeft(next, 'ai-2');
     next = markPlayerLeft(next, 'ai-3');
     expect(next.phase).toBe('game-over');
-    expect(next.winner).toBe('human');
+    // 只剩 1 人（房主）不算「贏」——對局被退空弄崩，記為中斷局。
+    expect(next.winner).toBeNull();
+    expect(next.endedByLeave).toBe(true);
   });
 
   it('current-player-leaves mid-discard advances the turn cleanly', () => {

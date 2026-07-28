@@ -731,8 +731,13 @@ export const usePvpStore = create<PvpStore>()(
       clearClaimTimer();
     }
 
-    if (newState.winner && !wasAlreadyWinner) {
-      const winnerId = newState.winner;
+    // 對局結束存檔：正常分勝負（winner 非 null）或中斷局（endedByLeave：其他人
+    // 全退光只剩房主）。中斷局 winner=null → game-record 寫 winner_player_id=null。
+    const wasAlreadyOver =
+      wasAlreadyWinner || !!(rawState as { endedByLeave?: boolean }).endedByLeave;
+    const isOverNow = !!newState.winner || !!newState.endedByLeave;
+    if (isOverNow && !wasAlreadyOver) {
+      const winnerId = newState.winner; // 中斷局為 null
       get().sendMessage({ type: 'game-over', winnerId });
       if (room) {
         // New schema: game_sessions + game_participants + big_five_snapshots.

@@ -171,4 +171,8 @@ export interface GameState {
   discardedByIndex: number;
   claimResponses: PlayerId[];
   winner: PlayerId | null;
+  // 中斷局標記：對局非正常結束（其他人全退光、只剩房主一人）。此時 winner=null，
+  // 不計勝負；存檔寫 winner_player_id=null，/stats 標「中斷」。host 退出走另一條路徑
+  // （persistInterruptedGame）也是 winner=null。2026-07-29。
+  endedByLeave?: boolean;
 }

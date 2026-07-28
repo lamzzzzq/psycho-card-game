@@ -598,6 +598,31 @@ export default function PvpGamePage() {
   // 把最新 canDraw 同步到 ref，給 early-return 前定義的 handleDrawPileHover 用。
   canDrawRef.current = canDraw;
 
+  // 中斷局：其他人全退光、只剩自己（房主）。不判勝負，顯示「對手已離開」+ 返回。
+  if (gameState.endedByLeave) {
+    return (
+      <div className="flex flex-1 items-center justify-center px-4">
+        <div className="max-w-sm space-y-4 text-center">
+          <div className="text-4xl" aria-hidden>🚪</div>
+          <h2 className="psy-serif text-xl text-[var(--psy-ink)]">
+            {locale === 'en' ? 'Opponents Left' : '對手已離開'}
+          </h2>
+          <p className="text-sm leading-6 text-[var(--psy-ink-soft)]">
+            {locale === 'en'
+              ? 'All other players left, so this match was interrupted and does not count.'
+              : '其他玩家都已離開，本局中斷、不計勝負。'}
+          </p>
+          <button
+            onClick={() => router.replace('/')}
+            className="psy-btn psy-btn-accent px-5 py-2.5 text-sm font-bold"
+          >
+            {locale === 'en' ? 'Back to Home' : '返回主頁'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Game over screen — 与单机共用 GameOverModal（归档 declaredSets 是公开信息，
   // PVP 序列化已发全桌）。onPlayAgain 走回 room 页开新局；onBackToLobby 回主页。
   if (gameState.winner) {

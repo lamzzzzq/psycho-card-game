@@ -1050,17 +1050,16 @@ export function markPlayerLeft(state: GameState, playerId: string): GameState {
 
   const activeCount = newPlayers.filter((p) => !p.hasLeft).length;
 
-  // End the game if 0 or 1 active players left.
+  // End the game if 0 or 1 active players left. 只剩 1 人（必是房主，因為其他人
+  // 已退光）不算「贏」——對局被中途退出弄崩了，記為中斷局：winner=null +
+  // endedByLeave=true。存檔寫 winner_player_id=null、不計勝負，UI 顯示「對手已離開」。
   if (activeCount <= 1) {
-    const lastStanding = newPlayers.find((p) => !p.hasLeft);
-    const winnerId = lastStanding
-      ? lastStanding.id
-      : getRankings(newPlayers)[0]?.id ?? null;
     return {
       ...state,
       players: newPlayers,
       phase: 'game-over',
-      winner: winnerId,
+      winner: null,
+      endedByLeave: true,
       pendingDiscard: null,
       discardedByIndex: -1,
       claimResponses: [],
