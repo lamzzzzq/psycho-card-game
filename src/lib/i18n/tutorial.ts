@@ -23,7 +23,7 @@ export const TUTORIAL_T = {
     dgHand: '你的手牌',
     dgIncoming: '抽到／別人棄的',
     dgLocked: '鎖定一組',
-    dgGoalCaption: '每維各需湊夠對應張數（圈內數字＝要幾張，每維不同）→ 5 維全部歸檔即食胡獲勝',
+    dgGoalCaption: '圈內數字＝目標張數 → 5 維全部歸檔即食胡並獲勝',
     dgPongCaption: '湊滿「該維度目標張數」即可鎖定：2 張手牌 + 1 張進來的牌 = 3 張（張數要與目標一致）',
     dgTableCaption: '你 + 3 AI（或 2–4 名玩家）圍住牌堆',
     dgDrawCaption: '每回合先從牌堆摸 1 張',
@@ -55,11 +55,11 @@ export const TUTORIAL_T = {
     pvpFlow: [
       {
         title: '開始測評',
-        body: '首次進入時，首頁只有一個「開始測評」入口。先完成人格測評，測評分數會決定你之後每個維度要湊幾張牌。',
+        body: '首次進入時，首頁只有一個「開始測評」入口。先完成人格測評，分數將決定你在每個維度需要湊幾多張牌。',
       },
       {
         title: '登入 / 註冊帳號',
-        body: '當你首次點擊「開始測評」時，系統會提示你登入或註冊帳號。請使用你的學號作為用戶名稱來建立帳號，並設定密碼。使用學號能確保你的測評結果正確連結至課堂數據分析。',
+        body: '當你首次點擊「開始測評」時，系統會提示你登入或註冊帳號。請以學號建立帳號，並設定密碼，以連結至課堂數據分析。',
       },
       {
         title: '查看人格畫像',
@@ -68,11 +68,11 @@ export const TUTORIAL_T = {
       },
       {
         title: '進入聯機對戰',
-        body: '在畫像頁點「聯機對戰」。學號已從測評帶入，創建或加入房間，並設定最多玩家數、遊戲輪數、看牌難度。',
+        body: '在畫像頁點「聯機對戰」。學號已從測評帶入，創建或加入房間，並設定遊戲規格。',
       },
       {
         title: '開始對戰',
-        body: '房主創建房間後拿到房間碼，分享給其他玩家加入；人齊後房主點「開始對戰」進入牌桌。默認明牌（全場人格公開），房主也可改半公開或隱藏。',
+        body: '創建房間後，分享房間碼給其他玩家加入；人齊後便可開始對戰。',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -80,11 +80,11 @@ export const TUTORIAL_T = {
     soloFlow: [
       {
         title: '開始測評',
-        body: '首次進入時，首頁只有一個「開始測評」入口。先完成人格測評，測評分數會決定你之後每個維度要湊幾張牌。',
+        body: '首次進入時，首頁只有一個「開始測評」入口。先完成人格測評，分數將決定你在每個維度需要湊幾多張牌。',
       },
       {
         title: '登入 / 註冊帳號',
-        body: '當你首次點擊「開始測評」時，系統會提示你登入或註冊帳號。請使用你的學號作為用戶名稱來建立帳號，並設定密碼。使用學號能確保你的測評結果正確連結至課堂數據分析。',
+        body: '當你首次點擊「開始測評」時，系統會提示你登入或註冊帳號。請以學號建立帳號，並設定密碼，以連結至課堂數據分析。',
       },
       {
         title: '查看人格畫像',
@@ -93,11 +93,11 @@ export const TUTORIAL_T = {
       },
       {
         title: '進入單機對戰',
-        body: '在畫像頁點「單機對戰」進入對戰大廳。設定 AI 難度、遊戲輪數、看牌難度，並查看三名 AI 對手檔案。',
+        body: '在畫像頁點「單機對戰」進入對戰大廳。設定你的遊戲規格。',
       },
       {
         title: '開始對戰',
-        body: '設定好後點「開始對戰」直接進入牌桌。單機固定是你 + 3 個 AI，流程與聯機一致：抽牌、查看、歸檔、棄牌、應對對手棄牌。',
+        body: '直接進入牌桌和 AI 對戰。',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -105,7 +105,7 @@ export const TUTORIAL_T = {
     steps: [
       {
         title: '🎯 終極目標：5維度「公開歸檔」！',
-        body: '你的目標是將五大人格的 5 個維度（OCEAN）全部湊齊並「公開歸檔」，最快完成的人獲勝！\n特別注意：每個維度要湊幾張牌，取決於你自己一開始的測評分數。所以，每個人的「胡牌路線（目標張數）」都是不一樣的！\n例如：你的目標可能是 O 需 3 張、C 需 4 張、E 需 2 張、A 需 5 張、N 需 4 張。',
+        body: '你的目標是將五大人格的 5 個維度（OCEAN）湊齊並「公開歸檔」，最快完成的人獲勝！\n特別注意：每個維度的目標張數取決於你的測評分數。例如：你的目標可能是 O 需 3 張、C 需 4 張、E 需 2 張、A 需 5 張、N 需 4 張等。',
         hint: '初始手牌公式：你的初始手牌張數 = 5 個維度目標張數之和 − 1（少的那 1 張，要靠「碰」或「食胡」來補齊）。',
       },
       {
@@ -168,7 +168,7 @@ export const TUTORIAL_T = {
 
     // ── 沙盒：開局介紹遮罩 ──
     introTitle: '開局先看「目標張數」',
-    introBody: '每個維度都有一個指定張數，你要湊到那個數量，才能把這組牌「碰」下來、公開鎖定。張數是根據你的測評分數決定的，每個維度不一樣，數字愈大就愈難湊。下面是這局示範的目標：',
+    introBody: '每個維度都有一個目標張數。你要湊夠牌，才能把這個維度的牌「碰」下來、公開鎖定。\n以下是這局示範的目標：',
     introBtn: '開始教學',
 
     // ── 沙盒：目標板 + 操作橫幅 ──
@@ -205,20 +205,20 @@ export const TUTORIAL_T = {
     cardsCountSuffix: (n: number) => `${n} 張`,
 
     // ── 沙盒：caption（按 scene）──
-    captionStart: '這是你的開局：手牌裏有多種人格描述和一張知識牌。你需要先抽牌，再決定要查看、歸檔還是棄牌。',
-    captionViewing: '看牌難度不同，每回合可查看張數與保留機制也不同：\n・半公開：每回合可看 4 張，看過的牌將永久保留（直至打出）。\n・隱藏（最高難度）：每回合僅可看 2 張，且下一輪隨即重置、不作保留。\n本次示範採用最核心的「隱藏」模式——請先點擊上方高亮的「查看 2 張」開始體驗。',
+    captionStart: '手牌裏有多種人格描述牌和一張知識牌。先抽牌、再決定查看、歸檔還是棄牌。',
+    captionViewing: '所選難度決定可查看維度的牌數與保留機制：\n・明牌：所有牌的維度標示會一直顯示出來。\n・半公開：每回合可查看 4 張牌的人格標籤，標籤將會一直保留。\n・隱藏：每回合可看 2 張牌的人格標籤，但標籤會在下一輪消失。\n本次將示範「隱藏」模式——請先點擊上方高亮的「查看 2 張」。',
     captionViewPicking: (n: number) =>
       n >= 2
         ? '兩張都看過了！點高亮的「完成查看」繼續。'
         : `點選下方高亮的 2 張牌，揭開它們的真實維度（已看 ${n}/2）。`,
-    captionAfterDraw: '看上方「目標張數」：神經質要 4 張，而你手裏正好有 4 張神經質。點高亮的「自摸碰」開始（之後再選維度、再點牌）。',
+    captionAfterDraw: '神經質的「目標張數」是 4。你手裏正好有 4 張神經質牌。點高亮的「自摸碰」開始選維度及點牌。',
     captionPongDimension: (name: string) =>
       `自摸碰先選定一個維度。目標板上「${name}」需要的張數，正是你手裏有的張數——選高亮的「${name}」。`,
     captionPongPickingDone: (name: string, cnt: number) => `已選滿 ${cnt} 張「${name}」。點高亮的「確認自摸碰」完成歸檔。`,
     captionPongPicking: (name: string, cnt: number, sel: number) =>
       `從手牌精確選擇 ${cnt} 張「${name}」（高亮的就是，已選 ${sel}/${cnt}）。`,
     captionPongFailed: '失敗會公開你押錯的牌並罰停一回合（下次輪到你時自動跳過）。點「繼續」回到選牌模式。',
-    captionPongSuccess: '自摸碰成功！4 張公開歸檔鎖定。現在點一張手牌準備棄掉，結束回合。',
+    captionPongSuccess: '自摸碰成功！4 張公開歸檔鎖定。現在點一張手牌準備棄掉，結束此回合。',
     captionDiscardConfirm: '確認要棄這張嗎？點「棄牌」結束回合，或「取消」換一張。',
     captionClaimWindow: (name: string, sel: number) =>
       `別人棄牌後的判讀窗口：從手牌選 2 張高亮的「${name}」，加那張棄牌湊一組（${name} 目標 3 張），再點「碰」（已選 ${sel}/2）。`,
@@ -229,14 +229,14 @@ export const TUTORIAL_T = {
       `你已歸檔 4 維，只差「${name}」。對手打出的這張判定為「${name}」，正是你缺的最後一維——點高亮的「食胡」宣告勝利。`,
     captionHuSuccess: '食胡成功！五個維度全部集齊，你贏了。',
     captionDiscardPicking: '點擊要棄的牌。',
-    captionDone: '你的回合結束。下一步模擬別人棄牌後的「碰 / 食胡」窗口。',
+    captionDone: '你的回合結束。下一步模擬當別人棄牌時，你如何「碰 / 食胡」。',
 
     // ── 沙盒：feedback（reducer 內）──
     fbDraw: '抽到一張牌。現在選擇很多，先演示「查看 2 張牌」。',
     fbViewTwo: '本回合查看了 2 張牌：一張盡責性，一張神經質。隱藏模式看過的牌下一輪會重置、不保留；真實牌局裏只會揭開你選的 2 張。',
     fbViewStart: '點選下方高亮的 2 張牌，揭開它們的真實維度。',
     fbViewPicked: '已揭開一張。再點另一張高亮的牌。',
-    fbViewDone: '兩張都看過了。隱藏模式每回合只能看 2 張，而且下一輪就重置、不保留；換成半公開則是每回合看 4 張、看過永久保留。',
+    fbViewDone: '兩張都看過了。隱藏模式每回合只能看 2 張，且下一輪隨即重置、不作保留；半公開模式則是每回合看 4 張、看過可保留。',
     fbFinishView: '你知道剛抽到的牌能補齊一組。現在演示自摸碰。',
     fbOpenPong: '自摸碰要先選定一個人格維度。提示：手牌裏有 4 張「神經質」，選它。',
     fbChooseDim: (name: string, cnt: number) => `已選擇「${name}」。現在從手牌精確選擇 ${cnt} 張「${name}」的牌。`,
@@ -324,7 +324,7 @@ export const TUTORIAL_T = {
     dgHand: 'Your hand',
     dgIncoming: 'Drawn / discarded',
     dgLocked: 'Locked set',
-    dgGoalCaption: 'Each dimension needs its own count (the number in the chip = how many cards, different per dimension) → declare all 5 to win.',
+    dgGoalCaption: 'The number in the chip = target count → file all 5 dimensions to Win.',
     dgPongCaption: 'Reach that dimension\'s target count to lock it: 2 hand cards + 1 incoming card = 3 (the count must match the target).',
     dgTableCaption: 'You + 3 AI (or 1 to 3 players) around the pile',
     dgDrawCaption: 'Draw 1 from the pile to start your turn',
@@ -356,11 +356,11 @@ export const TUTORIAL_T = {
     pvpFlow: [
       {
         title: 'Start the Assessment',
-        body: 'On your first visit, the home page features only a single entry point: "Start Assessment". Complete this initial evaluation first—your scores will determine how many cards each dimension requires later.',
+        body: 'On your first visit, the home page has only one entry point: "Start Assessment". Complete the personality assessment first — your scores decide how many cards you need to collect for each dimension.',
       },
       {
         title: 'Log In / Register',
-        body: 'When you first tap "Start Assessment", you\'ll be prompted to log in or register. Please create an account using your Student ID as your username and set a password. Using your Student ID ensures your results are linked for class analytics.',
+        body: 'When you first tap "Start Assessment", you\'ll be prompted to log in or register. Create an account with your Student ID and set a password, so your results link to the class data analysis.',
       },
       {
         title: 'View Your Personality Portrait',
@@ -369,11 +369,11 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Enter Multiplayer Match',
-        body: 'Tap "Multiplayer Match" on the Portrait page. Your student ID is automatically carried over from the assessment. You can then create or join a room, where you can set the maximum player count, game rounds, and reveal difficulty.',
+        body: 'Tap "Multiplayer Match" on the Portrait page. Your Student ID is carried over from the assessment. Create or join a room and set the game settings.',
       },
       {
         title: 'Start the Match',
-        body: 'The host creates a room, receives a room code, and shares it with other players to join. Once everyone has arrived, the host taps "Start Match" to enter the table. The game defaults to an Open setting (all players\' personalities are fully public), though the host can switch this to Semi-Open or Hidden.',
+        body: 'Create a room, then share the room code for other players to join. Once everyone\'s in, you\'re ready to start the match.',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -381,11 +381,11 @@ export const TUTORIAL_T = {
     soloFlow: [
       {
         title: 'Start the Assessment',
-        body: 'On your first visit, the home page features only a single entry point: "Start Assessment". Complete this initial evaluation first—your scores will determine how many cards each dimension requires later.',
+        body: 'On your first visit, the home page has only one entry point: "Start Assessment". Complete the personality assessment first — your scores decide how many cards you need to collect for each dimension.',
       },
       {
         title: 'Log In / Register',
-        body: 'When you first tap "Start Assessment", you\'ll be prompted to log in or register. Please create an account using your Student ID as your username and set a password. Using your Student ID ensures your results are linked for class analytics.',
+        body: 'When you first tap "Start Assessment", you\'ll be prompted to log in or register. Create an account with your Student ID and set a password, so your results link to the class data analysis.',
       },
       {
         title: 'View Your Personality Portrait',
@@ -394,11 +394,11 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Enter Solo Match',
-        body: 'Tap "Solo Match" on the Portrait page to enter the match lobby. Here, you can configure the AI difficulty, total game rounds, and reveal difficulty, as well as review the profiles of your three AI opponents.',
+        body: 'Tap "Solo Match" on the Portrait page to enter the match lobby. Set your game settings.',
       },
       {
         title: 'Start the Match',
-        body: 'Once configured, tap "Start Match" to head straight to the table. Solo mode features you against 3 AI opponents, following the exact same gameplay loop as multiplayer: draw, view, declare, discard, and respond to opponents\' discards.',
+        body: 'Head straight to the table and play against the AI.',
       },
     ] as ReadonlyArray<{ title: string; body: string; note?: string }>,
 
@@ -406,7 +406,7 @@ export const TUTORIAL_T = {
     steps: [
       {
         title: '🎯 Ultimate Goal: Publicly File All 5 Dimensions!',
-        body: 'Your goal is to collect and "publicly file" all 5 Big Five personality dimensions (OCEAN). The first player to complete their profile wins!\nNote: The number of cards required for each dimension depends entirely on your initial psychological assessment score. This means every player\'s "path to victory (target counts)" is completely unique!\nExample: your targets might be O needs 3, C needs 4, E needs 2, A needs 5, N needs 4.',
+        body: 'Your goal is to collect and "publicly file" all 5 Big Five dimensions (OCEAN). The first to finish wins!\nNote: the target count for each dimension depends on your assessment score. Example: your targets might be O needs 3, C needs 4, E needs 2, A needs 5, N needs 4, and so on.',
         hint: 'Starting-hand formula: your starting hand size = the sum of the 5 dimension targets − 1. That 1 missing card must be completed later through a "Self-draw Pong", "Intercept Pong", or your final "Win"!',
       },
       {
@@ -469,7 +469,7 @@ export const TUTORIAL_T = {
 
     // ── Sandbox: intro overlay ──
     introTitle: 'Check Your "Winning Targets" First',
-    introBody: 'Each personality trait has a required count — you must collect that exact number of cards to "Pong" the set and lock it in publicly. The targets are determined by your assessment score and vary across traits; the higher the number, the more challenging it is to complete. Here are the targets for this demo:',
+    introBody: 'Each dimension has a target count. Collect enough cards to "Pong" that dimension and lock it in publicly.\nHere are the targets for this demo:',
     introBtn: 'Start Lesson',
 
     // ── Sandbox: target board + operation banner ──
@@ -506,20 +506,20 @@ export const TUTORIAL_T = {
     cardsCountSuffix: (n: number) => `${n} cards`,
 
     // ── Sandbox: captions (by scene) ──
-    captionStart: 'This is your opening hand: it contains various personality descriptions and one Knowledge Card. You must draw first, then decide whether to view, declare, or discard.',
-    captionViewing: 'Reveal difficulty dictates how many cards you can view per turn and whether they remain visible:\n・Semi-Open: Allows you to view 4 cards each turn, and they remain permanently revealed until played.\n・Hidden (Hardest): Allows you to view only 2 cards, which reset next round and are not kept.\nThis demo utilizes the advanced Hidden mode — tap the highlighted "View 2" above to begin.',
+    captionStart: 'Your hand holds several personality cards and one Knowledge Card. Draw first, then decide whether to view, file, or discard.',
+    captionViewing: 'The chosen reveal difficulty decides how many cards\' dimensions you can see and whether the tags stay:\n・Open: every card\'s dimension tag stays visible the whole time.\n・Semi-Open: view the dimension tags of 4 cards each turn, and the tags stay revealed.\n・Hidden: view the tags of 2 cards each turn, but the tags disappear next round.\nThis demo uses "Hidden" mode — tap the highlighted "View 2" above to begin.',
     captionViewPicking: (n: number) =>
       n >= 2
         ? 'You\'ve seen both! Tap the highlighted "Done viewing" to continue.'
         : `Tap the 2 highlighted cards below to reveal their true dimensions (${n}/2 seen).`,
-    captionAfterDraw: 'Look at the "Targets" board above: Neuroticism needs 4, and your hand has exactly 4 Neuroticism. Tap the highlighted "Self-draw Pong" to start (you\'ll pick the dimension, then the cards).',
+    captionAfterDraw: 'Neuroticism\'s target count is 4, and your hand has exactly 4 Neuroticism cards. Tap the highlighted "Self-draw Pong" to start choosing the dimension and cards.',
     captionPongDimension: (name: string) =>
       `Self-draw Pong needs a dimension first. The count "${name}" needs on the board is exactly what you hold — choose the highlighted "${name}".`,
     captionPongPickingDone: (name: string, cnt: number) => `${cnt} "${name}" cards selected. Tap the highlighted "Confirm Pong" to declare.`,
     captionPongPicking: (name: string, cnt: number, sel: number) =>
       `Select exactly ${cnt} "${name}" cards from your hand (the highlighted ones; ${sel}/${cnt} selected).`,
     captionPongFailed: 'A failure reveals the cards you wrongly bet and freezes you for one turn (your next turn is auto-skipped). Tap "Continue" to return to card-picking.',
-    captionPongSuccess: 'Self-draw Pong successful! 4 cards are now locked into your public file. Tap a card in your hand to discard and end your turn.',
+    captionPongSuccess: 'Self-draw Pong successful! 4 cards are now locked into your public file. Tap a card in your hand to discard and end this turn.',
     captionDiscardConfirm: 'Discard this one? Tap "Discard" to end the turn, or "Cancel" to pick another.',
     captionClaimWindow: (name: string, sel: number) =>
       `The read window after someone discards: pick 2 highlighted "${name}" cards, plus that discard to form a set (${name} target is 3), then tap "Pong" (${sel}/2 selected).`,
@@ -530,7 +530,7 @@ export const TUTORIAL_T = {
       `You have filed 4 dimensions and only need "${name}" to win. The opponent\'s discard is verified as "${name}" — exactly the final dimension you need. Tap the highlighted "Win" to declare victory!`,
     captionHuSuccess: 'Winning card claimed! All 5 dimensions are complete — you win!',
     captionDiscardPicking: 'Tap the card to discard.',
-    captionDone: 'Your turn is over. Next, simulate the "Pong / Win" window after someone else discards.',
+    captionDone: 'Your turn is over. Next, we simulate how you "Pong / Win" when someone else discards.',
 
     // ── Sandbox: feedback (in reducer) ──
     fbDraw: 'Drew a card. There are many options now — first let\'s demo "view 2 cards".',
