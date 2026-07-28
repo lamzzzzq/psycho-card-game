@@ -351,20 +351,6 @@ export default function GamePage() {
     try { await resolvePongWindow(); } finally { setAiRunning(false); }
   }, [resolvePongWindow, playerSkipPong]);
 
-  const handleResolvePongAI = useCallback(async () => {
-    setSelectedCardIds([]);
-    // Auto-countdown expired — also register human's implicit pass.
-    const g = useGameStore.getState().game;
-    if (g && g.phase === 'claim-window') {
-      const humanId = g.players[0]?.id;
-      if (humanId && !g.claimResponses.includes(humanId) && g.discardedByIndex !== 0) {
-        playerSkipPong();
-      }
-    }
-    setAiRunning(true);
-    try { await resolvePongWindow(); } finally { setAiRunning(false); }
-  }, [resolvePongWindow, playerSkipPong]);
-
   // 登录闸：未登入（含登出后）不渲染对局，正跳转 /login。
   if (!authReady) {
     return (
@@ -635,8 +621,6 @@ export default function GamePage() {
               selectedCardIds={selectedCardIds}
               onClaim={handlePong}
               onSkip={handleSkipPong}
-              onResolveAI={handleResolvePongAI}
-              autoAdvance={false}
               revealPendingDimension={revealDifficulty === 'open'}
               locale={locale}
             />

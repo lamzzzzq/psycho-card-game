@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { GameCard, Dimension, DIMENSIONS, Player, isPersonalityCard } from '@/types';
 import { getTargetCounts } from '@/lib/scoring';
@@ -16,9 +15,6 @@ interface PongPanelProps {
   selectedCardIds: number[];
   onClaim: (dimension: Dimension, handCardIds: number[]) => void;
   onSkip: () => void;
-  onResolveAI: () => void;
-  /** Solo play waits for a decision; PVP can retain a timed claim window. */
-  autoAdvance?: boolean;
   /** 明牌难度下弃牌堆公开人格 → 判读窗口里这张弃牌也应显示维度 tag。 */
   revealPendingDimension?: boolean;
   locale?: Locale;
@@ -31,8 +27,6 @@ export function PongPanel({
   selectedCardIds,
   onClaim,
   onSkip,
-  onResolveAI,
-  autoAdvance = true,
   revealPendingDimension = false,
   locale = 'zh',
 }: PongPanelProps) {
@@ -41,22 +35,10 @@ export function PongPanel({
   // 已归档维度：目标行里划线花掉（用户反馈：已碰过的维度应实时划线提示）。
   const declaredDims = new Set(player.declaredSets.map((s) => s.dimension));
   const dimName = (d: Dimension) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name);
-  // 碰牌判讀窗口一律 20s（老板要求：PVP 必須穩定 20s）。與 host 側 CLAIM_WINDOW_MS(20s) 對齊，
-  // 避免 client 端提前(原不可歸檔只給 5s)自動 pass 讓面板早於 20s 消失。
-  // solo 為 autoAdvance=false，此倒計時不跑（玩家自行決定，不超時）。
-  const [countdown, setCountdown] = useState(20);
-
-  // Solo play is deliberately player-paced. A network claim window can still
-  // use its countdown so an abandoned room does not block the table.
-  useEffect(() => {
-    if (!autoAdvance) return;
-    if (countdown <= 0) {
-      onResolveAI();
-      return;
-    }
-    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [autoAdvance, countdown, onResolveAI]);
+  // 本面板只用於單機，單機刻意由玩家自行決定節奏、不設超時（判讀窗口會一直等）。
+  // 曾有一個 autoAdvance 倒計時分支，但唯一調用點恆傳 false，2026-04 起就從未執行過
+  // ——留著只會讓人誤以為單機有超時（b87982a 就據此誤診改過一次），已刪。
+  // 聯機的 20s 判讀窗口由 host 的 CLAIM_WINDOW_MS 判定，倒計時 UI 在 PVP 對局頁自繪。
 
   // Only personality cards can be claimed
   if (!isPersonalityCard(pendingCard)) return null;
@@ -71,14 +53,6 @@ export function PongPanel({
       animate={{ opacity: 1, scale: 1 }}
       className="psy-panel psy-etched shrink-0 rounded-[1.3rem] p-3 space-y-3 sm:rounded-[1.6rem] sm:p-5 sm:space-y-4"
     >
-      <div className="hidden items-center justify-end sm:flex">
-        {autoAdvance && (
-          <span className={`font-mono text-sm font-medium tabular-nums ${countdown <= 2 ? 'animate-pulse text-[var(--psy-danger)]' : 'text-[var(--psy-accent)]'}`}>
-            {countdown}s
-          </span>
-        )}
-      </div>
-
       {/* Show the pending discard card */}
       <div className="flex items-center gap-4 sm:gap-6">
         <div className="flex flex-col items-center">
