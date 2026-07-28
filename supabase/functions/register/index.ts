@@ -80,10 +80,13 @@ Deno.serve(async (req) => {
   // ── 校验邮箱验证码 ──
   const { data: vc } = await admin
     .from('email_verify_codes')
-    .select('email, code_hash, expires_at, attempts')
+    .select('email, code_hash, expires_at, attempts, purpose')
     .eq('student_id', studentId)
     .maybeSingle();
   if (!vc) return json(400, { error: 'code_not_found' });
+  // 用途必须匹配：这张表与换绑流程(change-recovery-email)共用，purpose 是显式闸门，
+  // 防换绑码被拿来注册（见 0026_email_verify_codes_purpose.sql）。
+  if ((vc.purpose ?? 'register') !== 'register') return json(400, { error: 'code_not_found' });
   if (vc.attempts >= MAX_CODE_ATTEMPTS) return json(400, { error: 'code_locked' });
   if (new Date(vc.expires_at).getTime() < Date.now()) return json(400, { error: 'code_expired' });
   if (vc.email !== recoveryEmail) return json(400, { error: 'code_email_mismatch' });
@@ -118,16 +121,25 @@ Deno.serve(async (req) => {
       createErr &&
       ((createErr as { code?: string }).code === 'email_exists' ||
         /already|registered|exists/i.test(createErr.message ?? ''));
-    if (!dup) return json(409, { error: 'account_exists', detail: createErr?.message });
+    if (!dup) {
+      console.warn('[register] createUser failed', createErr?.message);
+      return json(409, { error: 'account_exists' });
+    }
     const orphanId = await findUserIdByEmail(synthEmail);
-    if (!orphanId) return json(409, { error: 'account_exists', detail: createErr?.message });
+    if (!orphanId) {
+      console.warn('[register] no orphan to reclaim', createErr?.message);
+      return json(409, { error: 'account_exists' });
+    }
     const { data: orphanProfile } = await admin.from('profiles').select('id').eq('id', orphanId).maybeSingle();
     if (orphanProfile) return json(409, { error: 'account_exists' }); // 有 profile = 真已注册（学号查重竞态兜底）
     const { error: pwErr } = await admin.auth.admin.updateUserById(orphanId, {
       password,
       user_metadata: { student_id: studentId },
     });
-    if (pwErr) return json(500, { error: 'unknown', detail: pwErr.message });
+    if (pwErr) {
+      console.warn('[register] updateUserById failed', pwErr.message);
+      return json(500, { error: 'unknown' });
+    }
     userId = orphanId;
     createdFresh = false;
   }
@@ -141,7 +153,7 @@ Deno.serve(async (req) => {
   });
   if (profErr) {
     if (createdFresh) await admin.auth.admin.deleteUser(userId);
-    return json(409, { error: 'student_id_taken', detail: profErr.message });
+    return json(409, { error: 'student_id_taken' });
   }
 
   // 清掉验证码

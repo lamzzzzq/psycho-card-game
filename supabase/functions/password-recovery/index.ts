@@ -169,7 +169,7 @@ async function handleVerify(studentId: string, code: string, password: string): 
   const { error: pwErr } = await admin.auth.admin.updateUserById(profile.id, { password });
   if (pwErr) {
     console.warn('[password-recovery] updateUserById failed', pwErr.message);
-    return json(500, { error: 'unknown', detail: pwErr.message });
+    return json(500, { error: 'unknown' });
   }
 
   // 用完即删（防重放）

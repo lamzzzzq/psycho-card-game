@@ -108,8 +108,11 @@ Deno.serve(async (req) => {
     const expiresAt = new Date(Date.now() + CODE_TTL_MIN * 60_000).toISOString();
     const { error: upErr } = await admin
       .from('email_verify_codes')
-      .upsert({ student_id: studentId, email, code_hash: codeHash, expires_at: expiresAt, attempts: 0 }, { onConflict: 'student_id' });
-    if (upErr) return json(500, { error: 'store_failed', detail: upErr.message });
+      .upsert({ student_id: studentId, email, code_hash: codeHash, expires_at: expiresAt, attempts: 0, purpose: 'change-email' }, { onConflict: 'student_id' });
+    if (upErr) {
+      console.warn('[change-recovery-email] store code failed', upErr.message);
+      return json(500, { error: 'store_failed' });
+    }
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -126,10 +129,13 @@ Deno.serve(async (req) => {
     if (!/^\d{6}$/.test(code)) return json(400, { error: 'invalid_code' });
     const { data: vc } = await admin
       .from('email_verify_codes')
-      .select('email, code_hash, expires_at, attempts')
+      .select('email, code_hash, expires_at, attempts, purpose')
       .eq('student_id', studentId)
       .maybeSingle();
     if (!vc) return json(400, { error: 'code_not_found' });
+    // 用途必须匹配：这张表与注册流程(send-verify-code)共用，purpose 是显式闸门，
+    // 防注册码被拿来换绑（见 0026_email_verify_codes_purpose.sql）。
+    if ((vc.purpose ?? 'register') !== 'change-email') return json(400, { error: 'code_not_found' });
     if (vc.attempts >= MAX_CODE_ATTEMPTS) return json(400, { error: 'code_locked' });
     if (new Date(vc.expires_at).getTime() < Date.now()) return json(400, { error: 'code_expired' });
     if (vc.email !== email) return json(400, { error: 'code_email_mismatch' });

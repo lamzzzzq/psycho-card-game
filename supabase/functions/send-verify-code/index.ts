@@ -110,8 +110,11 @@ Deno.serve(async (req) => {
 
   const { error: upErr } = await admin
     .from('email_verify_codes')
-    .upsert({ student_id: studentId, email, code_hash: codeHash, expires_at: expiresAt, attempts: 0 }, { onConflict: 'student_id' });
-  if (upErr) return json(500, { error: 'store_failed', detail: upErr.message });
+    .upsert({ student_id: studentId, email, code_hash: codeHash, expires_at: expiresAt, attempts: 0, purpose: 'register' }, { onConflict: 'student_id' });
+  if (upErr) {
+    console.warn('[send-verify-code] store code failed', upErr.message);
+    return json(500, { error: 'store_failed' });
+  }
 
   // 发信
   const res = await fetch('https://api.resend.com/emails', {
