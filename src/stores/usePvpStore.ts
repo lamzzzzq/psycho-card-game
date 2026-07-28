@@ -759,6 +759,10 @@ export const usePvpStore = create<PvpStore>()(
           startedAt,
           finalState: newState,
           seatMeta: buildSeatMeta(newState, players),
+          // 中斷局（endedByLeave）复用稳定 sessionId，与 persistInterruptedGame / pagehide
+          // 缓冲走同一去重键（localStorage 按 id 替换、Supabase 按 id 去重），防御性杜绝
+          // 极端时序下同一局落两行中断记录。正常胜局只触发一次、无需（缺省则 game-record mint）。
+          ...(newState.endedByLeave ? { sessionId: interruptedSessionId(startedAt) } : {}),
         });
         // Reset room status so "再來一局" can navigate back to room
         updateRoomStatus(room.id, 'waiting');

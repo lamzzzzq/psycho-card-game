@@ -143,7 +143,7 @@ export default function Home() {
               </h1>
             </div>
             <p className="max-w-xl text-base leading-7 text-[var(--psy-ink-soft)] sm:text-lg sm:leading-8 lg:max-w-none lg:whitespace-nowrap">
-              {renderCjkKeep(t.intro, ['人格測評', '心理線索', '卡牌對戰', '一起', '自己', '牌桌', '別人'], loc)}
+              {renderCjkKeep(t.intro, ['心理測評', '麻將策略', '自己', '牌桌', '別人'], loc)}
             </p>
           </div>
 
