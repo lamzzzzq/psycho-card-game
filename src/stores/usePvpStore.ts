@@ -25,7 +25,8 @@ const offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
 // Host-side claim-window auto-resolve. 抢牌窗口（碰/胡/过）要求所有有资格的
 // 玩家都响应才推进；若有人在线却发呆不点，窗口会永久卡死全桌。超时后 host 替
 // 未响应者补 skip-pong，让回合继续。一旦离开 claim-window 立即清除。
-const CLAIM_WINDOW_MS = 20 * 1000;
+// export：PVP 對局頁的判讀窗口倒計時顯示要用同一個值，避免兩處硬編碼漂移。
+export const CLAIM_WINDOW_MS = 20 * 1000;
 let claimTimer: ReturnType<typeof setTimeout> | null = null;
 function clearClaimTimer() {
   if (claimTimer) { clearTimeout(claimTimer); claimTimer = null; }
