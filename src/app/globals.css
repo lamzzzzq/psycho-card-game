@@ -427,3 +427,18 @@ a:focus-visible,
     cursor: text;
   }
 }
+
+/* 无障碍回退：用户在系统里要求高对比度时，自绘光标（米金细描边）反而更难看清，
+   且会盖掉系统的辅助光标设置 → 整套退回系统默认光标。
+   独立成块而不是并进上面的 media query：不支持 prefers-contrast 的浏览器会
+   整块忽略这里，品牌光标照常生效，不会误退。 */
+@media (prefers-contrast: more) {
+  html { cursor: auto; }
+  a, button, [role="button"], summary, label[for],
+  .psy-btn, .psy-tile,
+  input[type="checkbox"], input[type="radio"], select {
+    cursor: pointer;   /* 保住语义，只是换回系统图形 */
+  }
+  .psy-grab { cursor: grab; }
+  .psy-grab:active { cursor: grabbing; }
+}

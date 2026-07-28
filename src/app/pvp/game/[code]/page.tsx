@@ -321,7 +321,7 @@ export default function PvpGamePage() {
 
   // Recurring 60-second idle reminder. Deps narrowed to ONLY myIsCurrent —
   // any other dep (phase / actionLog / gameState) gets bumped by realtime
-  // state pushes and would prematurely reset the 30s clock. The interval
+  // state pushes and would prematurely reset the 60s clock. The interval
   // tears down naturally when myIsCurrent flips false (turn ends).
   useEffect(() => {
     if (!myIsCurrent) {
@@ -340,7 +340,7 @@ export default function PvpGamePage() {
       if (hideTimer) window.clearTimeout(hideTimer);
       setIdleReminderVisible(false);
     };
-    // shakeControls 是 useAnimationControls 的稳定引用，不会重置 30s 时钟。
+    // shakeControls 是 useAnimationControls 的稳定引用，不会重置 60s 时钟。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myIsCurrent]);
 
@@ -773,7 +773,7 @@ export default function PvpGamePage() {
         </motion.div>
       )}
 
-      {/* 30s idle reminder — 与单机一致用 psy 风 TurnNoticeToast（原 amber 与设计系统不统一） */}
+      {/* 60s idle reminder — 与单机一致用 psy 风 TurnNoticeToast（原 amber 与设计系统不统一） */}
       {idleReminderVisible && (
         <motion.div
           initial={{ opacity: 0, y: -10, scale: 0.96 }}

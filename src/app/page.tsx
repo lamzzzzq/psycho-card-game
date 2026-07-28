@@ -142,7 +142,15 @@ export default function Home() {
                 {t.title}
               </h1>
             </div>
-            <p className="max-w-xl text-base leading-7 text-[var(--psy-ink-soft)] sm:text-lg sm:leading-8 lg:max-w-none lg:whitespace-nowrap">
+            {/* lg:whitespace-nowrap 只給中文：它是配合 renderCjkKeep 讓 27 字的中文 intro
+                在大屏排成一行（約 486px，容器裝得下）。英文 intro 有 124 字符、text-lg 下
+                約 1116px，在 lg(1024px) 容器裏 nowrap 必然溢出；而英文本來就按空格斷詞、
+                renderCjkKeep 對 en 也是原樣返回，根本不需要 nowrap。 */}
+            <p
+              className={`max-w-xl text-base leading-7 text-[var(--psy-ink-soft)] sm:text-lg sm:leading-8 lg:max-w-none ${
+                loc === 'zh' ? 'lg:whitespace-nowrap' : ''
+              }`}
+            >
               {renderCjkKeep(t.intro, ['心理測評', '麻將策略', '自己', '牌桌', '別人'], loc)}
             </p>
           </div>

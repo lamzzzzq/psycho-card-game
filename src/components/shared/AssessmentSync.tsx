@@ -20,7 +20,14 @@ export function AssessmentSync() {
   const syncedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!studentId) return;
+    // 登出（studentId 变 null）必须清掉 syncedFor：AccountChip 登出时会 reset 本地
+    // 分数，而本组件挂在 root layout 不卸载、signOutUser 也不刷新页面——不清的话
+    // 同一浏览器重新登录会因 syncedFor 命中而早退，跳过下面的 restore，报告页显示
+    // 「未測評」直到手动刷新。2026-07-29。
+    if (!studentId) {
+      syncedFor.current = null;
+      return;
+    }
     const norm = normalizeStudentId(studentId);
     if (!norm) return;
     if (syncedFor.current === norm) return;
@@ -29,9 +36,12 @@ export function AssessmentSync() {
     const st = useAssessmentStore.getState();
     const owner = st.studentId ? normalizeStudentId(st.studentId) : null;
 
-    // 归属核对：本地有分数但不是当前登录用户的（或归属不明）→ 清掉，防串号看到别人的报告。
+    // 归属核对：本地有分数【或半截答案】但不是当前登录用户的（或归属不明）→ 清掉。
+    // 不只看 bigFiveScores：上一个用户只答了一半(有 answers 无 scores)时也必须清，
+    // 否则新用户会在 /assessment 看到别人预填的答案，并把两人答案混着存到新学号名下。
     // 正在重测(retaking)也照清——换了人，旧半截重测无意义。
-    if (st.bigFiveScores && owner !== norm) {
+    const hasLocalData = st.bigFiveScores !== null || Object.keys(st.answers).length > 0;
+    if (hasLocalData && owner !== norm) {
       st.reset();
     }
     // 认领为当前用户（reset 不清 studentId，这里显式写正确归属）

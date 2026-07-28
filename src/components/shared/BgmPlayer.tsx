@@ -16,13 +16,34 @@ export function BgmPlayer() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (enabled) {
-      el.volume = 0.35;
-      // autoplay 政策：靠用户点击开关触发时可播；rehydrate 自动恢复播放被拦时静默失败。
-      void el.play().catch(() => {});
-    } else {
+    if (!enabled) {
       el.pause();
+      return;
     }
+    el.volume = 0.35;
+
+    let disposed = false;
+    const resume = () => {
+      if (disposed) return;
+      window.removeEventListener('pointerdown', resume);
+      window.removeEventListener('keydown', resume);
+      void el.play().catch(() => {});
+    };
+
+    // 用户点开关触发时可以直接播。但开关是持久化的：下次打开网站 enabled 已是 true，
+    // 此时没有任何用户手势 → autoplay 政策必然拦截。原来 catch 里静默吞掉，结果是
+    // 「开关显示开、却没有声音」。改为挂一次性交互监听，用户第一次点/按键时补播。
+    void el.play().catch(() => {
+      if (disposed) return;
+      window.addEventListener('pointerdown', resume, { once: true });
+      window.addEventListener('keydown', resume, { once: true });
+    });
+
+    return () => {
+      disposed = true;
+      window.removeEventListener('pointerdown', resume);
+      window.removeEventListener('keydown', resume);
+    };
   }, [enabled]);
 
   return <audio ref={ref} src={BGM_SRC} loop preload="none" />;

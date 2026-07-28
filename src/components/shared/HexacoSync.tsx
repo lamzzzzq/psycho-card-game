@@ -18,7 +18,12 @@ export function HexacoSync() {
   const syncedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!studentId) return;
+    // 登出（studentId 变 null）必须清掉 syncedFor，否则同一浏览器重新登录会早退、
+    // 跳过下面的 restore（AccountChip 登出已 reset 本地分数）。同 AssessmentSync。
+    if (!studentId) {
+      syncedFor.current = null;
+      return;
+    }
     const norm = normalizeStudentId(studentId);
     if (!norm) return;
     if (syncedFor.current === norm) return;

@@ -5,11 +5,13 @@
 // 自包含（不需玩家数据），中英双语内联。2026-07-24。
 // 后续可改为「只出这局出现过的知识卡」——需从对局状态把 seen dummy 卡传进来。
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { KNOWLEDGE_CARDS, type KnowledgeCard } from '@/data/dummy-cards';
 import type { Locale } from '@/lib/i18n';
 
 const QUESTION_COUNT = 4;
+
+type Question = { card: KnowledgeCard; options: KnowledgeCard[] };
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -20,28 +22,39 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+// 抽题：全卡池随机 4 张，每题配 3 个干扰项。
+// ⚠️ 不要放进 useMemo——React 不保证 memo 缓存不被丢弃，一旦重算就会在答题途中
+// 换成一整套新题目，而 idx / score 还停在旧进度上。改为点「开始」时算一次存 state。
+function buildQuestions(): Question[] {
+  const pool = shuffle(KNOWLEDGE_CARDS);
+  return pool.slice(0, QUESTION_COUNT).map((card) => {
+    const distractors = shuffle(pool.filter((c) => c !== card)).slice(0, 3);
+    return { card, options: shuffle([card, ...distractors]) };
+  });
+}
+
 export function KnowledgeQuiz({ locale }: { locale: Locale }) {
   const en = locale === 'en';
   const [started, setStarted] = useState(false);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [idx, setIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
 
-  const questions = useMemo(() => {
-    if (!started) return [];
-    const pool = shuffle(KNOWLEDGE_CARDS);
-    return pool.slice(0, QUESTION_COUNT).map((card) => {
-      const distractors = shuffle(pool.filter((c) => c !== card)).slice(0, 3);
-      return { card, options: shuffle([card, ...distractors]) };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [started]);
-
   const term = (c: KnowledgeCard) => (en ? c.term : c.termZh);
   const def = (c: KnowledgeCard) => (en ? c.definition : c.definitionZh);
 
+  const start = () => {
+    setQuestions(buildQuestions());
+    setIdx(0);
+    setScore(0);
+    setPicked(null);
+    setStarted(true);
+  };
+
   const reset = () => {
     setStarted(false);
+    setQuestions([]);
     setIdx(0);
     setScore(0);
     setPicked(null);
@@ -80,7 +93,7 @@ export function KnowledgeQuiz({ locale }: { locale: Locale }) {
         </div>
 
         <button
-          onClick={() => setStarted(true)}
+          onClick={start}
           className="psy-btn psy-btn-accent psy-serif relative mt-4 inline-flex items-center gap-2 px-7 py-3 text-sm font-semibold shadow-[0_10px_22px_rgba(154,116,72,0.32)]"
         >
           <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden>
@@ -149,9 +162,18 @@ export function KnowledgeQuiz({ locale }: { locale: Locale }) {
 
   return (
     <div className="space-y-4 rounded-[1.35rem] border border-[rgba(200,155,93,0.24)] bg-[var(--psy-card-content)] p-5 shadow-[0_16px_30px_rgba(96,72,38,0.1)]">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <span className="psy-eyebrow text-[10px]">{en ? 'Knowledge Quiz' : '概念小測'}</span>
-        <span className="text-xs tabular-nums text-[var(--psy-muted)]">{idx + 1} / {questions.length}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs tabular-nums text-[var(--psy-muted)]">{idx + 1} / {questions.length}</span>
+          {/* 退出口：没有它的话，误点「立即測試」就被困在答题态，只能答完 4 题或离开页面。 */}
+          <button
+            onClick={reset}
+            className="rounded-lg px-2 py-1 text-xs text-[var(--psy-muted)] transition hover:bg-[var(--psy-surface-strong)] hover:text-[var(--psy-ink)]"
+          >
+            {en ? 'Exit' : '離開'}
+          </button>
+        </div>
       </div>
 
       <div>

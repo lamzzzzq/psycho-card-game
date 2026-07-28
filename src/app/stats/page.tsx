@@ -133,9 +133,13 @@ export default function StatsPage() {
     );
   }, [rows]);
 
+  // 中斷局判定唯一標準：pvp 局且 winner_player_id 為 null。
+  // 必須帶上 mode==='pvp'：單機存檔的 winner 是 'human'|'ai-N' 不是 UUID，
+  // game-record 一律寫 null（見該檔 winner_player_id 三元），不加這個條件的話
+  // 任何單機行都會被誤標「中斷」。現網 mode='single' 為 0 行，這是防未來。
   function rowToCsv(r: ParticipantRow): string {
     const meta = r.game_sessions;
-    const interrupted = meta ? meta.winner_player_id == null : false;
+    const interrupted = meta ? meta.mode === 'pvp' && meta.winner_player_id == null : false;
     return [
       r.student_id ?? (r.is_ai ? 'AI' : ''),
       meta?.room_code ?? '',
@@ -267,7 +271,7 @@ export default function StatsPage() {
               ) : (
                 bySession.map((parts) => {
                   const meta = parts[0].game_sessions;
-                  const interrupted = meta ? meta.winner_player_id == null : false;
+                  const interrupted = meta ? meta.mode === 'pvp' && meta.winner_player_id == null : false;
                   const ranked = [...parts].sort((a, b) => a.rank - b.rank);
                   return (
                     <div key={parts[0].session_id} className="space-y-3 rounded-[1.4rem] border border-[rgba(200,155,93,0.16)] bg-[rgba(255,255,255,0.02)] p-4">
