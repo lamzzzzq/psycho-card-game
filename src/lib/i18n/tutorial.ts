@@ -114,16 +114,16 @@ export const TUTORIAL_T = {
         hint: '策略提示：抽到就打掉，安全不穿幫；還能順便觀察對手打出知識牌的時機，試探他們的出牌風格！',
       },
       {
-        title: '🔄 遊戲基本輪迴：摸牌 ➔ 出牌',
-        body: '❶ 摸牌（抽牌）\n輪到你時，先從牌堆摸 1 張牌。此時你可以查看手牌、選擇歸檔（碰）或準備出牌。\n🔍 核心機制：你能看多少張手牌？依房主設定的「看牌難度」而定：\n・明牌（預設）：全場公開！自己手牌 + 所有棄牌都直接顯示人格標籤，免查看。\n・半公開：每回合可看 4 張手牌（看過就永久顯示）；棄牌不顯示。\n・隱藏：每回合只能看 2 張，一輪後自動重置（蓋回去）；棄牌不顯示。\n❷ 出牌\n從手牌選 1 張不需要的牌丟到中間的「棄牌堆」。這張牌會進入幾秒鐘的「心理判讀窗口」，這時其他玩家可以決定要不要搶這張牌來「碰」或「食胡」。',
+        title: '🔄 每回合運作：摸牌 ➔ 出牌',
+        body: '❶ 摸牌（抽牌）\n輪到你時，先抽 1 張牌。你可以查看手牌、選擇歸檔（碰）或準備出牌。\n🔍「看牌難度」決定你能看多少張手牌：\n・明牌（預設）：所有牌都直接顯示人格標籤。\n・半公開：每回合可查看 4 張手牌的人格標籤。\n・隱藏：每回合只能查看 2 張，標籤在下一輪便會消失。\n❷ 出牌\n從手裏選 1 張牌丟到中間的「棄牌堆」。其他玩家可以搶這張牌來「碰」或「食胡」。',
       },
       {
         title: '⚡ 兩大核心動作：碰 與 食胡',
-        body: '🀄 碰（公開歸檔）\n當某一維度的牌湊齊了你的目標張數，你就可以宣告「碰」來鎖定（歸檔）該維度。\n・自摸碰：在自己的回合，從「手牌 + 剛摸的牌」中，挑出符合目標張數的同維度牌歸檔。（每回合限 1 次）\n・截胡碰（搶牌）：在別人的「心理判讀窗口」內，如果你手牌的同維度張數「只差 1 張」就達標，可以立即點擊搶走那張棄牌，湊齊歸檔！（先搶先得）\n⚠️ 系統不會提示你哪個維度夠了！5 個維度按鈕都會亮起，你必須自己算對張數與維度。一旦選錯、放錯牌，就會被「罰停」！\n🏆 食胡（宣告勝利）\n當你已歸檔的維度 + 手牌 + 當下判定牌，剛好完美達成了 5 個維度的所有目標張數：\n・自摸食胡：自己回合摸到最後一張關鍵牌。\n・截胡食胡：別人丟出你需要的最後一張牌，直接攔截！\n⚠️ 沒算好就喊食胡？判定失敗的話，會遭受嚴厲的罰停懲罰！',
+        body: '🀄 碰（公開歸檔）\n當湊齊某一維度的目標張數，你可以「碰」來鎖定（歸檔）該維度。\n・自摸碰：在自己的回合，從「手牌 + 剛摸的牌」中，挑出符合維度目標張數的牌。（每回合限 1 次）\n・截胡碰：在別人棄牌的指定時間內，如果你手牌只差 1 張就達維度目標張數，你可以立即點擊搶走那張棄牌，湊齊歸檔！（先搶先得）\n⚠️ 系統不會向你提示！你必須自己計算哪維度可達到目標張數。一旦選錯、放錯牌，就會被「罰停」一回合！\n🏆 食胡（宣告勝利）\n當你已歸檔 5 個維度的所有目標張數：\n・自摸食胡：自己回合摸到最後一張關鍵牌。\n・截胡食胡：別人丟出你需要的最後一張牌，直接截胡！\n⚠️ 沒算好就喊食胡？判定失敗的話，會遭受嚴厲的懲罰！',
       },
       {
         title: '🚫 懲罰機制：罰停',
-        body: '如果你「碰失敗 / 自摸碰失敗 / 食胡失敗」，會受到以下懲罰：\n・罰停一回合：下次輪到你時自動被跳過（不抽牌、不出牌）。\n・強制亮牌：碰失敗的牌（或食胡失敗時的「整副手牌」）必須立即公開給全場看。\n・失去參與權：罰停期間，你不能參與別人的棄牌判定（無法碰牌、無法食胡）。\n・社死標記：你的頭像會掛上大大的「⛔ 罰停中」標誌。',
+        body: '如果「碰失敗 / 自摸碰失敗 / 食胡失敗」，你會被罰停一回合：\n・輪到你時自動被跳過（不得抽牌或出牌）。\n・不能參與別人的棄牌判定（無法碰牌、無法食胡）。\n・社死標記：你的頭像會掛上大大的「⛔ 罰停中」標誌。\n・碰失敗的牌、或食胡失敗時的「整副手牌」，將立即公開給全場看。',
         hint: '提示：一次失誤等於送對手一回合，動手前請務必看清楚、算明白！',
       },
       {
@@ -236,7 +236,7 @@ export const TUTORIAL_T = {
     fbViewTwo: '本回合查看了 2 張牌：一張盡責性，一張神經質。隱藏模式看過的牌下一輪會重置、不保留；真實牌局裏只會揭開你選的 2 張。',
     fbViewStart: '點選下方高亮的 2 張牌，揭開它們的真實維度。',
     fbViewPicked: '已揭開一張。再點另一張高亮的牌。',
-    fbViewDone: '兩張都看過了。隱藏模式每回合只能看 2 張，且下一輪隨即重置、不作保留；半公開模式則是每回合看 4 張、看過可保留。',
+    fbViewDone: '隱藏模式每回合只能看 2 張，且下一輪隨即重置、不作保留；半公開模式則是每回合看 4 張、看過可保留。',
     fbFinishView: '你知道剛抽到的牌能補齊一組。現在演示自摸碰。',
     fbOpenPong: '自摸碰要先選定一個人格維度。提示：手牌裏有 4 張「神經質」，選它。',
     fbChooseDim: (name: string, cnt: number) => `已選擇「${name}」。現在從手牌精確選擇 ${cnt} 張「${name}」的牌。`,
@@ -415,16 +415,16 @@ export const TUTORIAL_T = {
         hint: 'Strategy tip: discard knowledge cards as soon as you draw them to stay safe without giving away your hand strategy. You can also watch when your opponents discard their knowledge cards to read their playing style!',
       },
       {
-        title: '🔄 The Basic Loop: Draw ➔ Discard',
-        body: '❶ Draw\nOn your turn, first draw 1 card from the deck. Now you can view your hand, choose to file your cards, or get ready to discard.\n🔍 Core mechanic: how many cards in your hand can you see? It depends on the host\'s chosen "Reveal Difficulty":\n・Open (Default): fully public! Your hand and all discarded cards show their dimension tags directly — no viewing required.\n・Semi-Open: view up to 4 cards in your hand each turn (once viewed, they remain permanently revealed); discards do not show tags.\n・Hidden: view only 2 cards each turn, which automatically reset (turn back over) after a round; discards do not show tags.\n❷ Discard\nPick 1 unwanted card from your hand and play it into the central "discard". This discard opens a brief, few-second "psychological read window", during which other players can decide whether to seize it for an "Intercept Pong" or a final "Win".',
+        title: '🔄 Each Turn: Draw ➔ Discard',
+        body: '❶ Draw\nOn your turn, draw 1 card. You can then view your hand, choose to file (Pong), or get ready to discard.\n🔍 "Reveal Difficulty" decides how many hand cards you can see:\n・Open (Default): every card shows its dimension tag directly.\n・Semi-Open: view the dimension tags of 4 hand cards each turn.\n・Hidden: view only 2 cards each turn, and the tags disappear next round.\n❷ Discard\nPick 1 card from your hand and play it into the central "discard". Other players can seize it for a "Pong" or a "Win".',
       },
       {
         title: '⚡ Two Core Actions: Pong & Win',
-        body: '🀄 Pong (public file)\nWhen a dimension\'s cards reach your target count, you can declare "Pong" to lock (file) that dimension.\n・Self-draw Pong: on your own turn, use the cards from your "hand + the just-drawn card" to select the matching-dimension cards that meet your target count, then file them. (Limited to once per turn)\n・Intercept Pong (grab): within another player\'s "read window", if your card count for a specific dimension is "just 1 short" of its target, you can instantly seize that discard to complete your file! (First-come, first-served)\n⚠️ The system will not tell you which dimension is ready! All 5 dimension buttons will light up; you must count the cards and verify the dimensions yourself. Select or place them incorrectly, and you will be "Frozen"!\n🏆 Win (declare victory)\nWhen your filed dimensions + your current hand + the current judged card perfectly complete the target counts for all 5 dimensions:\n・Self-draw Win: you draw the final key card on your own turn.\n・Intercept Win: an opponent discards the exact final card you need — intercept it directly to claim victory!\n⚠️ Declaring a Win without counting correctly? A failed judgment carries a harsh "Frozen" penalty!',
+        body: '🀄 Pong (public file)\nWhen you reach a dimension\'s target count, you can "Pong" to lock (file) that dimension.\n・Self-draw Pong: on your own turn, pick cards from your "hand + the just-drawn card" that meet the dimension\'s target count. (Once per turn)\n・Intercept Pong: within the time window after someone discards, if your hand is just 1 card short of a dimension\'s target count, you can instantly grab that discard to complete your file! (First-come, first-served)\n⚠️ The system won\'t prompt you! You must work out yourself which dimension can reach its target count. Choose wrong or misplace a card, and you\'ll be "Frozen" for one turn!\n🏆 Win (declare victory)\nWhen you have filed the target counts for all 5 dimensions:\n・Self-draw Win: you draw the final key card on your own turn.\n・Intercept Win: an opponent discards the exact final card you need — intercept it directly!\n⚠️ Call a Win without counting correctly? A failed judgment brings a harsh penalty!',
       },
       {
         title: '🚫 Penalty: Frozen',
-        body: 'If you fail a "Self-draw Pong", "Intercept Pong", or a "Win" declaration, you will receive the following penalties:\n・Frozen for one turn: your next turn is automatically skipped (no drawing, no discarding).\n・Forced reveal: the cards involved in the failed Pong (or your "entire hand" if you failed a Win) must be immediately revealed to all players.\n・Locked out: while frozen, you cannot participate in anyone else\'s "read window" (meaning you cannot Intercept Pong or declare a Win).\n・Public shame badge: a massive "⛔ Frozen" indicator will be slapped onto your avatar.',
+        body: 'If you fail a "Pong / Self-draw Pong / Win", you\'ll be Frozen for one turn:\n・Your next turn is automatically skipped (no drawing or discarding).\n・You can\'t join others\' discard windows (no Pong, no Win).\n・Public shame badge: a big "⛔ Frozen" indicator is slapped onto your avatar.\n・The failed Pong cards, or your "entire hand" if you failed a Win, are immediately revealed to everyone.',
         hint: 'Tip: one slip hands your opponent a turn — look carefully and count clearly before you act!',
       },
       {
@@ -537,7 +537,7 @@ export const TUTORIAL_T = {
     fbViewTwo: 'This turn you viewed 2 cards: one Conscientiousness, one Neuroticism. In Hidden mode viewed cards reset next round — not kept; in a real game only the 2 you pick are revealed.',
     fbViewStart: 'Tap the 2 highlighted cards below to reveal their true dimensions.',
     fbViewPicked: 'One revealed. Now tap the other highlighted card.',
-    fbViewDone: 'Both viewed. In Hidden mode you see only 2 per turn and they reset next round (not kept); in Semi-Open mode you\'d view 4 per turn and they stay revealed for good.',
+    fbViewDone: 'In Hidden mode you see only 2 per turn and they reset next round (not kept); in Semi-Open mode you\'d view 4 per turn and they stay revealed for good.',
     fbFinishView: 'You know the just-drawn card can complete a set. Now, a demo of Self-draw Pong.',
     fbOpenPong: 'A Self-draw Pong requires you to select a personality dimension first. Hint: your hand has 4 "Neuroticism" cards — choose it.',
     fbChooseDim: (name: string, cnt: number) => `Chose "${name}". Now select exactly ${cnt} "${name}" cards from your hand.`,
