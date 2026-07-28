@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useRouter } from 'next/navigation';
 import { usePlayerStore } from '@/stores/usePlayerStore';
-import { usePvpStore, CLAIM_WINDOW_MS } from '@/stores/usePvpStore';
+import { usePvpStore } from '@/stores/usePvpStore';
 import { SerializedPlayer, PvpAction } from '@/types/pvp';
 import { GameCard, GameAction, Player, PlayerId, DeclaredSet, Dimension, DIMENSIONS, isPersonalityCard } from '@/types';
 import {
@@ -40,9 +40,6 @@ import { GameOverModal } from '@/components/game-results/GameOverModal';
 import { TarotCard } from '@/components/game/TarotCard';
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
-
-// 判讀窗口秒數：由 host 側的 CLAIM_WINDOW_MS 換算，兩邊永遠同一個值。
-const CLAIM_WINDOW_SEC = Math.round(CLAIM_WINDOW_MS / 1000);
 
 // Convert SerializedPlayer → Player (for reusing single-player components)
 function toPlayer(sp: SerializedPlayer, overrideHand?: GameCard[]): Player {
@@ -113,8 +110,6 @@ export default function PvpGamePage() {
   const [idleReminderVisible, setIdleReminderVisible] = useState(false);
   // 搶牌窗口提交鎖 + 「本輪已被搶」提示
   const [claimSubmitted, setClaimSubmitted] = useState(false);
-  // 判讀窗口剩餘秒數（純顯示，超時判定在 host）
-  const [claimCountdown, setClaimCountdown] = useState(CLAIM_WINDOW_SEC);
   const [stolenToast, setStolenToast] = useState(false);
   const pongAttemptRef = useRef(false);   // 我本輪是否點過「碰」
   const prevPhaseRef = useRef<string | null>(null);
@@ -269,25 +264,6 @@ export default function PvpGamePage() {
   useEffect(() => {
     if (gameState?.phase !== 'claim-window') setSelectedCardIds([]);
   }, [gameState?.phase]);
-
-  // 判讀窗口倒計時顯示。host 側 armClaimTimer 到點會替所有未響應者補 skip-pong
-  // （見 usePvpStore CLAIM_WINDOW_MS），但玩家原本看不到「還剩多久」——決定碰不碰
-  // 時這是關鍵資訊。這裏純顯示，不驅動任何行為：真正的超時判定始終在 host。
-  // claimKey 標識「哪一次窗口」（弃牌者 + 那張牌），換窗口即重新計時；
-  // client 從收到 state 起算，與 host 有一個網絡延遲的誤差（幾百 ms），可接受。
-  const claimKey =
-    gameState?.phase === 'claim-window' && gameState.pendingDiscard
-      ? `${gameState.discardedByIndex}:${gameState.pendingDiscard.id}`
-      : null;
-  useEffect(() => {
-    if (!claimKey) return;
-    setClaimCountdown(CLAIM_WINDOW_SEC);
-    const timer = setInterval(
-      () => setClaimCountdown((c) => (c > 0 ? c - 1 : 0)),
-      1000
-    );
-    return () => clearInterval(timer);
-  }, [claimKey]);
 
   // 搶牌窗口的提交鎖 + 「本輪已被搶」提示。
   // - 離開 claim-window：解鎖，準備下一個窗口。
@@ -992,19 +968,7 @@ export default function PvpGamePage() {
                 <h3 className="psy-serif min-w-0 text-sm font-medium text-[var(--psy-accent)]">
                   <span className="max-w-[8ch] truncate align-bottom inline-block">{gameState.players[gameState.discardedByIndex]?.name}</span> {t.discardedACard}
                 </h3>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span className="text-[10px] text-[var(--psy-muted)]">{t.firstComeFirst}</span>
-                  {/* 剩餘秒數：最後 5 秒轉紅+脈衝催促。純顯示，超時由 host 判。 */}
-                  <span
-                    className={`font-mono text-sm font-semibold tabular-nums ${
-                      claimCountdown <= 5
-                        ? 'animate-pulse text-[var(--psy-danger)]'
-                        : 'text-[var(--psy-accent)]'
-                    }`}
-                  >
-                    {claimCountdown}s
-                  </span>
-                </div>
+                <span className="shrink-0 text-[10px] text-[var(--psy-muted)]">{t.firstComeFirst}</span>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex flex-col items-center gap-1">
