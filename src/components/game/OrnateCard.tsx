@@ -7,6 +7,7 @@
 import { useState, useId } from 'react';
 import { Dimension } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
+import { getStatementTextLayout } from './cardTextLayout';
 
 const GOLD = '#9a7448';
 const GOLD_SOFT = '#b9904f';
@@ -66,6 +67,7 @@ export function OrnateCard({
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
   // 定义/句子去掉尾部句号（。太占位、单独换行更浪费）。
   const def = (description ?? '').replace(/[。．.\s]+$/, '');
+  const statementLayout = getStatementTextLayout(label, locale);
 
   // 知识牌字号自适应：术语按「最长单词」缩放（用当前语言的术语算），保证整词放得下、绝不从词中间断。
   const longestWord = Math.max(1, ...label.split(/[\s-]+/).filter(Boolean).map((w) => w.length));
@@ -221,14 +223,15 @@ export function OrnateCard({
         )}
 
         {/* 底框文字（下半）：人格陈述 / 知识定义；swapKnowledge 时知识牌改放术语标题 */}
-        <div className="psy-sans absolute flex items-center justify-center text-center" style={{ left: '9%', right: '9%', top: '64.5%', height: '30%' }}>
+        <div data-card-text-panel className="psy-sans absolute flex items-center justify-center text-center" style={{ left: '9%', right: '9%', top: '64.5%', height: '30%' }}>
           <p
+            data-card-statement={!isKnowledge ? 'true' : undefined}
             className={isKnowledge && !swapKnowledge ? '' : 'font-semibold leading-snug'}
             style={{
               color: isKnowledge && !swapKnowledge ? 'var(--psy-ink-soft)' : 'var(--psy-ink)',
-              fontSize: isKnowledge ? `${swapKnowledge ? termFont : defFont}cqw` : (locale === 'en' ? '9.5cqw' : '10.5cqw'),
-              lineHeight: isKnowledge && !swapKnowledge ? 1.32 : 1.25,
-              display: '-webkit-box', WebkitLineClamp: isKnowledge ? (swapKnowledge ? 4 : defClamp) : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              fontSize: isKnowledge ? `${swapKnowledge ? termFont : defFont}cqw` : statementLayout.fontSize,
+              lineHeight: isKnowledge && !swapKnowledge ? 1.32 : statementLayout.lineHeight,
+              overflowWrap: 'anywhere',
             }}
           >
             {isKnowledge ? (swapKnowledge ? renderLabel(label, locale) : renderLabel(def, locale)) : renderLabel(label, locale)}

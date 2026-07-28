@@ -65,8 +65,7 @@ export function KnowledgeQuiz({ locale }: { locale: Locale }) {
           </svg>
         </div>
 
-        <p className="psy-eyebrow relative text-[10px]">{en ? 'Pop Quiz' : '隨堂小測'}</p>
-        <p className="psy-serif relative mt-1.5 text-xl text-[var(--psy-ink)]">
+        <p className="psy-serif relative text-xl text-[var(--psy-ink)]">
           {en ? 'Post-Game Psychology Review' : '本局心理學知識複習'}
         </p>
         <p className="relative mx-auto mt-2 max-w-md text-xs leading-5 text-[var(--psy-ink-soft)]">
