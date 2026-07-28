@@ -25,15 +25,14 @@ describe('markPlayerLeft', () => {
     expect(twice).toBe(once);
   });
 
-  it('ends the game as an interrupted match (no winner) when only one player remains', () => {
+  it('awards the win to the last player standing when only one player remains', () => {
     const state = makeGameState();
     let next = markPlayerLeft(state, 'ai-1');
     next = markPlayerLeft(next, 'ai-2');
     next = markPlayerLeft(next, 'ai-3');
     expect(next.phase).toBe('game-over');
-    // 只剩 1 人（房主）不算「贏」——對局被退空弄崩，記為中斷局。
-    expect(next.winner).toBeNull();
-    expect(next.endedByLeave).toBe(true);
+    // 只剩 1 人 → 該玩家直接躺贏（與 /rules、教學文案一致）。
+    expect(next.winner).toBe('human');
   });
 
   it('current-player-leaves mid-discard advances the turn cleanly', () => {

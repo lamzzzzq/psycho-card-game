@@ -63,7 +63,7 @@ export type RealtimeMessage =
   | { type: 'game-start'; gameState: SerializedGameState; toPlayerId?: string }
   | { type: 'game-state-update'; gameState: SerializedGameState; toPlayerId?: string }
   | { type: 'action-request'; fromPlayerId: string; action: PvpAction }
-  | { type: 'game-over'; winnerId: string | null }
+  | { type: 'game-over'; winnerId: string }
   | { type: 'big-five-updated'; playerId: string; bigFive: BigFiveScores }
   | { type: 'state-request'; fromPlayerId: string };
 
@@ -91,7 +91,6 @@ export interface SerializedGameState {
   discardedByIndex: number;
   claimResponses: string[];
   winner: string | null;
-  endedByLeave?: boolean; // 中斷局：其他人全退光只剩房主，winner=null、不判勝負
   totalRounds: number;
   revealDifficulty?: RevealDifficulty; // 看牌難度，廣播給所有客戶端一致渲染 tag
 }

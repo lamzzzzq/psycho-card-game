@@ -731,13 +731,8 @@ export const usePvpStore = create<PvpStore>()(
       clearClaimTimer();
     }
 
-    // 對局結束存檔：正常分勝負（winner 非 null）或中斷局（endedByLeave：其他人
-    // 全退光只剩房主）。中斷局 winner=null → game-record 寫 winner_player_id=null。
-    const wasAlreadyOver =
-      wasAlreadyWinner || !!(rawState as { endedByLeave?: boolean }).endedByLeave;
-    const isOverNow = !!newState.winner || !!newState.endedByLeave;
-    if (isOverNow && !wasAlreadyOver) {
-      const winnerId = newState.winner; // 中斷局為 null
+    if (newState.winner && !wasAlreadyWinner) {
+      const winnerId = newState.winner;
       get().sendMessage({ type: 'game-over', winnerId });
       if (room) {
         // New schema: game_sessions + game_participants + big_five_snapshots.
@@ -759,10 +754,6 @@ export const usePvpStore = create<PvpStore>()(
           startedAt,
           finalState: newState,
           seatMeta: buildSeatMeta(newState, players),
-          // 中斷局（endedByLeave）复用稳定 sessionId，与 persistInterruptedGame / pagehide
-          // 缓冲走同一去重键（localStorage 按 id 替换、Supabase 按 id 去重），防御性杜绝
-          // 极端时序下同一局落两行中断记录。正常胜局只触发一次、无需（缺省则 game-record mint）。
-          ...(newState.endedByLeave ? { sessionId: interruptedSessionId(startedAt) } : {}),
         });
         // Reset room status so "再來一局" can navigate back to room
         updateRoomStatus(room.id, 'waiting');
