@@ -42,7 +42,6 @@ interface StudentAgg {
   wins: number;
   avgScore: string;
   avgDeclared: string;
-  bestRank: number;
 }
 
 // 注意：分数列（O/C/E/A/N）已移出公开 CSV（隐私）。分数在 big_five_snapshots（已锁表），
@@ -98,15 +97,14 @@ export default function StatsPage() {
   const sessionCount = useMemo(() => new Set(rows.map((r) => r.session_id)).size, [rows]);
 
   const summary: StudentAgg[] = useMemo(() => {
-    const map = new Map<string, { games: number; wins: number; scoreSum: number; declSum: number; bestRank: number }>();
+    const map = new Map<string, { games: number; wins: number; scoreSum: number; declSum: number }>();
     for (const r of humanRows) {
       const sid = r.student_id as string;
-      const e = map.get(sid) ?? { games: 0, wins: 0, scoreSum: 0, declSum: 0, bestRank: 99 };
+      const e = map.get(sid) ?? { games: 0, wins: 0, scoreSum: 0, declSum: 0 };
       e.games++;
       if (r.is_winner) e.wins++;
       e.scoreSum += r.final_score;
       e.declSum += r.declared_count;
-      e.bestRank = Math.min(e.bestRank, r.rank);
       map.set(sid, e);
     }
     return Array.from(map.entries())
@@ -116,7 +114,6 @@ export default function StatsPage() {
         wins: e.wins,
         avgScore: (e.scoreSum / e.games).toFixed(1),
         avgDeclared: (e.declSum / e.games).toFixed(1),
-        bestRank: e.bestRank,
       }))
       .sort((a, b) => b.games - a.games || b.wins - a.wins);
   }, [humanRows]);
@@ -239,17 +236,16 @@ export default function StatsPage() {
               </div>
             ) : (
               <div className="overflow-hidden rounded-[1.4rem] border border-[rgba(200,155,93,0.18)]">
-                <div className="psy-eyebrow grid grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr_0.8fr] gap-px border-b border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.05)] px-3 py-3 text-[10px] sm:px-5">
+                <div className="psy-eyebrow grid grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr] gap-px border-b border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.05)] px-3 py-3 text-[10px] sm:px-5">
                   <div>{s.colStudentId}</div>
                   <div className="text-center">{s.colGames}</div>
                   <div className="text-center">{s.colWins}</div>
                   <div className="text-center">{s.colAvgDeclared}</div>
-                  <div className="text-center">{s.colBestRank}</div>
                 </div>
                 {summary.map((agg, i) => (
                   <div
                     key={agg.studentId}
-                    className="grid grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr_0.8fr] items-center gap-px border-t border-[rgba(200,155,93,0.08)] px-3 py-3 text-sm transition hover:bg-[rgba(200,155,93,0.04)] sm:px-5"
+                    className="grid grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr] items-center gap-px border-t border-[rgba(200,155,93,0.08)] px-3 py-3 text-sm transition hover:bg-[rgba(200,155,93,0.04)] sm:px-5"
                     style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}
                   >
                     <div className="font-mono text-[var(--psy-ink)] tabular-nums">{agg.studentId}</div>
@@ -258,7 +254,6 @@ export default function StatsPage() {
                       <span className={agg.wins > 0 ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-muted)]'}>{agg.wins}</span>
                     </div>
                     <div className="text-center font-mono text-[var(--psy-ink-soft)] tabular-nums">{agg.avgDeclared}</div>
-                    <div className="text-center font-mono text-[var(--psy-ink-soft)] tabular-nums">#{agg.bestRank}</div>
                   </div>
                 ))}
               </div>

@@ -247,6 +247,13 @@ async function saveInner(input: SaveGameSessionInput): Promise<string | null> {
 
     const sessionId = input.sessionId!;
 
+    // rounds_played：打滿圈數自然結束時，currentRound 會多跳 1（= totalRounds+1）
+    // 來觸發 game-over，直接存會讓「5 輪玩法顯示 6 輪」。存檔前夾到 totalRounds。
+    // 無限局（totalRounds=0）保持 currentRound 原值。有人中途胡則 currentRound < 上限，不受影響。
+    const totalRounds = input.finalState.settings.totalRounds;
+    const roundsPlayed =
+      totalRounds > 0 ? Math.min(input.finalState.currentRound, totalRounds) : input.finalState.currentRound;
+
     // 1) 先建 session（去重闸门）：用客户端生成的稳定 id。若 23505（慢速成功后的
     //    重传），说明本局已写过 → 直接返回，跳过快照/参与者，避免整套重复行。
     const { error: sErr } = await supabase
@@ -258,8 +265,8 @@ async function saveInner(input: SaveGameSessionInput): Promise<string | null> {
         room_code: input.roomCode ?? null,
         started_at: new Date(input.startedAt).toISOString(),
         ended_at: new Date().toISOString(),
-        total_rounds: input.finalState.settings.totalRounds,
-        rounds_played: input.finalState.currentRound,
+        total_rounds: totalRounds,
+        rounds_played: roundsPlayed,
         winner_player_id:
           input.mode === 'pvp' && winnerId
             ? (winnerId as unknown as string)
