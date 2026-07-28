@@ -5,7 +5,6 @@ import { Dimension } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 import { OrnateCard } from './OrnateCard';
 import { ORNATE_FRAME } from './cardStyle';
-import { getStatementTextLayout } from './cardTextLayout';
 
 interface TarotCardProps {
   text: string;
@@ -86,7 +85,6 @@ export function TarotCard({
   // 术语/题面按 locale 取（en → textEn 英文术语）。
   const label = (locale === 'en' ? (textEn ?? text) : text).replace(/[。．.\s]+$/, '');
   const def = (description ?? '').replace(/[。．.\s]+$/, '');
-  const statementLayout = getStatementTextLayout(label, locale);
   // 术语按「最长单词」缩放（用当前语言的术语算）；定义按总长缩放，最长也不裁切。
   const longestWord = Math.max(1, ...label.split(/[\s-]+/).filter(Boolean).map((w) => w.length));
   const termFont = Math.max(7.5, Math.min(13, 118 / longestWord));
@@ -205,18 +203,18 @@ export function TarotCard({
 
           {/* 文字面板：占图窗以外的剩余高度 */}
           <div
-            data-card-text-panel
             className="flex min-h-0 flex-1 items-center justify-center text-center"
             style={{ padding: '0 3cqw' }}
           >
             <p
-              data-card-statement={!isKnowledge ? 'true' : undefined}
               className="psy-sans font-semibold leading-snug"
               style={{
                 color: isDummy ? 'var(--psy-muted)' : 'var(--psy-ink)',
-                fontSize: statementLayout.fontSize,
-                lineHeight: statementLayout.lineHeight,
-                overflowWrap: 'anywhere',
+                fontSize: locale === 'en' ? '9.5cqw' : '10.5cqw',
+                display: '-webkit-box',
+                WebkitLineClamp: 4,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
               }}
             >
               {renderLabel(label, locale)}
