@@ -68,7 +68,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '進入聯機對戰',
-        body: '在畫像頁點「聯機對戰」。學號已從測評帶入，創建或加入房間，並設定遊戲規格。',
+        body: '學號已從測評帶入，創建或加入房間，並設定遊戲規格。',
       },
       {
         title: '開始對戰',
@@ -93,7 +93,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '進入單機對戰',
-        body: '在畫像頁點「單機對戰」進入對戰大廳。設定你的遊戲規格。',
+        body: '設定你的遊戲規格。',
       },
       {
         title: '開始對戰',
@@ -369,7 +369,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Enter Multiplayer Match',
-        body: 'Tap "Multiplayer Match" on the Portrait page. Your Student ID is carried over from the assessment. Create or join a room and set the game settings.',
+        body: 'Your Student ID is carried over from the assessment. Create or join a room and set the game settings.',
       },
       {
         title: 'Start the Match',
@@ -394,7 +394,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Enter Solo Match',
-        body: 'Tap "Solo Match" on the Portrait page to enter the match lobby. Set your game settings.',
+        body: 'Set your game settings.',
       },
       {
         title: 'Start the Match',
