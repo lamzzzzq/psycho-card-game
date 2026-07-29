@@ -68,7 +68,7 @@ export const TUTORIAL_T = {
       },
       {
         title: '進入聯機對戰',
-        body: '學號已從測評帶入，創建或加入房間，並設定遊戲規格。',
+        body: '創建或加入房間，並設定遊戲規格。',
       },
       {
         title: '開始對戰',
@@ -369,7 +369,7 @@ export const TUTORIAL_T = {
       },
       {
         title: 'Enter Multiplayer Match',
-        body: 'Your Student ID is carried over from the assessment. Create or join a room and set the game settings.',
+        body: 'Create or join a room and set the game settings.',
       },
       {
         title: 'Start the Match',
