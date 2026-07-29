@@ -79,10 +79,10 @@ export function KnowledgeQuiz({ locale }: { locale: Locale }) {
         </div>
 
         <p className="psy-serif relative text-xl text-[var(--psy-ink)]">
-          {en ? 'Post-Game Psychology Review' : '本局心理學知識複習'}
+          {en ? 'Psychology Knowledge Quiz' : '心理學知識卡小測'}
         </p>
         <p className="relative mx-auto mt-2 max-w-md text-xs leading-5 text-[var(--psy-ink-soft)]">
-          {en ? 'A quick 4-question quiz on your knowledge cards to see how much you remembered.' : '來個 4 題知識卡小測，看看你記住多少。'}
+          {en ? 'Four questions drawn at random from the knowledge cards — see how much you remembered.' : '從知識卡裏隨機抽 4 題，看看你記住多少。'}
         </p>
 
         {/* 4 題小圓點提示 */}
