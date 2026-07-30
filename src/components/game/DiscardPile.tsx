@@ -184,7 +184,9 @@ export function DiscardPile({
                 />
               </>
             )}
-            <span className="psy-serif relative text-xs tracking-[0.2em] text-[var(--psy-muted)] sm:text-base">{t.discardPileName}</span>
+            {/* 字號縮小 + 字距收窄（老闆要求）：牌堆縮到 114px 寬後，原本 16px+0.2em
+                的「Discard Pile」擠成兩行還頂邊。 */}
+            <span className="psy-serif relative text-[10px] tracking-[0.12em] text-[var(--psy-muted)] sm:text-[13px]">{t.discardPileName}</span>
           </div>
         )}
         {/* 英文改成「0 discarded」語序（原本是 Discarded 0 cards）；中文本來就順，不動。 */}

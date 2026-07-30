@@ -962,7 +962,8 @@ function TargetBoard({ label, activeDim, dimName }: { label: string; activeDim: 
             key={d}
             className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums"
             style={{
-              color: active ? '#1a1206' : 'var(--psy-ink-soft)',
+              // 壓在主色實底上的字色跟着新配色走（deep navy 上的深棕字看不見）。
+              color: active ? m.onAccentHex : 'var(--psy-ink-soft)',
               background: active ? m.colorHex : '#f8f1e4',
               border: `1px solid ${active ? m.colorHex : 'rgba(154,116,72,0.18)'}`,
             }}

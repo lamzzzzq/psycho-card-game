@@ -7,7 +7,14 @@ export interface DimensionMeta {
   key: Dimension;
   name: string;
   nameEn: string;
+  /** 主色（Main Accent）：實色底、描邊、圖標、進度條。 */
   colorHex: string;
+  /** 淺色底（Tile Background）：格子/卡片的底色。 */
+  tintHex: string;
+  /** 深色字（Dark Text / Border）：淺底上的文字與描邊，保證對比度。 */
+  inkHex: string;
+  /** 壓在主色實底上的文字色：按對比度逐維挑好的（深主色配白、亮主色配深棕）。 */
+  onAccentHex: string;
   description: string;
 }
 

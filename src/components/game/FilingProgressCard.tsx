@@ -63,7 +63,8 @@ export function FilingProgressCard({
   const en = locale === 'en';
 
   return (
-    <div className="psy-panel psy-etched flex shrink-0 flex-col gap-1.5 rounded-[1.2rem] p-1.5 sm:gap-2 sm:p-2">
+    // 內距與行間距都放寬一档（老闆：margin 變寬、卡片變高）。
+    <div className="psy-panel psy-etched flex shrink-0 flex-col gap-2 rounded-[1.2rem] p-2 sm:gap-2.5 sm:p-3">
       {/* 第一行：輪次 + 右側信息 */}
       <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-3 py-1.5 text-xs text-[var(--psy-ink-soft)] sm:text-sm">
         <span className="psy-serif shrink-0 font-semibold text-[var(--psy-accent-strong)]">{roundText}</span>
@@ -71,7 +72,8 @@ export function FilingProgressCard({
       </div>
 
       {/* 第二行：5 維 —— 角標 + 卡位 */}
-      <div className="grid grid-cols-5 gap-1 sm:gap-1.5" aria-label={en ? 'Filing progress' : '歸檔進度'}>
+      {/* 格子之間的間距放寬（老闆要求） */}
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5" aria-label={en ? 'Filing progress' : '歸檔進度'}>
         {DIMENSIONS.map((dimension) => {
           const meta = DIMENSION_META[dimension];
           const color = meta.colorHex;
@@ -85,59 +87,62 @@ export function FilingProgressCard({
               type="button"
               onClick={onOpenArchive}
               // containerType 讓下面的 cqw 按「這一格的寬度」解析。
+              // 底色用該維度的 tint；已歸檔 = 主色 30% 加深 + 主色描邊，一眼看出區別。
               style={{
                 containerType: 'inline-size',
-                background: isDone ? `${color}1f` : '#f5ecdd',
-                borderColor: isDone ? `${color}99` : 'rgba(154,116,72,0.26)',
-                boxShadow: isDone ? `inset 0 0 0 1px ${color}40` : undefined,
+                background: isDone ? `${color}33` : meta.tintHex,
+                borderColor: isDone ? color : `${color}59`,
+                boxShadow: isDone ? `inset 0 0 0 1px ${color}66` : undefined,
               }}
               className="flex min-w-0 flex-col items-stretch overflow-hidden rounded-lg border text-center transition active:scale-95"
               aria-label={`${name}${en ? `: needs ${target} cards, ${isDone ? 'filed' : 'not filed'}` : `：需要 ${target} 張，${isDone ? '已歸檔' : '未歸檔'}`}`}
             >
-              {/* 實色帶：① 字母（最大） + ② 單詞（窄格自動換縮寫）。
-                  帶吃滿整格寬；格子開了 overflow-hidden，帶的上緣兩角跟着格子圓角走。 */}
+              {/* ① 字母：主色實底吃滿整格寬。字母是大號粗體，壓實底也有足夠對比
+                  （onAccentHex 是逐維按實測對比度挑的）。格子開了 overflow-hidden，
+                  帶的上緣兩角跟着格子圓角走。 */}
               <span
-                className="block w-full"
+                className="psy-serif block w-full font-bold leading-none"
                 style={{
-                  padding: 'min(1.6cqw, 4px) 0 min(2cqw, 5px)',
+                  fontSize: LETTER_FONT,
+                  letterSpacing: '0.02em',
+                  padding: 'min(2.6cqw, 7px) 0',
                   background: color,
-                  color: '#2a1c06',
-                  borderBottom: '1px solid rgba(154,116,72,0.35)',
+                  color: meta.onAccentHex,
+                  borderBottom: `1px solid ${color}`,
                 }}
               >
-                <span
-                  className="psy-serif block font-bold leading-none"
-                  style={{ fontSize: LETTER_FONT, letterSpacing: '0.02em' }}
-                >
-                  {meta.key}
-                </span>
-                <span
-                  lang={en ? 'en' : undefined}
-                  className="psy-sans block font-semibold leading-tight"
-                  style={{
-                    fontSize: en ? WORD_FONT_EN : WORD_FONT_ZH,
-                    marginTop: 'min(0.8cqw, 2px)',
-                    padding: '0 1px',
-                    hyphens: 'auto',
-                    overflowWrap: 'anywhere',
-                  }}
-                >
-                  {en ? (
-                    <>
-                      <span data-dim-word-full>{meta.nameEn}</span>
-                      <span data-dim-word-abbr>{WORD_ABBR_EN[dimension]}</span>
-                    </>
-                  ) : (
-                    meta.name
-                  )}
-                </span>
+                {meta.key}
+              </span>
+
+              {/* ② 單詞：放在【淺色底】上用深色字 —— 小字壓在 amber/coral 實底上
+                  對比度只有 ~3，放淺底才有 7+ 的對比度，手機 10px 也讀得清。
+                  窄格自動換縮寫（見 globals.css 的容器查詢）。 */}
+              <span
+                lang={en ? 'en' : undefined}
+                className="psy-sans block font-semibold leading-tight"
+                style={{
+                  fontSize: en ? WORD_FONT_EN : WORD_FONT_ZH,
+                  color: meta.inkHex,
+                  padding: 'min(2.4cqw, 6px) 2px min(1.2cqw, 3px)',
+                  hyphens: 'auto',
+                  overflowWrap: 'anywhere',
+                }}
+              >
+                {en ? (
+                  <>
+                    <span data-dim-word-full>{meta.nameEn}</span>
+                    <span data-dim-word-abbr>{WORD_ABBR_EN[dimension]}</span>
+                  </>
+                ) : (
+                  meta.name
+                )}
               </span>
 
               {/* 卡位：要幾張就幾格，居中。空 = 淡色描邊；滿 = 實色（該維度已歸檔）。 */}
               <span
                 className="flex flex-wrap items-center justify-center"
-                // 卡位區高度比原來厚一點（老闆要求），卡位本身也放大一档。
-                style={{ gap: 'min(2cqw, 4px)', padding: 'min(4cqw, 10px) 2px' }}
+                // 卡位區高度比原來厚一點（老闆要求「卡片再高一點」），卡位本身也放大一档。
+                style={{ gap: 'min(2cqw, 4px)', padding: '0 2px min(5cqw, 12px)' }}
               >
                 {Array.from({ length: target }).map((_, i) => (
                   <span
@@ -146,9 +151,9 @@ export function FilingProgressCard({
                       width: 'min(10cqw, 15px)',
                       aspectRatio: '3 / 4',
                       borderRadius: 'min(2cqw, 2.5px)',
-                      background: isDone ? color : `${color}14`,
-                      border: `1px solid ${isDone ? 'rgba(154,116,72,0.5)' : `${color}8c`}`,
-                      boxShadow: isDone ? 'inset 0 1px 0 rgba(255,255,255,0.45)' : undefined,
+                      background: isDone ? color : 'rgba(255,255,255,0.55)',
+                      border: `1px solid ${isDone ? color : `${color}8c`}`,
+                      boxShadow: isDone ? 'inset 0 1px 0 rgba(255,255,255,0.3)' : undefined,
                     }}
                   />
                 ))}

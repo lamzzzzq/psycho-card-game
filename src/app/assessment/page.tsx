@@ -286,7 +286,7 @@ export default function AssessmentPage() {
                 const metaName = locale === 'en' ? meta.nameEn : meta.name;
                 return (
                   <div key={d} className="flex items-center gap-3">
-                    <span className="psy-serif w-28 shrink-0 truncate text-sm" style={{ color: meta.colorHex }}>{metaName}</span>
+                    <span className="psy-serif w-28 shrink-0 truncate text-sm" style={{ color: meta.inkHex }}>{metaName}</span>
                     <input
                       type="text"
                       inputMode="decimal"

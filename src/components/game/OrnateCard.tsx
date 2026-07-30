@@ -264,7 +264,9 @@ export function OrnateCard({
                 className="psy-sans inline-flex items-center rounded-full font-bold uppercase leading-none whitespace-nowrap"
                 style={{
                   padding: '2.6cqw 6cqw', fontSize: `${dimFont}cqw`, letterSpacing: '0.06em',
-                  background: meta.colorHex, color: '#2a1c06',
+                  // 文字色用 onAccentHex：新配色裏 navy/teal/lavender 是深色，
+                  // 原本固定的深棕字壓上去等於看不見。
+                  background: meta.colorHex, color: meta.onAccentHex,
                   border: '1.5px solid rgba(154,116,72,0.45)', boxShadow: '0 0.5cqw 1.6cqw rgba(96,72,38,0.24)',
                 }}
               >

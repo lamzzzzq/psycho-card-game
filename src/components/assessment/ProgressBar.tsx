@@ -37,7 +37,7 @@ export function ProgressBar({ current, total, currentDimension, locale }: Progre
         />
       </div>
       <p className="text-xs leading-6 text-[var(--psy-ink-soft)]">
-        {t.progressPrefix}<span className="psy-serif" style={{ color: meta.colorHex }}>{dimName}</span>{t.progressSuffix}
+        {t.progressPrefix}<span className="psy-serif" style={{ color: meta.inkHex }}>{dimName}</span>{t.progressSuffix}
       </p>
     </div>
   );

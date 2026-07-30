@@ -332,7 +332,7 @@ export default function PvpLobbyPage() {
                       const meta = DIMENSION_META[d];
                       return (
                         <div key={d} className="flex items-center gap-3">
-                          <span className="psy-serif w-20 shrink-0 truncate text-xs" style={{ color: meta.colorHex }}>{locale === 'en' ? meta.nameEn : meta.name}</span>
+                          <span className="psy-serif w-20 shrink-0 truncate text-xs" style={{ color: meta.inkHex }}>{locale === 'en' ? meta.nameEn : meta.name}</span>
                           <input
                             type="text"
                             inputMode="decimal"

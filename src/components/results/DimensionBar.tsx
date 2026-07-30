@@ -26,7 +26,8 @@ export function DimensionBar({ dimension, score, delay = 0 }: DimensionBarProps)
         <div className="flex items-center gap-2">
           <span
             className="psy-serif inline-flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold"
-            style={{ backgroundColor: meta.colorHex + '10', color: meta.colorHex, borderColor: meta.colorHex + '33' }}
+            // 淺底上的字用 inkHex（新配色的 amber/coral 當文字色在米金底上只有 ~2.7 對比度）
+            style={{ backgroundColor: meta.tintHex, color: meta.inkHex, borderColor: meta.colorHex + '55' }}
           >
             {dimension}
           </span>
@@ -36,7 +37,7 @@ export function DimensionBar({ dimension, score, delay = 0 }: DimensionBarProps)
             {!en && <div className="text-[11px] text-[var(--psy-muted)]">{meta.nameEn}</div>}
           </div>
         </div>
-        <span className="psy-serif text-sm font-bold" style={{ color: meta.colorHex }}>
+        <span className="psy-serif text-sm font-bold" style={{ color: meta.inkHex }}>
           {score.toFixed(1)}
         </span>
       </div>
