@@ -13,12 +13,18 @@ import type { Locale } from '@/lib/i18n';
 // 所以這裏不能畫「2/3」那種進度，否則等於幫玩家數牌（規則要求玩家自己算）。
 //
 // 字號：每格自己是 container，直接用 cqw 跟着格子寬度動態變化。
-//   en 最長「CONSCIENTIOUSNESS」17 個大寫字符 ≈ 11.6em 寬 → 要 7.4cqw 才不溢出；
-//   但手機一格只有 ~69px，7.4cqw ≈ 5px 沒人看得見 → 給 8px 下限，
-//   窄到放不下就讓它按音節折成兩行（lang="en" + hyphens:auto），不硬切詞。
-//   zh 名字都是 3 個字 ≈ 3.2em → 可以開到 22cqw，桌面 13px 封頂。
-const NAME_FONT_EN = 'clamp(8px, 7.4cqw, 13px)';
-const NAME_FONT_ZH = 'min(22cqw, 14px)';
+//   en 最長「CONSCIENTIOUSNESS」17 個大寫字符（含字距 ≈ 0.8em/字）→ 6.2cqw 才有餘量；
+//   上限 16px（格子寬到 ~258px 就封頂，再大字也不用跟着漲）。
+//   下限 8px：手機一格只有 ~69px，6.2cqw ≈ 4px 沒人看得見，所以到 8px 就停，
+//   放不下就按音節折兩行（lang="en" + hyphens:auto）。
+//   zh 名字都是 3 個字 ≈ 3.2em，寬鬆得多 → min(20cqw, 16px)。
+//
+// ⚠️ 溢出防線是 overflow-wrap: anywhere，不是 break-word：
+//    break-word 允許折行但【不縮小 min-content 寬度】，所以 shrink-to-fit 的角標
+//    會被撐到整個單詞那麼寬、直接頂出格子（桌面上就是這麼溢出的）。
+//    anywhere 才會把 min-content 算成「可以斷在任何位置」，盒子才肯縮。
+const NAME_FONT_EN = 'clamp(8px, 6.2cqw, 16px)';
+const NAME_FONT_ZH = 'min(20cqw, 16px)';
 
 interface FilingProgressCardProps {
   locale?: Locale;
@@ -81,13 +87,13 @@ export function FilingProgressCard({
                 className="psy-sans inline-flex max-w-full items-center justify-center rounded-full font-bold uppercase leading-tight"
                 style={{
                   fontSize: en ? NAME_FONT_EN : NAME_FONT_ZH,
-                  letterSpacing: en ? '0.03em' : '0.02em',
-                  padding: 'min(1.4cqw, 3px) min(4cqw, 9px)',
+                  letterSpacing: en ? '0.02em' : '0.02em',
+                  padding: 'min(1.4cqw, 3px) min(3.5cqw, 8px)',
                   background: color,
                   color: '#2a1c06',
                   border: '1px solid rgba(154,116,72,0.45)',
                   hyphens: 'auto',
-                  overflowWrap: 'break-word',
+                  overflowWrap: 'anywhere',
                 }}
               >
                 {name}
