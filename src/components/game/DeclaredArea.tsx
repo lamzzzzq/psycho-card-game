@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DeclaredSet, Dimension, DIMENSIONS, PersonalityCard } from '@/types';
+import { DeclaredSet, PersonalityCard } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 import { TarotCard } from './TarotCard';
 import { cardToTarotProps } from './cardToTarotProps';
@@ -13,11 +13,6 @@ interface DeclaredAreaProps {
   compact?: boolean;
   title?: string;
   locale?: Locale;
-  /** When present, the desktop card becomes a combined target/result panel. */
-  targets?: Partial<Record<Dimension, number>>;
-  /** 桌面歸檔進度橫條左端的輪次文字。只 targets 模式用。
-      （原本下面還有一行「已完成 n/5」，老闆要求去掉——右邊五維本身已經寫著歸檔狀態。） */
-  roundText?: string;
   /** Nested mobile sheets need their detail overlay above the sheet itself. */
   overlayZIndex?: number;
   /** 有空间的容器（结算页玩家卡 / 移动弹窗）直接内联展开维度列表，不再套一层「歸檔記錄」卡中卡。 */
@@ -33,8 +28,6 @@ export function DeclaredArea({
   compact = false,
   title,
   locale = 'zh',
-  targets,
-  roundText,
   overlayZIndex,
   expanded = false,
   wide = false,
@@ -44,7 +37,6 @@ export function DeclaredArea({
   const resolvedTitle = title ?? t.archiveRecord;
   const [open, setOpen] = useState(false);
   const [detailCard, setDetailCard] = useState<PersonalityCard | null>(null);
-  const isProgressView = targets !== undefined;
 
   const modalNode = (
     <PsyOverlayPanel open={open} onClose={() => setOpen(false)} title={resolvedTitle} variant="centered" zIndex={overlayZIndex}>
@@ -161,56 +153,6 @@ export function DeclaredArea({
             ))}
           </div>
         )}
-        {detailNode}
-      </>
-    );
-  }
-
-  if (isProgressView) {
-    // 桌面歸檔進度：橫條，貼在操作排上方（與移動端信息行 + 5 維 pill 同一排版）。
-    // 原先是手牌左側的竖排面板，同事反饋「用電腦睇好似有點細」——橫條能吃滿整寬，
-    // 字號抬到 sm/xs，手牌也拿回左側那 13rem。
-    return (
-      <>
-        <section
-          className="psy-panel psy-etched flex w-full items-stretch gap-2 rounded-[1.2rem] p-2"
-          aria-label={locale === 'en' ? 'Filing progress' : '歸檔進度'}
-        >
-          {roundText && (
-            <div className="flex shrink-0 items-center rounded-lg border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-2.5 py-1.5 lg:px-3">
-              <span className="psy-serif whitespace-nowrap text-xs font-semibold leading-tight text-[var(--psy-accent-strong)] lg:text-sm">{roundText}</span>
-            </div>
-          )}
-          <div className="grid flex-1 grid-cols-5 gap-1 lg:gap-1.5">
-            {DIMENSIONS.map((dimension) => {
-              const declared = declaredSets.find((set) => set.dimension === dimension);
-              const target = targets[dimension] ?? 0;
-              const isDone = !!declared;
-              const content = (
-                <>
-                  <span className="psy-serif min-w-0 text-xs font-medium leading-tight text-[var(--psy-ink)] lg:text-sm">{dimName(dimension)}</span>
-                  <span className="shrink-0 text-right text-[10px] leading-4 lg:text-[11px]">
-                    <span className="block whitespace-nowrap text-[var(--psy-muted)]">{locale === 'en' ? `Target ${target}` : `目標 ${target} 張`}</span>
-                    <span className={`block whitespace-nowrap ${isDone ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-ink-soft)]'}`}>{isDone ? (locale === 'en' ? 'Filed' : '已歸檔') : (locale === 'en' ? 'Not Filed' : '未歸檔')}</span>
-                  </span>
-                </>
-              );
-              // 全部维度都可点击 → 打开归档模态（用户要求：不只已归档项可点）
-              return (
-                <button
-                  key={dimension}
-                  type="button"
-                  onClick={() => setOpen(true)}
-                  className={`flex w-full items-center justify-between gap-1.5 rounded-lg border px-2.5 py-1.5 text-left transition hover:-translate-y-px ${isDone ? 'border-[rgba(111,143,85,0.3)] bg-[rgba(111,143,85,0.08)] hover:border-[rgba(111,143,85,0.55)]' : 'border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] hover:border-[rgba(154,116,72,0.4)]'}`}
-                  aria-label={`${t.viewWord}: ${dimName(dimension)}`}
-                >
-                  {content}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-        {modalNode}
         {detailNode}
       </>
     );
