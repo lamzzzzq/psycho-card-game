@@ -30,9 +30,9 @@ export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProp
         // 高度定死、寬度由 4/7 比例推出（棄牌堆的塔羅卡同步縮到一樣的高度）：
         // 讓「牌堆 + 下方張數」這一列的總高 = 行動記錄卡（h-126/224），
         // 否則牌堆比記錄卡高、記錄卡下面就空出一條（老闆指出的空白）。
-        //   桌面 200 + gap 8 + text-xs 行高 16 = 224 ✓
+        //   桌面 148 + gap 8 + text-xs 行高 16 = 172 ✓（老闆嫌桌面太占高，整組又縮了一档）
         //   手機 104 + gap 8 + 10px 行高 ~15 = 127 ≈ 126 ✓
-        className={`psy-etched relative flex aspect-[4/7] h-[104px] items-center justify-center rounded-[1.1rem] border transition sm:h-[200px] sm:rounded-[1.35rem] ${
+        className={`psy-etched relative flex aspect-[4/7] h-[104px] items-center justify-center rounded-[1.1rem] border transition sm:h-[148px] sm:rounded-[1.35rem] ${
           canDraw ? 'cursor-pointer' : 'cursor-default opacity-60'
         }`}
         style={{

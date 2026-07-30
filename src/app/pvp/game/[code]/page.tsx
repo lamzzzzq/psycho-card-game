@@ -834,7 +834,7 @@ export default function PvpGamePage() {
         </div>
 
         {/* Center: 抽牌 + 弃牌 + 行动记录 三张竖卡并排，同尺寸同风格；mobile/desktop 一致（对齐单机） */}
-        <div className="mt-3 flex items-start justify-center gap-3 rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] p-3 sm:mt-4 sm:gap-6 sm:p-4">
+        <div className="mt-3 flex items-start justify-center gap-3 rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] p-3 sm:mt-4 sm:gap-6 sm:p-3">
           <div
             ref={drawPileRef}
             onMouseEnter={() => handleDrawPileHover(true)}

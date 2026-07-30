@@ -135,13 +135,13 @@ export function DiscardPile({
                 />
               </>
             )}
-            {/* 寬度 = 抽牌堆新高度 × 4/7（104→59 / 200→114）：兩堆同高，
+            {/* 寬度 = 抽牌堆高度 × 4/7（手機 104→59 / 桌面 148→85）：兩堆同高，
                 且「牌堆 + 下方張數」這一列的總高與行動記錄卡齊平。 */}
             <div className="sm:hidden">
               <TarotCard {...tarotProps(topCard, locale, revealTags)} width={59} />
             </div>
             <div className="hidden sm:block">
-              <TarotCard {...tarotProps(topCard, locale, revealTags)} width={114} />
+              <TarotCard {...tarotProps(topCard, locale, revealTags)} width={85} />
             </div>
             {canOpen && (
               <div
@@ -158,7 +158,7 @@ export function DiscardPile({
             )}
           </div>
         ) : (
-          <div className="relative flex aspect-[4/7] h-[104px] items-center justify-center overflow-hidden rounded-[1.1rem] bg-[var(--psy-card-content)] sm:h-[200px] sm:rounded-[1.35rem]" style={{ border: '1.5px dashed rgba(154,116,72,0.28)', boxShadow: 'inset 0 0 0 1px rgba(255,250,240,0.5), 0 16px 28px rgba(96,72,38,0.16)' }}>
+          <div className="relative flex aspect-[4/7] h-[104px] items-center justify-center overflow-hidden rounded-[1.1rem] bg-[var(--psy-card-content)] sm:h-[148px] sm:rounded-[1.35rem]" style={{ border: '1.5px dashed rgba(154,116,72,0.28)', boxShadow: 'inset 0 0 0 1px rgba(255,250,240,0.5), 0 16px 28px rgba(96,72,38,0.16)' }}>
             {/* 常驻轻呼吸内晕：空态也有生命感，不再是一个死板的空框 */}
             <motion.div
               aria-hidden
@@ -184,7 +184,7 @@ export function DiscardPile({
                 />
               </>
             )}
-            {/* 字號縮小 + 字距收窄（老闆要求）：牌堆縮到 114px 寬後，原本 16px+0.2em
+            {/* 字號縮小 + 字距收窄（老闆要求）：牌堆縮到 85px 寬後，原本 16px+0.2em
                 的「Discard Pile」擠成兩行還頂邊。 */}
             <span className="psy-serif relative text-[10px] tracking-[0.12em] text-[var(--psy-muted)] sm:text-[13px]">{t.discardPileName}</span>
           </div>

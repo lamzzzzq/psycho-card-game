@@ -142,7 +142,7 @@ export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80, i
           type="button"
           onClick={() => setOpen(true)}
           aria-label={tg.sheetLogTitle}
-          className="psy-etched flex h-[126px] w-[144px] flex-col overflow-hidden rounded-[1.1rem] p-3 text-left transition hover:border-[rgba(200,155,93,0.45)] sm:h-[224px] sm:w-64 sm:rounded-[1.35rem] sm:p-4"
+          className="psy-etched flex h-[126px] w-[144px] flex-col overflow-hidden rounded-[1.1rem] p-3 text-left transition hover:border-[rgba(200,155,93,0.45)] sm:h-[172px] sm:w-64 sm:rounded-[1.35rem] sm:p-4"
           style={{ background: 'linear-gradient(180deg, #fdf8f1, #f3ead9)', borderColor: 'rgba(154,116,72,0.28)', boxShadow: 'inset 0 0 0 1px rgba(255,250,240,0.46), 0 14px 24px rgba(96,72,38,0.12)' }}
         >
           <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
