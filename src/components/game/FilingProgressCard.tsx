@@ -8,26 +8,36 @@ import type { Locale } from '@/lib/i18n';
 // 回合信息 + 5 維歸檔進度卡。單機與 PVP 共用同一份（老闆：兩邊永遠保持一致），
 // PC 與移動端也是同一套排版，只有字號跟着格子寬度縮放。
 //
-// 一格 = 一個維度：上面是牌上那種實色維度角標，下面是「需要幾張牌」的卡位。
+// 一格 = 一個維度，分三個區域（老闆定的版式）：
+//   ① 字母 O/C/E/A/N —— 字號最大
+//   ② 維度單詞 —— 保證在小屏手機上也讀得清；格子窄到放不下全稱就換縮寫（Conscient.）
+//   ③ 卡位 —— 「這維度要幾張牌」，要 3 張擺 3 格
+// ①② 在實色帶上（帶吃滿整格寬），③ 在淺色底。
+//
 // 卡位只有兩態（空/滿）——引擎只公開「該維度是否已歸檔」，不公開手上湊了幾張，
 // 所以這裏不能畫「2/3」那種進度，否則等於幫玩家數牌（規則要求玩家自己算）。
 //
-// 字號：每格自己是 container，直接用 cqw 跟着格子寬度動態變化。
-//   標題橫幅【左右內距為 0】——老闆要求字從格子最左邊就開始，把整個寬度用盡。
-//   可用寬度 = 100cqw。「CONSCIENTIOUSNESS」在 Noto Sans 粗體下 17 個大寫字符
-//   ≈ 11.7–12.5em（各字寬 0.34~0.80em），取 7.8cqw ≈ 91~98cqw，貼着邊但不溢出。
-//   上限 20px（格子 ~256px 封頂）。
-//   ⚠️ 刻意【不設下限】（老闆要求「一行不折、多小都行」）：手機一格 ~70px 時約 5.5px。
-//      安全網是 overflow-wrap:anywhere —— 萬一某個設備的字體比估算寬，
-//      它會折成兩行而不是溢出。真機看到折行就把 7.8 往下調。
-//   zh 名字都是 3 個字 ≈ 3.0em，寬鬆得多 → min(30cqw, 20px)。
-//
-// ⚠️ 溢出防線是 overflow-wrap: anywhere，不是 break-word：
-//    break-word 允許折行但【不縮小 min-content 寬度】，所以 shrink-to-fit 的角標
-//    會被撐到整個單詞那麼寬、直接頂出格子（桌面上就是這麼溢出的）。
-//    anywhere 才會把 min-content 算成「可以斷在任何位置」，盒子才肯縮。
-const NAME_FONT_EN = 'min(7.8cqw, 20px)';
-const NAME_FONT_ZH = 'min(30cqw, 20px)';
+// 字號：每格自己是 container，用 cqw 跟着格子寬度動態變化。
+//   ① 字母只有 1 個字符 → 可以放得很大：min(30cqw, 22px)。
+//   ② 單詞改成首字母大寫（比全大寫窄約 30%）+ 下限 10px，手機上也讀得清；
+//      放不下全稱時由容器查詢換成縮寫（見 globals.css 的 [data-dim-word-*]）。
+//   ⚠️ 溢出防線是 overflow-wrap: anywhere，不是 break-word —— 後者允許折行但
+//      【不縮小 min-content 寬度】，shrink-to-fit 的盒子會被撐到整個單詞那麼寬、
+//      直接頂出格子。anywhere 才會讓盒子肯縮。
+const LETTER_FONT = 'min(30cqw, 22px)';
+const WORD_FONT_EN = 'clamp(10px, 12cqw, 14px)';
+const WORD_FONT_ZH = 'clamp(11px, 20cqw, 15px)';
+
+// 窄格子用的英文縮寫（Openness 本來就短，不縮）。閾值在 globals.css：
+// 格子 ≤ 140px 時顯示縮寫 —— 全稱 Conscientiousness 在 14px 下要 ~127px，
+// 加上留白得 ~135px 才放得下。
+const WORD_ABBR_EN: Record<Dimension, string> = {
+  O: 'Openness',
+  C: 'Conscient.',
+  E: 'Extraver.',
+  A: 'Agreeable.',
+  N: 'Neurotic.',
+};
 
 interface FilingProgressCardProps {
   locale?: Locale;
@@ -84,23 +94,43 @@ export function FilingProgressCard({
               className="flex min-w-0 flex-col items-stretch overflow-hidden rounded-lg border text-center transition active:scale-95"
               aria-label={`${name}${en ? `: needs ${target} cards, ${isDone ? 'filed' : 'not filed'}` : `：需要 ${target} 張，${isDone ? '已歸檔' : '未歸檔'}`}`}
             >
-              {/* 維度標題：實色橫幅吃滿整格寬（老闆要求：不要圓角膠囊，字能用到 full width）。
-                  格子開了 overflow-hidden，橫幅上緣兩角就跟着格子的圓角走。 */}
+              {/* 實色帶：① 字母（最大） + ② 單詞（窄格自動換縮寫）。
+                  帶吃滿整格寬；格子開了 overflow-hidden，帶的上緣兩角跟着格子圓角走。 */}
               <span
-                lang={en ? 'en' : undefined}
-                className="psy-sans block w-full font-bold uppercase leading-tight"
+                className="block w-full"
                 style={{
-                  fontSize: en ? NAME_FONT_EN : NAME_FONT_ZH,
-                  letterSpacing: '0',
-                  padding: 'min(2.2cqw, 6px) 0',
+                  padding: 'min(1.6cqw, 4px) 0 min(2cqw, 5px)',
                   background: color,
                   color: '#2a1c06',
                   borderBottom: '1px solid rgba(154,116,72,0.35)',
-                  hyphens: 'auto',
-                  overflowWrap: 'anywhere',
                 }}
               >
-                {name}
+                <span
+                  className="psy-serif block font-bold leading-none"
+                  style={{ fontSize: LETTER_FONT, letterSpacing: '0.02em' }}
+                >
+                  {meta.key}
+                </span>
+                <span
+                  lang={en ? 'en' : undefined}
+                  className="psy-sans block font-semibold leading-tight"
+                  style={{
+                    fontSize: en ? WORD_FONT_EN : WORD_FONT_ZH,
+                    marginTop: 'min(0.8cqw, 2px)',
+                    padding: '0 1px',
+                    hyphens: 'auto',
+                    overflowWrap: 'anywhere',
+                  }}
+                >
+                  {en ? (
+                    <>
+                      <span data-dim-word-full>{meta.nameEn}</span>
+                      <span data-dim-word-abbr>{WORD_ABBR_EN[dimension]}</span>
+                    </>
+                  ) : (
+                    meta.name
+                  )}
+                </span>
               </span>
 
               {/* 卡位：要幾張就幾格，居中。空 = 淡色描邊；滿 = 實色（該維度已歸檔）。 */}

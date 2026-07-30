@@ -135,11 +135,13 @@ export function DiscardPile({
                 />
               </>
             )}
+            {/* 寬度 = 抽牌堆新高度 × 4/7（104→59 / 200→114）：兩堆同高，
+                且「牌堆 + 下方張數」這一列的總高與行動記錄卡齊平。 */}
             <div className="sm:hidden">
-              <TarotCard {...tarotProps(topCard, locale, revealTags)} width={72} />
+              <TarotCard {...tarotProps(topCard, locale, revealTags)} width={59} />
             </div>
             <div className="hidden sm:block">
-              <TarotCard {...tarotProps(topCard, locale, revealTags)} width={128} />
+              <TarotCard {...tarotProps(topCard, locale, revealTags)} width={114} />
             </div>
             {canOpen && (
               <div
@@ -156,7 +158,7 @@ export function DiscardPile({
             )}
           </div>
         ) : (
-          <div className="relative flex aspect-[4/7] w-[72px] items-center justify-center overflow-hidden rounded-[1.1rem] bg-[var(--psy-card-content)] sm:w-32 sm:rounded-[1.35rem]" style={{ border: '1.5px dashed rgba(154,116,72,0.28)', boxShadow: 'inset 0 0 0 1px rgba(255,250,240,0.5), 0 16px 28px rgba(96,72,38,0.16)' }}>
+          <div className="relative flex aspect-[4/7] h-[104px] items-center justify-center overflow-hidden rounded-[1.1rem] bg-[var(--psy-card-content)] sm:h-[200px] sm:rounded-[1.35rem]" style={{ border: '1.5px dashed rgba(154,116,72,0.28)', boxShadow: 'inset 0 0 0 1px rgba(255,250,240,0.5), 0 16px 28px rgba(96,72,38,0.16)' }}>
             {/* 常驻轻呼吸内晕：空态也有生命感，不再是一个死板的空框 */}
             <motion.div
               aria-hidden
@@ -185,7 +187,10 @@ export function DiscardPile({
             <span className="psy-serif relative text-xs tracking-[0.2em] text-[var(--psy-muted)] sm:text-base">{t.discardPileName}</span>
           </div>
         )}
-        <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">{t.discardedCount} {count} {t.cardsUnit}</span>
+        {/* 英文改成「0 discarded」語序（原本是 Discarded 0 cards）；中文本來就順，不動。 */}
+        <span className="text-[10px] leading-tight text-[var(--psy-muted)] sm:text-xs">
+          {locale === 'en' ? `${count} discarded` : `${t.discardedCount} ${count} ${t.cardsUnit}`}
+        </span>
       </button>
       </div>
 

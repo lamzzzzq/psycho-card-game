@@ -397,6 +397,17 @@ a:focus-visible,
   .psy-turn-border { animation: none; }
 }
 
+/* ── 5 维格子的维度单词：窄格换缩写 ──────────────────────────────
+   FilingProgressCard 每一格自己是容器（container-type: inline-size），
+   所以这条容器查询问的是「这一格有多宽」，跟视口无关 —— 同一个断点在手机
+   和窄桌面窗口都成立。阈值 140px：全称 Conscientiousness 在 14px 下约 127px，
+   加留白要 ~135px 才放得下。 */
+[data-dim-word-abbr] { display: none; }
+@container (max-width: 140px) {
+  [data-dim-word-full] { display: none; }
+  [data-dim-word-abbr] { display: inline; }
+}
+
 /* ── 结算页专属动效 ─────────────────────────────────────────────
    只作用在带 data-psy-wobble 的容器 / .psy-trophy·.psy-sparkle 上，
    牌桌上的手牌与其它页面不受影响（结算页 GameOverModal 自己挂）。 */

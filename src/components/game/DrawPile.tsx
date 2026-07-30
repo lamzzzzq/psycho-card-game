@@ -27,9 +27,12 @@ export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProp
         whileTap={canDraw ? { scale: 0.95 } : undefined}
         onClick={canDraw ? onDraw : undefined}
         disabled={!canDraw}
-        // 尺寸與棄牌堆的塔羅卡完全一致（寬 72/96 + TarotCard 的 4/7 比例），
-        // 兩堆並排時大小不再不齊（用戶反饋）。
-        className={`psy-etched relative flex aspect-[4/7] w-[72px] items-center justify-center rounded-[1.1rem] border transition sm:w-32 sm:rounded-[1.35rem] ${
+        // 高度定死、寬度由 4/7 比例推出（棄牌堆的塔羅卡同步縮到一樣的高度）：
+        // 讓「牌堆 + 下方張數」這一列的總高 = 行動記錄卡（h-126/224），
+        // 否則牌堆比記錄卡高、記錄卡下面就空出一條（老闆指出的空白）。
+        //   桌面 200 + gap 8 + text-xs 行高 16 = 224 ✓
+        //   手機 104 + gap 8 + 10px 行高 ~15 = 127 ≈ 126 ✓
+        className={`psy-etched relative flex aspect-[4/7] h-[104px] items-center justify-center rounded-[1.1rem] border transition sm:h-[200px] sm:rounded-[1.35rem] ${
           canDraw ? 'cursor-pointer' : 'cursor-default opacity-60'
         }`}
         style={{
@@ -45,6 +48,19 @@ export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProp
         <div className="text-center">
           <div className={`psy-serif text-[var(--psy-ink-soft)] ${locale === 'en' ? 'text-xs tracking-[0.2em] sm:text-sm' : 'text-sm tracking-[0.2em] sm:text-base'}`}>{locale === 'en' ? 'DRAW' : '抽牌'}</div>
         </div>
+        {/* 轮到抽牌：手指 👆 在牌堆内部下缘上下浮动（老板要求收进卡里，不越过格子边界）。
+            黄色调浅：降饱和+提亮。 */}
+        {canDraw && (
+          <motion.span
+            aria-hidden
+            className="pointer-events-none absolute bottom-1.5 left-1/2 z-20 -translate-x-1/2 select-none text-2xl leading-none sm:bottom-2 sm:text-3xl"
+            style={{ filter: 'saturate(0.5) brightness(1.15) drop-shadow(0 2px 4px rgba(96,72,38,0.25))' }}
+            animate={{ y: [2, -4, 2] }}
+            transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut' }}
+          >
+            👆
+          </motion.span>
+        )}
         {canDraw && (
           <>
             {/* 内圈呼吸描边 */}
@@ -64,19 +80,10 @@ export function DrawPile({ count, canDraw, onDraw, locale = 'zh' }: DrawPileProp
           </>
         )}
       </motion.button>
-      {/* 轮到抽牌：手指 👆 在「剩餘 X 張」处上下浮动、指回牌堆（老板要求）。黄色调浅：降饱和+提亮。 */}
-      {canDraw && (
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 select-none text-3xl sm:text-4xl"
-          style={{ bottom: '0.9rem', filter: 'saturate(0.5) brightness(1.15) drop-shadow(0 2px 4px rgba(96,72,38,0.25))' }}
-          animate={{ y: [4, -6, 4] }}
-          transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut' }}
-        >
-          👆
-        </motion.div>
-      )}
-      <span className="text-[10px] text-[var(--psy-muted)] sm:text-xs">{tg.remainingPrefix} {count} {tg.cardsUnit}</span>
+      {/* 英文改成「32 left」語序（原本是 left 32 cards，同事反饋不通順）；中文本來就順，不動。 */}
+      <span className="text-[10px] leading-tight text-[var(--psy-muted)] sm:text-xs">
+        {locale === 'en' ? `${count} left` : `${tg.remainingPrefix} ${count} ${tg.cardsUnit}`}
+      </span>
     </div>
   );
 }
