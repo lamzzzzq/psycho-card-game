@@ -397,6 +397,44 @@ a:focus-visible,
   .psy-turn-border { animation: none; }
 }
 
+/* ── 结算页专属动效 ─────────────────────────────────────────────
+   只作用在带 data-psy-wobble 的容器 / .psy-trophy·.psy-sparkle 上，
+   牌桌上的手牌与其它页面不受影响（结算页 GameOverModal 自己挂）。 */
+
+/* 卡牌怠速微晃（Balatro 小丑牌那种）。动的是 button 里 TarotCard 的 wrapper，
+   button 自身的 hover:-translate-y-1 因此仍然生效，不会被动画抢走 transform。 */
+@keyframes psyIdleWobble {
+  0%, 100% { transform: rotate(-1.2deg) translateY(0); }
+  50%      { transform: rotate(1.2deg) translateY(-2px); }
+}
+[data-psy-wobble] button > div {
+  transform-origin: 50% 88%;   /* 靠底部为轴 → 像立着的牌在轻轻摆，而不是整张打转 */
+  animation: psyIdleWobble 3.4s ease-in-out infinite;
+}
+/* 周期与相位错开，一排牌才不会齐步走 */
+[data-psy-wobble] button:nth-child(3n+2) > div { animation-duration: 4.1s; animation-delay: -1.3s; }
+[data-psy-wobble] button:nth-child(3n+3) > div { animation-duration: 3.7s; animation-delay: -2.4s; }
+[data-psy-wobble] button:nth-child(4n+1) > div { animation-delay: -0.7s; }
+
+/* 奖杯：暖金呼吸光 + 周围星芒闪烁（🏆 是系统 emoji 字形，只能从外面打光，
+   不能给它本体做高光扫过——彩色 emoji 吃不了 background-clip:text）。 */
+@keyframes psyTrophyGlow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(214,166,80,0.5)); }
+  50%      { filter: drop-shadow(0 0 14px rgba(240,205,130,0.95)); }
+}
+@keyframes psySparkle {
+  0%, 100%  { opacity: 0; transform: scale(0.5) rotate(0deg); }
+  35%, 55%  { opacity: 1; transform: scale(1.15) rotate(25deg); }
+}
+.psy-trophy { animation: psyTrophyGlow 2.6s ease-in-out infinite; }
+.psy-sparkle { opacity: 0; animation: psySparkle 2.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-psy-wobble] button > div,
+  .psy-trophy { animation: none; }
+  .psy-sparkle { animation: none; opacity: 0.75; }
+}
+
 /* ── 桌面版品牌主题光标 ──
    仅在鼠标设备（hover+fine pointer）生效，触屏/笔不受影响。
    Safari 对 SVG 光标支持不佳 → 会优雅回退到默认箭头(auto)。 */

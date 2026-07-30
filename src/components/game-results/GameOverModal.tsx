@@ -51,7 +51,19 @@ export function GameOverModal({ players, winnerId, onPlayAgain, onBackToLobby, l
         className="mx-auto w-full max-w-3xl space-y-8"
       >
         <div className="space-y-2 text-center">
-          <div className="text-5xl">{isYouWinner ? '🏆' : '😯'}</div>
+          {/* 獎杯：暖金呼吸光 + 三顆錯開閃爍的星芒（動效在 globals.css）。輸的一方不加。 */}
+          <div className="relative mx-auto w-fit">
+            {isYouWinner ? (
+              <>
+                <div className="psy-trophy text-5xl">🏆</div>
+                <span className="psy-sparkle pointer-events-none absolute -left-4 top-1 text-lg" style={{ color: '#d9ad5c' }}>✦</span>
+                <span className="psy-sparkle pointer-events-none absolute -right-3 top-5 text-sm" style={{ color: '#e8c98a', animationDelay: '-0.8s' }}>✦</span>
+                <span className="psy-sparkle pointer-events-none absolute -right-5 -top-1 text-xs" style={{ color: '#d9ad5c', animationDelay: '-1.5s' }}>✧</span>
+              </>
+            ) : (
+              <div className="text-5xl">😯</div>
+            )}
+          </div>
           <h2 className="psy-serif text-4xl text-[var(--psy-ink)] sm:text-5xl">
             {isYouWinner ? tg.youWin : `${winner?.name ?? ''} ${tg.winShort}`}
           </h2>
@@ -95,7 +107,11 @@ export function GameOverModal({ players, winnerId, onPlayAgain, onBackToLobby, l
                     )}
                   </div>
                 </div>
-                <DeclaredArea declaredSets={player.declaredSets} locale={locale} expanded wide />
+                {/* data-psy-wobble：結算頁專屬的卡牌怠速微晃（見 globals.css）。
+                    只掛在這裏 → 牌桌上的手牌不受影響。 */}
+                <div data-psy-wobble>
+                  <DeclaredArea declaredSets={player.declaredSets} locale={locale} expanded wide />
+                </div>
               </div>
             );
           })}
