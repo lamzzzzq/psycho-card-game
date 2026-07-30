@@ -503,7 +503,9 @@ export default function GamePage() {
         </div>
       </PsyOverlayPanel>
 
-      <div className="shrink-0 rounded-[1.7rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,rgba(253,248,241,0.76),rgba(234,221,196,0.42))] p-2 shadow-[0_18px_40px_rgba(96,72,38,0.12)] sm:rounded-[2rem] sm:p-3">
+      {/* 對手排 + 牌桌中央：最外層那圈邊框/底色/陰影已去掉（老闆要求）——
+          對手卡與中央那塊各自有自己的邊框，外面再套一圈是重複的。 */}
+      <div className="shrink-0">
         {/* Opponents */}
         <div className="grid grid-cols-3 gap-2 sm:h-[6.5rem] sm:gap-3">
           {opponents.map((opp) => (
