@@ -5,10 +5,12 @@ import { Dimension, DimensionMeta } from '@/types';
 //   colorHex  Main Accent      實色底 / 描邊 / 圖標 / 進度條
 //   tintHex   Tile Background  格子底色（米金牌桌上要壓得住）
 //   inkHex    Dark Text/Border 淺底上的文字與描邊（WCAG 對比度）
-// 另外 onAccentHex = 壓在主色實底上的文字色，按實測對比度逐維挑：
-//   teal 3.32 / navy 9.0 / lavender 4.75 配白；amber 2.85 / coral 3.18 配自家深棕
-//   （這兩個是中間調，白字反而更低）。所以小字【不要】放在 amber/coral 實底上，
-//   只有大字母壓實底，單詞一律放淺底 —— 見 FilingProgressCard。
+// 另外 onAccentHex = 壓在主色實底上的文字色：五維【統一反白】（老闆要求，
+//   原本 amber/coral 配自家深棕，五張牌擺一起顏色不統一、不好看）。
+//   實測對比度：navy 9.0 / lavender 4.75 / teal 3.32 / coral 2.59 / amber 2.77，
+//   後兩個低於 AA-large 3.0 —— 是老闆權衡後選的統一感。若日後要補救，
+//   把 amber 壓到 #C2660A、coral 壓到 #D06A50 就能過線，版式不用動。
+//   小字仍然【不壓實底】：只有大字母壓實底，單詞一律放淺底 —— 見 FilingProgressCard。
 // 兩條硬要求（同事）：神經質不用紅、宜人性不用綠。
 export const DIMENSION_META: Record<Dimension, DimensionMeta> = {
   O: {
@@ -38,7 +40,7 @@ export const DIMENSION_META: Record<Dimension, DimensionMeta> = {
     colorHex: '#D97706',
     tintHex: '#FEF3C7',
     inkHex: '#78350F',
-    onAccentHex: '#78350F',
+    onAccentHex: '#ffffff',
     description: '社交活力、積極情緒和外向程度',
   },
   A: {
@@ -48,7 +50,7 @@ export const DIMENSION_META: Record<Dimension, DimensionMeta> = {
     colorHex: '#E07A5F',
     tintHex: '#FDF0ED',
     inkHex: '#7A2E22',
-    onAccentHex: '#7A2E22',
+    onAccentHex: '#ffffff',
     description: '合作、信任和體貼他人的傾向',
   },
   N: {
