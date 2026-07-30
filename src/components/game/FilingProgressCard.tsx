@@ -63,7 +63,7 @@ export function FilingProgressCard({
 
   return (
     // 內距與行間距都放寬一档（老闆：margin 變寬、卡片變高）。
-    <div className="psy-panel psy-etched flex shrink-0 flex-col gap-2 rounded-[1.2rem] p-2 sm:gap-2.5 sm:p-3">
+    <div className="psy-panel psy-etched flex shrink-0 flex-col gap-2 rounded-[1.2rem] p-1.5 sm:gap-2.5 sm:p-3">
       {/* 第一行：輪次 + 右側信息 */}
       <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-3 py-1.5 text-xs text-[var(--psy-ink-soft)] sm:text-sm">
         <span className="psy-serif shrink-0 font-semibold text-[var(--psy-accent-strong)]">{roundText}</span>
@@ -72,7 +72,7 @@ export function FilingProgressCard({
 
       {/* 第二行：5 維 —— 角標 + 卡位 */}
       {/* 格子之間的間距放寬（老闆要求） */}
-      <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5" aria-label={en ? 'Filing progress' : '歸檔進度'}>
+      <div className="grid grid-cols-5 gap-1 sm:gap-2.5" aria-label={en ? 'Filing progress' : '歸檔進度'}>
         {DIMENSIONS.map((dimension) => {
           const meta = DIMENSION_META[dimension];
           const color = meta.colorHex;
@@ -143,10 +143,12 @@ export function FilingProgressCard({
                   空 = 虛線待放置位（與棄牌堆空態同一套視覺語言：虛線 = 這裏要放牌）；
                   滿 = 漸層實色 + 內圈白細線 + 投影，看起來像一張蓋在位上的牌
                        （內圈細線呼應牌面的雙線金框，◈ 是本項目的牌背符號）。
-                  尺寸按最擠的情況定：iPhone 8 一格 ~65px、某維度要 5 張時，
-                  5 個卡位 + 4 道間距 ≈ 57px，仍在 61px 可用寬度內。 */}
+                  兩條硬要求（老闆）：單詞必須自己一行、五張卡位也必須自己一行。
+                  單詞靠 whiteSpace:nowrap；卡位靠 flex-nowrap + minWidth:0（放不下就
+                  等比壓小，不折行）。另外把卡片內距 8→6px、格距 6→4px 讓出 12px，
+                  iPhone 8 一格從 65px 加寬到 ~68px。 */}
               <span
-                className="flex flex-wrap items-center justify-center"
+                className="flex flex-nowrap items-center justify-center"
                 style={{ gap: 'min(2.6cqw, 5px)', padding: '0 2px min(5cqw, 12px)' }}
               >
                 {Array.from({ length: target }).map((_, i) => (
@@ -156,6 +158,9 @@ export function FilingProgressCard({
                     className="flex items-center justify-center leading-none"
                     style={{
                       // 4:7 = 真牌的比例，卡位長身站着更像一張牌（老闆：卡牌弄高一點）。
+                      // minWidth:0 —— 外層是 flex-nowrap，萬一某個維度要 5 張、
+                      // 格子又特別窄，卡位可以等比壓小，但【絕不換行】（老闆硬要求）。
+                      minWidth: 0,
                       width: 'min(15.5cqw, 21px)',
                       aspectRatio: '4 / 7',
                       borderRadius: 'min(2.4cqw, 3.5px)',
