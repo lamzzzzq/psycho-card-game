@@ -17,15 +17,18 @@ import type { Locale } from '@/lib/i18n';
 // 卡位只有兩態（空/滿）——引擎只公開「該維度是否已歸檔」，不公開手上湊了幾張，
 // 所以這裏不能畫「2/3」那種進度，否則等於幫玩家數牌（規則要求玩家自己算）。
 //
+// ⚠️ 桌面上的高度全靠這些 min()/clamp() 的【px 上限】收着（老闆嫌太占高，
+//    2026-07-31 又收了一档）：手機那邊 cqw 算出來的值都小於上限，所以只動上限
+//    不會影響手機。
 // 字號：每格自己是 container，用 cqw 跟着格子寬度動態變化。
 //   ① 字母只有 1 個字符 → 可以放得很大：min(24cqw, 18px)。
 //   ② 單詞首字母大寫（比全大寫窄約 30%）+ 下限 9px；格子 ≤140px 換縮寫
 //      （容器查詢見 globals.css 的 [data-dim-word-*]）。
 //      【禁止換行】：縮寫尾巴那個「.」曾被甩到第二行（iPhone 8 一格只有 65px，
 //      10px 下差 1~2px 放不下）→ whiteSpace: nowrap + 下限降到 9px 一起解決。
-const LETTER_FONT = 'min(24cqw, 18px)';
-const WORD_FONT_EN = 'clamp(9px, 12cqw, 14px)';
-const WORD_FONT_ZH = 'clamp(11px, 20cqw, 15px)';
+const LETTER_FONT = 'min(24cqw, 16px)';
+const WORD_FONT_EN = 'clamp(9px, 12cqw, 13px)';
+const WORD_FONT_ZH = 'clamp(11px, 20cqw, 14px)';
 
 // 窄格子用的英文縮寫（Openness 本來就短，不縮）。閾值在 globals.css：
 // 格子 ≤ 140px 時顯示縮寫 —— 全稱 Conscientiousness 在 14px 下要 ~127px，
@@ -63,7 +66,7 @@ export function FilingProgressCard({
 
   return (
     // 內距與行間距都放寬一档（老闆：margin 變寬、卡片變高）。
-    <div className="psy-panel psy-etched flex shrink-0 flex-col gap-2 rounded-[1.2rem] p-1.5 sm:gap-2.5 sm:p-3">
+    <div className="psy-panel psy-etched flex shrink-0 flex-col gap-2 rounded-[1.2rem] p-1.5 sm:p-2.5">
       {/* 第一行：輪次 + 右側信息 */}
       <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-3 py-1.5 text-xs text-[var(--psy-ink-soft)] sm:text-sm">
         <span className="psy-serif shrink-0 font-semibold text-[var(--psy-accent-strong)]">{roundText}</span>
@@ -104,7 +107,7 @@ export function FilingProgressCard({
                 style={{
                   fontSize: LETTER_FONT,
                   letterSpacing: '0.02em',
-                  padding: 'min(2.2cqw, 6px) 0',
+                  padding: 'min(2.2cqw, 4px) 0',
                   background: color,
                   color: meta.onAccentHex,
                   borderBottom: `1px solid ${color}`,
@@ -123,7 +126,7 @@ export function FilingProgressCard({
                   fontSize: en ? WORD_FONT_EN : WORD_FONT_ZH,
                   color: meta.inkHex,
                   // 下方留白拉開（老闆：單詞跟卡位靠太近）
-                  padding: 'min(2.4cqw, 6px) 2px min(3.6cqw, 9px)',
+                  padding: 'min(2.4cqw, 4px) 2px min(3.6cqw, 6px)',
                   // 禁止換行（老闆：縮寫的那個「.」被甩到第二行）。字號下限降到 9px：
                   // iPhone 8 一格只有 ~65px，10px 下「Conscient.」差 1~2px 放不下才折的。
                   whiteSpace: 'nowrap',
@@ -149,7 +152,7 @@ export function FilingProgressCard({
                   iPhone 8 一格從 65px 加寬到 ~68px。 */}
               <span
                 className="flex flex-nowrap items-center justify-center"
-                style={{ gap: 'min(2.6cqw, 5px)', padding: '0 2px min(5cqw, 12px)' }}
+                style={{ gap: 'min(2.6cqw, 5px)', padding: '0 2px min(5cqw, 8px)' }}
               >
                 {Array.from({ length: target }).map((_, i) => (
                   <span
@@ -161,7 +164,7 @@ export function FilingProgressCard({
                       // minWidth:0 —— 外層是 flex-nowrap，萬一某個維度要 5 張、
                       // 格子又特別窄，卡位可以等比壓小，但【絕不換行】（老闆硬要求）。
                       minWidth: 0,
-                      width: 'min(15.5cqw, 21px)',
+                      width: 'min(15.5cqw, 17px)',
                       aspectRatio: '4 / 7',
                       borderRadius: 'min(2.4cqw, 3.5px)',
                       fontSize: 'min(7cqw, 11px)',
