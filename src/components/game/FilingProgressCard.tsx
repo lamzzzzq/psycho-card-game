@@ -145,7 +145,7 @@ export function FilingProgressCard({
                        （內圈細線呼應牌面的雙線金框；◈ 是牌背符號，窄格會隱藏）。 */}
               <span
                 className="flex flex-wrap items-center justify-center"
-                style={{ gap: 'min(2.4cqw, 5px)', padding: '0 2px min(5cqw, 12px)' }}
+                style={{ gap: 'min(3cqw, 5px)', padding: '0 2px min(5cqw, 12px)' }}
               >
                 {Array.from({ length: target }).map((_, i) => (
                   <span
@@ -153,10 +153,11 @@ export function FilingProgressCard({
                     data-dim-slot
                     className="flex items-center justify-center leading-none"
                     style={{
-                      width: 'min(12cqw, 19px)',
-                      aspectRatio: '3 / 4',
-                      borderRadius: 'min(2cqw, 3px)',
-                      fontSize: 'min(6cqw, 10px)',
+                      // 4:7 = 真牌的比例，卡位長身站着更像一張牌（老闆：卡牌弄高一點）。
+                      width: 'min(17cqw, 21px)',
+                      aspectRatio: '4 / 7',
+                      borderRadius: 'min(2.4cqw, 3.5px)',
+                      fontSize: 'min(7cqw, 11px)',
                       color: isDone ? 'rgba(255,255,255,0.9)' : `${color}99`,
                       background: isDone
                         ? `linear-gradient(160deg, ${color}, ${color}cc)`
