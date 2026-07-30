@@ -31,6 +31,15 @@ const GOLD = '#9a7448';
 const GOLD_LINE = 'rgba(154,116,72,0.58)';
 const GOLD_FAINT = 'rgba(154,116,72,0.34)';
 
+// 選中態：金環 + 外擴柔光 + 更深的暖投影（原本是綠環，與米金牌面不搭，老闆要求換金）。
+// 內圈高光保留，否則選中的牌會比未選中的少一層立體感。
+const SELECTED_SHADOW = [
+  'inset 0 0 0 1px rgba(255,250,240,0.7)',
+  '0 0 0 2px rgba(200,155,93,0.95)',
+  '0 0 0 5px rgba(200,155,93,0.24)',
+  '0 20px 38px rgba(140,98,36,0.34)',
+].join(', ');
+
 // 中文默认按「字符」换行，会把「概念」拆成上下两行。用 Intl.Segmenter 分词后，
 // 把每个词包进 white-space:nowrap → 换行只发生在词与词之间，词内不再断开。
 // 英文本就按空格断词，无需处理；无 Segmenter 的环境回退为原字符串。
@@ -133,7 +142,7 @@ export function TarotCard({
           background: 'linear-gradient(180deg, #eadfc8 0%, #e1d1b2 60%, #d5be95 100%)',
           border: `1.5px solid ${GOLD_LINE}`,
           boxShadow: selected
-            ? `0 0 0 2px rgba(111,143,85,0.7), 0 18px 34px rgba(96,72,38,0.22)`
+            ? SELECTED_SHADOW
             : `inset 0 0 0 1px rgba(255,250,240,0.55), 0 16px 30px rgba(96,72,38,0.2)`,
           opacity: isDummy ? 0.92 : 1,
         }}

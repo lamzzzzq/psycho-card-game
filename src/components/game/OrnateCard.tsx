@@ -12,7 +12,9 @@ const GOLD = '#9a7448';
 const GOLD_SOFT = '#b9904f';
 const GOLD_DIM = 'rgba(154,116,72,0.42)';
 const GOLD_BRIGHT = '#c39a52'; // 点缀(星/菱)用更深的暖金，小图也看得清
-const GREEN = 'rgba(111,143,85,0.82)';
+// 选中态描边：深金托底 + 亮金芯，两条同路径叠出金属带质感。
+const GOLD_DEEP = '#8a5f22';
+const GOLD_LIT = '#e8c98a';
 
 const M = 18;            // 内容内缩（≈4.5%，对齐现版）
 const R = 400 - M;      // 382
@@ -103,7 +105,15 @@ export function OrnateCard({
       <div
         onClick={onClick}
         className={`relative w-full select-none ${onClick ? 'psy-grab transition-transform hover:-translate-y-1' : ''}`}
-        style={{ aspectRatio: '4 / 7', filter: 'drop-shadow(0 22px 30px rgba(96,72,38,0.34))', transform: 'translateZ(0)', opacity: isDummy ? 0.98 : 1 }}
+        style={{
+          aspectRatio: '4 / 7',
+          // 选中：叠一层暖金外发光（drop-shadow 跟随卡形，box-shadow 会画成方框）。
+          filter: selected
+            ? 'drop-shadow(0 0 6px rgba(214,166,80,0.9)) drop-shadow(0 22px 30px rgba(96,72,38,0.38))'
+            : 'drop-shadow(0 22px 30px rgba(96,72,38,0.34))',
+          transform: 'translateZ(0)',
+          opacity: isDummy ? 0.98 : 1,
+        }}
       >
         <svg viewBox="0 0 400 700" width="100%" height="100%" style={{ display: 'block' }}>
           <defs>
@@ -207,8 +217,15 @@ export function OrnateCard({
           <path d={`M${R - 10},648 V660 a4,4 0 0 1 -4,4 H${R - 26}`} fill="none" stroke={GOLD} strokeWidth="2" />
           <path d="M192,448 l8,-8 l8,8 l-8,8 Z" fill={GOLD_BRIGHT} />
 
-          {/* 选中：绿色外描边 */}
-          {selected && <rect x="5" y="5" width="390" height="690" rx="40" fill="none" stroke={GREEN} strokeWidth="5" />}
+          {/* 选中：金色外描边（深金托底 + 亮金芯 = 金属描边质感）。
+              原本是绿色，与米金牌面不搭（老板要求换金）。选中的立体感另由
+              wrapper 的暖金外发光 + PlayerHand 的 -12px 抬起共同表达。 */}
+          {selected && (
+            <>
+              <rect x="4" y="4" width="392" height="692" rx="42" fill="none" stroke={GOLD_DEEP} strokeWidth="7" />
+              <rect x="4" y="4" width="392" height="692" rx="42" fill="none" stroke={GOLD_LIT} strokeWidth="3" />
+            </>
+          )}
         </svg>
 
         {/* 知识牌拱区（上半）：默认=术语大字；swapKnowledge=定义正文（对调预览用） */}
