@@ -164,7 +164,10 @@ export function FilingProgressCard({
                       background: isDone
                         ? `linear-gradient(160deg, ${color}, ${color}cc)`
                         : 'rgba(255,255,255,0.45)',
-                      border: isDone ? `1px solid ${color}` : `1px dashed ${color}8c`,
+                      // 空位用 dotted 而不是 dashed：dashed 的線段長度是瀏覽器按
+                      // 邊框粗細算的，在 10px 的小方塊上一段就占掉小半條邊，太搶眼
+                      // （老闆反饋）。dotted 每段只有 1px，同樣是「虛的」但安靜得多。
+                      border: isDone ? `1px solid ${color}` : `1px dotted ${color}b3`,
                       boxShadow: isDone
                         ? `0 1px 2px rgba(96,72,38,0.28), inset 0 0 0 1px rgba(255,255,255,0.42)`
                         : undefined,
