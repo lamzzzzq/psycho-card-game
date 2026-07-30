@@ -13,19 +13,21 @@ import type { Locale } from '@/lib/i18n';
 // 所以這裏不能畫「2/3」那種進度，否則等於幫玩家數牌（規則要求玩家自己算）。
 //
 // 字號：每格自己是 container，直接用 cqw 跟着格子寬度動態變化。
-//   標題是吃滿整格寬的實色橫幅（不是圓角膠囊），左右只留 1.5cqw 內距 →
-//   可用寬度 ≈ 97cqw。en 最長「CONSCIENTIOUSNESS」17 個大寫字符 ≈ 13.4em
-//   → 97/13.4 ≈ 7.2cqw，取 7.0cqw 留餘量；上限 18px（格子 ~257px 封頂）。
-//   ⚠️ 刻意【不設下限】（老闆要求「一行不折、多小都行」）：手機一格 ~70px 時約 4.9px。
-//      若嫌太小，把 min(...) 換成 clamp(8px, ...) 即可，那時長詞會折成兩行。
-//   zh 名字都是 3 個字 ≈ 3.1em，寬鬆得多 → min(28cqw, 18px)。
+//   標題橫幅【左右內距為 0】——老闆要求字從格子最左邊就開始，把整個寬度用盡。
+//   可用寬度 = 100cqw。「CONSCIENTIOUSNESS」在 Noto Sans 粗體下 17 個大寫字符
+//   ≈ 11.7–12.5em（各字寬 0.34~0.80em），取 7.8cqw ≈ 91~98cqw，貼着邊但不溢出。
+//   上限 20px（格子 ~256px 封頂）。
+//   ⚠️ 刻意【不設下限】（老闆要求「一行不折、多小都行」）：手機一格 ~70px 時約 5.5px。
+//      安全網是 overflow-wrap:anywhere —— 萬一某個設備的字體比估算寬，
+//      它會折成兩行而不是溢出。真機看到折行就把 7.8 往下調。
+//   zh 名字都是 3 個字 ≈ 3.0em，寬鬆得多 → min(30cqw, 20px)。
 //
 // ⚠️ 溢出防線是 overflow-wrap: anywhere，不是 break-word：
 //    break-word 允許折行但【不縮小 min-content 寬度】，所以 shrink-to-fit 的角標
 //    會被撐到整個單詞那麼寬、直接頂出格子（桌面上就是這麼溢出的）。
 //    anywhere 才會把 min-content 算成「可以斷在任何位置」，盒子才肯縮。
-const NAME_FONT_EN = 'min(7cqw, 18px)';
-const NAME_FONT_ZH = 'min(28cqw, 18px)';
+const NAME_FONT_EN = 'min(7.8cqw, 20px)';
+const NAME_FONT_ZH = 'min(30cqw, 20px)';
 
 interface FilingProgressCardProps {
   locale?: Locale;
@@ -89,8 +91,8 @@ export function FilingProgressCard({
                 className="psy-sans block w-full font-bold uppercase leading-tight"
                 style={{
                   fontSize: en ? NAME_FONT_EN : NAME_FONT_ZH,
-                  letterSpacing: '0.01em',
-                  padding: 'min(2cqw, 5px) min(1.5cqw, 4px)',
+                  letterSpacing: '0',
+                  padding: 'min(2.2cqw, 6px) 0',
                   background: color,
                   color: '#2a1c06',
                   borderBottom: '1px solid rgba(154,116,72,0.35)',
@@ -104,13 +106,14 @@ export function FilingProgressCard({
               {/* 卡位：要幾張就幾格，居中。空 = 淡色描邊；滿 = 實色（該維度已歸檔）。 */}
               <span
                 className="flex flex-wrap items-center justify-center"
-                style={{ gap: 'min(1.8cqw, 3px)', padding: 'min(2.4cqw, 6px) 2px' }}
+                // 卡位區高度比原來厚一點（老闆要求），卡位本身也放大一档。
+                style={{ gap: 'min(2cqw, 4px)', padding: 'min(4cqw, 10px) 2px' }}
               >
                 {Array.from({ length: target }).map((_, i) => (
                   <span
                     key={i}
                     style={{
-                      width: 'min(9cqw, 13px)',
+                      width: 'min(10cqw, 15px)',
                       aspectRatio: '3 / 4',
                       borderRadius: 'min(2cqw, 2.5px)',
                       background: isDone ? color : `${color}14`,
