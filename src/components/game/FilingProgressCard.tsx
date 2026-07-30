@@ -13,19 +13,19 @@ import type { Locale } from '@/lib/i18n';
 // 所以這裏不能畫「2/3」那種進度，否則等於幫玩家數牌（規則要求玩家自己算）。
 //
 // 字號：每格自己是 container，直接用 cqw 跟着格子寬度動態變化。
-//   en 最長「CONSCIENTIOUSNESS」17 個大寫字符（含字距 ≈ 0.8em/字）→ 5.8cqw 保證單行放得下；
-//   上限 16px（格子寬到 ~276px 就封頂，再大字也不用跟着漲）。
-//   ⚠️ 刻意【不設下限】（老闆要求試「一行不折、多小都行」）：手機一格只有 ~69px，
-//      算出來只有 4px。若嫌太小，把 min(...) 換回 clamp(8px, ...) 即可，
-//      那時長詞會折成兩行。
-//   zh 名字都是 3 個字 ≈ 3.2em，寬鬆得多 → min(20cqw, 16px)。
+//   標題是吃滿整格寬的實色橫幅（不是圓角膠囊），左右只留 1.5cqw 內距 →
+//   可用寬度 ≈ 97cqw。en 最長「CONSCIENTIOUSNESS」17 個大寫字符 ≈ 13.4em
+//   → 97/13.4 ≈ 7.2cqw，取 7.0cqw 留餘量；上限 18px（格子 ~257px 封頂）。
+//   ⚠️ 刻意【不設下限】（老闆要求「一行不折、多小都行」）：手機一格 ~70px 時約 4.9px。
+//      若嫌太小，把 min(...) 換成 clamp(8px, ...) 即可，那時長詞會折成兩行。
+//   zh 名字都是 3 個字 ≈ 3.1em，寬鬆得多 → min(28cqw, 18px)。
 //
 // ⚠️ 溢出防線是 overflow-wrap: anywhere，不是 break-word：
 //    break-word 允許折行但【不縮小 min-content 寬度】，所以 shrink-to-fit 的角標
 //    會被撐到整個單詞那麼寬、直接頂出格子（桌面上就是這麼溢出的）。
 //    anywhere 才會把 min-content 算成「可以斷在任何位置」，盒子才肯縮。
-const NAME_FONT_EN = 'min(5.8cqw, 16px)';
-const NAME_FONT_ZH = 'min(20cqw, 16px)';
+const NAME_FONT_EN = 'min(7cqw, 18px)';
+const NAME_FONT_ZH = 'min(28cqw, 18px)';
 
 interface FilingProgressCardProps {
   locale?: Locale;
@@ -79,20 +79,21 @@ export function FilingProgressCard({
                 borderColor: isDone ? `${color}99` : 'rgba(154,116,72,0.26)',
                 boxShadow: isDone ? `inset 0 0 0 1px ${color}40` : undefined,
               }}
-              className="flex min-w-0 flex-col items-center gap-1 rounded-lg border px-1 py-1.5 text-center transition active:scale-95 sm:py-2"
+              className="flex min-w-0 flex-col items-stretch overflow-hidden rounded-lg border text-center transition active:scale-95"
               aria-label={`${name}${en ? `: needs ${target} cards, ${isDone ? 'filed' : 'not filed'}` : `：需要 ${target} 張，${isDone ? '已歸檔' : '未歸檔'}`}`}
             >
-              {/* 維度角標：與牌面上的角標同款（實色底 + 深色字 + 大寫） */}
+              {/* 維度標題：實色橫幅吃滿整格寬（老闆要求：不要圓角膠囊，字能用到 full width）。
+                  格子開了 overflow-hidden，橫幅上緣兩角就跟着格子的圓角走。 */}
               <span
                 lang={en ? 'en' : undefined}
-                className="psy-sans inline-flex max-w-full items-center justify-center rounded-full font-bold uppercase leading-tight"
+                className="psy-sans block w-full font-bold uppercase leading-tight"
                 style={{
                   fontSize: en ? NAME_FONT_EN : NAME_FONT_ZH,
-                  letterSpacing: en ? '0.02em' : '0.02em',
-                  padding: 'min(1.4cqw, 3px) min(3.5cqw, 8px)',
+                  letterSpacing: '0.01em',
+                  padding: 'min(2cqw, 5px) min(1.5cqw, 4px)',
                   background: color,
                   color: '#2a1c06',
-                  border: '1px solid rgba(154,116,72,0.45)',
+                  borderBottom: '1px solid rgba(154,116,72,0.35)',
                   hyphens: 'auto',
                   overflowWrap: 'anywhere',
                 }}
@@ -103,7 +104,7 @@ export function FilingProgressCard({
               {/* 卡位：要幾張就幾格，居中。空 = 淡色描邊；滿 = 實色（該維度已歸檔）。 */}
               <span
                 className="flex flex-wrap items-center justify-center"
-                style={{ gap: 'min(1.8cqw, 3px)' }}
+                style={{ gap: 'min(1.8cqw, 3px)', padding: 'min(2.4cqw, 6px) 2px' }}
               >
                 {Array.from({ length: target }).map((_, i) => (
                   <span
