@@ -18,14 +18,13 @@ import type { Locale } from '@/lib/i18n';
 // 所以這裏不能畫「2/3」那種進度，否則等於幫玩家數牌（規則要求玩家自己算）。
 //
 // 字號：每格自己是 container，用 cqw 跟着格子寬度動態變化。
-//   ① 字母只有 1 個字符 → 可以放得很大：min(30cqw, 22px)。
-//   ② 單詞改成首字母大寫（比全大寫窄約 30%）+ 下限 10px，手機上也讀得清；
-//      放不下全稱時由容器查詢換成縮寫（見 globals.css 的 [data-dim-word-*]）。
-//   ⚠️ 溢出防線是 overflow-wrap: anywhere，不是 break-word —— 後者允許折行但
-//      【不縮小 min-content 寬度】，shrink-to-fit 的盒子會被撐到整個單詞那麼寬、
-//      直接頂出格子。anywhere 才會讓盒子肯縮。
+//   ① 字母只有 1 個字符 → 可以放得很大：min(24cqw, 18px)。
+//   ② 單詞首字母大寫（比全大寫窄約 30%）+ 下限 9px；格子 ≤140px 換縮寫
+//      （容器查詢見 globals.css 的 [data-dim-word-*]）。
+//      【禁止換行】：縮寫尾巴那個「.」曾被甩到第二行（iPhone 8 一格只有 65px，
+//      10px 下差 1~2px 放不下）→ whiteSpace: nowrap + 下限降到 9px 一起解決。
 const LETTER_FONT = 'min(24cqw, 18px)';
-const WORD_FONT_EN = 'clamp(10px, 12cqw, 14px)';
+const WORD_FONT_EN = 'clamp(9px, 12cqw, 14px)';
 const WORD_FONT_ZH = 'clamp(11px, 20cqw, 15px)';
 
 // 窄格子用的英文縮寫（Openness 本來就短，不縮）。閾值在 globals.css：
@@ -125,8 +124,9 @@ export function FilingProgressCard({
                   color: meta.inkHex,
                   // 下方留白拉開（老闆：單詞跟卡位靠太近）
                   padding: 'min(2.4cqw, 6px) 2px min(3.6cqw, 9px)',
-                  hyphens: 'auto',
-                  overflowWrap: 'anywhere',
+                  // 禁止換行（老闆：縮寫的那個「.」被甩到第二行）。字號下限降到 9px：
+                  // iPhone 8 一格只有 ~65px，10px 下「Conscient.」差 1~2px 放不下才折的。
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {en ? (
@@ -142,10 +142,12 @@ export function FilingProgressCard({
               {/* 卡位：要幾張就幾格，居中。
                   空 = 虛線待放置位（與棄牌堆空態同一套視覺語言：虛線 = 這裏要放牌）；
                   滿 = 漸層實色 + 內圈白細線 + 投影，看起來像一張蓋在位上的牌
-                       （內圈細線呼應牌面的雙線金框；◈ 是牌背符號，窄格會隱藏）。 */}
+                       （內圈細線呼應牌面的雙線金框，◈ 是本項目的牌背符號）。
+                  尺寸按最擠的情況定：iPhone 8 一格 ~65px、某維度要 5 張時，
+                  5 個卡位 + 4 道間距 ≈ 57px，仍在 61px 可用寬度內。 */}
               <span
                 className="flex flex-wrap items-center justify-center"
-                style={{ gap: 'min(3cqw, 5px)', padding: '0 2px min(5cqw, 12px)' }}
+                style={{ gap: 'min(2.6cqw, 5px)', padding: '0 2px min(5cqw, 12px)' }}
               >
                 {Array.from({ length: target }).map((_, i) => (
                   <span
@@ -154,7 +156,7 @@ export function FilingProgressCard({
                     className="flex items-center justify-center leading-none"
                     style={{
                       // 4:7 = 真牌的比例，卡位長身站着更像一張牌（老闆：卡牌弄高一點）。
-                      width: 'min(17cqw, 21px)',
+                      width: 'min(15.5cqw, 21px)',
                       aspectRatio: '4 / 7',
                       borderRadius: 'min(2.4cqw, 3.5px)',
                       fontSize: 'min(7cqw, 11px)',
