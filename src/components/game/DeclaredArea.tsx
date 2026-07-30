@@ -15,9 +15,9 @@ interface DeclaredAreaProps {
   locale?: Locale;
   /** When present, the desktop card becomes a combined target/result panel. */
   targets?: Partial<Record<Dimension, number>>;
-  /** 桌面歸檔進度橫條左端的輪次 / 已完成文字（與移動端信息行同款）。只 targets 模式用。 */
+  /** 桌面歸檔進度橫條左端的輪次文字。只 targets 模式用。
+      （原本下面還有一行「已完成 n/5」，老闆要求去掉——右邊五維本身已經寫著歸檔狀態。） */
   roundText?: string;
-  doneText?: string;
   /** Nested mobile sheets need their detail overlay above the sheet itself. */
   overlayZIndex?: number;
   /** 有空间的容器（结算页玩家卡 / 移动弹窗）直接内联展开维度列表，不再套一层「歸檔記錄」卡中卡。 */
@@ -35,7 +35,6 @@ export function DeclaredArea({
   locale = 'zh',
   targets,
   roundText,
-  doneText,
   overlayZIndex,
   expanded = false,
   wide = false,
@@ -177,10 +176,9 @@ export function DeclaredArea({
           className="psy-panel psy-etched flex w-full items-stretch gap-2 rounded-[1.2rem] p-2"
           aria-label={locale === 'en' ? 'Filing progress' : '歸檔進度'}
         >
-          {(roundText || doneText) && (
-            <div className="flex shrink-0 flex-col justify-center gap-0.5 rounded-lg border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-2.5 py-1.5 lg:px-3">
-              {roundText && <span className="psy-serif whitespace-nowrap text-xs font-semibold leading-tight text-[var(--psy-accent-strong)] lg:text-sm">{roundText}</span>}
-              {doneText && <span className="whitespace-nowrap text-[10px] leading-tight text-[var(--psy-muted)] lg:text-xs">{doneText}</span>}
+          {roundText && (
+            <div className="flex shrink-0 items-center rounded-lg border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-2.5 py-1.5 lg:px-3">
+              <span className="psy-serif whitespace-nowrap text-xs font-semibold leading-tight text-[var(--psy-accent-strong)] lg:text-sm">{roundText}</span>
             </div>
           )}
           <div className="grid flex-1 grid-cols-5 gap-1 lg:gap-1.5">

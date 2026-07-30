@@ -754,7 +754,6 @@ export default function GamePage() {
             locale={locale}
             targets={targets}
             roundText={locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}
-            doneText={`${tg.doneLabel} ${humanPlayer.declaredSets.length}/5`}
           />
         </div>
 
