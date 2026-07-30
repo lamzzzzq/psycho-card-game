@@ -83,6 +83,18 @@ function getActionLabel(action: GameAction, locale: Locale): ActionLabel {
 export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80, inline = false, vertical = false }: GameLogProps) {
   const tg = STRINGS[locale].game;
   const [open, setOpen] = useState(false);
+
+  // ⚠️ 必須放在所有 early return 之前：下面 inline 模式會提前 return，
+  //    這個 useEffect 原本寫在那之後 → 條件調用 Hook，切換 inline 時 Hook
+  //    順序會錯位（react-hooks/rules-of-hooks 一直在報這條）。
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
   const recentActions = actions.slice(-5).reverse();
   const allActions = [...actions].reverse();
   const getPlayer = (id: string) => players.find((p) => p.id === id);
@@ -125,15 +137,6 @@ export function GameLog({ actions, players, locale = 'zh', overlayZIndex = 80, i
       <div className="space-y-2">{allActions.map(renderFullRow)}</div>
     );
   }
-
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open]);
 
   return (
     <>

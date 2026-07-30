@@ -244,7 +244,13 @@ export function OrnateCard({
             style={{
               color: isKnowledge && !swapKnowledge ? 'var(--psy-ink-soft)' : 'var(--psy-ink)',
               fontSize: isKnowledge ? `${swapKnowledge ? termFont : defFont}cqw` : (locale === 'en' ? '9.5cqw' : '10.5cqw'),
-              lineHeight: isKnowledge && !swapKnowledge ? 1.32 : 1.25,
+              lineHeight: isKnowledge && !swapKnowledge ? 1.32 : 1.26,
+              // paddingBottom 是給下沉筆畫（g/p/y）留的：-webkit-line-clamp 把盒子高度
+              // 卡死成「行數 × 行高」，最後一行的下沉部分正好被 overflow:hidden 切掉
+              // ——手機和桌面都會（老闆截圖裏 easily 的 y 就被切了）。
+              // 用 em 而不是 cqw：它跟着字號走，卡片多大都留同樣比例的餘量。
+              // 上面拱區的術語早就補過同樣的 padding。
+              paddingBottom: '0.22em',
               display: '-webkit-box', WebkitLineClamp: isKnowledge ? (swapKnowledge ? 4 : defClamp) : 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
             }}
           >
