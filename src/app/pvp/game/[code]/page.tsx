@@ -36,6 +36,7 @@ import { DrawPile } from '@/components/game/DrawPile';
 import { DiscardPile } from '@/components/game/DiscardPile';
 import { GameLog } from '@/components/game/GameLog';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
+import { FilingProgressCard } from '@/components/game/FilingProgressCard';
 import { GameOverModal } from '@/components/game-results/GameOverModal';
 import { TarotCard } from '@/components/game/TarotCard';
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
@@ -862,44 +863,14 @@ export default function PvpGamePage() {
               （見下方 Hand + Declared 前的錨點），不再插進文檔流把手牌往下推。 */}
           {/* Big Five 分数条已移除（桌面端与目标板重复、单机也没有；老板要求）。 */}
 
-          {/* Targets */}
-          {targets && (
-            <div className="hidden items-center justify-center gap-1.5 flex-wrap sm:flex">
-              {DIMENSIONS.map(d => {
-                const isDone = declaredDims.has(d);
-                return (
-                  <div
-                    key={d}
-                    className="flex items-center gap-1 rounded-full px-2 py-0.5"
-                    style={{
-                      backgroundColor: isDone ? 'rgba(195,154,82,0.18)' : '#fdf8f1',
-                      border: `1px solid ${isDone ? 'rgba(154,116,72,0.45)' : 'rgba(154,116,72,0.16)'}`,
-                    }}
-                  >
-                    <span className="text-[9px]" style={{ color: isDone ? 'var(--psy-accent)' : 'var(--psy-muted)' }}>
-                      {dimName(d)}
-                    </span>
-                    <span
-                      className="text-[10px] font-medium"
-                      style={{ color: isDone ? 'var(--psy-accent)' : 'var(--psy-ink-soft)' }}
-                    >
-                      {isDone ? '✓' : (locale === 'en' ? `${targets[d]} cards` : `${targets[d]}張`)}
-                    </span>
-                  </div>
-                );
-              })}
-              <div className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-2 py-0.5">
-                <span className="text-[9px] text-[var(--psy-muted)]">{t.done} </span>
-                <span className="text-[10px] font-medium text-[var(--psy-success)]">{mePlayer.declaredSets.length}/5</span>
-              </div>
-            </div>
-          )}
-
-          <div className="flex shrink-0 flex-col gap-1.5 sm:hidden">
-            {/* 回合信息 + 記錄 合并一行（人格/歸檔入口已移除：下方 5 维 pill 本身即人格展示，点击=展开归档）。 */}
-            <div className="flex items-center gap-1.5">
-              <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-3 py-1.5 text-xs text-[var(--psy-ink-soft)]">
-                <span className="psy-serif shrink-0 font-semibold text-[var(--psy-accent-strong)]">{locale === 'en' ? `${t.roundUnit} ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''}` : `第 ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''} 輪`}</span>
+          {/* 回合信息 + 5 維歸檔進度：與單機共用 FilingProgressCard（老闆：PVP 與單機
+              永遠保持一致），PC 與移動端也是同一套。原本桌面是一排小 pill、移動端
+              是另一套 5 格，兩份都已換成這個。 */}
+          <FilingProgressCard
+            locale={locale}
+            roundText={locale === 'en' ? `${t.roundUnit} ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''}` : `第 ${gameState.currentRound}${gameState.totalRounds > 0 ? `/${gameState.totalRounds}` : ''} 輪`}
+            info={
+              <>
                 <span className="flex min-w-0 items-center gap-0.5">
                   {isMyTurn ? (
                     <span className="truncate font-medium text-[var(--psy-accent)]">{t.yourTurnShort}</span>
@@ -911,34 +882,12 @@ export default function PvpGamePage() {
                   )}
                 </span>
                 <span className="ml-auto shrink-0 font-medium">{t.doneLabel} {mePlayer.declaredSets.length}/5</span>
-              </div>
-            </div>
-            {/* 5 维人格 pill：点击展开该玩家归档（模态居中）；实底加深、字加大，替代原独立人格/归档入口。 */}
-            {targets && (
-              <div className="grid grid-cols-5 gap-1.5" aria-label={locale === 'en' ? 'Filing progress' : '歸檔進度'}>
-                {DIMENSIONS.map((d) => {
-                  const isDone = declaredDims.has(d);
-                  return (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setMobileSheet('declared')}
-                      className={`flex min-w-0 flex-col items-center gap-0.5 rounded-lg border px-0.5 py-1.5 text-center transition active:scale-95 ${isDone ? 'border-[rgba(111,143,85,0.5)] bg-[rgba(111,143,85,0.18)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.3)] bg-[#f0e6d2] text-[var(--psy-ink)]'}`}
-                    >
-                      {/* 英文維度名全寫（同單機）：9px + lang="en" 連字符斷行才放得下長詞。 */}
-                      <span
-                        lang={locale === 'en' ? 'en' : undefined}
-                        className={`font-bold leading-tight ${locale === 'en' ? 'text-[9px] hyphens-auto break-words' : 'text-[11px]'}`}
-                      >
-                        {dimName(d)}
-                      </span>
-                      <span className="text-[8px] font-medium leading-tight opacity-90">{locale === 'en' ? `${targets[d]} · ${isDone ? 'Filed' : 'Not Filed'}` : `目標${targets[d]}張 ${isDone ? '已歸檔' : '未歸檔'}`}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+              </>
+            }
+            targets={targets ?? {}}
+            declaredDims={declaredDims}
+            onOpenArchive={() => setMobileSheet('declared')}
+          />
 
           {/* ── 懸浮操作層 ─────────────────────────────────────────────
               罰停橫幅 / 搶牌窗 / 查看 / 碰意圖面板全部懸浮在操作排上方
@@ -1241,11 +1190,9 @@ export default function PvpGamePage() {
           )}
           </div>
 
-          {/* Hand + Declared */}
+          {/* Hand —— 手牌吃滿整寬。原本左側還有一張「歸檔記錄」小卡，單機已經去掉了
+              （歸檔進度統一由上方 FilingProgressCard 表達，點格子看詳情），PVP 同步去掉。 */}
           <div className="flex flex-1 items-start justify-center gap-3 sm:gap-4">
-            <div className="hidden flex-shrink-0 sm:block">
-              <DeclaredArea declaredSets={mePlayer.declaredSets} locale={locale} />
-            </div>
             <div ref={handAreaRef} className="flex-1 min-w-0 overflow-visible">
               <PlayerHand
                 cards={mePlayer.hand}
@@ -1299,14 +1246,17 @@ export default function PvpGamePage() {
               </div>
             </div>
           </MobileGameSheet>
-          <MobileGameSheet
+          {/* 歸檔詳情：直接用 PsyOverlayPanel（不走 MobileGameSheet）——後者帶
+              hideAbove="sm"，桌面上點 5 維格子會什麼都不彈。與單機同樣處理。 */}
+          <PsyOverlayPanel
             title={t.sheetDeclaredTitle}
             open={mobileSheet === 'declared'}
             onClose={() => setMobileSheet(null)}
+            locale={locale}
             variant="centered"
           >
             {mePlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={mePlayer.declaredSets} locale={locale} overlayZIndex={98} expanded /> : <p className="text-sm text-[var(--psy-muted)]">{t.noArchiveYet}</p>}
-          </MobileGameSheet>
+          </PsyOverlayPanel>
           <MobileGameSheet
             title={t.sheetLogTitle}
             open={mobileSheet === 'log'}

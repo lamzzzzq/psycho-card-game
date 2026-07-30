@@ -30,6 +30,7 @@ import { GameOverModal } from '@/components/game-results/GameOverModal';
 import { FlyingCard } from '@/components/game/FlyingCard';
 import { PongPanel } from '@/components/game/PongPanel';
 import { DeclaredArea } from '@/components/game/DeclaredArea';
+import { FilingProgressCard } from '@/components/game/FilingProgressCard';
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
 import { HowToPlayButton } from '@/components/game/HowToPlayButton';
@@ -547,44 +548,21 @@ export default function GamePage() {
       <div className="mt-2 flex flex-1 flex-col space-y-2 p-1 sm:mt-3 sm:space-y-3 sm:p-1.5">
         {/* 罰停橫幅 / 碰窗 / 查看 / 碰意圖面板已全部移入手牌上方的懸浮層
             （見下方 Hand + Declared 區），不再插進文檔流把手牌往下推。 */}
-        {/* 回合信息 + 5 維歸檔進度：PC 與移動端同一套排版（老闆要求 PC 照搬移動端設計）。
-            外面套一張卡把兩行托住 → 玩家看得出這兩行是同一組信息。
-            桌面只把字號抬一档（原本 11/8px 在大屏上偏小，同事反饋過）。 */}
-        <div className="psy-panel psy-etched flex shrink-0 flex-col gap-1.5 rounded-[1.2rem] p-1.5 sm:gap-2 sm:p-2">
-          {/* 第一行：輪次 + 右側提示（棄牌階段顯示「先圈定要棄的牌」，否則顯示已完成張數）。 */}
-          <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-3 py-1.5 text-xs text-[var(--psy-ink-soft)] sm:text-sm">
-            <span className="psy-serif shrink-0 font-semibold text-[var(--psy-accent-strong)]">{locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}</span>
-            {isHumanTurn && isDiscarding && !viewMode && !pongIntent && discardPickId === null ? (
+        {/* 回合信息 + 5 維歸檔進度：PC 與移動端、單機與 PVP 全部共用 FilingProgressCard。 */}
+        <FilingProgressCard
+          locale={locale}
+          roundText={locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}
+          info={
+            isHumanTurn && isDiscarding && !viewMode && !pongIntent && discardPickId === null ? (
               <span className="ml-auto truncate font-medium text-[var(--psy-accent)]">{tg.pickDiscard}</span>
             ) : (
               <span className="ml-auto truncate font-medium">{tg.doneLabel} {humanPlayer.declaredSets.length}/5</span>
-            )}
-          </div>
-          {/* 第二行：5 维人格 pill，点击展开归档（居中模态）。 */}
-          <div className="grid grid-cols-5 gap-1.5" aria-label={locale === 'en' ? 'Filing progress' : '歸檔進度'}>
-            {DIMENSIONS.map((dimension) => {
-              const done = declaredDims.has(dimension);
-              return (
-                <button
-                  key={dimension}
-                  type="button"
-                  onClick={() => setMobileSheet('declared')}
-                  className={`flex min-w-0 flex-col items-center gap-0.5 rounded-lg border px-0.5 py-1.5 text-center transition active:scale-95 sm:py-2 ${done ? 'border-[rgba(111,143,85,0.5)] bg-[rgba(111,143,85,0.18)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.3)] bg-[#f0e6d2] text-[var(--psy-ink)]'}`}
-                >
-                  {/* 英文維度名全寫（同事反饋單字母 O/C/E/A/N 看不懂）：手機 5 欄窄格放不下
-                      Conscientiousness → 字號降到 9px + lang="en" 開連字符斷行；桌面夠寬，正常字號。 */}
-                  <span
-                    lang={locale === 'en' ? 'en' : undefined}
-                    className={`font-bold leading-tight ${locale === 'en' ? 'text-[9px] hyphens-auto break-words sm:text-[13px]' : 'text-[11px] sm:text-sm'}`}
-                  >
-                    {dimName(dimension)}
-                  </span>
-                  <span className="text-[8px] font-medium leading-tight opacity-90 sm:text-[11px]">{locale === 'en' ? `${targets[dimension]} · ${done ? 'Filed' : 'Not Filed'}` : `目標${targets[dimension]}張 ${done ? '已歸檔' : '未歸檔'}`}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+            )
+          }
+          targets={targets}
+          declaredDims={declaredDims}
+          onOpenArchive={() => setMobileSheet('declared')}
+        />
 
         {/* ── 懸浮操作層 ─────────────────────────────────────────────
             罰停橫幅 / 碰窗 / 查看 / 碰意圖面板全部懸浮在操作排上方
@@ -816,12 +794,13 @@ export default function GamePage() {
               <span className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2 text-xs text-[var(--psy-muted)]">{tg.viewUsed}</span>
             )}
 
-            {isHumanTurn && isDiscarding && !viewMode && !pongIntent && (
-              // 仅提示无按钮(discardPickId===null)时：窄屏(<sm)隐藏空胶囊——提示改在下方回合行显示；
-              // sm+ 正常显示带文字的 pill。有取消/提交按钮时始终显示。
-              <div className={`min-w-0 items-center gap-2 rounded-full border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-3 py-1.5 ${discardPickId === null ? 'hidden sm:flex' : 'flex'}`}>
+            {/* 只在「已圈定要棄的牌」時才出這條胶囊（確認提示 + 取消/提交）。
+                未圈定時原本這裏也顯示「先圈定要棄的牌」，與上方回合行那句一模一樣
+                （老闆：重複了）→ 整條不渲染。 */}
+            {isHumanTurn && isDiscarding && !viewMode && !pongIntent && discardPickId !== null && (
+              <div className="flex min-w-0 items-center gap-2 rounded-full border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-3 py-1.5">
                 <span className="hidden max-w-[15rem] truncate text-xs text-[var(--psy-muted)] sm:inline">
-                  {discardPickId === null ? tg.pickDiscard : tg.confirmDiscardHint}
+                  {tg.confirmDiscardHint}
                 </span>
                 {discardPickId !== null && (
                   <>
