@@ -584,7 +584,10 @@ export default function GamePage() {
             （h-0 錨點 + absolute bottom 錨定；錨點必須在操作排之前——
             否則面板會蓋住排裏的截胡/查看/AI回合按鈕），蓋住牌桌中央而不佔文檔流
             —— 手牌位置在任何窗口彈出時都紋絲不動（牌類手游慣例做法）。 */}
-        <div className="relative z-30 h-0 overflow-visible">
+        {/* sm:mb-0：錨點自身 h-0，但 space-y 會給它挂一格 margin-bottom，
+            在桌面上白白撐開牌桌與歸檔進度橫條之間的間距。移動端不動（那格是
+            信息行與操作排之間的正常間距）。 */}
+        <div className="relative z-30 h-0 overflow-visible sm:mb-0">
           <div className="pointer-events-none absolute inset-x-0 bottom-1 flex flex-col items-center">
             <div className="pointer-events-auto w-full max-w-xl space-y-2 px-1">
 

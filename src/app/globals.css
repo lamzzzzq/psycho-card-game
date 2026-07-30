@@ -404,13 +404,14 @@ a:focus-visible,
   html {
     cursor: url('/cursor-arrow.svg') 4 4, auto;
   }
-  /* 可点击元素：品牌纸飞机光标（回退 pointer） */
+  /* 可点击元素：品牌开手光标（回退 pointer）。
+     原本是纸飞机，与卡牌的抓取手同页并存 → 一个页面两种悬停光标，已统一成手（老板要求）。 */
   a, button, [role="button"], summary, label[for],
   .psy-btn, .psy-tile,
   input[type="checkbox"], input[type="radio"], select {
-    cursor: url('/cursor-pointer.svg') 2 2, pointer;
+    cursor: url('/cursor-grab.svg') 11 7, pointer;
   }
-  /* 可交互卡片：品牌抓取手（悬停 grab / 按下 grabbing），回退系统 grab */
+  /* 可交互卡片：同一只手，多一个按下态（悬停 grab / 按下 grabbing），回退系统 grab */
   .psy-grab {
     cursor: url('/cursor-grab.svg') 11 7, grab;
   }
