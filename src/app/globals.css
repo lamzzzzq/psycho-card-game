@@ -408,6 +408,15 @@ a:focus-visible,
   [data-dim-word-abbr] { display: inline; }
 }
 
+/* 卡位中央的牌背符号 ◈：格子窄时（手机）藏起来——那尺寸下它只是一个糊点，
+   反而把「空位/满位」的形状读糊了。桌面上留着，填满的卡位才像一张真的牌。
+   同理，空卡位的虚线在 8px 宽的小格上只剩四个点、糊成一团 → 窄格改回实线，
+   「待放置」的语义在手机上靠淡底 + 淡描边表达就够了。 */
+@container (max-width: 110px) {
+  [data-dim-slot-mark] { display: none; }
+  [data-dim-slot] { border-style: solid !important; }
+}
+
 /* ── 结算页专属动效 ─────────────────────────────────────────────
    只作用在带 data-psy-wobble 的容器 / .psy-trophy·.psy-sparkle 上，
    牌桌上的手牌与其它页面不受影响（结算页 GameOverModal 自己挂）。 */

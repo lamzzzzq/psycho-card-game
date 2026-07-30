@@ -24,7 +24,7 @@ import type { Locale } from '@/lib/i18n';
 //   ⚠️ 溢出防線是 overflow-wrap: anywhere，不是 break-word —— 後者允許折行但
 //      【不縮小 min-content 寬度】，shrink-to-fit 的盒子會被撐到整個單詞那麼寬、
 //      直接頂出格子。anywhere 才會讓盒子肯縮。
-const LETTER_FONT = 'min(30cqw, 22px)';
+const LETTER_FONT = 'min(24cqw, 18px)';
 const WORD_FONT_EN = 'clamp(10px, 12cqw, 14px)';
 const WORD_FONT_ZH = 'clamp(11px, 20cqw, 15px)';
 
@@ -105,7 +105,7 @@ export function FilingProgressCard({
                 style={{
                   fontSize: LETTER_FONT,
                   letterSpacing: '0.02em',
-                  padding: 'min(2.6cqw, 7px) 0',
+                  padding: 'min(2.2cqw, 6px) 0',
                   background: color,
                   color: meta.onAccentHex,
                   borderBottom: `1px solid ${color}`,
@@ -123,7 +123,8 @@ export function FilingProgressCard({
                 style={{
                   fontSize: en ? WORD_FONT_EN : WORD_FONT_ZH,
                   color: meta.inkHex,
-                  padding: 'min(2.4cqw, 6px) 2px min(1.2cqw, 3px)',
+                  // 下方留白拉開（老闆：單詞跟卡位靠太近）
+                  padding: 'min(2.4cqw, 6px) 2px min(3.6cqw, 9px)',
                   hyphens: 'auto',
                   overflowWrap: 'anywhere',
                 }}
@@ -138,24 +139,36 @@ export function FilingProgressCard({
                 )}
               </span>
 
-              {/* 卡位：要幾張就幾格，居中。空 = 淡色描邊；滿 = 實色（該維度已歸檔）。 */}
+              {/* 卡位：要幾張就幾格，居中。
+                  空 = 虛線待放置位（與棄牌堆空態同一套視覺語言：虛線 = 這裏要放牌）；
+                  滿 = 漸層實色 + 內圈白細線 + 投影，看起來像一張蓋在位上的牌
+                       （內圈細線呼應牌面的雙線金框；◈ 是牌背符號，窄格會隱藏）。 */}
               <span
                 className="flex flex-wrap items-center justify-center"
-                // 卡位區高度比原來厚一點（老闆要求「卡片再高一點」），卡位本身也放大一档。
-                style={{ gap: 'min(2cqw, 4px)', padding: '0 2px min(5cqw, 12px)' }}
+                style={{ gap: 'min(2.4cqw, 5px)', padding: '0 2px min(5cqw, 12px)' }}
               >
                 {Array.from({ length: target }).map((_, i) => (
                   <span
                     key={i}
+                    data-dim-slot
+                    className="flex items-center justify-center leading-none"
                     style={{
-                      width: 'min(10cqw, 15px)',
+                      width: 'min(12cqw, 19px)',
                       aspectRatio: '3 / 4',
-                      borderRadius: 'min(2cqw, 2.5px)',
-                      background: isDone ? color : 'rgba(255,255,255,0.55)',
-                      border: `1px solid ${isDone ? color : `${color}8c`}`,
-                      boxShadow: isDone ? 'inset 0 1px 0 rgba(255,255,255,0.3)' : undefined,
+                      borderRadius: 'min(2cqw, 3px)',
+                      fontSize: 'min(6cqw, 10px)',
+                      color: isDone ? 'rgba(255,255,255,0.9)' : `${color}99`,
+                      background: isDone
+                        ? `linear-gradient(160deg, ${color}, ${color}cc)`
+                        : 'rgba(255,255,255,0.45)',
+                      border: isDone ? `1px solid ${color}` : `1px dashed ${color}8c`,
+                      boxShadow: isDone
+                        ? `0 1px 2px rgba(96,72,38,0.28), inset 0 0 0 1px rgba(255,255,255,0.42)`
+                        : undefined,
                     }}
-                  />
+                  >
+                    <span data-dim-slot-mark>◈</span>
+                  </span>
                 ))}
               </span>
             </button>
