@@ -571,8 +571,15 @@ export default function GamePage() {
                   onClick={() => setMobileSheet('declared')}
                   className={`flex min-w-0 flex-col items-center gap-0.5 rounded-lg border px-0.5 py-1.5 text-center transition active:scale-95 ${done ? 'border-[rgba(111,143,85,0.5)] bg-[rgba(111,143,85,0.18)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.3)] bg-[#f0e6d2] text-[var(--psy-ink)]'}`}
                 >
-                  <span className="text-[11px] font-bold leading-tight">{locale === 'en' ? dimension : dimName(dimension)}</span>
-                  <span className="text-[8px] font-medium leading-tight opacity-90">{locale === 'en' ? `${targets[dimension]} · ${done ? 'Done' : 'Open'}` : `目標${targets[dimension]}張 ${done ? '已歸檔' : '未歸檔'}`}</span>
+                  {/* 英文維度名全寫（同事反饋單字母 O/C/E/A/N 看不懂）：5 欄窄格放不下
+                      Conscientiousness → 字號降到 9px + lang="en" 開連字符斷行。 */}
+                  <span
+                    lang={locale === 'en' ? 'en' : undefined}
+                    className={`font-bold leading-tight ${locale === 'en' ? 'text-[9px] hyphens-auto break-words' : 'text-[11px]'}`}
+                  >
+                    {dimName(dimension)}
+                  </span>
+                  <span className="text-[8px] font-medium leading-tight opacity-90">{locale === 'en' ? `${targets[dimension]} · ${done ? 'Filed' : 'Not Filed'}` : `目標${targets[dimension]}張 ${done ? '已歸檔' : '未歸檔'}`}</span>
                 </button>
               );
             })}

@@ -86,7 +86,13 @@ export function PongPanel({
               key={dimension}
               className={`flex min-w-0 flex-col items-center gap-0.5 rounded-md border px-1 py-1 text-center tabular-nums sm:py-1.5 ${done ? 'border-[rgba(154,116,72,0.1)] bg-[rgba(154,116,72,0.04)] text-[var(--psy-muted)] line-through' : 'border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] text-[var(--psy-ink-soft)]'}`}
             >
-              <span className="text-[9px] font-semibold leading-tight sm:text-[11px]">{locale === 'en' ? dimension : dimName(dimension)}</span>
+              {/* 英文維度名全寫（同事反饋單字母看不懂）：窄格用 8px + 連字符斷行。 */}
+              <span
+                lang={locale === 'en' ? 'en' : undefined}
+                className={`font-semibold leading-tight ${locale === 'en' ? 'text-[8px] hyphens-auto break-words sm:text-[10px]' : 'text-[9px] sm:text-[11px]'}`}
+              >
+                {dimName(dimension)}
+              </span>
               <span className="text-[8px] leading-none opacity-90 sm:text-[10px]">{locale === 'en' ? `${targets[dimension]}` : `目標 ${targets[dimension]} 張`}</span>
             </div>
           );

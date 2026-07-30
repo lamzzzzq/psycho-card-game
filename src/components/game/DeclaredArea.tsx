@@ -191,7 +191,7 @@ export function DeclaredArea({
                   <span className="psy-serif min-w-0 text-xs font-medium leading-tight text-[var(--psy-ink)] lg:text-sm">{dimName(dimension)}</span>
                   <span className="shrink-0 text-right text-[10px] leading-4 lg:text-[11px]">
                     <span className="block whitespace-nowrap text-[var(--psy-muted)]">{locale === 'en' ? `Target ${target}` : `目標 ${target} 張`}</span>
-                    <span className={`block whitespace-nowrap ${isDone ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-ink-soft)]'}`}>{isDone ? (locale === 'en' ? 'Filed' : '已歸檔') : (locale === 'en' ? 'Not filed' : '未歸檔')}</span>
+                    <span className={`block whitespace-nowrap ${isDone ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-ink-soft)]'}`}>{isDone ? (locale === 'en' ? 'Filed' : '已歸檔') : (locale === 'en' ? 'Not Filed' : '未歸檔')}</span>
                   </span>
                 </>
               );

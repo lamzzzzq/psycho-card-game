@@ -763,7 +763,7 @@ export const STRINGS = {
       enter4Code: 'Please enter a 4-digit room code',
       createFailed: 'Failed to create room',
       joinFailed: 'Failed to join room',
-      deckBigFiveSub: 'Dimensional Personality Model ・ OCEAN',
+      deckBigFiveSub: '5-Dimensional Personality Model • OCEAN',
       deckHexacoName: 'HEXACO',
       deckHexacoSub: '6-Dimensional Personality Model • Adds Honesty-Humility',
       deckCpaiName: 'CPAI-2',

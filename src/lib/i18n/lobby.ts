@@ -41,7 +41,8 @@ export const LOBBY_T = {
       backHome: '← Back home',
     },
     backHome: '← Back home',
-    title: 'Single Player',
+    // 與首頁入口 single: 'Play Solo' 統一（同事反饋 not "Single Player"）。
+    title: 'Play Solo',
     subtitle: 'Set your parameters and prepare for the personality battle.',
     difficultyLabel: 'AI difficulty',
     difficultyOptions: [

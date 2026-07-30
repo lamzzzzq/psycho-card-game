@@ -1052,7 +1052,7 @@ function DiagramFrame({ caption, children }: { caption?: string; children: React
 }
 
 // 每條規則下的示意圖。flex-wrap 自適應：桌面 2 欄、手機 1 欄都不擠。
-function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
+function RuleDiagram({ index, s, dimName }: { index: number; s: TutStrings; dimName: DimName }) {
   const c = DIMENSION_META.E.colorHex; // 示例維度用外向性 E 的主題色
   const danger = '#d66a4f'; // 罰停／亮牌的紅
 
@@ -1070,7 +1070,9 @@ function RuleDiagram({ index, s }: { index: number; s: TutStrings }) {
                   className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
                   style={{ color: m.colorHex, background: m.colorHex + '20', border: `1px solid ${m.colorHex}66` }}
                 >
-                  <span>{d}</span>
+                  {/* 維度名全寫，不再只給 O/C/E/A/N 單字母（同事反饋看不懂）。
+                      這裏是 flex-wrap 的示意圖，長名字自然折行，不會擠爆。 */}
+                  <span>{dimName(d)}</span>
                   <span>{sample[d]}</span>
                 </span>
               );
@@ -1569,7 +1571,7 @@ export default function TutorialPage() {
                     <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[var(--psy-ink-soft)]">
                       {step.body}
                     </p>
-                    <RuleDiagram index={i} s={s} />
+                    <RuleDiagram index={i} s={s} dimName={dimName} />
                     {step.hint && (
                       <p className="mt-3 rounded-lg border border-[rgba(200,155,93,0.18)] bg-[rgba(200,155,93,0.06)] px-3 py-2 text-xs text-[var(--psy-accent)]">
                         💡 {step.hint}

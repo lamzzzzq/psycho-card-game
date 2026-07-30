@@ -925,8 +925,14 @@ export default function PvpGamePage() {
                       onClick={() => setMobileSheet('declared')}
                       className={`flex min-w-0 flex-col items-center gap-0.5 rounded-lg border px-0.5 py-1.5 text-center transition active:scale-95 ${isDone ? 'border-[rgba(111,143,85,0.5)] bg-[rgba(111,143,85,0.18)] text-[var(--psy-success)]' : 'border-[rgba(154,116,72,0.3)] bg-[#f0e6d2] text-[var(--psy-ink)]'}`}
                     >
-                      <span className="text-[11px] font-bold leading-tight">{locale === 'en' ? d : dimName(d)}</span>
-                      <span className="text-[8px] font-medium leading-tight opacity-90">{locale === 'en' ? `${targets[d]} · ${isDone ? 'Done' : 'Open'}` : `目標${targets[d]}張 ${isDone ? '已歸檔' : '未歸檔'}`}</span>
+                      {/* 英文維度名全寫（同單機）：9px + lang="en" 連字符斷行才放得下長詞。 */}
+                      <span
+                        lang={locale === 'en' ? 'en' : undefined}
+                        className={`font-bold leading-tight ${locale === 'en' ? 'text-[9px] hyphens-auto break-words' : 'text-[11px]'}`}
+                      >
+                        {dimName(d)}
+                      </span>
+                      <span className="text-[8px] font-medium leading-tight opacity-90">{locale === 'en' ? `${targets[d]} · ${isDone ? 'Filed' : 'Not Filed'}` : `目標${targets[d]}張 ${isDone ? '已歸檔' : '未歸檔'}`}</span>
                     </button>
                   );
                 })}
@@ -1007,7 +1013,12 @@ export default function PvpGamePage() {
                         key={d}
                         className={`flex min-w-0 flex-col items-center gap-0.5 rounded-md border px-1 py-1 text-center tabular-nums sm:py-1.5 ${done ? 'border-[rgba(154,116,72,0.1)] bg-[rgba(154,116,72,0.04)] text-[var(--psy-muted)] line-through' : 'border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] text-[var(--psy-ink-soft)]'}`}
                       >
-                        <span className="text-[9px] font-semibold leading-tight sm:text-[11px]">{locale === 'en' ? d : dimName(d)}</span>
+                        <span
+                          lang={locale === 'en' ? 'en' : undefined}
+                          className={`font-semibold leading-tight ${locale === 'en' ? 'text-[8px] hyphens-auto break-words sm:text-[10px]' : 'text-[9px] sm:text-[11px]'}`}
+                        >
+                          {dimName(d)}
+                        </span>
                         <span className="text-[8px] leading-none opacity-90 sm:text-[10px]">{locale === 'en' ? `${targets[d]}` : `目標 ${targets[d]} 張`}</span>
                       </div>
                     );

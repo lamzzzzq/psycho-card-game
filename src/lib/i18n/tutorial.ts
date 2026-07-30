@@ -570,11 +570,11 @@ export const TUTORIAL_T = {
 
     // ── FlowScreenshot (static mockups) ──
     shotPvpTitle: 'Online Flow Mockup',
-    shotSoloTitle: 'Single-Player Flow Mockup',
+    shotSoloTitle: 'Solo Flow Mockup',
     shotStaticBadge: 'Static mockup',
     shotProductName: 'Personalities Mahjong',
     shotPvp: 'Online Match',
-    shotSolo: 'Single Player',
+    shotSolo: 'Play Solo',
     shotStudentId: 'Student ID',
     shotStartAssessBtn: 'Start Assessment',
     shotHomeHint: 'The sole entry point on your first visit',
