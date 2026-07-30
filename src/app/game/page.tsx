@@ -515,12 +515,8 @@ export default function GamePage() {
           ))}
         </div>
 
-        {/* 回合数（桌面）：中央行两栏布局无处放轮次，这里补一枚居中 chip；移动端已在下方信息行显示，故 md 才顯示。 */}
-        <div className="mt-3 hidden justify-center md:flex">
-          <span className="psy-serif rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-4 py-1 text-sm text-[var(--psy-ink-soft)] shadow-[0_8px_18px_rgba(96,72,38,0.08)]">
-            {locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}
-          </span>
-        </div>
+        {/* 桌面輪次原本在這裏補一枚居中 chip；現已合進下方「歸檔進度」橫條左端
+            （與移動端信息行一致），不再重複顯示。 */}
 
         {/* Center: 抽牌 + 弃牌 + 行动记录 三张竖卡并排，同尺寸同风格；mobile/desktop 一致（用户反馈） */}
         <div className="mt-3 flex items-start justify-center gap-3 rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] p-3 sm:mt-4 sm:gap-6 sm:p-4">
@@ -746,6 +742,19 @@ export default function GamePage() {
           </div>
         </div>
 
+        {/* 歸檔進度（桌面）：橫條，貼在操作排上方，排版與移動端信息行一致
+            （同事反饋原本手牌左側的竖排面板在電腦上偏小）。錨點之後 → 不會被
+            碰窗/罰停浮層蓋住。 */}
+        <div className="hidden shrink-0 sm:block">
+          <DeclaredArea
+            declaredSets={humanPlayer.declaredSets}
+            locale={locale}
+            targets={targets}
+            roundText={locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}
+            doneText={`${tg.doneLabel} ${humanPlayer.declaredSets.length}/5`}
+          />
+        </div>
+
         {/* Action buttons — 恆佔一行高度（min-h）：按鈕隨回合出現/消失時
             手牌不再上下跳。面板打開時內容隱藏但行高保留。 */}
         <div className="flex min-h-[46px] shrink-0 flex-wrap items-center justify-center gap-2 sm:flex-nowrap sm:gap-3">
@@ -859,13 +868,6 @@ export default function GamePage() {
 
         {/* Hand + Declared cards */}
         <div className="flex flex-1 items-start justify-center gap-3 sm:gap-4">
-          <div className="hidden flex-shrink-0 sm:block">
-            <DeclaredArea
-              declaredSets={humanPlayer.declaredSets}
-              locale={locale}
-              targets={targets}
-            />
-          </div>
           <div ref={handAreaRef} className="flex-1 min-w-0 overflow-visible">
             <PlayerHand
               cards={humanPlayer.hand}
@@ -898,9 +900,7 @@ export default function GamePage() {
 
         {isHumanActive && (
           <div className="hidden items-center justify-center gap-2 sm:flex">
-            {canDraw && (
-              <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">{tg.clickToDraw}</p>
-            )}
+            {/* 「點擊牌堆抽一張牌」已移除：移動端沒有這句，牌堆本身已有手指提示動畫（同事反饋）。 */}
             {isDiscarding && !game.drawnCard && (
               <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">
                 {tg.pongDoneDiscard}

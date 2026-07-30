@@ -15,6 +15,9 @@ interface DeclaredAreaProps {
   locale?: Locale;
   /** When present, the desktop card becomes a combined target/result panel. */
   targets?: Partial<Record<Dimension, number>>;
+  /** 桌面歸檔進度橫條左端的輪次 / 已完成文字（與移動端信息行同款）。只 targets 模式用。 */
+  roundText?: string;
+  doneText?: string;
   /** Nested mobile sheets need their detail overlay above the sheet itself. */
   overlayZIndex?: number;
   /** 有空间的容器（结算页玩家卡 / 移动弹窗）直接内联展开维度列表，不再套一层「歸檔記錄」卡中卡。 */
@@ -31,6 +34,8 @@ export function DeclaredArea({
   title,
   locale = 'zh',
   targets,
+  roundText,
+  doneText,
   overlayZIndex,
   expanded = false,
   wide = false,
@@ -163,24 +168,32 @@ export function DeclaredArea({
   }
 
   if (isProgressView) {
+    // 桌面歸檔進度：橫條，貼在操作排上方（與移動端信息行 + 5 維 pill 同一排版）。
+    // 原先是手牌左側的竖排面板，同事反饋「用電腦睇好似有點細」——橫條能吃滿整寬，
+    // 字號抬到 sm/xs，手牌也拿回左側那 13rem。
     return (
       <>
-        <section className="psy-panel psy-etched w-[13rem] rounded-[1.2rem] p-3" aria-label={locale === 'en' ? 'Filing progress' : '歸檔進度'}>
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <h3 className="psy-serif text-sm text-[var(--psy-accent)]">{locale === 'en' ? 'Filing progress' : '歸檔進度'}</h3>
-            {declaredSets.length > 0 && <span className="text-[10px] text-[var(--psy-muted)]">{t.viewWord}</span>}
-          </div>
-          <div className="space-y-1.5">
+        <section
+          className="psy-panel psy-etched flex w-full items-stretch gap-2 rounded-[1.2rem] p-2"
+          aria-label={locale === 'en' ? 'Filing progress' : '歸檔進度'}
+        >
+          {(roundText || doneText) && (
+            <div className="flex shrink-0 flex-col justify-center gap-0.5 rounded-lg border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-2.5 py-1.5 lg:px-3">
+              {roundText && <span className="psy-serif whitespace-nowrap text-xs font-semibold leading-tight text-[var(--psy-accent-strong)] lg:text-sm">{roundText}</span>}
+              {doneText && <span className="whitespace-nowrap text-[10px] leading-tight text-[var(--psy-muted)] lg:text-xs">{doneText}</span>}
+            </div>
+          )}
+          <div className="grid flex-1 grid-cols-5 gap-1 lg:gap-1.5">
             {DIMENSIONS.map((dimension) => {
               const declared = declaredSets.find((set) => set.dimension === dimension);
               const target = targets[dimension] ?? 0;
               const isDone = !!declared;
               const content = (
                 <>
-                  <span className="psy-serif text-[11px] text-[var(--psy-ink)]">{dimName(dimension)}</span>
-                  <span className="text-right text-[10px] leading-4">
-                    <span className="block text-[var(--psy-muted)]">{locale === 'en' ? `Target ${target}` : `目標 ${target} 張`}</span>
-                    <span className={isDone ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-ink-soft)]'}>{isDone ? (locale === 'en' ? 'Filed' : '已歸檔') : (locale === 'en' ? 'Not filed' : '未歸檔')}</span>
+                  <span className="psy-serif min-w-0 text-xs font-medium leading-tight text-[var(--psy-ink)] lg:text-sm">{dimName(dimension)}</span>
+                  <span className="shrink-0 text-right text-[10px] leading-4 lg:text-[11px]">
+                    <span className="block whitespace-nowrap text-[var(--psy-muted)]">{locale === 'en' ? `Target ${target}` : `目標 ${target} 張`}</span>
+                    <span className={`block whitespace-nowrap ${isDone ? 'font-medium text-[var(--psy-success)]' : 'text-[var(--psy-ink-soft)]'}`}>{isDone ? (locale === 'en' ? 'Filed' : '已歸檔') : (locale === 'en' ? 'Not filed' : '未歸檔')}</span>
                   </span>
                 </>
               );
@@ -190,7 +203,7 @@ export function DeclaredArea({
                   key={dimension}
                   type="button"
                   onClick={() => setOpen(true)}
-                  className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-1.5 text-left transition hover:-translate-y-px ${isDone ? 'border-[rgba(111,143,85,0.3)] bg-[rgba(111,143,85,0.08)] hover:border-[rgba(111,143,85,0.55)]' : 'border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] hover:border-[rgba(154,116,72,0.4)]'}`}
+                  className={`flex w-full items-center justify-between gap-1.5 rounded-lg border px-2.5 py-1.5 text-left transition hover:-translate-y-px ${isDone ? 'border-[rgba(111,143,85,0.3)] bg-[rgba(111,143,85,0.08)] hover:border-[rgba(111,143,85,0.55)]' : 'border-[rgba(154,116,72,0.14)] bg-[var(--psy-card-content)] hover:border-[rgba(154,116,72,0.4)]'}`}
                   aria-label={`${t.viewWord}: ${dimName(dimension)}`}
                 >
                   {content}
