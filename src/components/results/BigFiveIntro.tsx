@@ -1,13 +1,16 @@
 'use client';
 
 import type { Locale } from '@/lib/i18n';
+import type { Dimension } from '@/types';
+import { DIMENSION_META } from '@/data/dimensions';
 
-// 五维：名称(中/英) + 定义句(def) + 高/低分说明(hl) + 补充注记(note，E/N 才有) + 维度色。
+// 五维：名称(中/英) + 定义句(def) + 高/低分说明(hl) + 补充注记(note，E/N 才有)。
+// 圆点颜色统一取自 DIMENSION_META[key].colorHex（卡片/雷达/标签同一套配色，单一真相源）。
 // ⚠️ 文案逐字照 The Big Five Model_20260723 官方文档（中英双语），术语用「五大人格 / 評估」，
 // 高/低分保留文档原「People with higher/lower scores…」两句式，不改写不压缩。
 const DIMS = [
   {
-    key: 'O', zh: '開放性', en: 'Openness', color: '#c084fc',
+    key: 'O', zh: '開放性', en: 'Openness',
     defZh: '開放性描述一個人的好奇心、想像力、創造力，以及對新觀念和新體驗的興趣。',
     defEn: 'Openness describes curiosity, imagination, creativity, and interest in new ideas and experiences.',
     hlZh: '得分較高的人可能較喜歡探索陌生的觀念、文化、活動和藝術體驗。得分較低的人則可能較偏好熟悉、實際和既有的做事方式。',
@@ -15,7 +18,7 @@ const DIMS = [
     noteZh: '', noteEn: '',
   },
   {
-    key: 'C', zh: '盡責性', en: 'Conscientiousness', color: '#60a5fa',
+    key: 'C', zh: '盡責性', en: 'Conscientiousness',
     defZh: '盡責性描述一個人的組織能力、自律、細心程度和堅持性。',
     defEn: 'Conscientiousness describes organisation, self-discipline, carefulness, and persistence.',
     hlZh: '得分較高的人通常會預先規劃、朝着目標努力，並重視自己的責任。得分較低的人可能較喜歡彈性和隨性，亦可能較不習慣高度結構化的計劃。',
@@ -23,7 +26,7 @@ const DIMS = [
     noteZh: '', noteEn: '',
   },
   {
-    key: 'E', zh: '外向性', en: 'Extraversion', color: '#facc15',
+    key: 'E', zh: '外向性', en: 'Extraversion',
     defZh: '外向性描述一個人的社交性、活力、自信表達，以及對社交互動的喜愛程度。',
     defEn: 'Extraversion describes sociability, energy, assertiveness, and enjoyment of social interaction.',
     hlZh: '得分較高的人可能會從社交活動中獲得活力，並較自在地發言或帶領他人。得分較低的人可能較安靜、含蓄，並較喜歡小組活動或獨處。',
@@ -32,7 +35,7 @@ const DIMS = [
     noteEn: 'Lower Extraversion does not necessarily mean disliking people. It may simply reflect a preference for less social stimulation.',
   },
   {
-    key: 'A', zh: '宜人性', en: 'Agreeableness', color: '#4ade80',
+    key: 'A', zh: '宜人性', en: 'Agreeableness',
     defZh: '宜人性描述一個人的同理心、合作性、信任，以及對他人的關心程度。',
     defEn: 'Agreeableness describes compassion, cooperation, trust, and concern for other people.',
     hlZh: '得分較高的人通常較體貼、富有同情心，並願意與他人合作。得分較低的人可能較懷疑他人、表達較直接、競爭性較強，或較願意質疑和挑戰他人。',
@@ -40,7 +43,7 @@ const DIMS = [
     noteZh: '', noteEn: '',
   },
   {
-    key: 'N', zh: '神經質', en: 'Neuroticism', color: '#f87171',
+    key: 'N', zh: '神經質', en: 'Neuroticism',
     defZh: '神經質描述一個人出現憂慮、壓力、悲傷和其他負面情緒的強度和頻率。',
     defEn: 'Neuroticism describes how strongly and frequently a person tends to experience worry, stress, sadness, and other negative emotions.',
     hlZh: '得分較高的人可能對威脅、問題和情緒變化較敏感。得分較低的人通常較能保持冷靜，並較容易從壓力經驗中恢復。',
@@ -80,7 +83,7 @@ export function BigFiveIntro({ locale }: { locale: Locale }) {
         {DIMS.map((d, i) => (
           <div key={d.key} className={`flex flex-col sm:flex-row ${i > 0 ? 'border-t border-[var(--psy-border)]' : ''}`}>
             <div className="flex items-center gap-2 border-b border-[var(--psy-border)] bg-[var(--psy-accent-soft)] px-3 py-2.5 sm:w-56 sm:shrink-0 sm:items-start sm:border-b-0 sm:border-r sm:px-4 sm:py-3">
-              <span className="h-2 w-2 shrink-0 rounded-full sm:mt-[6px]" style={{ backgroundColor: d.color }} />
+              <span className="h-2 w-2 shrink-0 rounded-full sm:mt-[6px]" style={{ backgroundColor: DIMENSION_META[d.key as Dimension].colorHex }} />
               <span className="psy-serif font-semibold leading-5 text-[var(--psy-ink)]">
                 {isEn ? d.en : (
                   <>
