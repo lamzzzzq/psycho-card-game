@@ -46,6 +46,15 @@ export function PongPanel({
   const pendingDim = pendingCard.dimension;
   // 需從手牌選的張數 = 該維度目標張數 − 1（待判讀的這張弃牌補足最後 1 張）。
   const handNeeded = Math.max(0, targets[pendingDim] - 1);
+  // ── 目標 1 張的維度：手上一張都不用出，這張棄牌本身就湊滿 ──────────────
+  // 原本「未選牌 → 碰鈕禁用」是為了防空點被罰，但也把 target=1 的玩家徹底鎖死
+  // ——他永遠選不出第 0 張，就永遠碰不了別人的牌（老闆回報的 bug）。
+  // 判斷條件【不能】用 handNeeded === 0：那等於在玩家還沒選牌時就告訴他
+  // 「這張棄牌屬於你目標 1 張的那個維度」，洩露牌面。改用「我有沒有任何一個
+  // 未歸檔維度只要 1 張」——這是玩家自己的分數，他本來就看得到，零洩露。
+  const allowZeroSelect = DIMENSIONS.some(
+    (d) => targets[d] === 1 && !declaredDims.has(d)
+  );
 
   return (
     <motion.div
@@ -104,7 +113,9 @@ export function PongPanel({
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0 text-xs leading-snug text-[var(--psy-ink-soft)]">
           {selectedCardIds.length === 0 ? (
-            <span className="font-medium text-[var(--psy-accent-strong)]">{t.pongSelectFirst}</span>
+            <span className="font-medium text-[var(--psy-accent-strong)]">
+              {allowZeroSelect ? t.pongNoSelectNeeded : t.pongSelectFirst}
+            </span>
           ) : (
             <>
               {t.pongNeedPrefix} <span className="font-semibold text-[var(--psy-ink)]">{handNeeded}</span> {t.pongSelectedCandidates}
@@ -127,8 +138,8 @@ export function PongPanel({
           </button>
           <button
             onClick={() => onClaim(pendingDim, selectedCardIds)}
-            disabled={selectedCardIds.length === 0}
-            title={selectedCardIds.length === 0 ? t.pongNeedSelect : undefined}
+            disabled={selectedCardIds.length === 0 && !allowZeroSelect}
+            title={selectedCardIds.length === 0 && !allowZeroSelect ? t.pongNeedSelect : undefined}
             className="psy-btn psy-btn-accent px-3 py-1.5 text-[11px] font-bold disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:py-2 sm:text-xs"
           >
             {t.archiveJudge}

@@ -484,6 +484,9 @@ export default function PvpGamePage() {
   // 讓點。frozenUntilOwnDiscard-only 狀態允許 draw/discard（spec 解凍路徑）。
   const canDraw = isMyTurn && gameState.phase === 'drawing' && !meSerialized?.skipNextTurn;
   const isDiscarding = isMyTurn && gameState.phase === 'discarding' && !meSerialized?.skipNextTurn;
+  // 老闆：自己回合【抽牌前】食胡與自摸碰都要顯示、但置灰不可點，抽完牌才亮起。
+  // 截胡（claim-window）不受這條限制，走上面的 canClaim 分支。與單機保持一致。
+  const preDraw = isMyTurn && gameState.phase === 'drawing';
 
   // Convert serialized players to Player objects for components
   const mePlayer = meSerialized ? toPlayer(meSerialized, meSerialized.hand) : null;
@@ -622,6 +625,13 @@ export default function PvpGamePage() {
 
   const targets = mePlayer ? getTargetCounts(mePlayer.bigFiveScores) : null;
   const declaredDims = mePlayer ? getDeclaredDimensions(mePlayer) : new Set<Dimension>();
+  // ── 目標 1 張的維度：手上一張都不用出，別人打出的那張本身就湊滿 ───────────
+  // 原本「未選牌 → 碰鈕禁用」把 target=1 的玩家徹底鎖死（他永遠選不出第 0 張，
+  // 就永遠碰不了別人的牌 —— 老闆回報的 bug）。判斷條件【不能】用「這張棄牌的
+  // 目標是 1」，那等於提前告訴玩家棄牌屬於哪個維度；改用「我有沒有任何一個未歸檔
+  // 維度只要 1 張」——那是玩家自己的分數，本來就看得到，零洩露。單機 PongPanel 同款。
+  const allowZeroSelect =
+    !!targets && DIMENSIONS.some((d) => targets[d] === 1 && !declaredDims.has(d));
 
   // ── Pong candidates (mirror of single-player game/page logic) ─────────
   // Self-pong candidate list = ALL undeclared dimensions. Deliberately
@@ -986,6 +996,8 @@ export default function PvpGamePage() {
                   <p className="text-center text-[11px] text-[var(--psy-muted)]">
                     {selectedCardIds.length > 0
                       ? `${t.selectedPrefix} ${selectedCardIds.length} ${t.cardsUnit}`
+                      : allowZeroSelect
+                      ? t.pongNoSelectNeeded
                       : t.selectFirst}
                   </p>
                 )}
@@ -999,10 +1011,10 @@ export default function PvpGamePage() {
                   {canPong && (
                     <button
                       onClick={handlePong}
-                      disabled={selectedCardIds.length === 0}
+                      disabled={selectedCardIds.length === 0 && !allowZeroSelect}
                       className="psy-btn psy-btn-accent px-2 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35"
                       title={
-                        selectedCardIds.length === 0
+                        selectedCardIds.length === 0 && !allowZeroSelect
                           ? t.pongNeedSelect
                           : undefined
                       }
@@ -1150,18 +1162,22 @@ export default function PvpGamePage() {
             )}
             {!meFrozen && (
               <button
-                onClick={handleHu}
-                className="psy-btn psy-btn-danger px-3 py-2 text-xs font-bold sm:px-5 sm:text-sm"
+                onClick={preDraw ? undefined : handleHu}
+                disabled={preDraw}
+                title={preDraw ? t.needDrawFirst : undefined}
+                className="psy-btn psy-btn-danger px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35 sm:px-5 sm:text-sm"
               >
                 {t.win}
               </button>
             )}
-            {/* Self-pong button — 只在 discarding 阶段(已抽牌/已碰牌)显示：drawing 阶段
-                自摸会漏抽一次牌导致掉牌(见 selfPongCard 守卫)。与单机一致。
+            {/* Self-pong button — drawing 阶段也【显示】但置灰(老板：抽牌前两个按钮都在，
+                只是暗的)，真正可点仍只有 discarding：drawing 阶段自摸会漏抽一次牌导致
+                掉牌(见 selfPongCard 守卫)。与单机一致。
                 enabled 不随是否真有牌切换,避免泄露"你有足够X维牌"。玩家决定、引擎判。*/}
-            {gameState.phase === 'discarding' && (
+            {(gameState.phase === 'drawing' || gameState.phase === 'discarding') && (
             <button
               onClick={() => {
+                if (preDraw) return;
                 if (meFrozen || meAlreadySelfPonged) return;
                 if (selfPongCandidates.length === 0) return;
                 // 默認選第一個未歸檔維度，避免點擊「自摸碰」直接落到 trap 維度
@@ -1172,13 +1188,16 @@ export default function PvpGamePage() {
                 setSelectedCardIds([]);
               }}
               disabled={
+                preDraw ||
                 meFrozen ||
                 meAlreadySelfPonged ||
                 selfPongCandidates.length === 0
               }
               className="psy-btn psy-btn-accent px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35 sm:px-5 sm:text-sm"
               title={
-                meFrozen
+                preDraw
+                  ? t.needDrawFirst
+                  : meFrozen
                   ? t.selfPongFrozen
                   : meAlreadySelfPonged
                   ? t.selfPongUsed

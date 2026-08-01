@@ -397,6 +397,12 @@ export default function GamePage() {
         game.discardedByIndex !== 0 &&
         !game.claimResponses.includes(humanPlayer.id))
     );
+  // 老闆：自己回合【抽牌前】食胡與自摸碰都要顯示，但置灰不可點；抽完牌才亮起。
+  // （麻將裏自摸胡也得先摸一張；截胡走的是 claim-window，不受這條限制。）
+  const preDraw = isHumanTurn && game.phase === 'drawing';
+  // 顯示 = 能胡 或 處在「抽牌前」這個置灰態；啟用 = 能胡且已抽牌。
+  const showHuButton = canHu || preDraw;
+  const huEnabled = canHu && !preDraw;
   const topDiscard = game.discardPile.length > 0 ? game.discardPile[game.discardPile.length - 1] : null;
   const targets = getTargetCounts(humanPlayer.bigFiveScores);
   const declaredDims = getDeclaredDimensions(humanPlayer);
@@ -740,21 +746,25 @@ export default function GamePage() {
             {/* Hu button — visible on own turn, or during an opponent's
                 claim-window ("跳着胡"). Hidden when the human has already
                 responded to this claim window. */}
-            {canHu && (
+            {showHuButton && (
               <button
-                onClick={handleHu}
-                className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
+                onClick={huEnabled ? handleHu : undefined}
+                disabled={!huEnabled}
+                title={preDraw ? tg.needDrawFirst : undefined}
+                className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
               >
                 {tg.win}
               </button>
             )}
 
-            {/* Self-pong button — 只在 discarding 阶段（已抽牌/已碰牌）显示：drawing
-                阶段自摸会漏抽一次牌导致掉牌（见 selfPongCard 守卫）。claim-window 的
-                碰由浮层 PongPanel 处理。按钮是否启用不泄露"你能碰维度X"——玩家决定、引擎判。*/}
-            {isHumanTurn && game.phase === 'discarding' && (
+            {/* Self-pong button — drawing 阶段也【显示】但置灰（老板：抽牌前两个按钮
+                都在，只是暗的），真正可点仍只有 discarding：drawing 阶段自摸会漏抽一次
+                牌导致掉牌（见 selfPongCard 守卫）。claim-window 的碰由浮层 PongPanel
+                处理。按钮是否启用不泄露"你能碰维度X"——玩家决定、引擎判。*/}
+            {isHumanTurn && (game.phase === 'drawing' || game.phase === 'discarding') && (
               <button
                 onClick={() => {
+                  if (preDraw) return;
                   if (humanPlayer.selfPongUsedThisTurn || humanFrozen) return;
                   if (selfPongCandidates.length === 0) return;
                   // 默認選第一個未歸檔維度，防止誤觸 trap
@@ -766,13 +776,16 @@ export default function GamePage() {
                   setSelfPongDimensionChosen(selfPongCandidates.length === 1);
                 }}
                 disabled={
+                  preDraw ||
                   humanFrozen ||
                   !!humanPlayer.selfPongUsedThisTurn ||
                   selfPongCandidates.length === 0
                 }
                 className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
                 title={
-                  humanFrozen
+                  preDraw
+                    ? tg.needDrawFirst
+                    : humanFrozen
                     ? tg.selfPongFrozen
                     : humanPlayer.selfPongUsedThisTurn
                     ? tg.selfPongUsed

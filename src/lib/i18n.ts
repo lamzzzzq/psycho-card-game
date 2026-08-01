@@ -186,8 +186,12 @@ export const STRINGS = {
       pass: '過',
       pong: '碰！',
       pongNeedSelect: '請先點擊手牌選擇同維度卡再碰',
+      // 有維度目標 = 1 張時，這張棄牌本身就湊滿，不必再選手牌（老闆回報的 bug）。
+      pongNoSelectNeeded: '目標 1 張的維度可以不選手牌，直接碰',
       selectFirst: '請先選牌',
       win: '食胡',
+      // 抽牌前：食胡 / 自摸碰 都顯示但置灰（老闆：抽完牌才亮）
+      needDrawFirst: '請先抽一張牌',
       // Action bar
       clickToDraw: '點擊牌堆抽一張牌',
       pongDoneDiscard: '碰牌成功 — 請直接出一張手牌',
@@ -576,8 +580,10 @@ export const STRINGS = {
       pass: 'Pass',
       pong: 'Pong!',
       pongNeedSelect: 'Tap hand cards of the same dimension first, then pong',
+      pongNoSelectNeeded: 'If that dimension needs only 1 card, pong without selecting',
       selectFirst: 'select cards first',
       win: 'Win',
+      needDrawFirst: 'Draw a card first',
       // Action bar
       clickToDraw: 'Tap the draw pile to draw a card',
       pongDoneDiscard: 'Pong successful — discard a card now',
