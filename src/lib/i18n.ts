@@ -197,7 +197,8 @@ export const STRINGS = {
       needDrawFirst: '請先抽一張牌',
       // Action bar
       clickToDraw: '點擊牌堆抽一張牌',
-      pongDoneDiscard: '碰牌成功 — 請直接出一張手牌',
+      // pongDoneDiscard「碰牌成功 — 請直接出一張手牌」2026-08-02 老闆定：整句刪掉
+      // （碰成功有 toast，下一步有回合行的 pickDiscard，這句是第三遍重複）
       dropHere: '丟這裡',
       tapCardToDiscard: '點一張手牌丟出',
       viewCardsTitle: '本回合可查看自己手牌的人格（張數依看牌難度）',
@@ -591,7 +592,7 @@ export const STRINGS = {
       needDrawFirst: 'Draw a card first',
       // Action bar
       clickToDraw: 'Tap the draw pile to draw a card',
-      pongDoneDiscard: 'Pong successful — discard a card now',
+      // pongDoneDiscard removed 2026-08-02 — see the zh block.
       dropHere: 'Drop here',
       tapCardToDiscard: 'Tap a card to discard',
       viewCardsTitle: 'This turn you may reveal traits of your own cards (count depends on reveal difficulty)',

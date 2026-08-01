@@ -1174,12 +1174,10 @@ export default function PvpGamePage() {
           {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && !viewMode && !pongIntent && (
           <>
             {/* 「點擊牌堆抽一張牌」已刪：單機 2026-07-30 就按同事反饋刪掉了
-                （牌堆自帶手指動畫），PVP 這次跟上，兩邊一致。 */}
-            {isDiscarding && !gameState.drawnCard && (
-              <p className="psy-serif animate-pulse text-xs text-[var(--psy-accent)] sm:text-sm">
-                {t.pongDoneDiscard}
-              </p>
-            )}
+                （牌堆自帶手指動畫），PVP 這次跟上，兩邊一致。
+                「碰牌成功 — 請直接出一張手牌」（pongDoneDiscard）2026-08-02 老闆
+                定：所有碰的情況都不再顯示（碰成功有 toast、下一步有回合行提示，
+                這句是第三遍重複）。單機同步刪。 */}
             {/* 顯示/啟用條件與單機逐字對齊（單機 showHuButton / huEnabled）：
                 抽牌前顯示但置灰；罰停中也是顯示但點不動（自摸碰鈕本來就這樣，
                 兩顆鈕要同進同出）。之前 PVP 用 !meFrozen 直接隱藏，罰停解凍那

@@ -769,14 +769,13 @@ export default function GamePage() {
         <div className="flex min-h-[46px] shrink-0 flex-wrap items-center justify-center gap-2 sm:flex-nowrap sm:gap-3">
           {!viewMode && !pongIntent && (
           <>
-            {/* 截胡碰偷來的回合：沒有摸牌，直接欠一張棄牌 —— 這句解釋為什麼牌堆
-                沒動、Win/自摸碰也不見了。原本只在桌面顯示（hidden sm:flex），手機
-                單機看不到而 PVP 兩端都有 → 統一成兩端、兩個模式都顯示。 */}
-            {isHumanTurn && isDiscarding && !game.drawnCard && (
-              <p className="psy-serif animate-pulse text-xs text-[var(--psy-accent)] sm:text-sm">
-                {tg.pongDoneDiscard}
-              </p>
-            )}
+            {/* 這裏原本有一句「碰牌成功 — 請直接出一張手牌」（pongDoneDiscard，
+                2026-04-17 加）。2026-08-02 老闆定：所有碰的情況都不再顯示 ——
+                碰成功本來就有 toast，下一步該做什麼上方回合行的「先點擊一張要
+                捨棄的牌」已經說了，不做也只是停在原地，這句是第三遍重複。
+                （順帶修掉一個老 bug：它的顯示條件是 !drawnCard，本意只認截胡碰，
+                但自摸碰若把剛摸那張用進歸檔也會命中 → 老闆看到的「有時出現有時
+                不出現」。整句刪掉後不存在了。）*/}
 
             {/* Hu button — visible on own turn, or during an opponent's
                 claim-window ("跳着胡"). Hidden when the human has already
@@ -910,9 +909,9 @@ export default function GamePage() {
           </div>
         </div>
 
-        {/* 這裏原本是一條桌面專屬提示行：「點擊牌堆抽一張牌」（已刪，牌堆自帶手指動畫）
-            + 碰完那句 pongDoneDiscard。後者已挪進上方操作排，手機也看得到，
-            與 PVP 一致 —— 整條桌面專屬行不再需要。 */}
+        {/* 這裏原本是一條桌面專屬提示行：「點擊牌堆抽一張牌」（已刪，牌堆自帶手指
+            動畫）+ 碰完那句 pongDoneDiscard（2026-08-02 整句刪掉，見上方操作排的
+            註釋）—— 整條桌面專屬行不再需要。 */}
       </div>
 
       <MobileGameSheet
