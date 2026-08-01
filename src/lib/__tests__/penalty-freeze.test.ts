@@ -153,7 +153,10 @@ describe('own-turn hu-fail — 立即 advance turn (banner-vs-action 一致性 f
     expect(result.drawnCard).toBeNull();
   });
 
-  it('phase=discarding 时 own-turn hu-fail：drawnCard 还回手牌 + advance turn', () => {
+  it('phase=discarding 时 own-turn hu-fail：留在原地欠一张罚弃牌，不让位', () => {
+    // 老板 2026-08-01 定的规则：胡失败也要走完弃牌。旧实现是把 drawnCard 塞回
+    // 手牌直接 advance turn，那张牌永远没弃出去 → 站立手牌永久 +1（故意胡错
+    // 就能白赚一张牌）。现在改成留在 discarding + owesPenaltyDiscard。
     const drawn = makeCard('A', { id: 500 });
     const state = makeGameState({
       phase: 'discarding',
@@ -166,18 +169,19 @@ describe('own-turn hu-fail — 立即 advance turn (banner-vs-action 一致性 f
       ],
     });
     const result = attemptHu(state, 0);
-    expect(result.currentPlayerIndex).toBe(1);
-    expect(result.drawnCard).toBeNull();
-    // drawnCard 500 应被塞回 A 手牌
-    expect(result.players[0].hand.map((c) => c.id).sort()).toEqual([10, 500]);
+    expect(result.currentPlayerIndex).toBe(0);   // 不让位——他还欠一张弃牌
+    expect(result.phase).toBe('discarding');
+    expect(result.drawnCard?.id).toBe(500);      // 仍在 drawnCard 位上，可被弃掉
+    expect(result.players[0].hand.map((c) => c.id)).toEqual([10]);
+    expect(result.players[0].owesPenaltyDiscard).toBe(true);
     expect(result.players[0].skipNextTurn).toBe(true);
     expect(result.players[0].frozenUntilOwnDiscard).toBe(true);
     expect(result.players[0].revealedHand).toBe(true);
   });
 
-  it('own-turn hu-fail 当回合 frozenUntilOwnDiscard 不会被 discard 立即清掉', () => {
-    // 新 spec 关键不变量：当回合不再调 discardCard（因为已 advance turn），
-    // 所以 frozenUntilOwnDiscard 必然保留到下一圈玩家自己的解冻轮。
+  it('罚弃牌不解冻：弃完仍 frozenUntilOwnDiscard，且手牌回到原来的张数', () => {
+    // 关键不变量：这次弃牌是"罚出来的"，不算解冻用的干净出牌，否则
+    // 「胡错 → 马上弃一张 → 立刻解冻」= 罚停白罚。
     const state = makeGameState({
       phase: 'discarding',
       currentPlayerIndex: 0,
@@ -187,8 +191,62 @@ describe('own-turn hu-fail — 立即 advance turn (banner-vs-action 一致性 f
         makePlayer({ id: 'B' as PlayerId }),
       ],
     });
-    const result = attemptHu(state, 0);
-    expect(result.players[0].frozenUntilOwnDiscard).toBe(true);
+    const failed = attemptHu(state, 0);
+    expect(failed.players[0].frozenUntilOwnDiscard).toBe(true);
+
+    const afterDiscard = discardCard(failed, 7);
+    // 手牌回到 hu 之前的 1 张 —— 没有多出来的牌
+    expect(afterDiscard.players[0].hand.map((c) => c.id)).toEqual([8]);
+    expect(afterDiscard.players[0].owesPenaltyDiscard).toBe(false);
+    // 罚停照旧：不因为这次弃牌就解冻
+    expect(afterDiscard.players[0].frozenUntilOwnDiscard).toBe(true);
+    expect(afterDiscard.players[0].skipNextTurn).toBe(true);
+  });
+
+  it('罚弃牌之后仍会正常解冻 —— 不会被永久冻住', () => {
+    // 罚弃牌不解冻（上一条），解冻改由 skipPenalizedPlayers 在「最后一跳」完成。
+    // 这条把这两跳走完，确认玩家不会因为改动被永远锁死。
+    let state = makeGameState({
+      phase: 'discarding',
+      currentPlayerIndex: 0,
+      drawnCard: makeCard('A', { id: 7 }),
+      players: [
+        makePlayer({ id: 'A' as PlayerId, hand: [makeCard('O', { id: 8 }), makeCard('C', { id: 9 })] }),
+        makePlayer({ id: 'B' as PlayerId }),
+        makePlayer({ id: 'C' as PlayerId }),
+      ],
+    });
+    state = attemptHu(state, 0);          // 胡失败 → 欠一张罚弃牌
+    state = discardCard(state, 7);        // 罚弃（弃的是刚摸的那张，不开判读窗口才好断言）
+
+    // 第 1 跳：extraSkipQueued 被消费，仍冻着
+    state = skipPenalizedPlayers({ ...state, phase: 'drawing', currentPlayerIndex: 0 });
+    expect(state.players[0].extraSkipQueued).toBeFalsy();
+    expect(state.players[0].frozenUntilOwnDiscard).toBe(true);
+    expect(state.players[0].skipNextTurn).toBe(true);
+
+    // 第 2 跳：最后一跳 → 解冻
+    state = skipPenalizedPlayers({ ...state, phase: 'drawing', currentPlayerIndex: 0 });
+    expect(state.players[0].skipNextTurn).toBe(false);
+    expect(state.players[0].frozenUntilOwnDiscard).toBe(false);
+  });
+
+  it('本回合用过自摸碰 → 同回合不能再食胡（老板规则）', () => {
+    const state = makeGameState({
+      phase: 'discarding',
+      currentPlayerIndex: 0,
+      drawnCard: makeCard('O', { id: 21 }),
+      players: [
+        makePlayer({
+          id: 'A' as PlayerId,
+          hand: [makeCard('O', { id: 20 })],
+          selfPongUsedThisTurn: true,
+        }),
+        makePlayer({ id: 'B' as PlayerId }),
+      ],
+    });
+    // 原样返回 = 引擎拒绝，不进 hu-success 也不进 hu-fail
+    expect(attemptHu(state, 0)).toBe(state);
   });
 });
 
@@ -472,7 +530,7 @@ describe('penalty freeze — frozenUntilOwnDiscard (罚停一整轮)', () => {
     expect(state.players[1].frozenUntilOwnDiscard).toBe(false);
   });
 
-  it('self-pong-fail: drawnCard returns to hand, both skipNextTurn AND frozenUntilOwnDiscard set, turn advanced', () => {
+  it('self-pong-fail: 留在原地欠一张罚弃牌，both skipNextTurn AND frozenUntilOwnDiscard set', () => {
     // C is in own turn (phase=discarding, drawnCard set), big-five all
     // 3.0 so target for any dim = 3. C selects 2 wrong-dim cards → fail.
     const drawn = makeCard('A', { id: 500 });
@@ -490,15 +548,49 @@ describe('penalty freeze — frozenUntilOwnDiscard (罚停一整轮)', () => {
       ],
     });
     state = selfPongCard(state, 2, 'O', [600, 601]);
-    // drawnCard returned to hand → no information lost, but no discard either.
-    expect(state.players[2].hand.map((c) => c.id).sort()).toEqual([500, 600, 601]);
+    // 手牌不动、drawnCard 也不动：C 还欠一张弃牌，从「手牌 + 刚摸的那张」里挑。
+    // 旧实现把 drawnCard 塞回手牌 + 直接让位 → 那张牌永远没弃出去，手牌永久 +1。
+    expect(state.players[2].hand.map((c) => c.id).sort()).toEqual([600, 601]);
+    expect(state.drawnCard?.id).toBe(500);
+    expect(state.players[2].owesPenaltyDiscard).toBe(true);
     // Both penalty marks set: skip own next turn + freeze claim windows
     // until the second own-turn discard.
     expect(state.players[2].skipNextTurn).toBe(true);
     expect(state.players[2].frozenUntilOwnDiscard).toBe(true);
-    // Turn advanced past C.
-    expect(state.currentPlayerIndex).not.toBe(2);
-    expect(state.drawnCard).toBeNull();
+    // 本回合没走完 —— 不让位，等 C 把那张弃掉。
+    expect(state.currentPlayerIndex).toBe(2);
+    expect(state.phase).toBe('discarding');
+
+    // 弃完之后：手牌回到 2 张（守恒），罚停照旧不解冻。
+    const after = discardCard(state, 500);
+    expect(after.players[2].hand.map((c) => c.id).sort()).toEqual([600, 601]);
+    expect(after.players[2].owesPenaltyDiscard).toBe(false);
+    expect(after.players[2].frozenUntilOwnDiscard).toBe(true);
+    expect(after.players[2].skipNextTurn).toBe(true);
+  });
+
+  it('碰成功 = 新的一回合：清掉上一回合的 selfPongUsedThisTurn（否则碰完即胡会被误挡）', () => {
+    // 回归测试：attemptHu 新增了「本回合用过自摸碰就不能胡」的守卫。
+    // selfPongUsedThisTurn 只在 drawCard 时清，而碰是抢走出牌权、不经过 drawCard——
+    // 不在 pongCard 里清的话，上一回合自摸过的玩家碰完就永远胡不了。
+    const state = makeGameState({
+      phase: 'claim-window',
+      discardedByIndex: 0,
+      currentPlayerIndex: 0,
+      pendingDiscard: makeCard('O', { id: 100 }),
+      players: [
+        makePlayer({ id: 'A' as PlayerId }),
+        makePlayer({
+          id: 'B' as PlayerId,
+          hand: [makeCard('O', { id: 10 }), makeCard('O', { id: 11 })],
+          selfPongUsedThisTurn: true,   // 上一回合用过
+        }),
+        makePlayer({ id: 'C' as PlayerId }),
+      ],
+    });
+    const result = pongCard(state, 1, 'O', [10, 11]);
+    expect(result.players[1].declaredSets.length).toBe(1);  // 碰成功
+    expect(result.players[1].selfPongUsedThisTurn).toBe(false);
   });
 
   it('强 trap: 已归档维度 pong → fail + 罚停 + failReason="already-declared"', () => {

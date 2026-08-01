@@ -58,6 +58,10 @@ export function serializeGameState(state: RawGameState, viewerPlayerId: string |
     if (p.selfPongUsedThisTurn) {
       base.selfPongUsedThisTurn = true;
     }
+    // 欠罰棄牌：客戶端要靠這個才知道「我雖然被罰停，但這一張還是得我自己點出來」。
+    if (p.owesPenaltyDiscard) {
+      base.owesPenaltyDiscard = true;
+    }
 
     return base;
   });

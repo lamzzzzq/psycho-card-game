@@ -151,6 +151,9 @@ export const STRINGS = {
       // Penalty banners
       penaltyLockoutFull: '你被罰停一回合 — 下次輪到你時自動跳過，期間無法參與碰/食胡',
       penaltyLockoutShort: '罰停一回合 · 輪到你時跳過 · 不可碰/胡',
+      // 判定失敗後仍欠一張棄牌（不棄就不算走完這回合，否則手牌會永久多一張）
+      penaltyMustDiscardFull: '判定失敗，罰停一回合 — 但你仍要棄出一張牌才結束本回合',
+      penaltyMustDiscardShort: '罰停 · 仍要棄一張牌',
       thawFull: '解凍輪 — 正常出牌一次即可解除罰停（期間仍不可碰/胡）',
       thawShort: '解凍輪 · 出牌一次解除',
       // Single-player result toasts
@@ -545,6 +548,8 @@ export const STRINGS = {
       // Penalty banners
       penaltyLockoutFull: 'Penalized one turn — your next turn is auto-skipped; you cannot pong/win during it',
       penaltyLockoutShort: 'Penalized 1 turn · skipped · no pong/win',
+      penaltyMustDiscardFull: 'Attempt failed, penalty applies — but you still must discard one card to end this turn',
+      penaltyMustDiscardShort: 'Penalty · still must discard',
       thawFull: 'Thaw turn — discard once normally to clear the penalty (still no pong/win)',
       thawShort: 'Thaw turn · discard once to clear',
       // Single-player result toasts

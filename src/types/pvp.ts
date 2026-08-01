@@ -120,4 +120,7 @@ export interface SerializedPlayer {
   hasLeft?: boolean;
   // Once-per-turn self-pong gate, mirrored for UI to disable the button.
   selfPongUsedThisTurn?: boolean;
+  // 欠一張罰棄牌（食胡失敗 / 自摸碰失敗後仍要棄一張），mirrored for UI：
+  // 被罰玩家雖然 frozen，這一張還是得由他自己點出來。見 types/index.ts。
+  owesPenaltyDiscard?: boolean;
 }

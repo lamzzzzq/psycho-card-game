@@ -127,7 +127,15 @@ export interface Player {
   // True once the player commits a self-pong on the current turn.
   // Reset by drawCard when the player begins a fresh turn. Enforces
   // the "one self-pong per turn" rule (engine + UI both gate on this).
+  // 老闆規則：本回合用過自摸碰 → 這回合不能再食胡（沒看出自己能胡就認了），
+  // UI 直接隱藏食胡鈕，attemptHu 也有同款守衛。
   selfPongUsedThisTurn?: boolean;
+  // 「欠一張罰棄牌」——食胡失敗 / 自摸碰失敗之後，玩家【仍然要棄一張牌】才算走完
+  // 這回合。舊實現是把 drawnCard 塞回手牌直接讓位，結果該玩家站立手牌永久 +1
+  // （打破「手牌 = 剩餘目標總和 − 1」不變量，還能靠故意失敗來刷牌）。
+  // 這個標誌讓被罰玩家即使處於 frozen/skipNextTurn 狀態也能（且必須）棄這一張，
+  // 且這次棄牌【不解凍】—— 見 discardCard 裏的 isPenaltyDiscard 分支。
+  owesPenaltyDiscard?: boolean;
 }
 
 // ===== Game State =====

@@ -262,6 +262,45 @@ export function skipPenalizedPlayers(state: GameState): GameState {
   return current;
 }
 
+// 「欠一張罰棄牌」的前提是手上真有牌可棄（手牌 或 剛摸的那張）。
+// 理論上到不了 false：碰牌成功、自摸碰成功都有空手兜底，不會把玩家留在
+// 「discarding 但一張牌都沒有」的狀態。但萬一到了，讓他卡在一個永遠棄不出去的
+// 回合是最壞的結果（整局作廢），所以兩條 fail 路徑都用它兜一道，false 就直接讓位。
+function canStillDiscard(state: GameState, playerIndex: number): boolean {
+  return state.players[playerIndex].hand.length > 0 || !!state.drawnCard;
+}
+
+// fail 之後直接結束該玩家的回合（兜底路徑：沒牌可棄，或食胡失敗發生在摸牌前）。
+function endTurnAfterFailure(
+  state: GameState,
+  playerIndex: number,
+  players: Player[],
+  action: GameAction
+): GameState {
+  const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
+    playerIndex,
+    state.currentRound,
+    state.settings.totalRounds,
+    state.players.length
+  );
+  // 走這條路 = 這回合就此結束，不欠棄牌了（呼叫方可能已經先標上）。
+  const cleared = players.map((p, i) =>
+    i === playerIndex ? { ...p, owesPenaltyDiscard: false } : p
+  );
+  return skipPenalizedPlayers({
+    ...state,
+    players: cleared,
+    // 已摸未棄的那張進棄牌堆 —— 直接置 null 會讓它從牌池蒸發（重洗時永久缺失）。
+    discardPile: state.drawnCard ? [...state.discardPile, state.drawnCard] : state.discardPile,
+    drawnCard: null,
+    currentPlayerIndex: nextPlayerIndex,
+    currentRound: nextRound,
+    phase: isGameOver ? 'game-over' : 'drawing',
+    actionLog: [...state.actionLog, action],
+    winner: isGameOver ? determineWinner(cleared) : null,
+  });
+}
+
 export function hasWon(player: Player): boolean {
   const declaredDims = new Set(player.declaredSets.map((s) => s.dimension));
   return DIMENSIONS.every((d) => declaredDims.has(d));
@@ -284,6 +323,19 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
   // operates again. Defensive guard so direct calls from PVP can't bypass
   // the freeze.
   if (isFrozen(player)) return state;
+  // 老闆規則：本回合已經用過自摸碰 → 這回合不能再食胡（「他沒看出自己能胡，
+  // 選了自摸碰，那這回合就認了」）。只鎖【自己回合】——別人棄牌的判讀窗口裏
+  // 截胡不受影響（selfPongUsedThisTurn 要到自己下次抽牌才清，不 gate 會誤鎖截胡）。
+  // UI 那邊直接把食胡鈕隱藏掉，這裏是 PVP 直調 / 亂序消息的防禦。
+  // 限定 discarding/ai-turn：selfPongUsedThisTurn 要到玩家【真的摸牌】才清，所以
+  // 下一回合的 drawing 階段它還掛着 true —— 不限定階段的話會把下一回合也一起鎖了。
+  if (
+    (state.phase === 'discarding' || state.phase === 'ai-turn') &&
+    playerIndex === state.currentPlayerIndex &&
+    player.selfPongUsedThisTurn
+  ) {
+    return state;
+  }
   const targets = getTargetCounts(player.bigFiveScores);
   const declaredDims = getDeclaredDimensions(player);
 
@@ -388,54 +440,37 @@ export function attemptHu(state: GameState, playerIndex: number): GameState {
       return allClaimersResponded(nextState) ? finalizeClaimWindow(nextState) : nextState;
     }
 
-    // 碰成功後（phase='discarding'、drawnCard=null、還欠一張棄牌）的 hu-fail：
-    // 不能走下面的「立即讓位」—— 那樣欠的棄牌永遠沒棄，該玩家站立手牌從此
-    // 永久 +1（打破「手牌 = 剩餘目標總和 − 1」不變量，之後他摸牌前就能合法胡）。
-    // 改為：吃罰停標記，但留在 discarding 把欠的那張棄完，回合經正常棄牌流程讓位。
-    // 代價：這次棄牌會提前清掉 frozenUntilOwnDiscard（skipNextTurn/extraSkip 仍在），
-    // 罰停略輕於正常路徑，但好過結構性多一張牌。
-    if (!state.drawnCard && state.phase === 'discarding') {
+    // 自己回合的 hu-fail（已經摸了牌 或 碰完欠一張）：【留在原地，把那張牌棄掉】。
+    //
+    // 舊實現是把 drawnCard 塞回手牌 + 立刻讓位，結果那張牌永遠沒棄出去 —— 該玩家
+    // 站立手牌從此永久 +1，打破「手牌 = 剩餘目標總和 − 1」不變量：之後他摸牌前
+    // 就能合法胡，而且【故意胡錯就能白賺一張牌】，只賠一次罰停。老闆實測發現
+    // （「如果人哋撳咗 Win 掣，冇出到牌，下次再 draw 嘅時候就會多咗一張牌」）。
+    // 碰成功後那條路徑本來就是這麼處理的，這裏只是把兩條路合成同一條。
+    //
+    // owesPenaltyDiscard=true：
+    //   - 讓 UI 知道「雖然你被罰停了，但這一張還是得你自己點出來」（否則
+    //     isDiscarding 會因為 skipNextTurn 而是 false，玩家點不動 = 死鎖）；
+    //   - 讓 discardCard 知道這次棄牌【不解凍】，罰停力度和舊實現一樣重。
+    // 這張罰出來的牌照常開判讀窗口給別人碰/截胡（老闆定的），終局判定也自然
+    // 落在棄牌之後 —— 都走 discardCard 的常規路徑。
+    const owingPlayers = newPlayers.map((p, i) =>
+      i === playerIndex ? { ...p, owesPenaltyDiscard: true } : p
+    );
+    if (
+      (state.phase === 'discarding' || state.phase === 'ai-turn') &&
+      canStillDiscard(state, playerIndex)
+    ) {
       return {
         ...state,
-        players: newPlayers,
+        players: owingPlayers,
         actionLog: [...state.actionLog, action],
       };
     }
 
-    // Own-turn hu-fail: 立即結束本回合 + 罰停下一輪 + 鎖定 claim windows
-    // 直到自己再次完成 own-discard。等價於 self-pong-fail 的「罰停一整輪」語義。
-    //   1. drawnCard 還回手牌 — 不讓玩家用 discard 解凍 frozenUntilOwnDiscard。
-    //   2. advance turn + skipPenalizedPlayers — 本回合就讓位。
-    //   3. skipNextTurn 讓下一圈到該玩家時再被跳過一回合。
-    // 之前的舊實現：當回合繼續 draw+discard，結果 UI banner 顯示罰停但按鈕沒禁，
-    // 玩家事實上「能出牌」+ 當回合 discard 又把 frozenUntilOwnDiscard 清掉了。
-    //
-    // ⚠️ 邊界：最後一回合 own-turn hu-fail 會觸發 isGameOver=true，winner 由
-    // getRankings 推斷（declaredSets desc, hand asc）。被罰停玩家此時手牌 +1
-    // (drawnCard 還回) + declaredSets 一張沒加 → 通常 rank 墊底。這是設計
-    // 取捨：舊實現允許該玩家最後再補一張人格組，新實現一律不補。
-    const handWithDrawnReturned: GameCard[] = state.drawnCard
-      ? [...newPlayers[playerIndex].hand, state.drawnCard]
-      : newPlayers[playerIndex].hand;
-    const finalPlayers = newPlayers.map((p, i) =>
-      i === playerIndex ? { ...p, hand: handWithDrawnReturned } : p
-    );
-    const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
-      playerIndex,
-      state.currentRound,
-      state.settings.totalRounds,
-      state.players.length
-    );
-    return skipPenalizedPlayers({
-      ...state,
-      players: finalPlayers,
-      drawnCard: null,
-      currentPlayerIndex: nextPlayerIndex,
-      currentRound: nextRound,
-      phase: isGameOver ? 'game-over' : 'drawing',
-      actionLog: [...state.actionLog, action],
-      winner: isGameOver ? determineWinner(finalPlayers) : null,
-    });
+    // phase === 'drawing'：還沒摸牌，手上沒有多出來的牌 → 沒有棄牌可欠，直接讓位。
+    // （UI 已把摸牌前的食胡鈕置灰，這條只在 PVP 亂序/重放消息下才走到。）
+    return endTurnAfterFailure(state, playerIndex, newPlayers, action);
   }
 }
 
@@ -485,11 +520,15 @@ export function drawCard(state: GameState): GameState {
   // hu-fail + discard + full loop + skip turn, then clears on resume.
   // Also reset selfPongUsedThisTurn — drawing a card marks the start of
   // a fresh turn, so the once-per-turn self-pong gate is restored.
+  // owesPenaltyDiscard 也一併清掉：摸牌代表上一回合已經結束，任何殘留的「欠一張
+  // 罰棄牌」都作廢。正常流程下它在 discardCard 就清了，這裏是防呆 —— 萬一某條路徑
+  // 讓回合在沒棄牌的情況下過去了，殘留的標誌會讓他下一次正常棄牌被誤判成罰棄牌
+  // （不解凍），白白多凍一輪。
   const newPlayers = state.players.map((p, i) =>
     i === currentIdx && !p.skipNextTurn
-      ? { ...p, revealedHand: false, revealedSelectedCards: undefined, selfPongUsedThisTurn: false }
+      ? { ...p, revealedHand: false, revealedSelectedCards: undefined, selfPongUsedThisTurn: false, owesPenaltyDiscard: false }
       : i === currentIdx
-      ? { ...p, selfPongUsedThisTurn: false }
+      ? { ...p, selfPongUsedThisTurn: false, owesPenaltyDiscard: false }
       : p
   );
 
@@ -517,6 +556,11 @@ export function discardCard(state: GameState, cardId: number): GameState {
   if (!cardToDiscard) return state;
   const newHand = allCards.filter((c) => c.id !== cardId);
 
+  // 罰棄牌：食胡失敗 / 自摸碰失敗之後欠的那一張。它【不算】解凍用的乾淨出牌 ——
+  // 否則「胡錯 → 馬上棄一張 → 立刻解凍」，罰停等於白罰。玩家仍要照常被跳過
+  // 兩個 own-turn，由 skipPenalizedPlayers 在最後一跳時解凍。
+  const isPenaltyDiscard = !!player.owesPenaltyDiscard;
+
   const action: GameAction = {
     round: state.currentRound,
     playerId: player.id,
@@ -524,7 +568,7 @@ export function discardCard(state: GameState, cardId: number): GameState {
     card: cardToDiscard,
     // 這次出牌若把自己的凍結解除（解凍輪 own discard）→ 標記，方便日誌顯示
     // 「解除罰停」，讓玩家直觀看到罰停確實結束了。
-    clearedPenalty: !!player.frozenUntilOwnDiscard,
+    clearedPenalty: !isPenaltyDiscard && !!player.frozenUntilOwnDiscard,
     timestamp: Date.now(),
   };
 
@@ -537,7 +581,8 @@ export function discardCard(state: GameState, cardId: number): GameState {
     return {
       ...p,
       hand: newHand,
-      frozenUntilOwnDiscard: false,
+      owesPenaltyDiscard: false,
+      frozenUntilOwnDiscard: isPenaltyDiscard ? p.frozenUntilOwnDiscard : false,
     };
   });
 
@@ -664,9 +709,13 @@ export function pongCard(
       { dimension, cards: declaredCards, round: state.currentRound },
     ];
 
+    // 碰成功 = 把出牌權搶過來，對 ponger 而言是【全新的一回合】：
+    // selfPongUsedThisTurn 必須清掉。否則他上一回合用過自摸碰的話，這個標誌會一路
+    // 帶到碰來的這回合 —— 自摸碰鈕被鎖死，更要命的是「碰完即胡」也會被
+    // attemptHu 的「本回合用過自摸碰就不能胡」守衛擋掉（該守衛 2026-08-01 加）。
     const newPlayers = state.players.map((p, i) =>
       i === pongerIndex
-        ? { ...p, hand: newHand, declaredSets: newDeclaredSets }
+        ? { ...p, hand: newHand, declaredSets: newDeclaredSets, selfPongUsedThisTurn: false }
         : p
     );
 
@@ -918,8 +967,10 @@ export function selfPongCard(
   }
 
   // SELF-PONG FAIL — full "罰停一整輪" treatment.
-  //   1. drawnCard returns to hand — letting the offender discard would
-  //      immediately clear frozenUntilOwnDiscard, nullifying the freeze.
+  //   1. 【仍然要棄一張牌】：留在 discarding + owesPenaltyDiscard=true。舊實現是
+  //      把 drawnCard 塞回手牌直接讓位，那張牌永遠沒棄出去 → 站立手牌永久 +1，
+  //      故意碰錯就能白賺一張牌（見 attemptHu 裏同款註釋）。這次棄牌【不解凍】
+  //      （discardCard 看 owesPenaltyDiscard），所以罰停力度和舊實現一樣重。
   //   2. skipNextTurn=true — the offender ALSO loses their next own-turn
   //      (no draw, no discard). Combined with frozenUntilOwnDiscard,
   //      this forces the offender to sit through TWO full rounds of
@@ -931,17 +982,17 @@ export function selfPongCard(
   // than pong-fail (4 + 1) — by design, because the offender has more
   // information (they already saw the drawnCard + chose a dim).
   const exposedCards = selected;
-  const handWithDrawnReturned: GameCard[] = state.drawnCard
-    ? [...ponger.hand, state.drawnCard]
-    : ponger.hand;
+  // drawnCard 留在原處（不塞回手牌）—— 玩家等下要從「手牌 + 剛摸的那張」裏
+  // 挑一張棄掉，跟正常回合一模一樣。selfPongUsedThisTurn 也照樣記，本回合不能再碰。
   const newPlayers = state.players.map((p, i) =>
     i === pongerIndex
       ? {
           ...p,
-          hand: handWithDrawnReturned,
           skipNextTurn: true,
           extraSkipQueued: true,
           frozenUntilOwnDiscard: true,
+          selfPongUsedThisTurn: true,
+          owesPenaltyDiscard: true,
           revealedSelectedCards: exposedCards,
         }
       : p
@@ -957,23 +1008,17 @@ export function selfPongCard(
     timestamp: Date.now(),
   };
 
-  const { nextPlayerIndex, nextRound, isGameOver } = advancePlayer(
-    state.currentPlayerIndex,
-    state.currentRound,
-    state.settings.totalRounds,
-    state.players.length
-  );
-
-  return skipPenalizedPlayers({
+  // 留在 discarding：本回合還沒完 —— 罰歸罰，這一張牌照樣要棄出去（老闆定的）。
+  // 讓位、判讀窗口、終局判定全部交給接下來的 discardCard 走常規路徑。
+  // canStillDiscard 兜底：手上一張牌都沒有時不能欠棄牌（會卡死），直接讓位。
+  if (!canStillDiscard(state, pongerIndex)) {
+    return endTurnAfterFailure(state, pongerIndex, newPlayers, action);
+  }
+  return {
     ...state,
     players: newPlayers,
-    drawnCard: null,
-    currentPlayerIndex: nextPlayerIndex,
-    currentRound: nextRound,
-    phase: isGameOver ? 'game-over' : 'drawing',
     actionLog: [...state.actionLog, action],
-    winner: isGameOver ? determineWinner(newPlayers) : null,
-  });
+  };
 }
 
 // A single claimer passes. Pending card only moves to discard pile after

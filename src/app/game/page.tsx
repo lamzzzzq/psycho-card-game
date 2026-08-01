@@ -114,7 +114,8 @@ export default function GamePage() {
   const isHumanDiscardPhase =
     game?.currentPlayerIndex === 0 &&
     game?.phase === 'discarding' &&
-    !game.players[0]?.skipNextTurn;
+    // 欠罰棄牌的玩家雖然帶着 skipNextTurn，但這一張仍要他自己棄（見下方 isDiscarding）
+    (!game.players[0]?.skipNextTurn || !!game.players[0]?.owesPenaltyDiscard);
 
   useEffect(() => {
     if (isHumanDiscardPhase) return;
@@ -387,7 +388,14 @@ export default function GamePage() {
   // canDraw/isDiscarding 加 !skipNextTurn 防禦 — skipPenalizedPlayers 應已跳過該
   // 玩家；frozenUntilOwnDiscard-only 狀態允許出牌（spec 解凍路徑）。
   const canDraw = isHumanTurn && game.phase === 'drawing' && !humanPlayer.skipNextTurn;
-  const isDiscarding = isHumanTurn && game.phase === 'discarding' && !humanPlayer.skipNextTurn;
+  // 欠罰棄牌：食胡失敗 / 自摸碰失敗之後仍要棄一張（老闆定的，防止手牌永久 +1）。
+  // 這時玩家已被標 skipNextTurn，若不特判就會 isDiscarding=false → 點不動任何牌，
+  // 而引擎又停在 discarding 不讓位 = 死鎖。
+  const owesPenaltyDiscard = !!humanPlayer.owesPenaltyDiscard;
+  const isDiscarding =
+    isHumanTurn &&
+    game.phase === 'discarding' &&
+    (!humanPlayer.skipNextTurn || owesPenaltyDiscard);
   const canHu =
     game.phase !== 'game-over' &&
     !humanFrozen &&
@@ -400,9 +408,14 @@ export default function GamePage() {
   // 老闆：自己回合【抽牌前】食胡與自摸碰都要顯示，但置灰不可點；抽完牌才亮起。
   // （麻將裏自摸胡也得先摸一張；截胡走的是 claim-window，不受這條限制。）
   const preDraw = isHumanTurn && game.phase === 'drawing';
+  // 老闆：抽完牌後如果選了自摸碰（= 沒看出自己能胡），這回合就【不能再食胡】，
+  // 按鈕直接隱藏 —— 此刻只剩「棄一張牌」一條路。只鎖自己回合，截胡不受影響
+  // （selfPongUsedThisTurn 要到自己下次抽牌才清）。engine 側 attemptHu 有同款守衛。
+  const huLockedBySelfPong =
+    isHumanTurn && game.phase === 'discarding' && !!humanPlayer.selfPongUsedThisTurn;
   // 顯示 = 能胡 或 處在「抽牌前」這個置灰態；啟用 = 能胡且已抽牌。
-  const showHuButton = canHu || preDraw;
-  const huEnabled = canHu && !preDraw;
+  const showHuButton = (canHu || preDraw) && !huLockedBySelfPong;
+  const huEnabled = canHu && !preDraw && !huLockedBySelfPong;
   const topDiscard = game.discardPile.length > 0 ? game.discardPile[game.discardPile.length - 1] : null;
   const targets = getTargetCounts(humanPlayer.bigFiveScores);
   const declaredDims = getDeclaredDimensions(humanPlayer);
@@ -584,12 +597,14 @@ export default function GamePage() {
           <div className="pointer-events-none absolute inset-x-0 bottom-1 flex flex-col items-center">
             <div className="pointer-events-auto w-full max-w-xl space-y-2 px-1">
 
-        {/* Penalty banner — lockout 時顯示紅色"罰停"，own-turn 解凍輪顯示提示 */}
-        {humanFrozenLockout && (
+        {/* Penalty banner — lockout 時顯示紅色"罰停"，own-turn 解凍輪顯示提示。
+            欠罰棄牌時換一句：光說「罰停」會讓玩家以為自己什麼都不用做，
+            但這回合他還欠一張棄牌（不棄就卡住）。 */}
+        {(humanFrozenLockout || owesPenaltyDiscard) && (
           <div className="fixed left-1/2 top-3 z-[78] flex w-[min(54rem,calc(100vw-2rem))] -translate-x-1/2 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.5)] bg-[var(--psy-card-content)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] shadow-[0_14px_30px_rgba(96,72,38,0.2)] sm:text-sm">
             <span>⛔</span>
-            <span className="hidden sm:inline">{tg.penaltyLockoutFull}</span>
-            <span className="sm:hidden">{tg.penaltyLockoutShort}</span>
+            <span className="hidden sm:inline">{owesPenaltyDiscard ? tg.penaltyMustDiscardFull : tg.penaltyLockoutFull}</span>
+            <span className="sm:hidden">{owesPenaltyDiscard ? tg.penaltyMustDiscardShort : tg.penaltyLockoutShort}</span>
           </div>
         )}
         {humanAwaitingOwnDischarge && (
@@ -796,7 +811,9 @@ export default function GamePage() {
               </button>
             )}
 
-            {isHumanTurn && isDiscarding && !viewUsedThisTurn && revealDifficulty !== 'open' && (
+            {/* 罰棄牌回合不給查看：這回合只剩「棄一張」一條路（老闆）。isDiscarding
+                現在對欠罰棄牌的玩家也是 true，不排除的話等於白送他一次查看。 */}
+            {isHumanTurn && isDiscarding && !owesPenaltyDiscard && !viewUsedThisTurn && revealDifficulty !== 'open' && (
               <button
                 onClick={() => { setViewMode(true); setPickedViewIds([]); }}
                 className="psy-btn psy-btn-ghost px-4 py-2 text-sm font-medium"
@@ -805,7 +822,7 @@ export default function GamePage() {
                 🔍 {locale === 'en' ? `View ${viewCap}` : `查看 ${viewCap} 張`}
               </button>
             )}
-            {isHumanTurn && isDiscarding && viewUsedThisTurn && revealDifficulty !== 'open' && (
+            {isHumanTurn && isDiscarding && !owesPenaltyDiscard && viewUsedThisTurn && revealDifficulty !== 'open' && (
               <span className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2 text-xs text-[var(--psy-muted)]">{tg.viewUsed}</span>
             )}
 

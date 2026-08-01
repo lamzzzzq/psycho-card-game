@@ -67,6 +67,7 @@ function toPlayer(sp: SerializedPlayer, overrideHand?: GameCard[]): Player {
     frozenUntilOwnDiscard: sp.frozenUntilOwnDiscard,
     hasLeft: sp.hasLeft,
     selfPongUsedThisTurn: sp.selfPongUsedThisTurn,
+    owesPenaltyDiscard: sp.owesPenaltyDiscard,
   };
 }
 
@@ -483,10 +484,21 @@ export default function PvpGamePage() {
   // 該玩家，若 race 導致 currentPlayerIndex 停在 skipNextTurn 玩家身上，UI 也不
   // 讓點。frozenUntilOwnDiscard-only 狀態允許 draw/discard（spec 解凍路徑）。
   const canDraw = isMyTurn && gameState.phase === 'drawing' && !meSerialized?.skipNextTurn;
-  const isDiscarding = isMyTurn && gameState.phase === 'discarding' && !meSerialized?.skipNextTurn;
+  // 欠罰棄牌：食胡失敗 / 自摸碰失敗之後仍要棄一張（老闆定的，防止手牌永久 +1）。
+  // 這時玩家已被標 skipNextTurn，不特判就會 isDiscarding=false → 點不動牌，
+  // 而引擎又停在 discarding 不讓位 = 死鎖。與單機同款。
+  const owesPenaltyDiscard = !!meSerialized?.owesPenaltyDiscard;
+  const isDiscarding =
+    isMyTurn &&
+    gameState.phase === 'discarding' &&
+    (!meSerialized?.skipNextTurn || owesPenaltyDiscard);
   // 老闆：自己回合【抽牌前】食胡與自摸碰都要顯示、但置灰不可點，抽完牌才亮起。
   // 截胡（claim-window）不受這條限制，走上面的 canClaim 分支。與單機保持一致。
   const preDraw = isMyTurn && gameState.phase === 'drawing';
+  // 老闆：抽完牌後選了自摸碰 → 這回合不能再食胡，按鈕隱藏，只剩棄牌一條路。
+  // 只鎖自己回合（selfPongUsedThisTurn 要到下次抽牌才清），截胡不受影響。
+  const huLockedBySelfPong =
+    isMyTurn && gameState.phase === 'discarding' && !!meSerialized?.selfPongUsedThisTurn;
 
   // Convert serialized players to Player objects for components
   const mePlayer = meSerialized ? toPlayer(meSerialized, meSerialized.hand) : null;
@@ -598,7 +610,8 @@ export default function PvpGamePage() {
   }
 
   // open(明牌)無需查看，隱藏按鈕；half/hidden 才顯示。
-  const canStartView = isMyTurn && gameState.phase === 'discarding' && !viewUsedThisTurn && !viewMode && revealDifficulty !== 'open';
+  // !owesPenaltyDiscard：罰棄牌回合只剩「棄一張」一條路（老闆），不給查看。與單機一致。
+  const canStartView = isMyTurn && gameState.phase === 'discarding' && !meSerialized?.owesPenaltyDiscard && !viewUsedThisTurn && !viewMode && revealDifficulty !== 'open';
   // 把最新 canDraw 同步到 ref，給 early-return 前定義的 handleDrawPileHover 用。
   canDrawRef.current = canDraw;
 
@@ -910,12 +923,14 @@ export default function PvpGamePage() {
           <div className="pointer-events-none absolute inset-x-0 bottom-1 flex flex-col items-center">
           <div className="pointer-events-auto w-full max-w-xl space-y-2 px-1">
 
-          {/* Penalty banner — 真正 lockout 時顯示"罰停"，own-turn 解凍輪換成提示 */}
-          {meFrozenLockout && (
+          {/* Penalty banner — 真正 lockout 時顯示"罰停"，own-turn 解凍輪換成提示。
+              欠罰棄牌時換一句：光說「罰停」會讓玩家以為自己不用動，
+              但這回合他還欠一張棄牌（不棄就卡住）。與單機同款。 */}
+          {(meFrozenLockout || owesPenaltyDiscard) && (
             <div className="psy-panel flex items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.5)] bg-[var(--psy-card-content)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] shadow-[0_14px_30px_rgba(96,72,38,0.2)] sm:text-sm">
               <span>⛔</span>
-              <span className="hidden sm:inline">{t.penaltyLockoutFull}</span>
-              <span className="sm:hidden">{t.penaltyLockoutShort}</span>
+              <span className="hidden sm:inline">{owesPenaltyDiscard ? t.penaltyMustDiscardFull : t.penaltyLockoutFull}</span>
+              <span className="sm:hidden">{owesPenaltyDiscard ? t.penaltyMustDiscardShort : t.penaltyLockoutShort}</span>
             </div>
           )}
           {meAwaitingOwnDischarge && (
@@ -1160,7 +1175,7 @@ export default function PvpGamePage() {
             {viewUsedThisTurn && !viewMode && (
               <span className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2 text-xs text-[var(--psy-muted)]">{t.viewUsed}</span>
             )}
-            {!meFrozen && (
+            {!meFrozen && !huLockedBySelfPong && (
               <button
                 onClick={preDraw ? undefined : handleHu}
                 disabled={preDraw}
