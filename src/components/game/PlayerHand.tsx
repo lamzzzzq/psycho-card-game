@@ -105,26 +105,29 @@ export function PlayerHand({
           <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
             {discardPickId === null ? t.pickDiscard : t.confirmDiscardHint}
           </p>
-          {discardPickId !== null && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => setDiscardPickId(null)}
-                className="psy-btn psy-btn-ghost px-3 py-1.5 text-xs"
-              >
-                {t.cancel}
-              </button>
-              <button
-                onClick={() => {
-                  const id = discardPickId;
-                  onDiscardCard(id);
-                  setDiscardPickId(null);
-                }}
-                className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold"
-              >
-                {t.submitDiscard}
-              </button>
-            </div>
-          )}
+          {/* 未圈定牌時兩顆鈕照樣顯示、只是置灰（老闆 2026-08-01），
+              圈定之後才亮起 —— 跟單機頁那條胶囊同一套規則。 */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setDiscardPickId(null)}
+              disabled={discardPickId === null}
+              className="psy-btn psy-btn-ghost px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              {t.cancel}
+            </button>
+            <button
+              onClick={() => {
+                const id = discardPickId;
+                if (id === null) return;
+                onDiscardCard(id);
+                setDiscardPickId(null);
+              }}
+              disabled={discardPickId === null}
+              className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              {t.submitDiscard}
+            </button>
+          </div>
         </motion.div>
       )}
       {isDeclaring && (

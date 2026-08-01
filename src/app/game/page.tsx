@@ -829,34 +829,39 @@ export default function GamePage() {
               <span className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2 text-xs text-[var(--psy-muted)]">{tg.viewUsed}</span>
             )}
 
-            {/* 只在「已圈定要棄的牌」時才出這條胶囊（確認提示 + 取消/提交）。
-                未圈定時原本這裏也顯示「先圈定要棄的牌」，與上方回合行那句一模一樣
-                （老闆：重複了）→ 整條不渲染。 */}
-            {isHumanTurn && isDiscarding && !viewMode && !pongIntent && discardPickId !== null && (
+            {/* 出牌階段一進來就把這條胶囊擺出來、只是置灰（老闆 2026-08-01：
+                「When this is shown, the box below shd be shown, but dimmed」），
+                圈定要棄的牌之後才亮起可點。
+                注意只在出牌階段出現：查看/碰牌意圖進行中都不算。
+                提示文案仍然只在已圈定時才顯示 —— 未圈定那句跟上方回合行一模一樣
+                （老闆早前指出重複），所以留空只給兩顆灰鈕。 */}
+            {isHumanTurn && isDiscarding && !viewMode && !pongIntent && (
               <div className="flex min-w-0 items-center gap-2 rounded-full border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-3 py-1.5">
-                <span className="hidden max-w-[15rem] truncate text-xs text-[var(--psy-muted)] sm:inline">
-                  {tg.confirmDiscardHint}
-                </span>
                 {discardPickId !== null && (
-                  <>
-                    <button
-                      onClick={() => setDiscardPickId(null)}
-                      className="psy-btn psy-btn-ghost px-3 py-1.5 text-xs"
-                    >
-                      {tg.cancel}
-                    </button>
-                    <button
-                      onClick={() => {
-                        const id = discardPickId;
-                        handleDiscardCard(id);
-                        setDiscardPickId(null);
-                      }}
-                      className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold"
-                    >
-                      {tg.submitDiscard}
-                    </button>
-                  </>
+                  <span className="hidden max-w-[15rem] truncate text-xs text-[var(--psy-muted)] sm:inline">
+                    {tg.confirmDiscardHint}
+                  </span>
                 )}
+                <button
+                  onClick={() => setDiscardPickId(null)}
+                  disabled={discardPickId === null}
+                  className="psy-btn psy-btn-ghost px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  {tg.cancel}
+                </button>
+                <button
+                  onClick={() => {
+                    const id = discardPickId;
+                    if (id === null) return;
+                    handleDiscardCard(id);
+                    setDiscardPickId(null);
+                  }}
+                  disabled={discardPickId === null}
+                  className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35"
+                  title={discardPickId === null ? tg.pickDiscard : undefined}
+                >
+                  {tg.submitDiscard}
+                </button>
               </div>
             )}
 
