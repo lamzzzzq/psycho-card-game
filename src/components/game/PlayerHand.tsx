@@ -21,7 +21,6 @@ interface PlayerHandProps {
   viewedCardIds?: number[];
   discardPickId?: number | null;
   onDiscardPickChange?: (cardId: number | null) => void;
-  showDiscardControls?: boolean;
   /** Keeps the source slot stable while its card clone is flying away. */
   flyingCardId?: number | null;
   // True when "view 2 cards" mode is active (user picking cards). In this
@@ -29,7 +28,8 @@ interface PlayerHandProps {
   viewMode?: boolean;
   pickedViewIds?: number[];
   onTogglePickView?: (cardId: number) => void;
-  onDiscardCard: (cardId: number) => void;
+  // 註：手牌不再負責「提交棄牌」——那顆鈕在 DiscardControls 裏，
+  // 這裏只回報圈定了哪一張（onDiscardPickChange）。
   onToggleSelect?: (cardId: number) => void;
   onCardHover: (el: HTMLElement | null) => void;
 }
@@ -44,12 +44,10 @@ export function PlayerHand({
   viewedCardIds = [],
   discardPickId: controlledDiscardPickId,
   onDiscardPickChange,
-  showDiscardControls = true,
   flyingCardId = null,
   viewMode = false,
   pickedViewIds = [],
   onTogglePickView,
-  onDiscardCard,
   onToggleSelect,
   onCardHover,
 }: PlayerHandProps) {
@@ -96,40 +94,11 @@ export function PlayerHand({
 
   return (
     <div className="space-y-2">
-      {isDiscarding && !viewMode && showDiscardControls && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-wrap items-center justify-center gap-2"
-        >
-          <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
-            {discardPickId === null ? t.pickDiscard : t.confirmDiscardHint}
-          </p>
-          {/* 未圈定牌時兩顆鈕照樣顯示、只是置灰（老闆 2026-08-01），
-              圈定之後才亮起 —— 跟單機頁那條胶囊同一套規則。 */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setDiscardPickId(null)}
-              disabled={discardPickId === null}
-              className="psy-btn psy-btn-ghost px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-35"
-            >
-              {t.cancel}
-            </button>
-            <button
-              onClick={() => {
-                const id = discardPickId;
-                if (id === null) return;
-                onDiscardCard(id);
-                setDiscardPickId(null);
-              }}
-              disabled={discardPickId === null}
-              className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35"
-            >
-              {t.submitDiscard}
-            </button>
-          </div>
-        </motion.div>
-      )}
+      {/* 「取消 / 提交棄牌」控制欄已移出去：單機與 PVP 都用操作排裏的
+          DiscardControls（共用組件）。這裏原本那份是第二套實現，兩邊各改各的
+          很容易漏，索性刪掉 —— 手牌只負責「點一張牌 = 圈定/取消圈定」。
+          提示文案「先點擊一張要捨棄的牌」也一起搬到回合行（兩頁的
+          FilingProgressCard info 位）。 */}
       {isDeclaring && (
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           className="psy-serif text-center text-sm text-[var(--psy-accent)]">

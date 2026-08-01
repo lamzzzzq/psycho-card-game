@@ -22,6 +22,7 @@ import { DIMENSIONS, Dimension, GameCard } from '@/types';
 import { getTargetCounts } from '@/lib/scoring';
 import { getDeclaredDimensions, getRankings } from '@/lib/game-logic';
 import { PlayerHand } from '@/components/game/PlayerHand';
+import { DiscardControls } from '@/components/game/DiscardControls';
 import { OpponentHand } from '@/components/game/OpponentHand';
 import { DrawPile } from '@/components/game/DrawPile';
 import { DiscardPile } from '@/components/game/DiscardPile';
@@ -768,6 +769,15 @@ export default function GamePage() {
         <div className="flex min-h-[46px] shrink-0 flex-wrap items-center justify-center gap-2 sm:flex-nowrap sm:gap-3">
           {!viewMode && !pongIntent && (
           <>
+            {/* 截胡碰偷來的回合：沒有摸牌，直接欠一張棄牌 —— 這句解釋為什麼牌堆
+                沒動、Win/自摸碰也不見了。原本只在桌面顯示（hidden sm:flex），手機
+                單機看不到而 PVP 兩端都有 → 統一成兩端、兩個模式都顯示。 */}
+            {isHumanTurn && isDiscarding && !game.drawnCard && (
+              <p className="psy-serif animate-pulse text-xs text-[var(--psy-accent)] sm:text-sm">
+                {tg.pongDoneDiscard}
+              </p>
+            )}
+
             {/* Hu button — visible on own turn, or during an opponent's
                 claim-window ("跳着胡"). Hidden when the human has already
                 responded to this claim window. */}
@@ -775,8 +785,8 @@ export default function GamePage() {
               <button
                 onClick={huEnabled ? handleHu : undefined}
                 disabled={!huEnabled}
-                title={preDraw ? tg.needDrawFirst : undefined}
-                className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
+                title={preDraw ? tg.needDrawFirst : !canHu ? tg.selfPongFrozen : undefined}
+                className="psy-btn psy-btn-danger px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35 sm:px-5 sm:text-sm"
               >
                 {tg.win}
               </button>
@@ -811,7 +821,7 @@ export default function GamePage() {
                   !!humanPlayer.selfPongUsedThisTurn ||
                   selfPongCandidates.length === 0
                 }
-                className="psy-btn psy-btn-accent px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-35"
+                className="psy-btn psy-btn-accent px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35 sm:px-5 sm:text-sm"
                 title={
                   preDraw
                     ? tg.needDrawFirst
@@ -831,7 +841,7 @@ export default function GamePage() {
             {isHumanTurn && isDiscarding && !owesPenaltyDiscard && !viewUsedThisTurn && revealDifficulty !== 'open' && (
               <button
                 onClick={() => { setViewMode(true); setPickedViewIds([]); }}
-                className="psy-btn psy-btn-ghost px-4 py-2 text-sm font-medium"
+                className="psy-btn psy-btn-ghost px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm"
                 title={tg.viewCardsTitle}
               >
                 🔍 {locale === 'en' ? `View ${viewCap}` : `查看 ${viewCap} 張`}
@@ -841,40 +851,16 @@ export default function GamePage() {
               <span className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2 text-xs text-[var(--psy-muted)]">{tg.viewUsed}</span>
             )}
 
-            {/* 出牌階段一進來就把這條胶囊擺出來、只是置灰（老闆 2026-08-01：
-                「When this is shown, the box below shd be shown, but dimmed」），
-                圈定要棄的牌之後才亮起可點。
-                注意只在出牌階段出現：查看/碰牌意圖進行中都不算。
-                提示文案仍然只在已圈定時才顯示 —— 未圈定那句跟上方回合行一模一樣
-                （老闆早前指出重複），所以留空只給兩顆灰鈕。 */}
+            {/* 出牌階段一進來就把這條胶囊擺出來、只是置灰，圈定要棄的牌之後才亮起
+                （老闆 2026-08-01）。只在出牌階段出現：查看/碰牌意圖進行中都不算。
+                組件與 PVP 共用（DiscardControls）——兩邊必須一模一樣。 */}
             {isHumanTurn && isDiscarding && !viewMode && !pongIntent && (
-              <div className="flex min-w-0 items-center gap-2 rounded-full border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-3 py-1.5">
-                {discardPickId !== null && (
-                  <span className="hidden max-w-[15rem] truncate text-xs text-[var(--psy-muted)] sm:inline">
-                    {tg.confirmDiscardHint}
-                  </span>
-                )}
-                <button
-                  onClick={() => setDiscardPickId(null)}
-                  disabled={discardPickId === null}
-                  className="psy-btn psy-btn-ghost px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-35"
-                >
-                  {tg.cancel}
-                </button>
-                <button
-                  onClick={() => {
-                    const id = discardPickId;
-                    if (id === null) return;
-                    handleDiscardCard(id);
-                    setDiscardPickId(null);
-                  }}
-                  disabled={discardPickId === null}
-                  className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35"
-                  title={discardPickId === null ? tg.pickDiscard : undefined}
-                >
-                  {tg.submitDiscard}
-                </button>
-              </div>
+              <DiscardControls
+                locale={locale}
+                discardPickId={discardPickId}
+                onCancel={() => setDiscardPickId(null)}
+                onSubmit={handleDiscardCard}
+              />
             )}
 
             {/* AI 回合：自动执行（8-15s 思考延迟已在 effect 内），此处仅弱提示「思考中…」。
@@ -907,7 +893,6 @@ export default function GamePage() {
               viewedCardIds={effectiveViewedIds}
               discardPickId={discardPickId}
               onDiscardPickChange={setDiscardPickId}
-              showDiscardControls={false}
               flyingCardId={flyingCards[0]?.cardId ?? null}
               viewMode={viewMode}
               pickedViewIds={pickedViewIds}
@@ -918,7 +903,6 @@ export default function GamePage() {
                     : prev.length >= viewCap ? prev : [...prev, cardId]
                 )
               }
-              onDiscardCard={handleDiscardCard}
               onToggleSelect={handleToggleSelect}
               onCardHover={handleCardHover}
               locale={locale}
@@ -926,16 +910,9 @@ export default function GamePage() {
           </div>
         </div>
 
-        {isHumanActive && (
-          <div className="hidden items-center justify-center gap-2 sm:flex">
-            {/* 「點擊牌堆抽一張牌」已移除：移動端沒有這句，牌堆本身已有手指提示動畫（同事反饋）。 */}
-            {isDiscarding && !game.drawnCard && (
-              <p className="psy-serif animate-pulse text-sm text-[var(--psy-accent)]">
-                {tg.pongDoneDiscard}
-              </p>
-            )}
-          </div>
-        )}
+        {/* 這裏原本是一條桌面專屬提示行：「點擊牌堆抽一張牌」（已刪，牌堆自帶手指動畫）
+            + 碰完那句 pongDoneDiscard。後者已挪進上方操作排，手機也看得到，
+            與 PVP 一致 —— 整條桌面專屬行不再需要。 */}
       </div>
 
       <MobileGameSheet

@@ -31,6 +31,7 @@ import { DIMENSION_META } from '@/data/dimensions';
 import { getTargetCounts } from '@/lib/scoring';
 import { getDeclaredDimensions } from '@/lib/game-logic';
 import { PlayerHand } from '@/components/game/PlayerHand';
+import { DiscardControls } from '@/components/game/DiscardControls';
 import { OpponentHand } from '@/components/game/OpponentHand';
 import { DrawPile } from '@/components/game/DrawPile';
 import { DiscardPile } from '@/components/game/DiscardPile';
@@ -97,6 +98,9 @@ export default function PvpGamePage() {
   const [pickedViewIds, setPickedViewIds] = useState<number[]>([]);
   const [viewedCardIds, setViewedCardIds] = useState<number[]>([]);
   const [viewUsedThisTurn, setViewUsedThisTurn] = useState(false);
+  // 圈定要棄的那張牌。原本這個 state 留在 PlayerHand 內部（PVP 用它自帶的控制欄），
+  // 現在跟單機一樣提上來，好把「取消 / 提交棄牌」胶囊放進操作排（共用 DiscardControls）。
+  const [discardPickId, setDiscardPickId] = useState<number | null>(null);
   // Arrow state — 存「取点函数」，ArrowOverlay 每帧重算 → 移动端滚动时跟随卡牌。
   type Pt = { x: number; y: number };
   const [arrowFrom, setArrowFrom] = useState<(() => Pt | null) | null>(null);
@@ -913,7 +917,14 @@ export default function PvpGamePage() {
                     </>
                   )}
                 </span>
-                <span className="ml-auto shrink-0 font-medium">{t.doneLabel} {mePlayer.declaredSets.length}/5</span>
+                {/* 出牌階段還沒圈牌時，右邊那格換成「先點擊一張要捨棄的牌」——
+                    與單機同一條規則（單機在 game/page.tsx 的 info 位做同樣的事）。
+                    PlayerHand 那條提示已隨控制欄一起關掉，指引就靠這裏。 */}
+                {isMyTurn && isDiscarding && !viewMode && !pongIntent && discardPickId === null ? (
+                  <span className="ml-auto truncate font-medium text-[var(--psy-accent)]">{t.pickDiscard}</span>
+                ) : (
+                  <span className="ml-auto shrink-0 font-medium">{t.doneLabel} {mePlayer.declaredSets.length}/5</span>
+                )}
               </>
             }
             targets={targets ?? {}}
@@ -934,7 +945,7 @@ export default function PvpGamePage() {
               欠罰棄牌時換一句：光說「罰停」會讓玩家以為自己不用動，
               但這回合他還欠一張棄牌（不棄就卡住）。與單機同款。 */}
           {(meFrozenLockout || owesPenaltyDiscard) && (
-            <div className="psy-panel flex items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.5)] bg-[var(--psy-card-content)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] shadow-[0_14px_30px_rgba(96,72,38,0.2)] sm:text-sm">
+            <div className="fixed left-1/2 top-3 z-[78] flex w-[min(54rem,calc(100vw-2rem))] -translate-x-1/2 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.5)] bg-[var(--psy-card-content)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] shadow-[0_14px_30px_rgba(96,72,38,0.2)] sm:text-sm">
               <span>⛔</span>
               <span className="hidden sm:inline">{owesPenaltyDiscard ? t.penaltyMustDiscardFull : t.penaltyLockoutFull}</span>
               <span className="sm:hidden">{owesPenaltyDiscard ? t.penaltyMustDiscardShort : t.penaltyLockoutShort}</span>
@@ -1159,34 +1170,25 @@ export default function PvpGamePage() {
 
           {/* Action buttons (my turn only) — 恆佔一行高度（min-h）：
               按鈕隨回合出現/消失時手牌不再上下跳。 */}
-          <div className="flex min-h-[46px] shrink-0 flex-nowrap items-center justify-center gap-2 sm:gap-3">
+          <div className="flex min-h-[46px] shrink-0 flex-wrap items-center justify-center gap-2 sm:flex-nowrap sm:gap-3">
           {isMyTurn && gameState.phase !== 'game-over' && gameState.phase !== 'claim-window' && !viewMode && !pongIntent && (
           <>
-            {canDraw && (
-              <p className="psy-serif animate-pulse text-xs text-[var(--psy-accent)] sm:text-sm">{t.clickToDraw}</p>
-            )}
+            {/* 「點擊牌堆抽一張牌」已刪：單機 2026-07-30 就按同事反饋刪掉了
+                （牌堆自帶手指動畫），PVP 這次跟上，兩邊一致。 */}
             {isDiscarding && !gameState.drawnCard && (
               <p className="psy-serif animate-pulse text-xs text-[var(--psy-accent)] sm:text-sm">
                 {t.pongDoneDiscard}
               </p>
             )}
-            {canStartView && (
+            {/* 顯示/啟用條件與單機逐字對齊（單機 showHuButton / huEnabled）：
+                抽牌前顯示但置灰；罰停中也是顯示但點不動（自摸碰鈕本來就這樣，
+                兩顆鈕要同進同出）。之前 PVP 用 !meFrozen 直接隱藏，罰停解凍那
+                一回合兩邊長得不一樣。 */}
+            {(canHu || preDraw) && !usedSelfPongThisTurn && !postPongDiscard && (
               <button
-                onClick={handleStartView}
-                className="psy-btn psy-btn-ghost px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm"
-                title={t.viewCardsTitle}
-              >
-                🔍 {locale === 'en' ? `View ${viewCap}` : `查看 ${viewCap} 張`}
-              </button>
-            )}
-            {viewUsedThisTurn && !viewMode && (
-              <span className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2 text-xs text-[var(--psy-muted)]">{t.viewUsed}</span>
-            )}
-            {!meFrozen && !usedSelfPongThisTurn && !postPongDiscard && (
-              <button
-                onClick={preDraw ? undefined : handleHu}
-                disabled={preDraw}
-                title={preDraw ? t.needDrawFirst : undefined}
+                onClick={canHu && !preDraw ? handleHu : undefined}
+                disabled={!canHu || preDraw}
+                title={preDraw ? t.needDrawFirst : !canHu ? t.selfPongFrozen : undefined}
                 className="psy-btn psy-btn-danger px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35 sm:px-5 sm:text-sm"
               >
                 {t.win}
@@ -1233,6 +1235,32 @@ export default function PvpGamePage() {
               {t.selfPong}
             </button>
             )}
+
+            {/* 查看 N 張 —— 位置與門檻對齊單機：罰棄牌回合不給查看（那回合只剩
+                「棄一張」一條路），明牌檔也不出現。 */}
+            {canStartView && (
+              <button
+                onClick={handleStartView}
+                className="psy-btn psy-btn-ghost px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm"
+                title={t.viewCardsTitle}
+              >
+                🔍 {locale === 'en' ? `View ${viewCap}` : `查看 ${viewCap} 張`}
+              </button>
+            )}
+            {isDiscarding && !owesPenaltyDiscard && viewUsedThisTurn && revealDifficulty !== 'open' && (
+              <span className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2 text-xs text-[var(--psy-muted)]">{t.viewUsed}</span>
+            )}
+
+            {/* 取消 / 提交棄牌 —— 與單機共用 DiscardControls（見組件註釋）：
+                出牌階段一進來就顯示、置灰，圈定一張牌後才亮。 */}
+            {isDiscarding && (
+              <DiscardControls
+                locale={locale}
+                discardPickId={discardPickId}
+                onCancel={() => setDiscardPickId(null)}
+                onSubmit={handleDiscard}
+              />
+            )}
           </>
           )}
           </div>
@@ -1258,10 +1286,11 @@ export default function PvpGamePage() {
                         .map((c) => c.id)
                     : viewedCardIds
                 }
+                discardPickId={discardPickId}
+                onDiscardPickChange={setDiscardPickId}
                 viewMode={viewMode}
                 pickedViewIds={pickedViewIds}
                 onTogglePickView={handleTogglePickView}
-                onDiscardCard={handleDiscard}
                 onToggleSelect={handleToggleSelect}
                 onCardHover={handleCardHover}
               />
