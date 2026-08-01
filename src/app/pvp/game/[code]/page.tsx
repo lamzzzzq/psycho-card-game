@@ -1191,7 +1191,10 @@ export default function PvpGamePage() {
                 掉牌(见 selfPongCard 守卫)。本回合已经用过(成功归档 或 判定失败)→ 整个
                 按钮撤掉，不留灰的(老板：多此一举)。与单机一致。
                 enabled 不随是否真有牌切换,避免泄露"你有足够X维牌"。玩家决定、引擎判。*/}
-            {(gameState.phase === 'drawing' || gameState.phase === 'discarding') && !usedSelfPongThisTurn && (
+            {/* !owesPenaltyDiscard：食胡失败 / 自摸碰失败之后那次罚弃牌只剩「弃一张」
+                一条路，按钮撤掉不留灰的（老板 2026-08-01：「After wrong Win or wrong
+                Pong, only the discard box shd be shown」）。与单机一致。 */}
+            {(gameState.phase === 'drawing' || gameState.phase === 'discarding') && !usedSelfPongThisTurn && !owesPenaltyDiscard && (
             <button
               onClick={() => {
                 if (preDraw) return;

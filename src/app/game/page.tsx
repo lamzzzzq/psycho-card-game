@@ -778,8 +778,12 @@ export default function GamePage() {
                 都在，只是暗的），真正可点仍只有 discarding：drawing 阶段自摸会漏抽一次
                 牌导致掉牌（见 selfPongCard 守卫）。本回合已经用过（成功归档 或 判定
                 失败）→ 整个按钮撤掉，不留灰的（老板：多此一举）。claim-window 的碰由
-                浮层 PongPanel 处理。按钮是否启用不泄露"你能碰维度X"——玩家决定、引擎判。*/}
-            {isHumanTurn && (game.phase === 'drawing' || game.phase === 'discarding') && !usedSelfPongThisTurn && (
+                浮层 PongPanel 处理。按钮是否启用不泄露"你能碰维度X"——玩家决定、引擎判。
+                !owesPenaltyDiscard：食胡失败 / 自摸碰失败之后那次罚弃牌，只剩「弃一张」
+                一条路，按钮撤掉不留灰的（老板 2026-08-01：「After wrong Win or wrong
+                Pong, only the discard box shd be shown」）。跟上面查看键同一条规则。
+                自摸碰失败本来就被 usedSelfPongThisTurn 挡掉了，这条主要管食胡失败。*/}
+            {isHumanTurn && (game.phase === 'drawing' || game.phase === 'discarding') && !usedSelfPongThisTurn && !owesPenaltyDiscard && (
               <button
                 onClick={() => {
                   if (preDraw) return;
