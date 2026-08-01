@@ -415,9 +415,17 @@ export default function GamePage() {
   // engine 側 attemptHu 有同款守衛。
   const usedSelfPongThisTurn =
     isHumanTurn && game.phase === 'discarding' && !!humanPlayer.selfPongUsedThisTurn;
+  // 截胡碰（碰別人的棄牌）成功後偷來的這回合：engine 給 phase='discarding' +
+  // drawnCard=null，玩家只欠一張棄牌。老闆 2026-08-01：「After intercept pong,
+  // these two shd not be shown」—— 食胡與自摸碰兩個鈕都撤掉，跟自摸碰後同一條規則。
+  // ⚠️ 這條同時把「碰完即胡」從 UI 上收走了（engine 那邊 attemptHu 仍允許，
+  // 見 game-logic.ts pong-success 裏 selfPongUsedThisTurn 清零的註釋）——老闆決定。
+  // discarding 而 drawnCard===null 只有碰來的回合會出現（正常回合必有 drawnCard）。
+  const postPongDiscard =
+    isHumanTurn && game.phase === 'discarding' && game.drawnCard === null;
   // 顯示 = 能胡 或 處在「抽牌前」這個置灰態；啟用 = 能胡且已抽牌。
-  const showHuButton = (canHu || preDraw) && !usedSelfPongThisTurn;
-  const huEnabled = canHu && !preDraw && !usedSelfPongThisTurn;
+  const showHuButton = (canHu || preDraw) && !usedSelfPongThisTurn && !postPongDiscard;
+  const huEnabled = canHu && !preDraw && !usedSelfPongThisTurn && !postPongDiscard;
   const topDiscard = game.discardPile.length > 0 ? game.discardPile[game.discardPile.length - 1] : null;
   const targets = getTargetCounts(humanPlayer.bigFiveScores);
   const declaredDims = getDeclaredDimensions(humanPlayer);
@@ -783,7 +791,7 @@ export default function GamePage() {
                 一条路，按钮撤掉不留灰的（老板 2026-08-01：「After wrong Win or wrong
                 Pong, only the discard box shd be shown」）。跟上面查看键同一条规则。
                 自摸碰失败本来就被 usedSelfPongThisTurn 挡掉了，这条主要管食胡失败。*/}
-            {isHumanTurn && (game.phase === 'drawing' || game.phase === 'discarding') && !usedSelfPongThisTurn && !owesPenaltyDiscard && (
+            {isHumanTurn && (game.phase === 'drawing' || game.phase === 'discarding') && !usedSelfPongThisTurn && !owesPenaltyDiscard && !postPongDiscard && (
               <button
                 onClick={() => {
                   if (preDraw) return;

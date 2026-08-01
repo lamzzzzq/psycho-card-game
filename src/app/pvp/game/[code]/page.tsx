@@ -500,6 +500,12 @@ export default function PvpGamePage() {
   // 只鎖自己回合（selfPongUsedThisTurn 要到下次抽牌才清），截胡不受影響。與單機一致。
   const usedSelfPongThisTurn =
     isMyTurn && gameState.phase === 'discarding' && !!meSerialized?.selfPongUsedThisTurn;
+  // 截胡碰（碰別人的棄牌）成功偷來的回合：engine 給 phase='discarding' +
+  // drawnCard=null，只欠一張棄牌。老闆 2026-08-01：「After intercept pong,
+  // these two shd not be shown」→ 食胡與自摸碰都撤掉。與單機一致。
+  // ⚠️ 連帶把「碰完即胡」從 UI 收走（engine 仍允許，見 game-logic pong-success 註釋）。
+  const postPongDiscard =
+    isMyTurn && gameState.phase === 'discarding' && !gameState.drawnCard;
 
   // Convert serialized players to Player objects for components
   const mePlayer = meSerialized ? toPlayer(meSerialized, meSerialized.hand) : null;
@@ -1176,7 +1182,7 @@ export default function PvpGamePage() {
             {viewUsedThisTurn && !viewMode && (
               <span className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2 text-xs text-[var(--psy-muted)]">{t.viewUsed}</span>
             )}
-            {!meFrozen && !usedSelfPongThisTurn && (
+            {!meFrozen && !usedSelfPongThisTurn && !postPongDiscard && (
               <button
                 onClick={preDraw ? undefined : handleHu}
                 disabled={preDraw}
@@ -1194,7 +1200,7 @@ export default function PvpGamePage() {
             {/* !owesPenaltyDiscard：食胡失败 / 自摸碰失败之后那次罚弃牌只剩「弃一张」
                 一条路，按钮撤掉不留灰的（老板 2026-08-01：「After wrong Win or wrong
                 Pong, only the discard box shd be shown」）。与单机一致。 */}
-            {(gameState.phase === 'drawing' || gameState.phase === 'discarding') && !usedSelfPongThisTurn && !owesPenaltyDiscard && (
+            {(gameState.phase === 'drawing' || gameState.phase === 'discarding') && !usedSelfPongThisTurn && !owesPenaltyDiscard && !postPongDiscard && (
             <button
               onClick={() => {
                 if (preDraw) return;
