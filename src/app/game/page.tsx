@@ -408,14 +408,16 @@ export default function GamePage() {
   // 老闆：自己回合【抽牌前】食胡與自摸碰都要顯示，但置灰不可點；抽完牌才亮起。
   // （麻將裏自摸胡也得先摸一張；截胡走的是 claim-window，不受這條限制。）
   const preDraw = isHumanTurn && game.phase === 'drawing';
-  // 老闆：抽完牌後如果選了自摸碰（= 沒看出自己能胡），這回合就【不能再食胡】，
-  // 按鈕直接隱藏 —— 此刻只剩「棄一張牌」一條路。只鎖自己回合，截胡不受影響
-  // （selfPongUsedThisTurn 要到自己下次抽牌才清）。engine 側 attemptHu 有同款守衛。
-  const huLockedBySelfPong =
+  // 老闆：抽完牌後動過自摸碰（不管成敗），這回合就只剩「棄一張牌」一條路 ——
+  // 食胡【和】自摸碰兩個鈕都直接隱藏，不留一個灰的在那裏（老闆：多此一舉，
+  // 歸檔成功那格自己會變色，灰鈕沒有任何新信息）。
+  // 只鎖自己回合，截胡不受影響（selfPongUsedThisTurn 要到自己下次抽牌才清）。
+  // engine 側 attemptHu 有同款守衛。
+  const usedSelfPongThisTurn =
     isHumanTurn && game.phase === 'discarding' && !!humanPlayer.selfPongUsedThisTurn;
   // 顯示 = 能胡 或 處在「抽牌前」這個置灰態；啟用 = 能胡且已抽牌。
-  const showHuButton = (canHu || preDraw) && !huLockedBySelfPong;
-  const huEnabled = canHu && !preDraw && !huLockedBySelfPong;
+  const showHuButton = (canHu || preDraw) && !usedSelfPongThisTurn;
+  const huEnabled = canHu && !preDraw && !usedSelfPongThisTurn;
   const topDiscard = game.discardPile.length > 0 ? game.discardPile[game.discardPile.length - 1] : null;
   const targets = getTargetCounts(humanPlayer.bigFiveScores);
   const declaredDims = getDeclaredDimensions(humanPlayer);
@@ -774,9 +776,10 @@ export default function GamePage() {
 
             {/* Self-pong button — drawing 阶段也【显示】但置灰（老板：抽牌前两个按钮
                 都在，只是暗的），真正可点仍只有 discarding：drawing 阶段自摸会漏抽一次
-                牌导致掉牌（见 selfPongCard 守卫）。claim-window 的碰由浮层 PongPanel
-                处理。按钮是否启用不泄露"你能碰维度X"——玩家决定、引擎判。*/}
-            {isHumanTurn && (game.phase === 'drawing' || game.phase === 'discarding') && (
+                牌导致掉牌（见 selfPongCard 守卫）。本回合已经用过（成功归档 或 判定
+                失败）→ 整个按钮撤掉，不留灰的（老板：多此一举）。claim-window 的碰由
+                浮层 PongPanel 处理。按钮是否启用不泄露"你能碰维度X"——玩家决定、引擎判。*/}
+            {isHumanTurn && (game.phase === 'drawing' || game.phase === 'discarding') && !usedSelfPongThisTurn && (
               <button
                 onClick={() => {
                   if (preDraw) return;

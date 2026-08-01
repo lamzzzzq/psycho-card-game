@@ -495,9 +495,10 @@ export default function PvpGamePage() {
   // 老闆：自己回合【抽牌前】食胡與自摸碰都要顯示、但置灰不可點，抽完牌才亮起。
   // 截胡（claim-window）不受這條限制，走上面的 canClaim 分支。與單機保持一致。
   const preDraw = isMyTurn && gameState.phase === 'drawing';
-  // 老闆：抽完牌後選了自摸碰 → 這回合不能再食胡，按鈕隱藏，只剩棄牌一條路。
-  // 只鎖自己回合（selfPongUsedThisTurn 要到下次抽牌才清），截胡不受影響。
-  const huLockedBySelfPong =
+  // 老闆：抽完牌後動過自摸碰（不管成敗）→ 這回合只剩棄牌一條路，食胡【和】自摸碰
+  // 兩個鈕都撤掉，不留一個灰的（多此一舉：歸檔成功那格自己會變色）。
+  // 只鎖自己回合（selfPongUsedThisTurn 要到下次抽牌才清），截胡不受影響。與單機一致。
+  const usedSelfPongThisTurn =
     isMyTurn && gameState.phase === 'discarding' && !!meSerialized?.selfPongUsedThisTurn;
 
   // Convert serialized players to Player objects for components
@@ -1175,7 +1176,7 @@ export default function PvpGamePage() {
             {viewUsedThisTurn && !viewMode && (
               <span className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2 text-xs text-[var(--psy-muted)]">{t.viewUsed}</span>
             )}
-            {!meFrozen && !huLockedBySelfPong && (
+            {!meFrozen && !usedSelfPongThisTurn && (
               <button
                 onClick={preDraw ? undefined : handleHu}
                 disabled={preDraw}
@@ -1187,9 +1188,10 @@ export default function PvpGamePage() {
             )}
             {/* Self-pong button — drawing 阶段也【显示】但置灰(老板：抽牌前两个按钮都在，
                 只是暗的)，真正可点仍只有 discarding：drawing 阶段自摸会漏抽一次牌导致
-                掉牌(见 selfPongCard 守卫)。与单机一致。
+                掉牌(见 selfPongCard 守卫)。本回合已经用过(成功归档 或 判定失败)→ 整个
+                按钮撤掉，不留灰的(老板：多此一举)。与单机一致。
                 enabled 不随是否真有牌切换,避免泄露"你有足够X维牌"。玩家决定、引擎判。*/}
-            {(gameState.phase === 'drawing' || gameState.phase === 'discarding') && (
+            {(gameState.phase === 'drawing' || gameState.phase === 'discarding') && !usedSelfPongThisTurn && (
             <button
               onClick={() => {
                 if (preDraw) return;
