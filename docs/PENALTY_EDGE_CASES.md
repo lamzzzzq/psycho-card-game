@@ -1,23 +1,33 @@
 # 罚停机制 · Edge Case 手动测试清单
 
 > 用途：6 月初测试前，逐条手动验证罚停（碰失败 / 自摸碰失败 / 食胡失败）的边界行为。
-> 真相源代码：`src/lib/game-logic.ts`。自动化测试：`src/lib/__tests__/penalty-freeze.test.ts` + `pong-empty-hand.test.ts`（全套 98 条，全绿）。
+> 真相源代码：`src/lib/game-logic.ts`。自动化测试：`src/lib/__tests__/penalty-freeze.test.ts` + `pong-empty-hand.test.ts` + `card-conservation.test.ts`。
 >
 > 测试建议用 **3 人联机**（PVP 默认 3 人 5 轮），座位记为 A→B→C。
+>
+> **⚠️ 2026-08-01 更新（commit `99a8f18`）**：自己回合的**食胡失败 / 自摸碰失败之后不再立刻让位**，
+> 犯规者仍要弃一张牌才轮到下家。下面 CASE 2.1 / 3.1 / 3.2 / 3.3 已按新规则重写。
+> 按钮在这一刻显示什么，见 [ACTION_BUTTON_RULES.md](ACTION_BUTTON_RULES.md)。
 
 ---
 
-## 0. 先理解罚停的「三个标记」
+## 0. 先理解罚停的「四个标记」
 
-一次失败会给犯规者打上最多三个内部标记：
+一次失败会给犯规者打上最多四个内部标记：
 
 | 标记 | 含义 | 何时清除 |
 |------|------|----------|
 | `skipNextTurn` | 下一个「自己的回合」被自动跳过 | 被自动跳过时清除 |
 | `extraSkipQueued`（加重罚停） | 第一次跳过后**再激活一次** skipNextTurn | 第一次跳过时消费 |
 | `frozenUntilOwnDiscard` | 从失败那刻起锁死**所有** claim-window（不能碰/胡/skip） | 自己真正完成一次 **draw+discard** 后清除 |
+| `owesPenaltyDiscard`（2026-08-01 新增） | **自己回合**失败后仍欠一张弃牌：留在 `discarding` 由犯规者自己弃出 | 弃出那张牌时清除；这次弃牌**不解冻** |
 
 **净效果：一次失败 = 罚停约「一整轮 + 2 个自己的回合」**，期间不能参与任何抢牌，直到自己重新出牌一次才完全解禁。
+
+`owesPenaltyDiscard` 存在的原因（**别把它当可有可无的 UI 标志**）：旧实现把 `drawnCard` 塞回手牌然后直接让位，
+那张牌永远没弃出去 → 站立手牌永久 +1，打破「手牌 = 剩余未归档目标总和 − 1」不变量，于是**故意胡错就能白赚一张牌**，
+只赔一次罚停，可以反复刷（老板实测发现：「撳咗 Win 掣冇出到牌，下次 draw 就多咗一张牌」）。
+`card-conservation.test.ts` 专门断死这条不变量。
 
 暴露手牌（reveal）：
 - **碰失败 / 自摸碰失败** → 只亮出押错的那几张（`revealedSelectedCards`）
@@ -56,17 +66,26 @@ reveal 在犯规者**下次真正摸牌**时清除（要熬过整个罚停期）
 
 ## 2. 自摸碰失败（自己回合碰，self-pong-fail）
 
-### CASE 2.1 — 自摸碰选错 → drawnCard 退回手牌
+### CASE 2.1 — 自摸碰选错 → 仍要弃一张才让位（2026-08-01 改）
 - **设置**：轮到你，已摸牌（drawnCard 在手）。target O=3，你选 2 张错维度的牌提交自摸碰。
 - **预期**：
-  - 自摸碰失败 + 罚停（skipNextTurn + frozenUntilOwnDiscard 都置位）。
-  - **刚摸的那张牌退回手牌**（不让你靠「弃掉它」来立即解冻）。
-  - 立刻**让出本回合**，轮到下家；`drawnCard` 清空。
+  - 自摸碰失败 + 罚停（skipNextTurn + extraSkipQueued + frozenUntilOwnDiscard 都置位）。
+  - **不让位**：留在 `discarding` + `owesPenaltyDiscard=true`，`drawnCard` 留在原处，
+    你要从「手牌 + 刚摸那张」里挑一张弃掉，跟正常回合一样。红色横幅文案是「仍要弃一张牌」。
+  - 这次弃牌**不解冻**（`discardCard` 看 `owesPenaltyDiscard`），罚停力度和旧实现一样重。
+  - 这张牌照常开判读窗口给别人碰/截胡。
+  - 这一刻只剩弃牌一条路：Win / 自摸碰 / 查看 三个入口全部**不显示**。
+- **兜底**：真的一张牌都没有时直接让位，绝不把人卡在弃不出去的回合里。
 
 ### CASE 2.2 — 每回合只能自摸碰一次
 - **操作**：本回合已经自摸碰成功过一次，再点自摸碰。
-- **预期**：第二次**静默无效**（不算失败、不罚停）。这是硬规则，优先于 trap 判定——避免玩家被莫名其妙罚。
-- **解禁**：下回合摸牌后名额恢复。
+- **预期**：按钮**根本不显示**（`selfPongUsedThisTurn`），此刻只剩弃牌一条路；食胡钮也一起撤掉
+  （老板：归档成功那格自己会变色，留个灰钮没有新信息）。
+  引擎侧第二次调用仍是**静默无效**（不算失败、不罚停），防 PVP 直调/乱序消息。
+- **⚠️ 连带规则（`99a8f18`）**：本回合动过自摸碰之后**不能再食胡**（老板：「他没看出自己能胡，
+  选了自摸碰，那这回合就认了」）。只锁自己回合，别人弃牌时的截胡不受影响。
+- **解禁**：下回合摸牌后名额恢复（`drawCard` 清 `selfPongUsedThisTurn`）。
+  另外**碰成功也会清**它——碰是抢走出牌权、不经过 drawCard，不清的话「碰完即胡」会被误挡。
 
 ### CASE 2.3 — 强 trap：自摸碰已归档维度
 - **设置**：已归档 O，本回合还没用过自摸碰名额，再提交自摸碰 O。
@@ -78,16 +97,23 @@ reveal 在犯规者**下次真正摸牌**时清除（要熬过整个罚停期）
 
 ### CASE 3.1 — 自己回合宣胡但牌不够（phase=drawing，还没摸牌）
 - **操作**：轮到你、还没摸牌就点「胡」，但手牌凑不齐所有未归档维度。
+  （注：2026-08-01 起 drawing 阶段的 Win 钮是**置灰不可点**的，要摸完牌才亮 ——
+  这条 CASE 走 PVP 直调 / 旧客户端消息路径才到得了。）
 - **预期**：
-  - 食胡失败 → **立刻 advance turn**，下家接管（**不再停在你这**）。
-  - 你被罚停（skipNextTurn + frozenUntilOwnDiscard）+ **整手牌翻开**。
+  - 食胡失败 → 你手上没有可弃的「欠账」（还没摸牌）→ **advance turn**，下家接管。
+  - 你被罚停（skipNextTurn + extraSkipQueued + frozenUntilOwnDiscard）+ **整手牌翻开**。
 
-### CASE 3.2 — 自己回合宣胡失败（phase=discarding，已摸牌）
-- **预期**：同 3.1，且**刚摸的牌退回手牌** + advance turn + drawnCard 清空。
+### CASE 3.2 — 自己回合宣胡失败（phase=discarding，已摸牌）（2026-08-01 改）
+- **预期**：**不再立刻让位**。与 CASE 2.1 完全同款：留在 `discarding` + `owesPenaltyDiscard=true`，
+  `drawnCard` 留在原处，你要自己弃一张；这次弃牌不解冻；这一刻 Win / 自摸碰 / 查看 全部不显示，
+  屏幕上只剩红色罚停横幅 + 「取消 / 提交棄牌」。
 
 ### CASE 3.3 — banner 与按钮一致性（旧 bug 回归）
-- **要确认的反例**：旧版本食胡失败后 banner 显示「罚停」，但按钮没禁、当回合还能 draw+discard，且那次 discard 会**立即清掉** frozenUntilOwnDiscard。
-- **现在预期**：失败后当回合直接结束，frozenUntilOwnDiscard 一定保留到下一圈自己的解冻回合，不会被当回合误清。
+- **要确认的反例**：更早的版本食胡失败后 banner 显示「罚停」，但按钮没禁、当回合还能 draw+discard，
+  且那次 discard 会**立即清掉** frozenUntilOwnDiscard。
+- **现在预期**：失败后当回合只剩「弃一张」，弃完才让位；`frozenUntilOwnDiscard` 一定保留到下一圈
+  自己的解冻回合，不会被这次罚弃牌误清。横幅文案此时是「仍要弃一张牌」而不是干巴巴的「罚停」
+  （否则玩家会以为自己什么都不用做，卡住整桌）。
 
 ### CASE 3.4 — 在别人 claim-window 里宣胡失败
 - **设置**：A 弃牌，claim-window 开着，你（非 A）点胡但牌不够。
