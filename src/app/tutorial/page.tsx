@@ -318,19 +318,10 @@ function InteractiveSandbox({
   const archived = state.chosenDim ? DIMENSION_META[state.chosenDim] : N;
   const claimed = state.claimDim ? DIMENSION_META[state.claimDim] : DIMENSION_META.A;
 
-  // 底部指引欄高度隨 caption/feedback 長短變化。用固定 mb 預留會出現「大窟窿」
-  // （指引欄比預留值矮時，露出未被覆蓋的空白）或內容被欄蓋住。改為實測欄高動態預留。
+  // 指引欄改 sticky 後（見下方欄本體的註釋），它自己在文檔流裏佔位，面板不再
+  // 需要補底部留白 —— 原來那套「ResizeObserver 實測欄高 → 給面板 marginBottom」
+  // 的 hack 整套刪掉。ref 保留：只作標識用，方便將來調試取到這個節點。
   const guideRef = useRef<HTMLDivElement>(null);
-  const [guidePad, setGuidePad] = useState(176);
-  useEffect(() => {
-    const el = guideRef.current;
-    if (!el) return;
-    const update = () => setGuidePad(el.offsetHeight + 16);
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   const op = opOf(state.scene);
   const pongNeed = state.chosenDim ? SANDBOX_TARGETS[state.chosenDim] : 4;
@@ -494,7 +485,6 @@ function InteractiveSandbox({
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.3 }}
       className="psy-panel psy-etched relative z-40 rounded-[1.8rem] p-5 pb-8 sm:p-7 sm:pb-8"
-      style={{ marginBottom: guidePad }}
     >
       {/* 面板頭（「交互式沙盒」標籤 + 重置/退出鏈接行）已刪：太佔縱向空間，
           重置/退出按鈕合併進了頁頭標題行（見父組件 mode==='sandbox' 分支）。 */}
@@ -852,11 +842,17 @@ function InteractiveSandbox({
 
         {/* 手牌 */}
         <div>
-          <div className="mb-1.5 flex items-baseline justify-between">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--psy-muted)]">
+          {/* 手牌抬頭：與正式牌桌的回合信息行同款膠囊（FilingProgressCard 第一行
+              的 rounded-full + 邊框 + 卡片底色，左端強調色、右端靠右信息）。
+              老闆 2026-08-04：「we shd make it more align wif current UI」——
+              原來是 10px 全大寫 + 0.3em 字距的裸文字，英文那句
+              「DISCARD 1 CARD TO END THE TURN ↓」被字距撐得極寬、和右邊的張數
+              擠在一起，跟牌桌完全不像一套東西。 */}
+          <div className="mb-2 flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-3 py-1.5 text-xs text-[var(--psy-ink-soft)] sm:text-sm">
+            <span className="psy-serif min-w-0 truncate font-semibold text-[var(--psy-accent-strong)]">
               {state.scene === 'pong-success' || state.scene === 'discard-confirm' ? s.discardToEnd : s.yourHand}
             </span>
-            <span className="text-[10px] text-[var(--psy-muted)]">
+            <span className="ml-auto shrink-0 font-medium">
               {s.cardsCountSuffix(state.hand.length + (state.drawnCard ? 1 : 0))}
             </span>
           </div>
@@ -906,9 +902,29 @@ function InteractiveSandbox({
       )}
     </AnimatePresence>
 
-    {/* 固定在視窗底部、永遠可見的指引欄。做大做醒目（佔更多空間、強對比）。
-        渲染在 motion.div 之外，避免 framer transform 祖先讓 fixed 失效。 */}
-    <div ref={guideRef} className="fixed inset-x-0 bottom-0 z-50 [transform:translateZ(0)] border-t-2 border-[rgba(154,116,72,0.36)] bg-[linear-gradient(180deg,#fdf8f1,#eaddc4)] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(96,72,38,0.18)]">
+    {/* 貼在視窗底部、永遠可見的指引欄。做大做醒目（佔更多空間、強對比）。
+        渲染在 motion.div 之外，避免 framer transform 祖先影響定位。
+
+        ⚠️ 2026-08-04 老闆回報（個別 iOS 設備）：往上滑時這條欄會「漂」到畫面
+        中間去、一直蓋住內容，往下滑又回到底部；連帶把「模擬別人棄牌」按鈕蓋掉，
+        教學走不下去。根因是 position:fixed —— iOS Safari 在地址欄收合的動畫期間
+        不會重排 fixed 元素（元素自帶 translateZ(0) 提升成合成層後更明顯），視口
+        變高了它卻停在舊的「底部」，看起來就是浮到了畫面中間。
+
+        改成 sticky：它留在文檔流裏佔位，滾到底自然排在內容下方、滾動中吸附在
+        視窗底，完全不依賴 iOS 對 fixed 的重排時機。順帶三個好處：
+          1. 天然不會蓋住任何內容 → 原來那套 guidePad 動態量欄高、給面板補
+             marginBottom 的 hack 整套刪掉（見 guideRef/guidePad 的註釋）。
+          2. 少一個合成層。
+          3. 手機端「按鈕被指引欄蓋住」不可能再發生。
+        mx-[calc(50%-50vw)] w-screen：sticky 必須待在文檔流裏（父層 max-w-4xl
+        會限寬），用純 margin 撐回通欄，視覺與原來的 fixed 通欄一致。不用
+        translate 撐開是因為 transform 會讓 sticky 失效。橫向溢出由 globals.css
+        的 overflow-x: clip 兜底。*/}
+    {/* -mb-3 sm:-mb-4 抵消頁面外層在沙盒模式下的 py-3 / sm:py-4：sticky 元素滾到
+        自己的文檔流位置就不再吸附，若下方還留着這段 padding，滑到最底時欄底會離
+        視窗底差一截、露出背景（原來的 fixed 是實貼底的）。 */}
+    <div ref={guideRef} className="sticky bottom-0 z-50 mx-[calc(50%-50vw)] -mb-3 w-screen border-t-2 border-[rgba(154,116,72,0.36)] bg-[linear-gradient(180deg,#fdf8f1,#eaddc4)] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(96,72,38,0.18)] sm:-mb-4">
       <div className="mx-auto max-w-3xl space-y-2.5">
         <div className="space-y-2">
           <span className="psy-serif inline-block rounded-full bg-[var(--psy-accent)] px-3 py-1 text-[11px] font-bold tracking-[0.2em] text-[#1a1206]">
