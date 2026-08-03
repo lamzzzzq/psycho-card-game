@@ -52,6 +52,13 @@ interface FilingProgressCardProps {
   declaredDims: Set<Dimension>;
   /** 點任一格 → 展開歸檔詳情。 */
   onOpenArchive: () => void;
+  /**
+   * 教學沙盒專用：當前步驟要玩家看的那一維，畫一圈引導描邊。
+   * 正式牌桌【不傳】—— 那裏高亮哪一維等於幫玩家做決定。
+   */
+  highlightDim?: Dimension | null;
+  /** 教學沙盒裏格子不可點（沒有歸檔詳情面板可開）。 */
+  disabled?: boolean;
 }
 
 export function FilingProgressCard({
@@ -61,6 +68,8 @@ export function FilingProgressCard({
   targets,
   declaredDims,
   onOpenArchive,
+  highlightDim = null,
+  disabled = false,
 }: FilingProgressCardProps) {
   const en = locale === 'en';
 
@@ -87,16 +96,24 @@ export function FilingProgressCard({
             <button
               key={dimension}
               type="button"
-              onClick={onOpenArchive}
+              onClick={disabled ? undefined : onOpenArchive}
+              disabled={disabled}
               // containerType 讓下面的 cqw 按「這一格的寬度」解析。
               // 底色用該維度的 tint；已歸檔 = 主色 30% 加深 + 主色描邊，一眼看出區別。
+              // highlightDim（只有教學沙盒會傳）再加一圈外發光引導視線。
               style={{
                 containerType: 'inline-size',
                 background: isDone ? `${color}33` : meta.tintHex,
-                borderColor: isDone ? color : `${color}59`,
-                boxShadow: isDone ? `inset 0 0 0 1px ${color}66` : undefined,
+                borderColor: isDone || dimension === highlightDim ? color : `${color}59`,
+                boxShadow: isDone
+                  ? `inset 0 0 0 1px ${color}66`
+                  : dimension === highlightDim
+                  ? `0 0 0 2px ${color}55`
+                  : undefined,
               }}
-              className="flex min-w-0 flex-col items-stretch overflow-hidden rounded-lg border text-center transition active:scale-95"
+              className={`flex min-w-0 flex-col items-stretch overflow-hidden rounded-lg border text-center transition ${
+                disabled ? 'cursor-default' : 'active:scale-95'
+              }`}
               aria-label={`${name}${en ? `: needs ${target} cards, ${isDone ? 'filed' : 'not filed'}` : `：需要 ${target} 張，${isDone ? '已歸檔' : '未歸檔'}`}`}
             >
               {/* ① 字母：主色實底吃滿整格寬。字母是大號粗體，壓實底也有足夠對比

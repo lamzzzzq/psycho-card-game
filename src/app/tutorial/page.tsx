@@ -8,8 +8,10 @@ import { cardToTarotProps } from '@/components/game/cardToTarotProps';
 import { DIMENSION_META } from '@/data/dimensions';
 import { DIMENSIONS } from '@/types';
 import { useHydrated } from '@/stores/useHydration';
-import { useLocaleStore, type Locale } from '@/lib/i18n';
+import { useLocaleStore, STRINGS, type Locale } from '@/lib/i18n';
 import { TUTORIAL_T } from '@/lib/i18n/tutorial';
+// 目標板直接用正式牌桌那塊（見沙盒裏的調用註釋）——同一塊 UI 不留兩份實現。
+import { FilingProgressCard } from '@/components/game/FilingProgressCard';
 import type { GameCard, PersonalityCard, DummyCard, Dimension } from '@/types';
 
 type TutStrings = (typeof TUTORIAL_T)['zh'];
@@ -40,6 +42,9 @@ const locCard = <T extends GameCard>(c: T, loc: Locale): T =>
 // 沙盒目標板：刻意讓只有神經質(4)剛好夠碰，其餘維度手牌都不足 → 教學聚焦在神經質。
 // O 有 1<2、C 有 2<3、E 有 0<2、A 有 2<3、N 有 4=4。（C=3 也讓後面截胡碰 2+1=3 成立）
 const SANDBOX_TARGETS: Record<Dimension, number> = { O: 2, C: 3, E: 2, A: 3, N: 4 };
+// 開場彈窗的目標板：還沒開局，一個都沒歸檔。模塊級常量，免得每次渲染新建 Set
+// 讓 FilingProgressCard 白白重繪。
+const EMPTY_DIMS: Set<Dimension> = new Set();
 
 // 歸檔 4 張神經質後，手裏留兩對（盡責性 104/108、宜人性 105/106）+ 一張單張 +
 // 知識牌 → 棄 1 張後仍至少剩一對可用於「截胡碰」演示。每卡用不同插畫 id。
@@ -324,6 +329,20 @@ function InteractiveSandbox({
   const guideRef = useRef<HTMLDivElement>(null);
 
   const op = opOf(state.scene);
+  // 沙盒的「已歸檔維度」——餵給 FilingProgressCard。與上方公開歸檔區同一套判據：
+  // 食胡步用固定的 HU_DECLARED（那一步是擺好的殘局），其餘看兩個歸檔標誌。
+  const sandboxDeclaredDims = useMemo(
+    () =>
+      new Set<Dimension>(
+        op === 'hu'
+          ? HU_DECLARED
+          : [
+              ...(state.declared && state.chosenDim ? [state.chosenDim] : []),
+              ...(state.claimDeclared && state.claimDim ? [state.claimDim] : []),
+            ]
+      ),
+    [op, state.declared, state.chosenDim, state.claimDeclared, state.claimDim]
+  );
   const pongNeed = state.chosenDim ? SANDBOX_TARGETS[state.chosenDim] : 4;
   const successToast =
     state.scene === 'pong-success' ? s.toastPongDone
@@ -464,7 +483,16 @@ function InteractiveSandbox({
           >
             <h3 className="psy-serif text-xl text-[var(--psy-ink)]">{s.introTitle}</h3>
             <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">{s.introBody}</p>
-            <TargetBoard label={s.targetBoardLabel} activeDim="N" dimName={dimName} />
+            {/* 開場彈窗裏的目標板也用同一塊（見沙盒裏的調用註釋）——否則同一頁
+                會出現兩種長相的目標板。這裏還沒開局，不顯示「已完成 x/5」。 */}
+            <FilingProgressCard
+              locale={loc}
+              roundText={s.targetBoardLabel}
+              targets={SANDBOX_TARGETS}
+              declaredDims={EMPTY_DIMS}
+              disabled
+              onOpenArchive={() => {}}
+            />
             <button
               onClick={() => setIntroSeen(true)}
               className="psy-btn psy-btn-accent psy-serif w-full px-6 py-3 text-sm font-semibold"
@@ -582,6 +610,25 @@ function InteractiveSandbox({
           </div>
           {/* 真實內容：垂直居中在槽位裏（矮步驟上下留白，視覺穩定） */}
           <div className="col-start-1 row-start-1 flex flex-col justify-center gap-3">
+
+        {/* 推進到下一課的按鈕：原本擺在手牌【下方】，離手牌遠、又跟着暗掉的手牌
+            一起沉在面板底部，玩家不知道下一步該幹嘛（老闆 2026-08-04）。挪到操作
+            區槽位裏——這裏本來就是各步驟操作 UI 的固定位置，在目標板上方，一眼
+            看得見。加大一號 + tut-spotlight 呼吸描邊，明確它是「該點這個」。 */}
+        {(state.scene === 'turn-done' || state.scene === 'hu-success') && (
+          <div className="flex justify-center">
+            <button
+              onClick={
+                state.scene === 'turn-done'
+                  ? () => dispatch({ type: 'open-claim' })
+                  : onComplete
+              }
+              className="psy-btn psy-btn-accent tut-spotlight px-6 py-2.5 text-sm font-bold"
+            >
+              {state.scene === 'turn-done' ? s.btnSimDiscard : s.btnFinishTutorial}
+            </button>
+          </div>
+        )}
 
         {/* 操作大標題（自摸碰／截胡碰／食胡）——做成醒目章節標題，起區分作用，非按鈕 */}
         {op && (
@@ -837,8 +884,29 @@ function InteractiveSandbox({
         </div>
 
         {/* 目標板：常駐渲染（原本只在操作階段出現——它一出現/消失就會把
-            手牌上下推，破壞「手牌位置恆定」；開局就展示目標張數也更直觀）。 */}
-        <TargetBoard label={s.targetBoardLabel} activeDim={op === 'claim' ? state.claimDim : 'N'} dimName={dimName} />
+            手牌上下推，破壞「手牌位置恆定」；開局就展示目標張數也更直觀）。
+
+            2026-08-04 老闆：「we shd make it more align wif current UI」——
+            這裏原本是一行自畫的小 chip，跟正式牌桌那塊五維格子完全不像一套。
+            改成【直接複用正式牌桌的 FilingProgressCard】，不是仿一個像的：
+            同一塊 UI 不留兩份實現，正式牌桌以後怎麼改，教學裏跟着一起變。
+            教學專用的兩個可選 prop：highlightDim 給當前步驟的維度加引導描邊
+            （正式牌桌不傳 —— 那等於幫玩家做決定）、disabled 關掉點擊（教學裏
+            沒有歸檔詳情面板可開）。 */}
+        <FilingProgressCard
+          locale={loc}
+          roundText={s.targetBoardLabel}
+          info={
+            <span className="ml-auto shrink-0 font-medium">
+              {STRINGS[loc].game.doneLabel} {sandboxDeclaredDims.size}/5
+            </span>
+          }
+          targets={SANDBOX_TARGETS}
+          declaredDims={sandboxDeclaredDims}
+          highlightDim={op === 'claim' ? state.claimDim : 'N'}
+          disabled
+          onOpenArchive={() => {}}
+        />
 
         {/* 手牌 */}
         <div>
@@ -859,27 +927,11 @@ function InteractiveSandbox({
           {renderHand()}
         </div>
 
-        {/* 手牌下方按鈕排：恆佔一行高度，按鈕出現/消失時面板底部不再忽高忽低 */}
-        <div className="flex min-h-[46px] flex-col justify-center">
-
-        {/* 回合結束 → 進入截胡演示 */}
-        {state.scene === 'turn-done' && (
-          <div className="flex justify-center">
-            <button onClick={() => dispatch({ type: 'open-claim' })} className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold">
-              {s.btnSimDiscard}
-            </button>
-          </div>
-        )}
-
-        {/* 食胡成功 → 完成教程，回首頁 */}
-        {state.scene === 'hu-success' && (
-          <div className="flex justify-center">
-            <button onClick={onComplete} className="psy-btn psy-btn-accent tut-spotlight px-6 py-2.5 text-sm font-bold">
-              {s.btnFinishTutorial}
-            </button>
-          </div>
-        )}
-        </div>
+        {/* 這裏原本是「手牌下方按鈕排」（min-h-[46px] 恆佔一行）：放着「模擬別人
+            棄牌」和「完成教程」兩顆推進按鈕。2026-08-04 老闆：「你把那個按鈕擺到
+            上面去，讓人知道他要幹嘛」—— 兩顆都挪進上方的操作區槽位了（那本來就是
+            各步驟操作 UI 的固定位置），這一行連同它恆佔的 46px 空高一起刪掉：
+            手牌與其他步驟一樣直接收尾，面板底部不再掛一塊空白。 */}
       </div>
 
     </motion.div>
@@ -965,33 +1017,9 @@ function InteractiveSandbox({
   );
 }
 
-// 沙盒目標板：5 維 + 目標張數，當前操作維度高亮。教學玩家「數字=要湊幾張」。
-function TargetBoard({ label, activeDim, dimName }: { label: string; activeDim: Dimension | null; dimName: DimName }) {
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-1.5 rounded-xl border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2">
-      <span className="mr-1 text-[10px] tracking-wide text-[var(--psy-muted)]">{label}</span>
-      {DIMENSIONS.map((d) => {
-        const active = d === activeDim;
-        const m = DIMENSION_META[d];
-        return (
-          <span
-            key={d}
-            className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums"
-            style={{
-              // 壓在主色實底上的字色跟着新配色走（deep navy 上的深棕字看不見）。
-              color: active ? m.onAccentHex : 'var(--psy-ink-soft)',
-              background: active ? m.colorHex : '#f8f1e4',
-              border: `1px solid ${active ? m.colorHex : 'rgba(154,116,72,0.18)'}`,
-            }}
-          >
-            <span>{dimName(d)}</span>
-            <span>{SANDBOX_TARGETS[d]}</span>
-          </span>
-        );
-      })}
-    </div>
-  );
-}
+// 原本這裏有個自畫的 TargetBoard（一行小 chip）。2026-08-04 老闆要求教學 UI
+// 向正式牌桌靠攏後，兩處調用都換成了正式牌桌的 FilingProgressCard，這份實現
+// 沒有調用者了 → 刪掉，避免同一塊 UI 留兩份長相不同的實現。
 
 // ── 規則示意圖基元（CSS 拼圖，跟 FlowScreenshot 同一套設計語言）──
 // 迷你卡：小圓角卡 + 維度字母／符號，可指定主題色。
