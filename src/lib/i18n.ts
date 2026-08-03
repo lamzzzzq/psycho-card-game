@@ -421,6 +421,19 @@ export const STRINGS = {
       waitingPlayersSuffix: '）',
       waitingHost: '等待房主開始遊戲…',
       dissolveRoom: '解散房間',
+      // ── 再來一局的等待態（2026-08-03）────────────────────────────────
+      // 組員比房主先點「再來一局」時看到的輕量頁：不顯示完整房間（房主都還
+      // 沒回來，顯示滿員名單是騙人的），只說在等誰、給一個離開的出口。
+      rematchWaitTitle: '等待房主回到房間',
+      rematchWaitHint: '只有房主能開始新的一局。房主回來後這裏會自動變成房間。',
+      // 房主失聯（關掉頁面 / 斷網）時的 30 秒倒數。%s = 剩餘秒數。
+      rematchHostGone: '房主似乎已離開，%s 秒後自動關閉房間',
+      // 房間確實沒了 —— 送回首頁前那句 toast。
+      roomClosedToast: '房主已離開，房間已關閉',
+      // 房主自己晚回來（組員那邊 30 秒已到、房間收掉了）看到的版本 —— 對他說
+      // 「房主已離開」很怪，他就是房主。
+      roomClosedPlain: '這個房間已關閉',
+      hostLeft: '房主已離開',
     },
     results: {
       loading: '加載中…',
@@ -815,6 +828,13 @@ export const STRINGS = {
       waitingPlayersSuffix: ')',
       waitingHost: 'Waiting for the host to start…',
       dissolveRoom: 'Dissolve Room',
+      // Rematch waiting state (2026-08-03) — see the zh block.
+      rematchWaitTitle: 'Waiting for the host to return',
+      rematchWaitHint: 'Only the host can start another game. This turns into the room as soon as they are back.',
+      rematchHostGone: 'The host seems to have left — closing this room in %s s',
+      roomClosedToast: 'The host left — this room is closed',
+      roomClosedPlain: 'This room is closed',
+      hostLeft: 'Host left',
     },
     results: {
       loading: 'Loading…',

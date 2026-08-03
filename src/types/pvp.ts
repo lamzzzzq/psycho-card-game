@@ -9,7 +9,14 @@ export interface PlayerInfo {
 }
 
 // Room status
-export type RoomStatus = 'waiting' | 'playing' | 'finished';
+//   waiting  — 房間開放：房主在場，可加入、可開局
+//   playing  — 對局進行中
+//   finished — 一局剛打完，房主【還沒表態】要不要再來一局。組員此時點「再來
+//              一局」只看到輕量等待態，不是完整房間（2026-08-03 老闆定）。
+//              房主點「再來一局」進房後才置回 waiting。
+//   ended    — 已解散（房主主動退出 / 房主失聯超時）。一直在寫，但過去漏在
+//              類型外（updateRoomStatus 收裸 string），現在收進來。
+export type RoomStatus = 'waiting' | 'playing' | 'finished' | 'ended';
 
 // Personality deck identifier. Only 'big-five' is implemented for MVP;
 // the others appear in the create-room UI as locked previews.
@@ -50,6 +57,10 @@ export type RealtimeMessage =
   | { type: 'player-left'; playerId: string }
   | { type: 'player-kicked'; playerId: string }
   | { type: 'room-dissolved' }
+  // 房主回到房間、把上一局結束後的 'finished' 置回 'waiting' —— 組員的輕量
+  // 等待態收到後切換成完整房間。DB 的 status 也會變，但 postgres_changes 訂閱
+  // 只在 room 已載入後才建立；廣播是即時的那條路，兩條都留着互為兜底。
+  | { type: 'rematch-open' }
   // Tentative offline: presence dropped but within grace period.
   // UI shows "離線中" badge until host promotes to player-left or
   // the player reconnects (player-online).

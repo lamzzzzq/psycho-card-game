@@ -83,10 +83,11 @@ export default function PvpGamePage() {
   const localeRaw = useLocaleStore((s) => s.locale);
   const locale = hydrated ? localeRaw : 'zh';
   const t = STRINGS[locale].game;
+  const tRoom = STRINGS[locale].pvpRoom; // 結算頁要用「房主已離開」，那句歸房間文案
   const dimName = (d: Dimension) => (locale === 'en' ? DIMENSION_META[d].nameEn : DIMENSION_META[d].name);
 
   const { player } = usePlayerStore();
-  const { gameState, myPlayerId, isHost, sendMessage, subscribeRoom, offlinePlayerIds, room } = usePvpStore();
+  const { gameState, myPlayerId, isHost, sendMessage, subscribeRoom, offlinePlayerIds, room, roomClosed } = usePvpStore();
   const hostOffline = !isHost && !!room?.host_id && offlinePlayerIds.includes(room.host_id);
 
   const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
@@ -627,7 +628,13 @@ export default function PvpGamePage() {
   canDrawRef.current = canDraw;
 
   // Game over screen — 与单机共用 GameOverModal（归档 declaredSets 是公开信息，
-  // PVP 序列化已发全桌）。onPlayAgain 走回 room 页开新局；onBackToLobby 回主页。
+  // PVP 序列化已发全桌）。onPlayAgain 走回 room 页开新局。
+  //
+  // onBackToLobby 過去是裸 router.replace('/')，繞開了 handleAbandonRoom ——
+  // 房主就這麼走掉，房間卻還開着且 host_id 指向他，組員點「再來一局」進去永遠
+  // 等不到人（老闆 2026-08-02 回報）。現在一律走 handleAbandonRoom：房主 → 廣播
+  // room-dissolved + 房間置 ended；組員 → leaveRoom 讓出座位。局已結束，所以
+  // 裏面的 gameInProgress 判定為 false，不會誤存中斷局。
   if (gameState.winner) {
     return (
       <GameOverModal
@@ -641,8 +648,11 @@ export default function PvpGamePage() {
         }))}
         winnerId={gameState.winner}
         onPlayAgain={() => router.replace(`/pvp/room/${code}`)}
-        onBackToLobby={() => router.replace('/')}
+        onBackToLobby={handleAbandonRoom}
         locale={locale}
+        // 房主已經走了（收到 room-dissolved）→ 房間不存在，別再讓人點進去等。
+        playAgainDisabled={roomClosed}
+        playAgainText={roomClosed ? tRoom.hostLeft : undefined}
       />
     );
   }

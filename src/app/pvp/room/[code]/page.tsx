@@ -1,18 +1,30 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { usePlayerStore } from '@/stores/usePlayerStore';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { usePvpStore } from '@/stores/usePvpStore';
 import { supabase } from '@/lib/supabase';
-import { getRoomPlayers, kickPlayer, dissolveRoom, leaveRoom } from '@/lib/room-api';
+import { getRoomPlayers, kickPlayer, dissolveRoom, leaveRoom, updateRoomStatus } from '@/lib/room-api';
 import { Room, RoomSettings } from '@/types/pvp';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 import { useRequireLogin } from '@/lib/useRequireLogin';
 import { useWakeLock } from '@/stores/useWakeLock';
+
+// 組員在「等房主回來開新局」時，判定房主失聯後的可見寬限（秒）。
+// 90 秒（2026-08-04 拍板，原定 30 秒）：手機瀏覽器切走就會掐掉 WebSocket，房主
+// 只是回條微信 / 鎖個屏也會被判失聯，30 秒太容易誤殺。組員多等一會兒的代價比
+// 房主回來發現房沒了小。注意這跟對局中的離線寬限（usePvpStore 的
+// OFFLINE_GRACE_MS，3 分鐘）是兩回事：那個護的是打到一半掉線的人。
+//
+// 倒數【只在判定房主失聯後】才開始跑：房主頁面還開着（哪怕停在結算頁不動）就
+// 一直等下去。另外兩條路不受這 90 秒約束，都是即時的：
+//   房主點「返回主頁」→ 廣播 room-dissolved → 房間當場解散；
+//   房主點「再來一局」→ 廣播 rematch-open → 房間恢復、倒數取消。
+const REMATCH_HOST_GRACE_SEC = 90;
 
 export default function RoomWaitPage() {
   useWakeLock(); // 屏幕常亮：房主/玩家在房间等待时别自动锁屏掉线
@@ -28,7 +40,7 @@ export default function RoomWaitPage() {
   const { player } = usePlayerStore();
   const { bigFiveScores } = useAssessmentStore();
   const {
-    room, players, isHost,
+    room, players, isHost, offlinePlayerIds, roomClosed,
     setRoom, setMyPlayerId, setPlayers,
     subscribeRoom, sendMessage, startGame, unsubscribeRoom,
   } = usePvpStore();
@@ -38,6 +50,18 @@ export default function RoomWaitPage() {
   const [starting, setStarting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [settings, setSettings] = useState<RoomSettings>({ maxPlayers: 4, totalRounds: 10 });
+  // ── 「再來一局」的等待態（2026-08-03 老闆定）──────────────────────────
+  // 組員比房主先點「再來一局」時進入：不畫完整房間，只說在等房主 + 給離開的
+  // 出口。房主回來（rematch-open / status→waiting）就自動關掉。
+  const [rematchWaiting, setRematchWaiting] = useState(false);
+  // 房主失聯時的可見倒數（秒）。null = 沒在倒數（房主還連着，或還沒判定）。
+  const [hostGoneCountdown, setHostGoneCountdown] = useState<number | null>(null);
+  // 送回首頁前那句 toast，顯示約 2 秒。硬跳轉會重載頁面，所以只能先顯示再跳。
+  const [closedToast, setClosedToast] = useState(false);
+  // 房主自己重開房間時，等 subscribeRoom 建好 channel 再廣播 rematch-open。
+  const hostReopenedRef = useRef(false);
+  // 倒數歸零後的收屍只做一次（見下方 effect）。
+  const closingRef = useRef(false);
 
   const handleCopyCode = useCallback(async () => {
     try {
@@ -72,14 +96,35 @@ export default function RoomWaitPage() {
           return;
         }
 
-        // 已解散（host 退出時置 'ended'）：擋住「再來一局」進無主房。
-        if (roomData.status !== 'waiting') {
-          setError(t.roomNotExist);
+        const amHostEarly = roomData.host_id === player!.id;
+
+        // 已解散（房主主動退出 / 組員那邊失聯倒數到點都會置 'ended'）。說清楚是
+        // 「房主走了」而不是含糊的「房間不存在」——後者會讓人以為房號輸錯了。
+        // 房主自己晚回來（超過 30 秒）也會撞到這裏，對他不能說「房主已離開」。
+        if (roomData.status === 'ended') {
+          setError(amHostEarly ? t.roomClosedPlain : t.roomClosedToast);
           setLoading(false);
           return;
         }
 
-        // status === 'waiting' — 此時才安全清舊 gameState 準備新一局。
+        // status === 'finished'：上一局剛打完，房主還沒表態要不要再來（見
+        // types/pvp.ts RoomStatus）。
+        //   房主到了 → 由他把房間重新開放（'waiting'）並廣播，組員的等待態
+        //              收到後自動變成完整房間。
+        //   組員先到 → 照常入座（廣播 player-joined，房主一回來就看得到人），
+        //              但畫面只給輕量等待態，不畫一個房主根本不在的「完整房間」。
+        if (roomData.status === 'finished') {
+          if (amHostEarly) {
+            void updateRoomStatus(roomData.id, 'waiting');
+            roomData.status = 'waiting';
+            hostReopenedRef.current = true; // subscribeRoom 之後再廣播
+          } else {
+            setRematchWaiting(true);
+          }
+        }
+
+        // 到這裏只剩 waiting / finished(組員等待態) —— 兩者都是「新一局的準備
+        // 期」，可以安全清掉上一局的 gameState。
         usePvpStore.setState({ gameState: null, rawGameState: null });
 
         const roomObj = roomData as Room;
@@ -108,6 +153,16 @@ export default function RoomWaitPage() {
         usePvpStore.setState({ isHost: amHost });
 
         subscribeRoom(code, player!.id);
+
+        // 房主是回來開新一局的 → 廣播一聲，讓已經在輕量等待態裏的組員立刻
+        // 切成完整房間，不用等 postgres_changes 那條慢路。必須在 subscribeRoom
+        // 之後發，否則 channel 還沒建好，這條廣播直接掉地上。
+        if (hostReopenedRef.current) {
+          hostReopenedRef.current = false;
+          setTimeout(() => {
+            usePvpStore.getState().sendMessage({ type: 'rematch-open' });
+          }, 300);
+        }
 
         if (!amHost) {
           setTimeout(() => {
@@ -159,14 +214,77 @@ export default function RoomWaitPage() {
         table: 'rooms',
         filter: `id=eq.${room.id}`,
       }, (payload: any) => {
-        if (payload.new?.status === 'playing') {
+        const next = payload.new?.status;
+        if (next === 'playing') {
           router.replace(`/pvp/game/${code}`);
+        } else if (next === 'waiting') {
+          // 房主回來把房間重新開放了 —— rematch-open 廣播的兜底路徑
+          // （廣播可能因為 channel 剛建好而錯過，DB 這條一定到）。
+          setRematchWaiting(false);
+        } else if (next === 'ended') {
+          // 房間被關了（房主主動退 / 別的客戶端倒數到點收的屍）。
+          usePvpStore.setState({ roomClosed: true });
         }
       })
       .subscribe();
 
     return () => { sub.unsubscribe(); };
   }, [room?.id]);
+
+  // 房主回到房間（rematch-open 廣播把 store 裏的 room.status 改成 waiting）→
+  // 輕量等待態收工，畫回完整房間。
+  useEffect(() => {
+    if (room?.status === 'waiting') setRematchWaiting(false);
+  }, [room?.status]);
+
+  // ── 房主失聯 → 30 秒可見倒數 → 關閉房間（老闆 2026-08-03）──────────────
+  // 只在「組員 + 等房主回來開新局」這個處境下跑。對局中的離線寬限是另一套
+  // （store 裏的 3 分鐘 armHostGraceTimer），那個不能縮短：打到一半切個後台
+  // 就被判出局太狠。這裏不一樣 —— 局已經打完了，人不在就是不在。
+  //
+  // 判據是 presence：房主只要頁面還開着（哪怕停在結算頁沒點「再來一局」），
+  // presence 就在，不倒數 —— 他隨時可能回來。真的關掉頁面才會掉出 presence。
+  // 房主主動點「返回主頁」走的是另一條路（room-dissolved 廣播，立刻關）。
+  const hostId = room?.host_id;
+  const hostGone = rematchWaiting && !!hostId && offlinePlayerIds.includes(hostId);
+  useEffect(() => {
+    if (!hostGone) { setHostGoneCountdown(null); return; }
+    setHostGoneCountdown(REMATCH_HOST_GRACE_SEC);
+    const timer = setInterval(() => {
+      setHostGoneCountdown((n) => (n === null ? null : n - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [hostGone]);
+
+  // 倒數歸零 → 房間確實救不回來了：best-effort 收屍（置 ended + 清掉自己的
+  // 座位），再走與「收到 room-dissolved」同一條出口，保證兩條路的收尾一致。
+  // closingRef 防重入：上面的 interval 不會因為歸零就停，會繼續往負數走，
+  // 每跳一次都會重新滿足這裏的條件 → 不擋住就會反覆發收屍請求。
+  useEffect(() => {
+    if (hostGoneCountdown === null || hostGoneCountdown > 0) return;
+    if (closingRef.current) return;
+    closingRef.current = true;
+    (async () => {
+      const rid = usePvpStore.getState().room?.id;
+      if (rid) {
+        try { await updateRoomStatus(rid, 'ended'); } catch {}
+        if (player) { try { await leaveRoom(rid, player.id); } catch {} }
+      }
+      usePvpStore.setState({ roomClosed: true });
+    })();
+  }, [hostGoneCountdown, player]);
+
+  // 房間已關閉（房主主動退出的廣播 / 上面倒數到點）→ 先讓那句 toast 露個面，
+  // 約 2 秒後再送回首頁。老闆：別讓人莫名其妙被扔出去。
+  useEffect(() => {
+    if (!roomClosed) return;
+    setClosedToast(true);
+    const timer = setTimeout(() => {
+      unsubscribeRoom();
+      router.replace('/');
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [roomClosed]);
 
   const handleKick = useCallback(async (playerId: string) => {
     if (!room) return;
@@ -234,11 +352,58 @@ export default function RoomWaitPage() {
     );
   }
 
+  // 房間被關掉時那句 toast —— 輕量等待態和完整房間都可能收到，抽出來兩處共用。
+  const closedToastNode = closedToast ? (
+    <motion.div
+      initial={{ opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="psy-serif fixed left-1/2 top-6 z-[95] -translate-x-1/2 rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-5 py-2.5 text-sm text-[var(--psy-accent-strong)] shadow-lg"
+    >
+      {t.roomClosedToast}
+    </motion.div>
+  ) : null;
+
+  // ── 組員先點「再來一局」、房主還沒回來 ────────────────────────────────
+  // 不畫完整房間：房主不在，一個看着「滿員、隨時能開」的房間是騙人的（而且
+  // 名單裏還躺着已經離場的房主）。只說在等誰、等多久、以及怎麼走。
+  if (rematchWaiting) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-10">
+        {closedToastNode}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="psy-panel psy-etched w-full max-w-md space-y-5 rounded-[2rem] px-6 py-10 text-center"
+        >
+          <p className="psy-eyebrow">{t.codeLabel}</p>
+          <div className="psy-serif text-4xl font-medium tracking-[0.28em] text-[var(--psy-accent)] tabular-nums">
+            {code}
+          </div>
+          <p className="psy-serif animate-pulse text-lg text-[var(--psy-ink)]">
+            {t.rematchWaitTitle}
+          </p>
+          <p className="text-xs leading-relaxed text-[var(--psy-muted)]">
+            {t.rematchWaitHint}
+          </p>
+          {hostGoneCountdown !== null && hostGoneCountdown > 0 && (
+            <p className="psy-serif rounded-[1.2rem] border border-dashed border-[rgba(200,155,93,0.3)] px-4 py-3 text-sm text-[var(--psy-accent-strong)] tabular-nums">
+              {t.rematchHostGone.replace('%s', String(hostGoneCountdown))}
+            </p>
+          )}
+          <button onClick={handleLeave} className="psy-btn psy-btn-ghost w-full py-2.5 text-sm">
+            {t.leaveRoom}
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
   const maxPlayers = settings.maxPlayers;
   const canStart = isHost && players.length >= 2;
 
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-10">
+      {closedToastNode}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

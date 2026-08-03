@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Room, RoomSettings, RoomPlayer, PlayerInfo } from '@/types/pvp';
+import { Room, RoomSettings, RoomPlayer, PlayerInfo, RoomStatus } from '@/types/pvp';
 
 // Generate a random 4-digit room code
 function generateRoomCode(): string {
@@ -178,7 +178,8 @@ export async function dissolveRoom(roomId: string) {
 
 // Update room status. 观测错误并重试一次：开局时若 'playing' 没写进去，房间会停留
 // 在 'waiting'，joinRoom 的 status 过滤就挡不住迟到玩家 → 进入已开始的局。
-export async function updateRoomStatus(roomId: string, status: string) {
+// status 收窄成 RoomStatus（原來是裸 string，所以 'ended' 一直寫在類型外沒人發現）。
+export async function updateRoomStatus(roomId: string, status: RoomStatus) {
   const { error } = await supabase.from('rooms').update({ status }).eq('id', roomId);
   if (error) {
     console.warn('[room-api] updateRoomStatus failed, retrying once:', error.message);

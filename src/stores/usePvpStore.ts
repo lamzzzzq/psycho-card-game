@@ -79,6 +79,12 @@ interface PvpStore {
   // period). Visible to every client via player-offline broadcast.
   offlinePlayerIds: string[];
 
+  // 房間已被房主關掉（收到 room-dissolved 而自己不在對局中）。置起後由 room 頁
+  // 彈 toast「房主已離開，房間已關閉」再送回首頁 —— store 裏不能直接 window
+  // 硬跳，否則 toast 還沒畫出來頁面就重載了（老闆 2026-08-03：要像碰成功那樣
+  // 先看到一句話）。
+  roomClosed: boolean;
+
   // Actions
   setRoom: (room: Room) => void;
   setMyPlayerId: (id: string) => void;
@@ -174,6 +180,7 @@ export const usePvpStore = create<PvpStore>()(
   rawGameState: null,
   isHost: false,
   offlinePlayerIds: [],
+  roomClosed: false,
 
   setRoom: (room) => set({ room }),
   setMyPlayerId: (id) => set({ myPlayerId: id }),
@@ -182,6 +189,9 @@ export const usePvpStore = create<PvpStore>()(
   subscribeRoom: (roomCode, myPlayerId) => {
     const existing = get().channel;
     if (existing) existing.unsubscribe();
+    // 新的一次房間會話：清掉上一次留下的「房間已關閉」標誌，否則剛進房就會
+    // 誤彈 toast 又把人送回首頁。
+    set({ roomClosed: false });
 
     const channel = supabase.channel(`pvp-${roomCode}`, {
       config: { broadcast: { self: false } },
@@ -193,6 +203,15 @@ export const usePvpStore = create<PvpStore>()(
     // 需要對賬）。
     let pendingSweep = true;
 
+    // 撤銷「房主離線」狀態：計時器 + 橫幅一起收。三個地方會用到（sync 對賬、
+    // presence join、收到房主推來的狀態），抽出來保證三條路收得一樣乾淨。
+    const clearHostOffline = (hostPid: string) => {
+      if (hostGraceTimer) { clearTimeout(hostGraceTimer); hostGraceTimer = null; }
+      set(s => s.offlinePlayerIds.includes(hostPid)
+        ? { offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== hostPid) }
+        : s);
+    };
+
     // 非 host 的「房主消失」倒計時。到點 = 房間確實救不回來了：best-effort
     // 把房間標成 ended + 清掉自己的座位（否則 DB 裏永遠掛着 'playing' 殭屍
     // 房，房主名下 room_players 也一直纏着這個學號），再跳回首頁。
@@ -200,6 +219,15 @@ export const usePvpStore = create<PvpStore>()(
       if (hostGraceTimer) clearTimeout(hostGraceTimer);
       hostGraceTimer = setTimeout(async () => {
         hostGraceTimer = null;
+        // 動手收屍前【最後再查一次 presence】。誤殺的代價是把一桌活人的房間
+        // 關掉（老闆 2026-08-03 遇到的就是這個），值得多這一次確認：計時器是
+        // 三分鐘前那一刻的快照武裝的，這期間房主完全可能已經回來了。
+        try {
+          const st = channel.presenceState() as Record<string, Array<{ player_id?: string }>>;
+          const hostPidNow = get().room?.host_id;
+          const alive = Object.values(st).flat().some((p) => p.player_id === hostPidNow);
+          if (alive && hostPidNow) { clearHostOffline(hostPidNow); return; }
+        } catch {}
         const { room: r, myPlayerId: me } = get();
         const cleanup: Promise<unknown>[] = [];
         if (r) cleanup.push(updateRoomStatus(r.id, 'ended').catch(() => {}));
@@ -326,13 +354,34 @@ export const usePvpStore = create<PvpStore>()(
             }
             break;
 
-          case 'room-dissolved':
+          case 'room-dissolved': {
+            // ⚠️ 必須在 unsubscribeRoom 之前把 gameState 抓出來 —— 它的 set 會
+            // 把 gameState 清成 null。原來的寫法是先 unsubscribe 再讀
+            // get().gameState?.phase，恆為 undefined，所以下面「結算頁不跳走」
+            // 那條判斷從來沒生效過：組員在看成績時會被硬跳去 /pvp。
+            const gs = get().gameState;
+            const atResults = gs?.phase === 'game-over';
             get().unsubscribeRoom();
-            // 終局後 host 退出也會解散（見 handleAbandonRoom）：此時對手正在看
-            // 結算頁，不硬跳走；房間已 'ended'，「再來一局」會在 room 頁被擋。
-            if (get().gameState?.phase !== 'game-over') {
+            // 三種處境分開處理：
+            //  1. 對局進行中 —— 房間沒了就是玩不下去，硬跳回 PVP 大廳（原行為）。
+            //  2. 正在看結算頁 —— 不跳走，讓人看完成績（gameState 補回去，否則
+            //     剛被清空，結算頁會塌成 loading）；置 roomClosed，「再來一局」
+            //     據此變成「房主已離開」且點不動，不會再進空房。
+            //  3. 在 room 頁等房主開新局（gs 為 null）—— 置 roomClosed，由 room
+            //     頁彈 toast 再送回首頁（老闆：要有一句話，別讓人莫名其妙被扔出去）。
+            set({ roomClosed: true });
+            if (atResults) {
+              set({ gameState: gs });
+            } else if (gs) {
               window.location.href = '/pvp';
             }
+            break;
+          }
+
+          case 'rematch-open':
+            // 房主回到房間、把房間重新開放了。組員的輕量等待態據此切換成完整
+            // 房間；房間對象本地也同步一下 status，免得 UI 兩處讀出不同狀態。
+            set(s => ({ room: s.room ? { ...s.room, status: 'waiting' } : null }));
             break;
 
           case 'settings-changed':
@@ -341,6 +390,14 @@ export const usePvpStore = create<PvpStore>()(
 
           case 'game-start':
           case 'game-state-update':
+            // 這兩條【只可能是房主發的】（PVP 架構裏只有房主持有 rawGameState）。
+            // 收到 = 房主活着，是比 presence 更硬的證據 —— presence 快照可能還沒
+            // 同步完，但消息實實在在到了。順手撤掉誤標的「房主離線」橫幅與那個
+            // 3 分鐘解散計時器（老闆 2026-08-03：第二局開局就掛橫幅、3 分鐘後房
+            // 間被關，而房主正是開局的人）。
+            // 放在 toPlayerId 過濾之前：即使這一條是發給別人的私有手牌快照，也
+            // 照樣證明房主活着。
+            if (!isHost && room.host_id) clearHostOffline(room.host_id);
             // Drop payloads addressed to other recipients (per-player
             // hand-privacy broadcast). Untagged payloads are accepted
             // for backwards-compat with legacy '__all__' broadcasts.
@@ -448,8 +505,6 @@ export const usePvpStore = create<PvpStore>()(
       // - 非 host 斷線重連期間錯過了 host 的 leave/join 事件，同樣靠 sync
       //   對賬補上 / 撤掉「房主離線」倒計時。
       .on('presence', { event: 'sync' }, () => {
-        if (!pendingSweep) return;
-        pendingSweep = false;
         const { isHost: hostNow, room: rm, rawGameState: raw, myPlayerId: me } = get();
         if (!rm) return;
         let present: Set<string>;
@@ -463,13 +518,19 @@ export const usePvpStore = create<PvpStore>()(
         } catch {
           return;
         }
+        // ⚠️ 房主在線與否【每次 sync 都要重新對賬】，不能鎖在 pendingSweep 裏
+        //（老闆 2026-08-03 回報：第二局一開始就掛「房主短暫離線」橫幅，3 分鐘後
+        // 真的把房間關了，而房主明明在線 —— 就是他開的局）。
+        // 原因：訂閱後的第一個 sync，presenceState 常常還沒同步完（第二局開局時
+        // 房主和組員幾乎同時重建 channel，room 頁跳 game 頁各訂閱一次）。組員那
+        // 一次快照裏沒有房主 → 標離線 + 武裝 3 分鐘計時器。而房主的 presence 隨
+        // 後是靠【後續的 sync】補上的（不是 join —— 房主早就在頻道裏了，只是本
+        // 地快照沒收全），偏偏 pendingSweep 已經關了，直接 return，永遠沒有修正
+        // 機會。全量 sync 本來就是最可靠的真相源，讓它每次都跑。
         const hostPid = rm.host_id;
         if (!hostNow && hostPid) {
           if (present.has(hostPid)) {
-            if (hostGraceTimer) { clearTimeout(hostGraceTimer); hostGraceTimer = null; }
-            set(s => s.offlinePlayerIds.includes(hostPid)
-              ? { offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== hostPid) }
-              : s);
+            clearHostOffline(hostPid);
           } else if (!hostGraceTimer) {
             set(s => s.offlinePlayerIds.includes(hostPid)
               ? s
@@ -477,6 +538,10 @@ export const usePvpStore = create<PvpStore>()(
             armHostGraceTimer();
           }
         }
+        // 下面這段是 host 側按引擎座位表逐一補標離線 —— 開銷大且只有「host 剛
+        // (重)連上、模塊級 offlineTimers 已隨頁面丟失」時才需要，維持只跑一次。
+        if (!pendingSweep) return;
+        pendingSweep = false;
         if (hostNow && raw && raw.phase !== 'game-over') {
           const enginePlayers = raw.players as { id: string; hasLeft?: boolean }[];
           for (const p of enginePlayers) {
@@ -755,8 +820,12 @@ export const usePvpStore = create<PvpStore>()(
           finalState: newState,
           seatMeta: buildSeatMeta(newState, players),
         });
-        // Reset room status so "再來一局" can navigate back to room
-        updateRoomStatus(room.id, 'waiting');
+        // 終局 → 'finished'（2026-08-03 老闆定）。以前這裏直接置 'waiting'，
+        // 等於「房間開放、隨時可進」，但這一刻房主根本還沒表態要不要再來一局：
+        // 房主若接着點「返回主頁」，組員點「再來一局」就進了一個 host 已離場的
+        // 房，永遠卡在「等待房主開始」。改成 'finished' 後，房主點「再來一局」
+        // 回到 room 頁才置回 'waiting'，組員在那之前只看到輕量等待態。
+        updateRoomStatus(room.id, 'finished');
       }
     }
   },
@@ -793,7 +862,7 @@ export const usePvpStore = create<PvpStore>()(
 
   reset: () => {
     get().unsubscribeRoom();
-    set({ room: null, players: [], myPlayerId: null, channel: null, gameState: null, rawGameState: null, isHost: false, offlinePlayerIds: [] });
+    set({ room: null, players: [], myPlayerId: null, channel: null, gameState: null, rawGameState: null, isHost: false, offlinePlayerIds: [], roomClosed: false });
     try { localStorage.removeItem('psycho-card-pvp'); } catch {}
   },
     }),

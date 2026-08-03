@@ -23,9 +23,22 @@ interface GameOverModalProps {
   onPlayAgain: () => void;
   onBackToLobby: () => void;
   locale?: Locale;
+  // PVP 專用：房主已離開 → 房間沒了，「再來一局」置灰並換成「房主已離開」。
+  // 不傳＝可用（單機恆為可用）。點不動比點了進空房好——後者才是老闆看到的
+  // 「永遠等待房主開始」。
+  playAgainDisabled?: boolean;
+  playAgainText?: string;
 }
 
-export function GameOverModal({ players, winnerId, onPlayAgain, onBackToLobby, locale = 'zh' }: GameOverModalProps) {
+export function GameOverModal({
+  players,
+  winnerId,
+  onPlayAgain,
+  onBackToLobby,
+  locale = 'zh',
+  playAgainDisabled = false,
+  playAgainText,
+}: GameOverModalProps) {
   const tg = STRINGS[locale].game;
   // 名次：winner 置顶（last-standing 结局 winner 不一定归档最多），其余按归档多者前、手牌少者前。
   const ranked = [...players].sort(
@@ -121,8 +134,12 @@ export function GameOverModal({ players, winnerId, onPlayAgain, onBackToLobby, l
         <KnowledgeQuiz locale={locale} />
 
         <div className="mx-auto flex w-full max-w-lg gap-3">
-          <button onClick={onPlayAgain} className="psy-btn psy-btn-accent flex-1 py-3 font-medium">
-            {tg.playAgain}
+          <button
+            onClick={playAgainDisabled ? undefined : onPlayAgain}
+            disabled={playAgainDisabled}
+            className="psy-btn psy-btn-accent flex-1 py-3 font-medium disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            {playAgainText ?? tg.playAgain}
           </button>
           <button onClick={onBackToLobby} className="psy-btn psy-btn-ghost px-6 py-3 text-sm">
             {locale === 'en' ? 'Home' : '返回主頁'}
