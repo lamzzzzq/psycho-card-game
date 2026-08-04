@@ -992,10 +992,11 @@ function InteractiveSandbox({
             {captionByScene[state.scene]}
           </motion.p>
         </div>
-        {/* 旁白框：min-h 鎖一行高度（有無旁白欄高都不變，貼底欄不再上下彈）；
-            mode="wait" 讓舊句完全退場後新句再進——默認 sync 模式會新舊同屏疊放
-            ~220ms，欄高瞬間翻倍、舊句一閃而過（錄屏裏的「一閃一閃」）。 */}
-        <div className="min-h-[40px]" role="status" aria-live="polite">
+        {/* 旁白框：無旁白時整塊收起（empty:hidden），不再用 min-h 佔一行空白——
+            手機上那條空白把指引欄撐得很高（2026-08-04 老闆圈出）。代價是旁白出現/
+            消失時欄高會變，但貼底欄向上生長、mode="wait" 也避免了新舊同屏疊放
+            ~220ms 造成的欄高瞬間翻倍與「一閃一閃」。 */}
+        <div className="empty:hidden" role="status" aria-live="polite">
           <AnimatePresence mode="wait">
             {state.feedback && (
               <motion.p

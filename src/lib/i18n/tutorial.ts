@@ -210,7 +210,7 @@ export const TUTORIAL_T = {
     captionViewPicking: (n: number) =>
       n >= 2
         ? '兩張都看過了！點高亮的「完成查看」繼續。'
-        : `點選下方高亮的 2 張牌，揭開它們的真實維度（已看 ${n}/2）。`,
+        : `點選上方高亮的 2 張牌，揭開它們的真實維度（已看 ${n}/2）。`,
     captionAfterDraw: '神經質的「目標張數」是 4。你手裏正好有 4 張神經質牌。點高亮的「自摸碰」開始選維度及點牌。',
     captionPongDimension: (name: string) =>
       `自摸碰先選定一個維度。目標板上「${name}」需要的張數，正是你手裏有的張數——選高亮的「${name}」。`,
@@ -234,7 +234,7 @@ export const TUTORIAL_T = {
     // ── 沙盒：feedback（reducer 內）──
     fbDraw: '抽到一張牌。現在選擇很多，先演示「查看 2 張牌」。',
     fbViewTwo: '本回合查看了 2 張牌：一張盡責性，一張神經質。隱藏模式看過的牌下一輪會重置、不保留；真實牌局裏只會揭開你選的 2 張。',
-    fbViewStart: '點選下方高亮的 2 張牌，揭開它們的真實維度。',
+    fbViewStart: '點選上方高亮的 2 張牌，揭開它們的真實維度。',
     fbViewPicked: '已揭開一張。再點另一張高亮的牌。',
     fbViewDone: '隱藏模式每回合只能看 2 張，且下一輪隨即重置、不作保留；半公開模式則是每回合看 4 張、看過可保留。',
     fbFinishView: '你知道剛抽到的牌能補齊一組。現在演示自摸碰。',
@@ -511,7 +511,7 @@ export const TUTORIAL_T = {
     captionViewPicking: (n: number) =>
       n >= 2
         ? 'You\'ve seen both! Tap the highlighted "Done viewing" to continue.'
-        : `Tap the 2 highlighted cards below to reveal their true dimensions (${n}/2 seen).`,
+        : `Tap the 2 highlighted cards above to reveal their true dimensions (${n}/2 seen).`,
     captionAfterDraw: 'Neuroticism\'s target count is 4, and your hand has exactly 4 Neuroticism cards. Tap the highlighted "Self-draw Pong" to start choosing the dimension and cards.',
     captionPongDimension: (name: string) =>
       `Self-draw Pong needs a dimension first. The count "${name}" needs on the board is exactly what you hold — choose the highlighted "${name}".`,
@@ -535,7 +535,7 @@ export const TUTORIAL_T = {
     // ── Sandbox: feedback (in reducer) ──
     fbDraw: 'Drew a card. There are many options now — first let\'s demo "view 2 cards".',
     fbViewTwo: 'This turn you viewed 2 cards: one Conscientiousness, one Neuroticism. In Hidden mode viewed cards reset next round — not kept; in a real game only the 2 you pick are revealed.',
-    fbViewStart: 'Tap the 2 highlighted cards below to reveal their true dimensions.',
+    fbViewStart: 'Tap the 2 highlighted cards above to reveal their true dimensions.',
     fbViewPicked: 'One revealed. Now tap the other highlighted card.',
     fbViewDone: 'In Hidden mode you see only 2 per turn and they reset next round (not kept); in Semi-Open mode you\'d view 4 per turn and they stay revealed for good.',
     fbFinishView: 'You know the just-drawn card can complete a set. Now, a demo of Self-draw Pong.',
