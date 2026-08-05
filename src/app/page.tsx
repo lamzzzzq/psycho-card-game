@@ -74,6 +74,14 @@ export default function Home() {
     router.push(modelDone(deckId) ? REPORT_ROUTE[deckId] : ASSESS_ROUTE[deckId]);
   }
 
+  // 「單機遊戲」按模型分流：Big Five → /lobby、HEXACO → /hexaco-lobby（两个大厅
+  // 各自带「未测评」门禁，没做该模型测评会被引去对应答题页）；CPAI 未上线 → 弹规划中提示框。
+  function handleSoloPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
+    setDeckModalFor(null);
+    if (deckId === 'cpai') { setReportPrompt(deckId); return; }
+    router.push(deckId === 'hexaco' ? '/hexaco-lobby' : '/lobby');
+  }
+
   // 自愈：已完成报告却残留半截答案 = 放弃的重测（unmount 清理可能没触发）。
   // 清掉它，避免主页显示「繼續測評(n/50)」而大厅显示「已完成」的不一致。
   // 仅在已有完成报告时清；无报告的半截答案是首次测评进行中，要保留可续答。
@@ -224,8 +232,8 @@ export default function Home() {
           : deckModalFor === 'solo' ? '/lobby'
           : '/assessment'
         )}
-        onPickDeck={deckModalFor === 'report' ? handleReportPick : deckModalFor === 'assessment' ? handleAssessPick : undefined}
-        modelState={deckModalFor === 'report' || deckModalFor === 'assessment' ? modelState : undefined}
+        onPickDeck={deckModalFor === 'report' ? handleReportPick : deckModalFor === 'assessment' ? handleAssessPick : deckModalFor === 'solo' ? handleSoloPick : undefined}
+        modelState={deckModalFor === 'report' || deckModalFor === 'assessment' || deckModalFor === 'solo' ? modelState : undefined}
         loc={loc}
       />
 
