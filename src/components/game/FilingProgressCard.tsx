@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Dimension, DIMENSIONS } from '@/types';
 import { DIMENSION_META } from '@/data/dimensions';
 import type { Locale } from '@/lib/i18n';
@@ -59,6 +59,12 @@ interface FilingProgressCardProps {
   highlightDim?: Dimension | null;
   /** 教學沙盒裏格子不可點（沒有歸檔詳情面板可開）。 */
   disabled?: boolean;
+  /**
+   * 整條第一行（輪次 + 已完成）可點 → 收起/展開下方維度格，省豎向空間。
+   * 點擊區只有第一行，維度格照舊點開歸檔詳情。默認關（教學沙盒等舊用法零變化），
+   * 正式牌桌（單機/PVP）顯式開。與 hexaco-game 版同款交互。
+   */
+  collapsible?: boolean;
 }
 
 export function FilingProgressCard({
@@ -70,20 +76,49 @@ export function FilingProgressCard({
   onOpenArchive,
   highlightDim = null,
   disabled = false,
+  collapsible = false,
 }: FilingProgressCardProps) {
   const en = locale === 'en';
+  const [collapsed, setCollapsed] = useState(false);
+  const headerClass =
+    'flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-3 py-1.5 text-xs text-[var(--psy-ink-soft)] sm:text-sm';
 
   return (
     // 內距與行間距都放寬一档（老闆：margin 變寬、卡片變高）。
     <div className="psy-panel psy-etched flex shrink-0 flex-col gap-2 rounded-[1.2rem] p-1.5 sm:p-2.5">
-      {/* 第一行：輪次 + 右側信息 */}
-      <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-[rgba(154,116,72,0.2)] bg-[var(--psy-card-content)] px-3 py-1.5 text-xs text-[var(--psy-ink-soft)] sm:text-sm">
-        <span className="psy-serif shrink-0 font-semibold text-[var(--psy-accent-strong)]">{roundText}</span>
-        {info}
-      </div>
+      {/* 第一行：輪次 + 右側信息。collapsible 時整行是按鈕 → 收起/展開下方維度格
+          （點擊區只有這一行；維度格的點擊仍是打開歸檔詳情，互不影響）。 */}
+      {collapsible ? (
+        <button
+          type="button"
+          onClick={() => setCollapsed((v) => !v)}
+          aria-expanded={!collapsed}
+          aria-label={en
+            ? (collapsed ? 'Expand filing progress' : 'Collapse filing progress')
+            : (collapsed ? '展開歸檔進度' : '收起歸檔進度')}
+          className={`${headerClass} text-left transition active:scale-[0.99]`}
+        >
+          <span className="psy-serif shrink-0 font-semibold text-[var(--psy-accent-strong)]">{roundText}</span>
+          {info}
+          {/* 展開 = ▼（點了收起）；收起 = 轉成 ▲（點了展開，用戶指定朝上）。
+              info 內部自帶 ml-auto，沒有 info 時箭頭自己靠右。 */}
+          <span
+            aria-hidden
+            className={`${info ? 'ml-0.5' : 'ml-auto'} shrink-0 text-[10px] leading-none text-[var(--psy-muted)] transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
+          >
+            ▼
+          </span>
+        </button>
+      ) : (
+        <div className={headerClass}>
+          <span className="psy-serif shrink-0 font-semibold text-[var(--psy-accent-strong)]">{roundText}</span>
+          {info}
+        </div>
+      )}
 
       {/* 第二行：5 維 —— 角標 + 卡位 */}
-      {/* 格子之間的間距放寬（老闆要求） */}
+      {/* 格子之間的間距放寬（老闆要求）。collapsible 收起時整塊不渲染（省豎向空間）。 */}
+      {!(collapsible && collapsed) && (
       <div className="grid grid-cols-5 gap-1 sm:gap-2.5" aria-label={en ? 'Filing progress' : '歸檔進度'}>
         {DIMENSIONS.map((dimension) => {
           const meta = DIMENSION_META[dimension];
@@ -206,6 +241,7 @@ export function FilingProgressCard({
           );
         })}
       </div>
+      )}
     </div>
   );
 }

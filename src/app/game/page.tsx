@@ -594,6 +594,7 @@ export default function GamePage() {
           targets={targets}
           declaredDims={declaredDims}
           onOpenArchive={() => setMobileSheet('declared')}
+          collapsible
         />
 
         {/* ── 懸浮操作層 ─────────────────────────────────────────────
