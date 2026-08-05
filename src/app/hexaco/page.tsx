@@ -24,6 +24,28 @@ export default function HexacoPage() {
         >
           {locale === 'en' ? '← Back to Home' : '← 返回首頁'}
         </Link>
+
+        {/* HEXACO 對局入口（Beta）：六維牌局走物理隔離的 /hexaco-lobby → /hexaco-game，
+            需先完成 HEXACO-60 測評（大廳裏有同款 needAssess 門禁）。 */}
+        <div className="psy-panel psy-etched flex flex-col items-start gap-3 rounded-[1.6rem] p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <p className="psy-serif text-lg text-[var(--psy-ink)]">
+              {locale === 'en' ? 'HEXACO Card Game (Beta)' : 'HEXACO 人格對局（Beta）'}
+            </p>
+            <p className="text-sm leading-6 text-[var(--psy-muted)]">
+              {locale === 'en'
+                ? 'Six dimensions, same rules — file all 6 to win. Requires the HEXACO-60 assessment.'
+                : '六個維度、同一套規則——歸檔全部 6 維即獲勝。需先完成 HEXACO-60 測評。'}
+            </p>
+          </div>
+          <Link
+            href="/hexaco-lobby"
+            className="psy-btn psy-btn-accent shrink-0 px-6 py-2.5 text-sm font-semibold"
+          >
+            {locale === 'en' ? 'Play Solo' : '進入單機對局'}
+          </Link>
+        </div>
+
         <HexacoIntro locale={locale} />
       </div>
     </main>
