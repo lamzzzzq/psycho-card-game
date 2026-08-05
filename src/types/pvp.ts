@@ -60,7 +60,6 @@ export type RealtimeMessage =
   // 房主回到房間、把上一局結束後的 'finished' 置回 'waiting' —— 組員的輕量
   // 等待態收到後切換成完整房間。DB 的 status 也會變，但 postgres_changes 訂閱
   // 只在 room 已載入後才建立；廣播是即時的那條路，兩條都留着互為兜底。
-  | { type: 'rematch-open' }
   // Tentative offline: presence dropped but within grace period.
   // UI shows "離線中" badge until host promotes to player-left or
   // the player reconnects (player-online).

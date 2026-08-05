@@ -20,14 +20,13 @@ export interface GameOverPlayer {
 interface GameOverModalProps {
   players: GameOverPlayer[];
   winnerId: string | null;
-  onPlayAgain: () => void;
+  /** 不傳 = 不渲染「再來一局」（2026-08-05 老闆定：PVP 組員只有回大廳一個鈕，
+      再來一局是房主專屬 —— 原先那套「房主已離開→置灰」判定隨之整個拆掉）。 */
+  onPlayAgain?: () => void;
   onBackToLobby: () => void;
   locale?: Locale;
-  // PVP 專用：房主已離開 → 房間沒了，「再來一局」置灰並換成「房主已離開」。
-  // 不傳＝可用（單機恆為可用）。點不動比點了進空房好——後者才是老闆看到的
-  // 「永遠等待房主開始」。
-  playAgainDisabled?: boolean;
-  playAgainText?: string;
+  /** 返回鍵文案。缺省「返回主頁/Home」；PVP 組員傳「返回大廳」。 */
+  backText?: string;
 }
 
 export function GameOverModal({
@@ -36,8 +35,7 @@ export function GameOverModal({
   onPlayAgain,
   onBackToLobby,
   locale = 'zh',
-  playAgainDisabled = false,
-  playAgainText,
+  backText,
 }: GameOverModalProps) {
   const tg = STRINGS[locale].game;
   // 名次：winner 置顶（last-standing 结局 winner 不一定归档最多），其余按归档多者前、手牌少者前。
@@ -134,15 +132,20 @@ export function GameOverModal({
         <KnowledgeQuiz locale={locale} />
 
         <div className="mx-auto flex w-full max-w-lg gap-3">
+          {onPlayAgain && (
+            <button
+              onClick={onPlayAgain}
+              className="psy-btn psy-btn-accent flex-1 py-3 font-medium"
+            >
+              {tg.playAgain}
+            </button>
+          )}
+          {/* 只剩一個鈕（PVP 組員）時它就是主行動：吃滿寬 + 主色。 */}
           <button
-            onClick={playAgainDisabled ? undefined : onPlayAgain}
-            disabled={playAgainDisabled}
-            className="psy-btn psy-btn-accent flex-1 py-3 font-medium disabled:cursor-not-allowed disabled:opacity-45"
+            onClick={onBackToLobby}
+            className={onPlayAgain ? 'psy-btn psy-btn-ghost px-6 py-3 text-sm' : 'psy-btn psy-btn-accent flex-1 py-3 font-medium'}
           >
-            {playAgainText ?? tg.playAgain}
-          </button>
-          <button onClick={onBackToLobby} className="psy-btn psy-btn-ghost px-6 py-3 text-sm">
-            {locale === 'en' ? 'Home' : '返回主頁'}
+            {backText ?? (locale === 'en' ? 'Home' : '返回主頁')}
           </button>
         </div>
       </motion.div>

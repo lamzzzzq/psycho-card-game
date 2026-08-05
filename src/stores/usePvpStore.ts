@@ -365,8 +365,8 @@ export const usePvpStore = create<PvpStore>()(
             // 三種處境分開處理：
             //  1. 對局進行中 —— 房間沒了就是玩不下去，硬跳回 PVP 大廳（原行為）。
             //  2. 正在看結算頁 —— 不跳走，讓人看完成績（gameState 補回去，否則
-            //     剛被清空，結算頁會塌成 loading）；置 roomClosed，「再來一局」
-            //     據此變成「房主已離開」且點不動，不會再進空房。
+            //     剛被清空，結算頁會塌成 loading）。組員的結算頁只有「返回大廳」
+            //     一個鈕（2026-08-05 老闆定），不存在點進空房的問題。
             //  3. 在 room 頁等房主開新局（gs 為 null）—— 置 roomClosed，由 room
             //     頁彈 toast 再送回首頁（老闆：要有一句話，別讓人莫名其妙被扔出去）。
             set({ roomClosed: true });
@@ -377,12 +377,6 @@ export const usePvpStore = create<PvpStore>()(
             }
             break;
           }
-
-          case 'rematch-open':
-            // 房主回到房間、把房間重新開放了。組員的輕量等待態據此切換成完整
-            // 房間；房間對象本地也同步一下 status，免得 UI 兩處讀出不同狀態。
-            set(s => ({ room: s.room ? { ...s.room, status: 'waiting' } : null }));
-            break;
 
           case 'settings-changed':
             set(s => ({ room: s.room ? { ...s.room, settings: payload.settings } : null }));

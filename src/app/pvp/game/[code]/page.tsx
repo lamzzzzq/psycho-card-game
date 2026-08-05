@@ -234,7 +234,8 @@ export default function PvpGamePage() {
     return () => clearTimeout(t);
   }, [gameState]);
 
-  async function handleAbandonRoom() {
+  // dest：離開後去哪。默認回主頁；終局結算頁的組員「返回大廳」傳 '/pvp'。
+  async function handleAbandonRoom(dest: string = '/') {
     const { isHost, gameState: gs, room, sendMessage: send } = usePvpStore.getState();
     // Host quitting mid-game: current architecture has no host migration
     // (rawGameState lives only on host). Broadcast 'room-dissolved' so all
@@ -264,7 +265,7 @@ export default function PvpGamePage() {
       if (data?.id) { try { await leaveRoom(data.id, player.id); } catch {} }
     }
     usePvpStore.getState().reset();
-    router.replace('/');
+    router.replace(dest);
   }
 
   // Clear card selection on phase change
@@ -414,7 +415,7 @@ export default function PvpGamePage() {
             <>
               <div className="text-sm text-[var(--psy-accent-strong)]">{t.hostOfflineNoResume}</div>
               <button
-                onClick={handleAbandonRoom}
+                onClick={() => handleAbandonRoom()}
                 className="psy-btn psy-btn-danger px-5 py-2.5 text-sm font-bold"
               >
                 {t.leaveRoomReturnLobby}
@@ -628,13 +629,15 @@ export default function PvpGamePage() {
   canDrawRef.current = canDraw;
 
   // Game over screen — 与单机共用 GameOverModal（归档 declaredSets 是公开信息，
-  // PVP 序列化已发全桌）。onPlayAgain 走回 room 页开新局。
+  // PVP 序列化已发全桌）。
   //
-  // onBackToLobby 過去是裸 router.replace('/')，繞開了 handleAbandonRoom ——
-  // 房主就這麼走掉，房間卻還開着且 host_id 指向他，組員點「再來一局」進去永遠
-  // 等不到人（老闆 2026-08-02 回報）。現在一律走 handleAbandonRoom：房主 → 廣播
-  // room-dissolved + 房間置 ended；組員 → leaveRoom 讓出座位。局已結束，所以
-  // 裏面的 gameInProgress 判定為 false，不會誤存中斷局。
+  // 終局按鈕（2026-08-05 老闆定，取代原先的 rematch 等待態/置灰那套判定）：
+  //   房主：「再來一局」→ 回 room 等待頁（房間重開 waiting，組員憑房號再加入）
+  //         ＋「返回主頁」→ handleAbandonRoom（廣播 room-dissolved + 置 ended）。
+  //   組員：只有「返回大廳」一個鈕 → handleAbandonRoom('/pvp')（leaveRoom 讓出
+  //         座位，落在 /pvp 建房/加房頁）。不再有組員側的「再來一局」，也就
+  //         不再需要 rematch-open 廣播、等房主回來的輕量等待態、失聯倒數。
+  // 局已結束 → handleAbandonRoom 裏 gameInProgress 為 false，不會誤存中斷局。
   if (gameState.winner) {
     return (
       <GameOverModal
@@ -647,12 +650,10 @@ export default function PvpGamePage() {
           isYou: p.id === myId,
         }))}
         winnerId={gameState.winner}
-        onPlayAgain={() => router.replace(`/pvp/room/${code}`)}
-        onBackToLobby={handleAbandonRoom}
+        onPlayAgain={isHost ? () => router.replace(`/pvp/room/${code}`) : undefined}
+        onBackToLobby={() => handleAbandonRoom(isHost ? '/' : '/pvp')}
+        backText={isHost ? undefined : tRoom.backLobby}
         locale={locale}
-        // 房主已經走了（收到 room-dissolved）→ 房間不存在，別再讓人點進去等。
-        playAgainDisabled={roomClosed}
-        playAgainText={roomClosed ? tRoom.hostLeft : undefined}
       />
     );
   }
@@ -940,6 +941,7 @@ export default function PvpGamePage() {
             targets={targets ?? {}}
             declaredDims={declaredDims}
             onOpenArchive={() => setMobileSheet('declared')}
+            collapsible
           />
 
           {/* ── 懸浮操作層 ─────────────────────────────────────────────
