@@ -1,0 +1,883 @@
+'use client';
+
+// HEXACO PVP store（src/stores/usePvpStore.ts 的六維物理隔離副本）。差異：hexaco-* 依賴、
+// 廣播頻道前綴 hxpvp-、persist key psycho-card-hexaco-pvp、分數字段 hexaco。
+// ⚠️ 大五 usePvpStore 修 bug 記得同步這裡。
+
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { supabase } from '@/lib/supabase';
+import { RealtimeChannel } from '@supabase/supabase-js';
+import { Room, RoomPlayer, RoomSettings, RealtimeMessage, PvpAction, SerializedGameState } from '@/types/hexaco-pvp';
+import { getRoomPlayers, updateRoomStatus, kickPlayer, dissolveRoom, leaveRoom } from '@/lib/hexaco-game/room-api';
+import {
+  saveGameSession,
+  bufferPendingSave,
+  removePendingInterrupted,
+  SaveGameSessionInput,
+} from '@/lib/hexaco-game/game-record';
+import { HexacoScores } from '@/types/hexaco-game';
+import { serializeGameState } from '@/lib/hexaco-game/pvp-serializer';
+import { initializePvpGame, applyPvpAction } from '@/lib/hexaco-game/pvp-game-logic';
+
+// Host-side grace-period timers: presence drops → 3-minute hold-off
+// → real markPlayerLeft + broadcast. Lives outside the zustand state
+// so it's not persisted / serialized.
+const OFFLINE_GRACE_MS = 3 * 60 * 1000;
+const offlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+// Host-side claim-window auto-resolve. 抢牌窗口（碰/胡/过）要求所有有资格的
+// 玩家都响应才推进；若有人在线却发呆不点，窗口会永久卡死全桌。超时后 host 替
+// 未响应者补 skip-pong，让回合继续。一旦离开 claim-window 立即清除。
+const CLAIM_WINDOW_MS = 20 * 1000;
+let claimTimer: ReturnType<typeof setTimeout> | null = null;
+function clearClaimTimer() {
+  if (claimTimer) { clearTimeout(claimTimer); claimTimer = null; }
+}
+
+// 武裝 claim-window 超時器。除了「剛進入 claim-window」時調用，host 刷新後
+// 重新訂閱時也要調（rawGameState 從 localStorage 恢復停在 claim-window，而
+// claimTimer 是模塊變量刷新即丟——不補一針的話 AFK 玩家會把全桌卡死）。
+// 待響應名單以 rawGameState.players（座位穩定）為準，不用房間名冊。
+function armClaimTimer(getStore: () => HexacoPvpStore) {
+  clearClaimTimer();
+  claimTimer = setTimeout(() => {
+    claimTimer = null;
+    const store = getStore();
+    const s = store.rawGameState;
+    if (!store.isHost || !s || s.phase !== 'claim-window') return;
+    const responded = new Set(s.claimResponses as string[]);
+    const pending = (s.players as { id: string; hasLeft?: boolean }[]).filter(
+      (p, idx) => idx !== s.discardedByIndex && !p.hasLeft && !responded.has(p.id)
+    );
+    // 逐个补 skip-pong；engine 在全员响应后自动 finalize 推进回合。
+    for (const p of pending) {
+      store.handlePlayerAction(p.id, { type: 'skip-pong' });
+    }
+  }, CLAIM_WINDOW_MS);
+}
+
+// Client-side host-grace timer (non-host clients only). If the host
+// vanishes, every non-host independently starts a 3-min countdown.
+// Host comes back inside the window → cancel. Otherwise the room is
+// truly unrecoverable and we dissolve locally.
+let hostGraceTimer: ReturnType<typeof setTimeout> | null = null;
+
+// 回前台立即补同步的 visibilitychange handler（手机切后台→presence/state 落后，
+// 等 Supabase 自动重连有几秒延迟；前台时主动补一次 → 恢复更快、更平滑）。
+let visibilityHandler: (() => void) | null = null;
+
+interface HexacoPvpStore {
+  // Room state
+  room: Room | null;
+  players: RoomPlayer[];
+  myPlayerId: string | null;
+  channel: RealtimeChannel | null;
+
+  // Game state (host runs the full state, others get serialized view)
+  gameState: SerializedGameState | null;
+  rawGameState: any | null; // host-only full game state
+  isHost: boolean;
+
+  // Tentative-offline players (presence dropped but still inside grace
+  // period). Visible to every client via player-offline broadcast.
+  offlinePlayerIds: string[];
+
+  // 房間已被房主關掉（收到 room-dissolved 而自己不在對局中）。置起後由 room 頁
+  // 彈 toast「房主已離開，房間已關閉」再送回首頁 —— store 裏不能直接 window
+  // 硬跳，否則 toast 還沒畫出來頁面就重載了（老闆 2026-08-03：要像碰成功那樣
+  // 先看到一句話）。
+  roomClosed: boolean;
+
+  // Actions
+  setRoom: (room: Room) => void;
+  setMyPlayerId: (id: string) => void;
+  setPlayers: (players: RoomPlayer[]) => void;
+  subscribeRoom: (roomCode: string, myPlayerId: string) => void;
+  unsubscribeRoom: () => void;
+  sendMessage: (msg: RealtimeMessage) => void;
+
+  // Host-only
+  startGame: () => void;
+  handlePlayerAction: (fromPlayerId: string, action: PvpAction) => void;
+  // Host 中途退出/解散時，把當前未結束的對局存成「中斷局」(winner=null)。
+  persistInterruptedGame: () => void;
+  // Host 頁面卸載（pagehide/beforeunload）時同步把中斷快照寫入 localStorage
+  // 重傳緩衝——硬崩潰/直接關頁時 async 存檔活不到返回，這是唯一保數據的窗口。
+  bufferInterruptedSnapshot: () => void;
+
+  reset: () => void;
+}
+
+// 模塊級去重：同一局（按 gameStartedAt）只存一次中斷記錄，避免退出流程
+// 多處觸發導致重複寫入。
+const interruptedSaved = new Set<number>();
+
+// 同一局中斷記錄的穩定 sessionId（按 gameStartedAt 鍵控）：pagehide 快照可能
+// 反覆觸發、之後 persistInterruptedGame 也可能再存——全部複用同一個 id，
+// localStorage 緩衝按 id 替換 + Supabase 按 id 去重，保證一局最多一條中斷行。
+const interruptedSessionIds = new Map<number, string>();
+function interruptedSessionId(startedAt: number): string {
+  let sid = interruptedSessionIds.get(startedAt);
+  if (!sid) {
+    sid =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${startedAt}-interrupted`;
+    interruptedSessionIds.set(startedAt, sid);
+  }
+  return sid;
+}
+
+// 座位元數據：以引擎 players 為準（中途退出者仍佔位），房間名冊只用來補
+// student_id；player-joined 廣播漏收時 student_id 為空 → 用 player_id 兜底
+// （PVP 流程裏兩者恆等），避免 game_participants.student_id 存 null 丟歸屬。
+function buildSeatMeta(
+  rawState: { players: { id: string }[] },
+  roster: RoomPlayer[]
+): SaveGameSessionInput['seatMeta'] {
+  const roomPlayerById = new Map(roster.map((rp) => [rp.player_id, rp]));
+  return rawState.players.map((p, i) => ({
+    seatIndex: i,
+    playerId: p.id,
+    studentId: roomPlayerById.get(p.id)?.student_id ?? p.id ?? null,
+    isAi: false,
+  }));
+}
+
+// 構造中斷局的存檔輸入（winner=null）。persistInterruptedGame（網絡存）和
+// bufferInterruptedSnapshot（純 localStorage）共用。
+function buildInterruptedInput(
+  rawGameState: {
+    phase?: string;
+    players: { id: string }[];
+    actionLog?: { timestamp?: number }[];
+    gameStartedAt?: number;
+  },
+  room: Room,
+  players: RoomPlayer[]
+): (SaveGameSessionInput & { sessionId: string }) | null {
+  if (!rawGameState || rawGameState.phase === 'game-over') return null;
+  const startedAt: number =
+    rawGameState.gameStartedAt ??
+    rawGameState.actionLog?.[0]?.timestamp ??
+    Date.now();
+  return {
+    mode: 'pvp',
+    roomId: room.id,
+    roomCode: room.code,
+    startedAt,
+    finalState: { ...rawGameState, winner: null } as unknown as SaveGameSessionInput['finalState'],
+    seatMeta: buildSeatMeta(rawGameState, players),
+    sessionId: interruptedSessionId(startedAt),
+  };
+}
+
+export const useHexacoPvpStore = create<HexacoPvpStore>()(
+  persist(
+    (set, get) => ({
+  room: null,
+  players: [],
+  myPlayerId: null,
+  channel: null,
+  gameState: null,
+  rawGameState: null,
+  isHost: false,
+  offlinePlayerIds: [],
+  roomClosed: false,
+
+  setRoom: (room) => set({ room }),
+  setMyPlayerId: (id) => set({ myPlayerId: id }),
+  setPlayers: (players) => set({ players }),
+
+  subscribeRoom: (roomCode, myPlayerId) => {
+    const existing = get().channel;
+    if (existing) existing.unsubscribe();
+    // 新的一次房間會話：清掉上一次留下的「房間已關閉」標誌，否則剛進房就會
+    // 誤彈 toast 又把人送回首頁。
+    set({ roomClosed: false });
+
+    const channel = supabase.channel(`hxpvp-${roomCode}`, {
+      config: { broadcast: { self: false } },
+    });
+
+    // (Re)subscribe 後的 presence 全量清點開關：leave/join 事件只覆蓋「訂閱
+    // 期間發生」的變化；自己剛（重新）連上時錯過的離線/回歸要靠第一次
+    // presence sync 對賬。每次 SUBSCRIBED 都重新武裝一次（斷線重連後同樣
+    // 需要對賬）。
+    let pendingSweep = true;
+
+    // 撤銷「房主離線」狀態：計時器 + 橫幅一起收。三個地方會用到（sync 對賬、
+    // presence join、收到房主推來的狀態），抽出來保證三條路收得一樣乾淨。
+    const clearHostOffline = (hostPid: string) => {
+      if (hostGraceTimer) { clearTimeout(hostGraceTimer); hostGraceTimer = null; }
+      set(s => s.offlinePlayerIds.includes(hostPid)
+        ? { offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== hostPid) }
+        : s);
+    };
+
+    // 非 host 的「房主消失」倒計時。到點 = 房間確實救不回來了：best-effort
+    // 把房間標成 ended + 清掉自己的座位（否則 DB 裏永遠掛着 'playing' 殭屍
+    // 房，房主名下 room_players 也一直纏着這個學號），再跳回首頁。
+    const armHostGraceTimer = () => {
+      if (hostGraceTimer) clearTimeout(hostGraceTimer);
+      hostGraceTimer = setTimeout(async () => {
+        hostGraceTimer = null;
+        // 動手收屍前【最後再查一次 presence】。誤殺的代價是把一桌活人的房間
+        // 關掉（老闆 2026-08-03 遇到的就是這個），值得多這一次確認：計時器是
+        // 三分鐘前那一刻的快照武裝的，這期間房主完全可能已經回來了。
+        try {
+          const st = channel.presenceState() as Record<string, Array<{ player_id?: string }>>;
+          const hostPidNow = get().room?.host_id;
+          const alive = Object.values(st).flat().some((p) => p.player_id === hostPidNow);
+          if (alive && hostPidNow) { clearHostOffline(hostPidNow); return; }
+        } catch {}
+        const { room: r, myPlayerId: me } = get();
+        const cleanup: Promise<unknown>[] = [];
+        if (r) cleanup.push(updateRoomStatus(r.id, 'ended').catch(() => {}));
+        if (r && me) cleanup.push(leaveRoom(r.id, me).catch(() => {}));
+        // 最多等 1.5s，別讓收屍拖住玩家離場。
+        await Promise.race([
+          Promise.allSettled(cleanup),
+          new Promise((res) => setTimeout(res, 1500)),
+        ]);
+        get().unsubscribeRoom();
+        if (typeof window !== 'undefined') window.location.href = '/';
+      }, OFFLINE_GRACE_MS);
+    };
+
+    // Host 側：把某玩家標成「暫時離線」+ 廣播 + 武裝 3 分鐘寬限計時器。
+    // presence leave 事件和 sync 對賬共用。
+    const hostMarkOffline = (lid: string) => {
+      set(s => s.offlinePlayerIds.includes(lid)
+        ? s
+        : { offlinePlayerIds: [...s.offlinePlayerIds, lid] });
+      get().sendMessage({ type: 'player-offline', playerId: lid });
+      // Reset any prior timer (presence flap)
+      const prev = offlineTimers.get(lid);
+      if (prev) clearTimeout(prev);
+      const timer = setTimeout(() => {
+        offlineTimers.delete(lid);
+        const stillHost = get().isHost;
+        const currRaw = get().rawGameState;
+        if (!stillHost || !currRaw || currRaw.phase === 'game-over') return;
+        const stillNotLeft = (currRaw.players as { id: string; hasLeft?: boolean }[])
+          .find((p) => p.id === lid && !p.hasLeft);
+        if (!stillNotLeft) return;
+        // Grace expired — really leave. The broadcast below has
+        // self:false, so host's own broadcast handler doesn't
+        // fire — that's why we manually splice players + clear
+        // offlinePlayerIds locally (instead of relying on the
+        // broadcast handler at 'case player-left').
+        get().handlePlayerAction(lid, { type: 'leave' });
+        get().sendMessage({ type: 'player-left', playerId: lid });
+        set(s => ({
+          players: s.players.filter((p) => p.player_id !== lid),
+          offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== lid),
+        }));
+      }, OFFLINE_GRACE_MS);
+      offlineTimers.set(lid, timer);
+    };
+
+    channel
+      .on('broadcast', { event: 'msg' }, ({ payload }: { payload: RealtimeMessage }) => {
+        const { room, myPlayerId: myId, isHost } = get();
+        if (!room) return;
+
+        switch (payload.type) {
+          case 'player-joined': {
+            set(s => {
+              const idx = s.players.findIndex(p => p.player_id === payload.player.id);
+              if (idx >= 0) {
+                // 已存在 → 合并补齐缺失字段(用既有值优先，incoming 只填 null)。
+                // 这样后到的「重广播」能把先前建成 null 的 hexaco/学号/头像补上，
+                // 修复各客户端「測評狀態/学号」分歧；且不会用 null 覆盖已有的好值。
+                const ex = s.players[idx];
+                const merged = {
+                  ...ex,
+                  student_id: ex.student_id ?? payload.player.studentId,
+                  hexaco: ex.hexaco ?? payload.player.hexaco,
+                  avatar: ex.avatar ?? payload.player.avatar,
+                };
+                if (merged.student_id === ex.student_id && merged.hexaco === ex.hexaco && merged.avatar === ex.avatar) return s;
+                const next = [...s.players];
+                next[idx] = merged;
+                return { players: next };
+              }
+              return {
+                players: [...s.players, {
+                  room_id: room.id,
+                  player_id: payload.player.id,
+                  seat_index: payload.seatIndex,
+                  student_id: payload.player.studentId,
+                  hexaco: payload.player.hexaco,
+                  avatar: payload.player.avatar,
+                }],
+              };
+            });
+            // 花名册收敛：host 把「既有」玩家的 join 重广播一遍，让新加入者补齐
+            // 学号/测评状态/头像（后加入者会漏掉先前的广播）。dedup 守卫(上面)防重复/循环。
+            if (isHost) {
+              const existing = get().players.filter((p) => p.player_id !== payload.player.id);
+              for (const p of existing) {
+                get().sendMessage({
+                  type: 'player-joined',
+                  player: { id: p.player_id, studentId: p.student_id ?? p.player_id, hexaco: p.hexaco ?? null, avatar: p.avatar },
+                  seatIndex: p.seat_index,
+                });
+              }
+            }
+            break;
+          }
+
+          case 'player-left':
+            set(s => ({
+              players: s.players.filter(p => p.player_id !== payload.playerId),
+              offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== payload.playerId),
+            }));
+            break;
+
+          case 'player-offline':
+            set(s => s.offlinePlayerIds.includes(payload.playerId)
+              ? s
+              : { offlinePlayerIds: [...s.offlinePlayerIds, payload.playerId] });
+            break;
+
+          case 'player-online':
+            set(s => ({
+              offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== payload.playerId),
+            }));
+            break;
+
+          case 'player-kicked':
+            if (payload.playerId === myId) {
+              get().unsubscribeRoom();
+              window.location.href = '/hexaco-pvp';
+            } else {
+              set(s => ({ players: s.players.filter(p => p.player_id !== payload.playerId) }));
+            }
+            break;
+
+          case 'room-dissolved': {
+            // ⚠️ 必須在 unsubscribeRoom 之前把 gameState 抓出來 —— 它的 set 會
+            // 把 gameState 清成 null。原來的寫法是先 unsubscribe 再讀
+            // get().gameState?.phase，恆為 undefined，所以下面「結算頁不跳走」
+            // 那條判斷從來沒生效過：組員在看成績時會被硬跳去 /pvp。
+            const gs = get().gameState;
+            const atResults = gs?.phase === 'game-over';
+            get().unsubscribeRoom();
+            // 三種處境分開處理：
+            //  1. 對局進行中 —— 房間沒了就是玩不下去，硬跳回 PVP 大廳（原行為）。
+            //  2. 正在看結算頁 —— 不跳走，讓人看完成績（gameState 補回去，否則
+            //     剛被清空，結算頁會塌成 loading）。組員的結算頁只有「返回大廳」
+            //     一個鈕（2026-08-05 老闆定），不存在點進空房的問題。
+            //  3. 在 room 頁等房主開新局（gs 為 null）—— 置 roomClosed，由 room
+            //     頁彈 toast 再送回首頁（老闆：要有一句話，別讓人莫名其妙被扔出去）。
+            set({ roomClosed: true });
+            if (atResults) {
+              set({ gameState: gs });
+            } else if (gs) {
+              window.location.href = '/hexaco-pvp';
+            }
+            break;
+          }
+
+          case 'settings-changed':
+            set(s => ({ room: s.room ? { ...s.room, settings: payload.settings } : null }));
+            break;
+
+          case 'game-start':
+          case 'game-state-update':
+            // 這兩條【只可能是房主發的】（PVP 架構裏只有房主持有 rawGameState）。
+            // 收到 = 房主活着，是比 presence 更硬的證據 —— presence 快照可能還沒
+            // 同步完，但消息實實在在到了。順手撤掉誤標的「房主離線」橫幅與那個
+            // 3 分鐘解散計時器（老闆 2026-08-03：第二局開局就掛橫幅、3 分鐘後房
+            // 間被關，而房主正是開局的人）。
+            // 放在 toPlayerId 過濾之前：即使這一條是發給別人的私有手牌快照，也
+            // 照樣證明房主活着。
+            if (!isHost && room.host_id) clearHostOffline(room.host_id);
+            // Drop payloads addressed to other recipients (per-player
+            // hand-privacy broadcast). Untagged payloads are accepted
+            // for backwards-compat with legacy '__all__' broadcasts.
+            if (payload.toPlayerId && payload.toPlayerId !== myId) break;
+            set({ gameState: payload.gameState });
+            break;
+
+          case 'action-request':
+            if (isHost) {
+              get().handlePlayerAction(payload.fromPlayerId, payload.action);
+            }
+            break;
+
+          case 'hexaco-updated':
+            set(s => ({
+              players: s.players.map(p =>
+                p.player_id === payload.playerId ? { ...p, hexaco: payload.hexaco } : p
+              ),
+            }));
+            break;
+
+          case 'game-over':
+            // Host saves result, everyone sees it in gameState.
+            // Also clear any stale offline UI — once the game is over
+            // we don't want lingering "離線中" badges if someone happened
+            // to disconnect right at the end.
+            for (const t of offlineTimers.values()) clearTimeout(t);
+            offlineTimers.clear();
+            clearClaimTimer();
+            set({ offlinePlayerIds: [] });
+            break;
+
+          case 'state-request':
+            // Host replies privately to the requester (resync after
+            // refresh). Personal snapshot — never expose other hands.
+            if (isHost) {
+              const rawState = get().rawGameState;
+              if (rawState) {
+                const requesterId = payload.fromPlayerId;
+                const snapshot = serializeGameState(rawState, requesterId);
+                channel.send({
+                  type: 'broadcast',
+                  event: 'msg',
+                  payload: {
+                    type: 'game-state-update',
+                    gameState: snapshot,
+                    toPlayerId: requesterId,
+                  },
+                });
+              }
+            }
+            break;
+        }
+      })
+      // Presence channel — supabase auto-pings every subscriber and
+      // fires 'leave' on disconnect (close tab / network drop / OS sleep).
+      // Don't kick immediately — give them OFFLINE_GRACE_MS (3 min) to
+      // come back. Switching apps / brief connection drops shouldn't
+      // boot the player. Host promotes to a real leave only when the
+      // timer expires without reconnect.
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+        const { isHost: hostNow, rawGameState, room } = get();
+        const leftIds = (leftPresences as { player_id?: string }[])
+          .map((p) => p.player_id)
+          .filter((id): id is string => typeof id === 'string');
+        if (leftIds.length === 0 || !room) return;
+
+        const hostPid = room.host_id;
+
+        // Case 1: HOST vanished. Earlier we dissolved immediately, but
+        // rawGameState is persisted in localStorage, so a host that
+        // tabbed away / refreshed can come back and resume. Give them
+        // the same 3-min grace as everyone else. Non-host clients can't
+        // act during the gap (action-requests have nowhere to land),
+        // so the UI shows a "房主暫時離線" banner via offlinePlayerIds.
+        if (!hostNow && hostPid && leftIds.includes(hostPid)) {
+          // Mark host as offline locally; show the banner.
+          set(s => s.offlinePlayerIds.includes(hostPid)
+            ? s
+            : { offlinePlayerIds: [...s.offlinePlayerIds, hostPid] });
+          // Independent client-side timeout — no broadcast (the host is
+          // gone, no one would forward it). Each client races its own
+          // countdown.
+          armHostGraceTimer();
+          return;
+        }
+
+        // Case 2: I'm host. Mark non-host leavers as tentatively offline
+        // and start a grace timer. If they reconnect within 3 min, we
+        // cancel. Otherwise we promote to a real leave.
+        if (hostNow && rawGameState && rawGameState.phase !== 'game-over') {
+          for (const lid of leftIds) {
+            if (lid === hostPid) continue;
+            const stillIn = (rawGameState.players as { id: string; hasLeft?: boolean }[])
+              .find((p) => p.id === lid && !p.hasLeft);
+            if (!stillIn) continue;
+            hostMarkOffline(lid);
+          }
+        }
+      })
+      // Presence 全量對賬（每次 SUBSCRIBED 後的第一個 sync 跑一次）：
+      // - Host 刷新後，模塊級 offlineTimers 已隨頁面丟失——之前掉線的玩家
+      //   沒人計時，若一直不回來，回合輪到他就永久卡桌。這裏按引擎座位表
+      //   逐一比對 presence，缺席者補標離線 + 重新武裝寬限計時器。
+      // - 非 host 斷線重連期間錯過了 host 的 leave/join 事件，同樣靠 sync
+      //   對賬補上 / 撤掉「房主離線」倒計時。
+      .on('presence', { event: 'sync' }, () => {
+        const { isHost: hostNow, room: rm, rawGameState: raw, myPlayerId: me } = get();
+        if (!rm) return;
+        let present: Set<string>;
+        try {
+          const st = channel.presenceState() as Record<string, Array<{ player_id?: string }>>;
+          present = new Set(
+            Object.values(st).flat()
+              .map((p) => p.player_id)
+              .filter((x): x is string => typeof x === 'string')
+          );
+        } catch {
+          return;
+        }
+        // ⚠️ 房主在線與否【每次 sync 都要重新對賬】，不能鎖在 pendingSweep 裏
+        //（老闆 2026-08-03 回報：第二局一開始就掛「房主短暫離線」橫幅，3 分鐘後
+        // 真的把房間關了，而房主明明在線 —— 就是他開的局）。
+        // 原因：訂閱後的第一個 sync，presenceState 常常還沒同步完（第二局開局時
+        // 房主和組員幾乎同時重建 channel，room 頁跳 game 頁各訂閱一次）。組員那
+        // 一次快照裏沒有房主 → 標離線 + 武裝 3 分鐘計時器。而房主的 presence 隨
+        // 後是靠【後續的 sync】補上的（不是 join —— 房主早就在頻道裏了，只是本
+        // 地快照沒收全），偏偏 pendingSweep 已經關了，直接 return，永遠沒有修正
+        // 機會。全量 sync 本來就是最可靠的真相源，讓它每次都跑。
+        const hostPid = rm.host_id;
+        if (!hostNow && hostPid) {
+          if (present.has(hostPid)) {
+            clearHostOffline(hostPid);
+          } else if (!hostGraceTimer) {
+            set(s => s.offlinePlayerIds.includes(hostPid)
+              ? s
+              : { offlinePlayerIds: [...s.offlinePlayerIds, hostPid] });
+            armHostGraceTimer();
+          }
+        }
+        // 下面這段是 host 側按引擎座位表逐一補標離線 —— 開銷大且只有「host 剛
+        // (重)連上、模塊級 offlineTimers 已隨頁面丟失」時才需要，維持只跑一次。
+        if (!pendingSweep) return;
+        pendingSweep = false;
+        if (hostNow && raw && raw.phase !== 'game-over') {
+          const enginePlayers = raw.players as { id: string; hasLeft?: boolean }[];
+          for (const p of enginePlayers) {
+            if (p.hasLeft || p.id === me) continue;
+            if (present.has(p.id)) {
+              const t = offlineTimers.get(p.id);
+              if (t) { clearTimeout(t); offlineTimers.delete(p.id); }
+              set(s => s.offlinePlayerIds.includes(p.id)
+                ? { offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== p.id) }
+                : s);
+            } else if (!offlineTimers.has(p.id)) {
+              hostMarkOffline(p.id);
+            }
+          }
+        }
+      })
+      // Presence 'join' fires on initial subscribe AND on reconnect.
+      // Use it to cancel a pending grace-timer when the player returns
+      // within the window.
+      .on('presence', { event: 'join' }, ({ newPresences }) => {
+        const { isHost: hostNow, room: rm, sendMessage: send } = get();
+        const joinIds = (newPresences as { player_id?: string }[])
+          .map((p) => p.player_id)
+          .filter((id): id is string => typeof id === 'string');
+        const hostPid = rm?.host_id;
+        for (const jid of joinIds) {
+          // Case A: host coming back — cancel the client-side
+          // host-grace countdown (regardless of whether I'm the host or
+          // a peer).
+          if (hostPid && jid === hostPid && hostGraceTimer) {
+            clearTimeout(hostGraceTimer);
+            hostGraceTimer = null;
+          }
+          // Case B: host's per-player grace timer (host only).
+          const t = offlineTimers.get(jid);
+          if (t) {
+            clearTimeout(t);
+            offlineTimers.delete(jid);
+          }
+          // Clear local offline state.
+          set(s => s.offlinePlayerIds.includes(jid)
+            ? { offlinePlayerIds: s.offlinePlayerIds.filter((id) => id !== jid) }
+            : s);
+          if (hostNow) {
+            send({ type: 'player-online', playerId: jid });
+          }
+        }
+      })
+      .subscribe(async (status) => {
+        if (status !== 'SUBSCRIBED') return;
+        // 每次（重）連上都重新武裝 presence 對賬：斷線期間錯過的 leave/join
+        // 由下一個 sync 事件補賬（peer 刷新撞上 host 寬限期 / host 刷新丟
+        // offlineTimers 兩種情況都在 sync handler 裏處理）。
+        pendingSweep = true;
+        // Track self in presence so others can detect our disconnect.
+        try { await channel.track({ player_id: myPlayerId, t: Date.now() }); } catch {}
+
+        const { isHost: iAmHost, myPlayerId: mid, rawGameState } = get();
+
+        if (!iAmHost && mid) {
+          // Non-host asks host for the current authoritative state.
+          channel.send({
+            type: 'broadcast',
+            event: 'msg',
+            payload: { type: 'state-request', fromPlayerId: mid },
+          });
+        } else if (iAmHost && rawGameState) {
+          // Host just reconnected — re-broadcast personalized state per
+          // recipient so anyone who acted during the outage can reconcile,
+          // without leaking other hands.
+          const orderedPlayers = [...get().players].sort(
+            (a, b) => a.seat_index - b.seat_index
+          );
+          for (const op of orderedPlayers) {
+            const pid = op.player_id;
+            const snapshot = serializeGameState(rawGameState, pid);
+            channel.send({
+              type: 'broadcast',
+              event: 'msg',
+              payload: {
+                type: 'game-state-update',
+                gameState: snapshot,
+                toPlayerId: pid,
+              },
+            });
+          }
+          // Host 刷新回來時若對局停在 claim-window，模塊級 claimTimer 已隨
+          // 刷新丟失 → 重新武裝，否則 AFK 玩家會把窗口永久卡死。
+          if (rawGameState.phase === 'claim-window' && !claimTimer) {
+            armClaimTimer(get);
+          }
+          // Host 復活、對局續命 → 之前 pagehide 落的中斷快照已過期，撤掉。
+          // 不撤的話，下次 retryPendingSaves 會把「活着的局」補傳成中斷局，
+          // 與之後的正常終局記錄自相矛盾。之後若再崩潰，pagehide 會重新落快照。
+          // ⚠️ 僅在前台撤：iOS 後台掛起時 socket 閃斷重連也會走到這裏，此時
+          // 頁面隨時被 OS 靜默殺掉（無 pagehide/visibilitychange）——快照是
+          // 唯一保險，不能撤。回前台後 visibilitychange handler 會補撤。
+          if (
+            rawGameState.phase !== 'game-over' &&
+            (typeof document === 'undefined' || document.visibilityState === 'visible')
+          ) {
+            const startedAt: number | undefined =
+              (rawGameState as { gameStartedAt?: number }).gameStartedAt ??
+              rawGameState.actionLog?.[0]?.timestamp;
+            if (startedAt != null) removePendingInterrupted(startedAt);
+          }
+        }
+      });
+
+    // 回前台立即补一次同步：重新上报 presence + 非房主拉最新状态 / 房主重广播。
+    // 与 SUBSCRIBED 里的逻辑一致,但不必等 Supabase 自动重连,恢复更平滑。
+    if (typeof document !== 'undefined') {
+      if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
+      visibilityHandler = () => {
+        if (document.visibilityState !== 'visible') return;
+        const { channel: ch, isHost: iAmHost, myPlayerId: mid, rawGameState: raw } = get();
+        if (!ch || !mid) return;
+        void ch.track({ player_id: mid, t: Date.now() }).catch(() => {});
+        if (!iAmHost) {
+          ch.send({ type: 'broadcast', event: 'msg', payload: { type: 'state-request', fromPlayerId: mid } });
+        } else if (raw) {
+          const ordered = [...get().players].sort((a, b) => a.seat_index - b.seat_index);
+          for (const op of ordered) {
+            ch.send({
+              type: 'broadcast',
+              event: 'msg',
+              payload: { type: 'game-state-update', gameState: serializeGameState(raw, op.player_id), toPlayerId: op.player_id },
+            });
+          }
+        }
+      };
+      document.addEventListener('visibilitychange', visibilityHandler);
+    }
+
+    set({ channel, myPlayerId });
+  },
+
+  unsubscribeRoom: () => {
+    const { channel } = get();
+    if (channel) channel.unsubscribe();
+    if (visibilityHandler && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', visibilityHandler);
+      visibilityHandler = null;
+    }
+    // Clear all pending grace timers (host's per-player + client-side
+    // host-grace).
+    for (const t of offlineTimers.values()) clearTimeout(t);
+    offlineTimers.clear();
+    clearClaimTimer();
+    if (hostGraceTimer) {
+      clearTimeout(hostGraceTimer);
+      hostGraceTimer = null;
+    }
+    set({ channel: null, room: null, players: [], gameState: null, rawGameState: null, isHost: false, offlinePlayerIds: [] });
+  },
+
+  sendMessage: (msg) => {
+    const { channel } = get();
+    if (!channel) return;
+    channel.send({ type: 'broadcast', event: 'msg', payload: msg });
+  },
+
+  startGame: () => {
+    const { players, room, myPlayerId } = get();
+    if (!room || !myPlayerId) return;
+
+    // Gather HEXACO scores for each player
+    const hexacoMap = Object.fromEntries(
+      players.map(p => [p.player_id, p.hexaco ?? null]).filter(([, v]) => v !== null)
+    );
+
+    const maxPlayers = (room.settings as RoomSettings).maxPlayers ?? 4;
+    const orderedPlayers = [...players]
+      .sort((a, b) => a.seat_index - b.seat_index)
+      .slice(0, maxPlayers);
+    const rawState = initializePvpGame(orderedPlayers, hexacoMap, room.settings);
+    // 記開局時刻，game-record 用這個值而不是 actionLog[0].timestamp（actionLog 第一項
+    // 可能是 leave 之類的非"開局"動作，會誤把 started_at 染成動作時間）。
+    (rawState as { gameStartedAt?: number }).gameStartedAt = Date.now();
+
+    // Store full state internally (host only)
+    set({ rawGameState: rawState });
+
+    set({ isHost: true });
+    updateRoomStatus(room.id, 'playing');
+
+    // Broadcast serialized state to each player
+    const { channel } = get();
+    if (!channel) return;
+
+    // Per-recipient broadcast: each player only ever sees their own hand
+    // + the public state. Replaces the old '__all__' mode which leaked
+    // every hand to every client (visible in opponent devtools).
+    for (const op of orderedPlayers) {
+      const pid = op.player_id;
+      const personal = serializeGameState(rawState, pid);
+      get().sendMessage({ type: 'game-start', gameState: personal, toPlayerId: pid });
+    }
+
+    // Also update local gameState for host
+    const hostSerialized = serializeGameState(rawState, myPlayerId);
+    set({ gameState: hostSerialized });
+  },
+
+  handlePlayerAction: (_fromPlayerId, action) => {
+    const rawState = get().rawGameState;
+    if (!rawState) return;
+    // 避免 game-over 後再觸發的 action（例如 leave）重複 broadcast / 重複 save。
+    const wasAlreadyWinner = !!rawState.winner;
+
+    const { players, room } = get();
+    // 當前玩家判定以引擎的 players（座位穩定）為準——房間名冊在玩家被剔除後
+    // 會縮短，用名冊索引會錯位（詳見 applyPvpAction 同款注釋）。
+    const rawPlayers = rawState.players as { id: string }[];
+    const currentPlayerId = rawPlayers[rawState.currentPlayerIndex]?.id;
+
+    // 'leave' is unconditional — any player at any time can quit. Whitelist
+    // it before the current-player gate, otherwise the host would silently
+    // drop a non-current-player's exit and the room would deadlock when
+    // turn rotation lands on the now-unmanned seat.
+    if (
+      action.type !== 'leave' &&
+      _fromPlayerId !== currentPlayerId &&
+      action.type !== 'pong' &&
+      action.type !== 'skip-pong' &&
+      action.type !== 'hu'
+    ) return;
+
+    const newState = applyPvpAction(rawState, _fromPlayerId, action);
+    set({ rawGameState: newState });
+
+    // Per-recipient broadcast to keep hands private.
+    const orderedPlayers = [...players].sort((a, b) => a.seat_index - b.seat_index);
+    for (const op of orderedPlayers) {
+      const pid = op.player_id;
+      const personal = serializeGameState(newState, pid);
+      get().sendMessage({ type: 'game-state-update', gameState: personal, toPlayerId: pid });
+    }
+
+    // Update host view
+    const hostSerialized = serializeGameState(newState, get().myPlayerId);
+    set({ gameState: hostSerialized });
+
+    // 抢牌窗口防卡死：刚进入 claim-window 时起一个超时；超时则替所有「有资格但
+    // 未响应」的玩家补 skip-pong（最后一个会触发 finalize 让回合推进）。窗口一解
+    // （phase 不再是 claim-window）立即清除计时器。
+    if (newState.phase === 'claim-window') {
+      if (rawState.phase !== 'claim-window') {
+        armClaimTimer(get);
+      }
+    } else {
+      clearClaimTimer();
+    }
+
+    if (newState.winner && !wasAlreadyWinner) {
+      const winnerId = newState.winner;
+      get().sendMessage({ type: 'game-over', winnerId });
+      if (room) {
+        // New schema: game_sessions + game_participants + hexaco_snapshots.
+        // Falls back silently if Supabase is unreachable (best-effort).
+        const startedAt =
+          (newState as { gameStartedAt?: number }).gameStartedAt ??
+          newState.actionLog[0]?.timestamp ??
+          Date.now();
+        // 對局正常打完 → pagehide 落過的中斷快照作廢，撤掉，避免補傳出
+        // 「同一局既有完整記錄又有中斷記錄」。
+        removePendingInterrupted(startedAt);
+        // fire-and-forget but with internal upfront localStorage buffer +
+        // 5s timeout (saveGameSession 先落緩衝再發網絡、成功才移除)。這裏
+        // 仍不 await，避免阻塞 UI；host 崩潰保護靠 retryPendingSaves() 補傳。
+        void saveGameSession({
+          mode: 'pvp',
+          roomId: room.id,
+          roomCode: room.code,
+          startedAt,
+          finalState: newState,
+          seatMeta: buildSeatMeta(newState, players),
+        });
+        // 終局 → 'finished'（2026-08-03 老闆定）。以前這裏直接置 'waiting'，
+        // 等於「房間開放、隨時可進」，但這一刻房主根本還沒表態要不要再來一局：
+        // 房主若接着點「返回主頁」，組員點「再來一局」就進了一個 host 已離場的
+        // 房，永遠卡在「等待房主開始」。改成 'finished' 後，房主點「再來一局」
+        // 回到 room 頁才置回 'waiting'，組員在那之前只看到輕量等待態。
+        updateRoomStatus(room.id, 'finished');
+      }
+    }
+  },
+
+  persistInterruptedGame: () => {
+    const { isHost, rawGameState, room, players } = get();
+    // 只有 host 持有完整 rawGameState 才能存；遊戲沒開始 / 已正常結束都不在此存。
+    if (!isHost || !rawGameState || !room) return;
+
+    const input = buildInterruptedInput(rawGameState, room, players);
+    if (!input) return; // 已正常結束（winner 路徑存過）
+
+    // 模塊級去重：退出流程多處觸發也只真正發起一次網絡存。
+    if (interruptedSaved.has(input.startedAt)) return;
+    interruptedSaved.add(input.startedAt);
+
+    // winner=null → game-record 寫入 winner_player_id=null，課堂查詢可區分中斷局。
+    // sessionId 與 pagehide 快照共用同一個（按 startedAt 鍵控）→ 緩衝按 id 替換、
+    // Supabase 按 id 去重，兩條路徑最多落一條中斷行。
+    // fire-and-forget（內部先落緩衝 + 5s 超時）。
+    void saveGameSession(input);
+  },
+
+  bufferInterruptedSnapshot: () => {
+    const { isHost, rawGameState, room, players } = get();
+    if (!isHost || !rawGameState || !room) return;
+    const input = buildInterruptedInput(rawGameState, room, players);
+    if (!input) return;
+    // 純同步 localStorage 寫入（頁面卸載時 async 網絡活不到返回）。
+    // 若之後頁面其實沒死（bfcache 回來 / 只是切後台）：host 重訂閱成功時
+    // removePendingInterrupted 會把這條快照撤掉，不會誤傳。
+    bufferPendingSave(input);
+  },
+
+  reset: () => {
+    get().unsubscribeRoom();
+    set({ room: null, players: [], myPlayerId: null, channel: null, gameState: null, rawGameState: null, isHost: false, offlinePlayerIds: [], roomClosed: false });
+    try { localStorage.removeItem('psycho-card-hexaco-pvp'); } catch {}
+  },
+    }),
+    {
+      name: 'psycho-card-hexaco-pvp',
+      storage: createJSONStorage(() => localStorage),
+      // Channel isn't serializable (functions + live socket). Everything
+      // else survives a refresh so the UI can re-render immediately and
+      // then re-subscribe.
+      partialize: (s) => ({
+        room: s.room,
+        players: s.players,
+        myPlayerId: s.myPlayerId,
+        gameState: s.gameState,
+        rawGameState: s.rawGameState,
+        isHost: s.isHost,
+      }),
+    }
+  )
+);
