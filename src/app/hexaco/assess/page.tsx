@@ -23,8 +23,9 @@ const ACCENT = '#c39a52';
 const L = {
   zh: {
     back: '返回主頁',
-    title: 'HEXACO 六維測評',
-    intro: '請憑第一直覺作答。你的答案將匯聚成專屬的「六維人格圖譜」，涵蓋誠實－謙遜、情緒性、外向性、宜人性、盡責性與開放性。',
+    // 標題+引導語 = 老闆 2026-08-06 微信逐字定稿，勿改寫。
+    title: '抽取你的人格原型',
+    intro: '每道題都像翻開一張隱喻牌面。請憑第一直覺選擇，你的答案將匯聚成專屬的「HEXACO 六維人格圖譜」，並直接決定接下來的「胡牌目標」。',
     likert: ['非常不同意', '不同意', '中立', '同意', '非常同意'],
     prev: '上一題',
     next: '下一題',
@@ -36,8 +37,9 @@ const L = {
   },
   en: {
     back: 'Back to Home',
-    title: 'HEXACO Assessment',
-    intro: 'Answer by instinct. Your responses form your six-dimension profile: Honesty–Humility, Emotionality, eXtraversion, Agreeableness, Conscientiousness, and Openness.',
+    // Title + intro = boss's verbatim copy (WeChat 2026-08-06), do not rewrite.
+    title: 'Discover Your Personality Archetype',
+    intro: 'Each question reveals a metaphorical card. Follow your first instinct—your choices will shape your unique "HEXACO Personality Portrait," directly determining your "Winning Targets" for the match ahead.',
     likert: ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree'],
     prev: 'Previous',
     next: 'Next',
