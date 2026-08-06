@@ -1133,7 +1133,7 @@ export default function PvpGamePage() {
                         opacity: isDeclared && pongIntent.dimension !== d ? 0.6 : 1,
                       }}
                     >
-                      {dimName(d)}{isDeclared ? ' ⚠️' : ''}
+                      {dimName(d)}
                     </button>
                     );
                   })}
