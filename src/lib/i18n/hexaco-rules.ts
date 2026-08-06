@@ -1,0 +1,223 @@
+// HEXACO 規則頁（A4 列印版）雙語文案 —— src/lib/i18n/rules.ts 的六維物理隔離副本。
+// 正文句式逐句沿用大五定稿，僅按六維事實調整：5→6、OCEAN→HEXACO（H/E/X/A/C/O）、
+// 維度名與示例目標張數（用戶 2026-08-06 授權「基本複製過去，按實際需要修改」）。
+// 純資料模組，無 React 依賴。
+
+// 區塊型別：段落 / 條列 / 警告 / 小標題 / 提示框（同大五）
+export type RuleBlock = { t: 'p' | 'li' | 'warn' | 'sub' | 'tip'; text: string };
+export type RuleSection = { title: string; fig?: 'goal' | 'flow' | 'pong' | 'cards'; blocks: readonly RuleBlock[] };
+
+export const HEXACO_RULES_T = {
+  zh: {
+    backToTutorial: '← 返回教學',
+    printOrPdf: '🖨 列印 / 存 PDF',
+
+    titleMain: '人格麻將',
+    titleSub: 'HEXACO 遊戲規則',
+    scanToEnter: '掃碼進入遊戲',
+
+    // 維度名（目標圖例用，六維）
+    dimH: '誠實謙遜',
+    dimE: '情緒性',
+    dimX: '外向性',
+    dimA: '宜人性',
+    dimC: '盡責性',
+    dimO: '開放性',
+
+    figGoalCap: '圈內數字＝目標張數 → 6 維全部歸檔即食胡並獲勝',
+    figFlowDraw: '① 摸 1 張',
+    figFlowDiscard: '② 出 1 張',
+    figFlowWindow: '約 20 秒判讀窗口',
+    figPongCap: '湊滿「該維度目標張數」即可鎖定（張數要與目標一致）',
+    figHand: '你的手牌',
+    figIncoming: '抽到／別人棄的',
+    figLocked: '鎖定一組',
+    figCardPersona: '人格牌',
+    figCardKnowledge: '知識牌',
+    figCanArchive: '可歸檔',
+    figCantArchive: '不可歸檔',
+    figCardsCap: '人格牌（有顏色）用來湊維度、公開歸檔；知識牌（灰色）不能歸檔，安全棄掉即可',
+
+    sections: [
+      {
+        title: '🎯 一、終極目標：6維度「公開歸檔」！',
+        fig: 'goal',
+        blocks: [
+          { t: 'p', text: '你的目標是將 HEXACO 的 6 個維度（誠實謙遜、情緒性、外向性、宜人性、盡責性、開放性）湊齊並「公開歸檔」，最快完成的人獲勝！' },
+          { t: 'p', text: '特別注意：每個維度的目標張數取決於你的測評分數。例如：你的目標可能是 H 需 3 張、E 需 4 張、X 需 2 張、A 需 5 張、C 需 4 張、O 需 3 張等。' },
+          { t: 'tip', text: '初始手牌公式：你的初始手牌張數 = 6 個維度目標張數之和 − 1（少的那 1 張，要靠「碰」或「食胡」來補齊）。' },
+        ],
+      },
+      {
+        title: '🃏 二、認識卡牌',
+        fig: 'cards',
+        blocks: [
+          { t: 'p', text: '牌堆中只有兩類牌，非常好認：' },
+          { t: 'li', text: '人格描述牌（有顏色）：帶有特定人格維度的標籤，是你用來歸檔（湊張數）的核心牌。' },
+          { t: 'li', text: '知識牌（灰色 / 無顏色）：印有心理學術語與定義。它們沒有維度屬性，不能用來歸檔。' },
+          { t: 'tip', text: '策略提示：抽到就打掉，安全不穿幫；還能順便觀察對手打出知識牌的時機，試探他們的出牌風格！' },
+        ],
+      },
+      {
+        title: '🔄 三、每回合運作：摸牌 ➔ 出牌',
+        fig: 'flow',
+        blocks: [
+          { t: 'sub', text: '❶ 摸牌（抽牌）' },
+          { t: 'p', text: '輪到你時，先抽 1 張牌。你可以查看手牌、選擇歸檔（碰）或準備出牌。' },
+          { t: 'sub', text: '🔍「看牌難度」決定你能看多少張手牌：' },
+          { t: 'li', text: '明牌（預設）：所有牌都直接顯示人格標籤。' },
+          { t: 'li', text: '半公開：每回合可查看 4 張手牌的人格標籤。' },
+          { t: 'li', text: '隱藏：每回合只能查看 2 張，標籤在下一輪便會消失。' },
+          { t: 'sub', text: '❷ 出牌' },
+          { t: 'p', text: '從手裏選 1 張牌丟到中間的「棄牌堆」。其他玩家可以搶這張牌來「碰」或「食胡」。' },
+        ],
+      },
+      {
+        title: '⚡ 四、兩大核心動作：碰 與 食胡',
+        fig: 'pong',
+        blocks: [
+          { t: 'sub', text: '🀄 碰（公開歸檔）' },
+          { t: 'p', text: '當湊齊某一維度的目標張數，你可以「碰」來鎖定（歸檔）該維度。' },
+          { t: 'li', text: '自摸碰：在自己的回合，從「手牌 + 剛摸的牌」中，挑出符合維度目標張數的牌。（每回合限 1 次）' },
+          { t: 'li', text: '截胡碰：在別人棄牌的指定時間內，如果你手牌只差 1 張就達維度目標張數，你可以立即點擊搶走那張棄牌，湊齊歸檔！（先搶先得）' },
+          { t: 'warn', text: '⚠️ 系統不會向你提示！你必須自己計算哪維度可達到目標張數。一旦選錯、放錯牌，就會被「罰停」一回合！' },
+          { t: 'sub', text: '🏆 食胡（宣告勝利）' },
+          { t: 'p', text: '當你已歸檔 6 個維度的所有目標張數：' },
+          { t: 'li', text: '自摸食胡：自己回合摸到最後一張關鍵牌。' },
+          { t: 'li', text: '截胡食胡：別人丟出你需要的最後一張牌，直接截胡！' },
+          { t: 'warn', text: '⚠️ 沒算好就喊食胡？判定失敗的話，會遭受嚴厲的懲罰！' },
+        ],
+      },
+      {
+        title: '🚫 五、懲罰機制：罰停',
+        blocks: [
+          { t: 'p', text: '如果「碰失敗 / 自摸碰失敗 / 食胡失敗」，你會被罰停一回合：' },
+          { t: 'li', text: '輪到你時自動被跳過（不得抽牌或出牌）。' },
+          { t: 'li', text: '不能參與別人的棄牌判定（無法碰牌、無法食胡）。' },
+          { t: 'li', text: '社死標記：你的頭像會掛上大大的「⛔ 罰停中」標誌。' },
+          { t: 'li', text: '碰失敗的牌、或食胡失敗時的「整副手牌」，將立即公開給全場看。' },
+          { t: 'tip', text: '提示：一次失誤等於送對手一回合，動手前請務必看清楚、算明白！' },
+        ],
+      },
+      {
+        title: '👥 六、聯機與勝負規則',
+        blocks: [
+          { t: 'li', text: '人數彈性：聯機支援 2–4 名玩家；單機固定 4 人（你 + 3 個 AI）。' },
+          { t: 'li', text: '斷線 / 退出處理：有人點擊「退出對局」後，該座位會永久跳過（顯示 🚪 已退出），不影響剩餘玩家繼續切磋；若退到只剩 1 人，該玩家直接躺贏！' },
+          { t: 'li', text: '防作弊機制：同一個學號無法同時進入兩個活動房間。' },
+          { t: 'li', text: '逾時提醒：回合超時 60 秒未操作，系統會每分鐘彈窗溫馨提醒。' },
+          { t: 'p', text: '無人胡牌怎麼辦？如果打滿約定圈數仍無人食胡，則按以下順序判定勝負：' },
+          { t: 'p', text: '已歸檔維度數（多者勝）→ 剩餘手牌張數（少者勝）' },
+        ],
+      },
+    ] as readonly RuleSection[],
+
+    footer: '掃描頁首 QR code 即可開始 · ',
+  },
+
+  en: {
+    backToTutorial: '← Back to Tutorial',
+    printOrPdf: '🖨 Print / Save PDF',
+
+    titleMain: 'Personalities Mahjong',
+    titleSub: 'HEXACO Game Rules',
+    scanToEnter: 'Scan to enter',
+
+    dimH: 'Honesty-Humility',
+    dimE: 'Emotionality',
+    dimX: 'Extraversion',
+    dimA: 'Agreeableness',
+    dimC: 'Conscientiousness',
+    dimO: 'Openness',
+
+    figGoalCap: 'The number in each chip = target count → file all 6 dimensions to Win',
+    figFlowDraw: '① Draw 1',
+    figFlowDiscard: '② Discard 1',
+    figFlowWindow: '~20s read window',
+    figPongCap: "Reach that dimension's target count to lock it in (the count must match the target)",
+    figHand: 'Your hand',
+    figIncoming: 'Drawn / discarded',
+    figLocked: 'Locked set',
+    figCardPersona: 'Personality',
+    figCardKnowledge: 'Knowledge',
+    figCanArchive: 'Can file',
+    figCantArchive: "Can't file",
+    figCardsCap: 'Personality cards (colored) build dimensions and file openly; Knowledge cards (grey) can’t be filed — safe to discard',
+
+    sections: [
+      {
+        title: '🎯 1. Ultimate Goal: Publicly File All 6 Dimensions!',
+        fig: 'goal',
+        blocks: [
+          { t: 'p', text: 'Your goal is to collect and "publicly file" all 6 HEXACO dimensions (Honesty-Humility, Emotionality, eXtraversion, Agreeableness, Conscientiousness, Openness). The first to finish wins!' },
+          { t: 'p', text: 'Note: the target count for each dimension depends on your assessment score. Example: your targets might be H needs 3, E needs 4, X needs 2, A needs 5, C needs 4, O needs 3, and so on.' },
+          { t: 'tip', text: 'Starting-hand formula: your starting hand size = the sum of the 6 dimension targets − 1. That 1 missing card must be completed later through a "Self-draw Pong", "Intercept Pong", or your final "Win"!' },
+        ],
+      },
+      {
+        title: '🃏 2. Know the Cards',
+        fig: 'cards',
+        blocks: [
+          { t: 'p', text: 'The deck contains only two types of cards, making them incredibly easy to tell apart:' },
+          { t: 'li', text: 'Personality cards (colored): carry a specific dimension tag — these are your core cards used for filing and reaching your target counts.' },
+          { t: 'li', text: 'Knowledge cards (grey / uncolored): printed with psychology terms and definitions. They have no dimension attributes and cannot be filed.' },
+          { t: 'tip', text: 'Strategy tip: discard knowledge cards as soon as you draw them to stay safe without giving away your hand strategy. You can also watch when your opponents discard their knowledge cards to read their playing style!' },
+        ],
+      },
+      {
+        title: '🔄 3. Each Turn: Draw ➔ Discard',
+        fig: 'flow',
+        blocks: [
+          { t: 'sub', text: '❶ Draw' },
+          { t: 'p', text: 'On your turn, draw 1 card. You can then view your hand, choose to file (Pong), or get ready to discard.' },
+          { t: 'sub', text: '🔍 "Reveal Difficulty" decides how many hand cards you can see:' },
+          { t: 'li', text: 'Open (Default): every card shows its dimension tag directly.' },
+          { t: 'li', text: 'Semi-Open: view the dimension tags of 4 hand cards each turn.' },
+          { t: 'li', text: 'Hidden: view only 2 cards each turn, and the tags disappear next round.' },
+          { t: 'sub', text: '❷ Discard' },
+          { t: 'p', text: 'Pick 1 card from your hand and play it into the central "discard". Other players can seize it for a "Pong" or a "Win".' },
+        ],
+      },
+      {
+        title: '⚡ 4. Two Core Actions: Pong & Win',
+        fig: 'pong',
+        blocks: [
+          { t: 'sub', text: '🀄 Pong (public file)' },
+          { t: 'p', text: 'When you reach a dimension\'s target count, you can "Pong" to lock (file) that dimension.' },
+          { t: 'li', text: 'Self-draw Pong: on your own turn, pick cards from your "hand + the just-drawn card" that meet the dimension\'s target count. (Once per turn)' },
+          { t: 'li', text: 'Intercept Pong: within the time window after someone discards, if your hand is just 1 card short of a dimension\'s target count, you can instantly grab that discard to complete your file! (First-come, first-served)' },
+          { t: 'warn', text: '⚠️ The system won\'t prompt you! You must work out yourself which dimension can reach its target count. Choose wrong or misplace a card, and you\'ll be "Frozen" for one turn!' },
+          { t: 'sub', text: '🏆 Win (declare victory)' },
+          { t: 'p', text: 'When you have filed the target counts for all 6 dimensions:' },
+          { t: 'li', text: 'Self-draw Win: you draw the final key card on your own turn.' },
+          { t: 'li', text: 'Intercept Win: an opponent discards the exact final card you need — intercept it directly!' },
+          { t: 'warn', text: '⚠️ Call a Win without counting correctly? A failed judgment brings a harsh penalty!' },
+        ],
+      },
+      {
+        title: '🚫 5. Penalty: Frozen',
+        blocks: [
+          { t: 'p', text: 'If you fail a "Pong / Self-draw Pong / Win", you\'ll be Frozen for one turn:' },
+          { t: 'li', text: 'Your next turn is automatically skipped (no drawing or discarding).' },
+          { t: 'li', text: 'You can\'t join others\' discard windows (no Pong, no Win).' },
+          { t: 'li', text: 'Public shame badge: a big "⛔ Frozen" indicator is slapped onto your avatar.' },
+          { t: 'li', text: 'The failed Pong cards, or your "entire hand" if you failed a Win, are immediately revealed to everyone.' },
+          { t: 'tip', text: 'Tip: one slip hands your opponent a turn — look carefully and count clearly before you act!' },
+        ],
+      },
+      {
+        title: '👥 6. Online & Results Rules',
+        blocks: [
+          { t: 'li', text: 'Flexible player count: Multiplayer matches support 2–4 players; Solo mode is fixed at 4 players (you + 3 AI).' },
+          { t: 'li', text: 'Disconnect / quit: Once a player taps "Leave", their seat is permanently skipped (displays 🚪 Left) while the remaining players continue. If only 1 player remains in the room, that player wins automatically!' },
+          { t: 'li', text: 'Anti-cheat: the same student ID cannot enter two active rooms at once.' },
+          { t: 'li', text: 'Idle nudge: if a turn goes 60 seconds without action, the system pops a friendly reminder every minute.' },
+          { t: 'p', text: 'What if no one wins? If the agreed rounds run out with no Win, the result is decided in this order:' },
+          { t: 'p', text: 'Most filed dimensions wins ➔ If tied, fewer remaining hand cards wins.' },
+        ],
+      },
+    ] as readonly RuleSection[],
+
+    footer: 'Scan the QR code above to start · ',
+  },
+} as const;

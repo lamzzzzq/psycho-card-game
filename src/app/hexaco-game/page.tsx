@@ -35,6 +35,7 @@ import { FilingProgressCard } from '@/components/hexaco-game/FilingProgressCard'
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
 import { BgmToggleButton } from '@/components/shared/BgmToggleButton';
+import { HexacoHowToPlayButton } from '@/components/hexaco-game/HexacoHowToPlayButton';
 
 interface FlyingAnim {
   id: number;
@@ -494,9 +495,7 @@ export default function GamePage() {
         </button>
         <div className="flex items-center gap-2">
           <BgmToggleButton locale={locale} />
-          {/* HowToPlayButton（玩法教學彈層）暫不放：RULES_T 是老闆逐字定稿的
-              Big Five 文案（「五大人格的 5 個維度（OCEAN）」），掛在六維牌桌上是錯的。
-              等老闆給 HEXACO 版規則文案後做一份 hexaco 專用彈層再掛回來。 */}
+          <HexacoHowToPlayButton locale={locale} />
         </div>
       </div>
 

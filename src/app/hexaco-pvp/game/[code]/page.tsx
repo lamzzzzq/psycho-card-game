@@ -21,6 +21,7 @@ import {
 } from '@/components/hexaco-game/FeedbackLayer';
 import { FlyingCard } from '@/components/hexaco-game/FlyingCard';
 import { BgmToggleButton } from '@/components/shared/BgmToggleButton';
+import { HexacoHowToPlayButton } from '@/components/hexaco-game/HexacoHowToPlayButton';
 import { supabase } from '@/lib/supabase';
 import { leaveRoom, leaveAllRooms, updateRoomStatus } from '@/lib/hexaco-game/room-api';
 import { retryPendingSaves, removePendingInterrupted } from '@/lib/hexaco-game/game-record';
@@ -754,7 +755,7 @@ export default function PvpGamePage() {
             {t.leaveGame}
           </button>
           <BgmToggleButton locale={locale} />
-          {/* HowToPlayButton 暫不掛：RULES_T 是大五定稿文案（5 維 OCEAN），等六維版。 */}
+          <HexacoHowToPlayButton locale={locale} />
         </div>
         <span className="psy-serif text-[10px] uppercase tracking-[0.32em] text-[var(--psy-muted)] sm:text-[11px]">
           {t.roomTitlePrefix} {code}
