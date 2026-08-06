@@ -198,12 +198,17 @@ export default function PvpGamePage() {
     (async () => {
       const { data, error } = await supabase
         .from('rooms')
-        .select('status')
+        .select('status, settings')
         .eq('code', code)
         .maybeSingle();
       if (cancelled) return;
       // 查失败 ≠ 僵尸房：网络抖动就 reset 会把 host 的 rawGameState 清掉、全桌不可恢复。
       if (error) return;
+      // 牌組守衛（2026-08-06）：HEXACO 房的對局頁在 /hexaco-pvp/game/。
+      if (data && ((data.settings as { deck?: string } | null)?.deck ?? 'big-five') === 'hexaco') {
+        router.replace(`/hexaco-pvp/game/${code}`);
+        return;
+      }
       if (!data || data.status !== 'playing') {
         // 开局竞态：host 的 updateRoomStatus('playing') 不 await，非 host 靠 game-start
         // 广播秒级跳转，可能先于 DB 提交读到 'waiting' —— 延迟重查一次再判死刑。

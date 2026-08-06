@@ -67,6 +67,12 @@ export default function RoomWaitPage() {
 
         if (roomErr || !roomData) { setError(t.roomNotExist); setLoading(false); return; }
 
+        // 牌組守衛（2026-08-06 HEXACO 联机上线）：這是 HEXACO 房 → 交還給 HEXACO 房間頁。
+        if (((roomData.settings as RoomSettings)?.deck ?? 'big-five') === 'hexaco') {
+          router.replace(`/hexaco-pvp/room/${code}`);
+          return;
+        }
+
         if (roomData.status === 'playing') {
           // 遊戲進行中：保留 gameState（持久化的舊快照），讓 game page
           // 渲染時有兜底數據；之後 host 會通過 state-request 推最新狀態。

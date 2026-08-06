@@ -82,6 +82,13 @@ export default function Home() {
     router.push(deckId === 'hexaco' ? '/hexaco-lobby' : '/lobby');
   }
 
+  // 「聯機對戰」按模型分流（2026-08-06 HEXACO 联机上线）：各自的建房/加房大厅。
+  function handlePvpPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
+    setDeckModalFor(null);
+    if (deckId === 'cpai') { setReportPrompt(deckId); return; }
+    router.push(deckId === 'hexaco' ? '/hexaco-pvp' : '/pvp');
+  }
+
   // 自愈：已完成报告却残留半截答案 = 放弃的重测（unmount 清理可能没触发）。
   // 清掉它，避免主页显示「繼續測評(n/50)」而大厅显示「已完成」的不一致。
   // 仅在已有完成报告时清；无报告的半截答案是首次测评进行中，要保留可续答。
@@ -232,8 +239,8 @@ export default function Home() {
           : deckModalFor === 'solo' ? '/lobby'
           : '/assessment'
         )}
-        onPickDeck={deckModalFor === 'report' ? handleReportPick : deckModalFor === 'assessment' ? handleAssessPick : deckModalFor === 'solo' ? handleSoloPick : undefined}
-        modelState={deckModalFor === 'report' || deckModalFor === 'assessment' || deckModalFor === 'solo' ? modelState : undefined}
+        onPickDeck={deckModalFor === 'report' ? handleReportPick : deckModalFor === 'assessment' ? handleAssessPick : deckModalFor === 'solo' ? handleSoloPick : deckModalFor === 'pvp' ? handlePvpPick : undefined}
+        modelState={deckModalFor === 'report' || deckModalFor === 'assessment' || deckModalFor === 'solo' || deckModalFor === 'pvp' ? modelState : undefined}
         loc={loc}
       />
 
