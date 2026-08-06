@@ -28,6 +28,7 @@ const L = {
     startAssess: '開始測評',
     retake: '重新測評',
     solo: '單機對戰',
+    pvp: '聯機對戰',
     loading: '加載中…',
   },
   en: {
@@ -38,6 +39,7 @@ const L = {
     startAssess: 'Start assessment',
     retake: 'Retake',
     solo: 'Play Solo',
+    pvp: 'Play Multiplayer',
     loading: 'Loading…',
   },
 };
@@ -116,12 +118,18 @@ export default function HexacoResultsPage() {
         {/* HEXACO 模型介紹（逐字官方文案），對稱大五結果頁底部 BigFiveIntro。 */}
         <HexacoIntro locale={locale} />
 
-        {/* 底部入口菜單（對齊大五 /results）：單機對戰 → /hexaco-lobby、重新測評。
-            原本頁中那顆單獨的「重新測評」併入這裏，不再重複。 */}
-        <div className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-2 pt-2 lg:gap-3">
+        {/* 底部入口菜單：與大五 /results 完全一致的三鍵（老闆 2026-08-06 定）——
+            聯機對戰(主色) / 單機對戰 / 重新測評。頁中不再有單獨的重測鈕。 */}
+        <div className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-2 pt-2 lg:grid-cols-3 lg:gap-3">
+          <button
+            onClick={() => router.push('/hexaco-pvp')}
+            className="psy-btn psy-btn-accent psy-serif col-span-2 w-full px-6 py-3.5 text-base font-semibold lg:col-span-1"
+          >
+            {t.pvp}
+          </button>
           <button
             onClick={() => router.push('/hexaco-lobby')}
-            className="psy-btn psy-btn-accent psy-serif w-full px-6 py-3.5 text-base font-semibold"
+            className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
           >
             {t.solo}
           </button>
