@@ -261,7 +261,9 @@ export default function AssessmentPage() {
           <h1 className="psy-serif text-3xl leading-none text-[var(--psy-ink)] md:text-4xl">
             {t.title}
           </h1>
-          <p className="max-w-2xl text-sm leading-7 text-[var(--psy-ink-soft)]">
+          {/* 不限寬（原 max-w-2xl 會在句中折行、第二行只剩幾個字，看着像硬換行）——
+              跟着頁面容器自然分行。 */}
+          <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">
             {t.intro}
           </p>
         </div>

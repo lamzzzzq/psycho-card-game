@@ -1,7 +1,9 @@
 'use client';
 
 // HEXACO 報告頁：寬版雙欄（雷達圖 + 六維分數條，桌面左右分欄）+ HexacoIntro 模型介紹。
-// 佈局對齊大五 /results（max-w-5xl，lg 兩欄）。HEXACO 純「測評→報告」，底部只給重測/返回。
+// 佈局對齊大五 /results（max-w-5xl，lg 兩欄）。
+// 2026-08-06：HEXACO 對局已可玩 → 底部菜單對齊大五（單機對戰 + 重新測評）；
+// 聯機不放 —— HEXACO 的 PVP 還沒做，放個跳去大五房的鈕是騙人。
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -25,6 +27,7 @@ const L = {
     notDone: '你還沒完成 HEXACO 測評。',
     startAssess: '開始測評',
     retake: '重新測評',
+    solo: '單機對戰',
     loading: '加載中…',
   },
   en: {
@@ -34,6 +37,7 @@ const L = {
     notDone: "You haven't completed the HEXACO assessment yet.",
     startAssess: 'Start assessment',
     retake: 'Retake',
+    solo: 'Play Solo',
     loading: 'Loading…',
   },
 };
@@ -107,19 +111,27 @@ export default function HexacoResultsPage() {
           </div>
         </div>
 
-        <div className="flex justify-center">
-          <button
-            onClick={() => { startRetake(); router.push('/hexaco/assess'); }}
-            className="psy-btn psy-btn-ghost psy-serif px-6 py-2.5 text-sm font-medium"
-          >
-            {t.retake}
-          </button>
-        </div>
-
         <hr className="border-t border-[var(--psy-border)]" />
 
         {/* HEXACO 模型介紹（逐字官方文案），對稱大五結果頁底部 BigFiveIntro。 */}
         <HexacoIntro locale={locale} />
+
+        {/* 底部入口菜單（對齊大五 /results）：單機對戰 → /hexaco-lobby、重新測評。
+            原本頁中那顆單獨的「重新測評」併入這裏，不再重複。 */}
+        <div className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-2 pt-2 lg:gap-3">
+          <button
+            onClick={() => router.push('/hexaco-lobby')}
+            className="psy-btn psy-btn-accent psy-serif w-full px-6 py-3.5 text-base font-semibold"
+          >
+            {t.solo}
+          </button>
+          <button
+            onClick={() => { startRetake(); router.push('/hexaco/assess'); }}
+            className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
+          >
+            {t.retake}
+          </button>
+        </div>
       </motion.div>
     </main>
   );
