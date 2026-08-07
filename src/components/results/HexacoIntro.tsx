@@ -7,7 +7,7 @@ import type { Locale } from '@/lib/i18n';
 // 高/低分保留文档原「People with higher/lower scores…」两句式，不改写不压缩。样式与 BigFiveIntro 一致。
 const DIMS = [
   {
-    key: 'H', zh: '誠實－謙遜', en: 'Honesty–Humility', color: '#2dd4bf',
+    key: 'H', zh: '誠實－謙遜', en: 'Honesty–Humility', color: '#5F7A46',
     defZh: '誠實－謙遜描述一個人的真誠、公平、謙遜，以及不願為了個人利益而利用他人的傾向。',
     defEn: 'Honesty–Humility describes sincerity, fairness, modesty, and unwillingness to exploit others for personal gain.',
     hlZh: '得分較高的人通常會避免欺騙或操控他人，亦較不重視財富、地位和特殊待遇。得分較低的人可能較願意使用奉承、為個人利益而變通規則，或追求地位和認同。',
@@ -16,7 +16,7 @@ const DIMS = [
     noteEn: 'This dimension is distinctive to HEXACO and has no direct equivalent in the Big Five.',
   },
   {
-    key: 'E', zh: '情緒性', en: 'Emotionality', color: '#f87171',
+    key: 'E', zh: '情緒性', en: 'Emotionality', color: '#7E6C8F',
     defZh: '情緒性描述一個人的恐懼、焦慮、情感依附、感性程度，以及對支持的需要。',
     defEn: 'Emotionality describes fearfulness, anxiety, emotional attachment, sentimentality, and need for support.',
     hlZh: '得分較高的人可能較擔心危險、較容易與他人建立強烈的情感連繫，並在面對困難時較傾向尋求支持。得分較低的人可能較少感到害怕、較不感性，並在情緒上較為獨立。',
@@ -25,7 +25,7 @@ const DIMS = [
     noteEn: 'Emotionality is related to, but different from, Big Five Neuroticism. In HEXACO, anger and irritability are mainly reflected in lower Agreeableness rather than higher Emotionality.',
   },
   {
-    key: 'X', zh: '外向性', en: 'Extraversion', color: '#facc15',
+    key: 'X', zh: '外向性', en: 'Extraversion', color: '#D97706',
     defZh: '外向性描述一個人的社交自信、社交性、活力和熱情。',
     defEn: 'Extraversion describes social confidence, sociability, energy, and enthusiasm.',
     hlZh: '得分較高的人通常較喜歡社交互動、在他人面前較有自信，並表現出較多活力和熱情。得分較低的人可能較安靜、含蓄，並較喜歡較少的社交刺激。',
@@ -34,7 +34,7 @@ const DIMS = [
     noteEn: 'This dimension is broadly similar to Big Five Extraversion.',
   },
   {
-    key: 'A', zh: '宜人性', en: 'Agreeableness', color: '#4ade80',
+    key: 'A', zh: '宜人性', en: 'Agreeableness', color: '#E07A5F',
     defZh: 'HEXACO 的宜人性描述一個人的耐性、寬恕、溫和，以及願意妥協的程度，尤其是在面對衝突時。',
     defEn: 'HEXACO Agreeableness describes patience, forgiveness, gentleness, and willingness to compromise, especially during conflict.',
     hlZh: '得分較高的人通常較能管理自己的憤怒、原諒他人，並在意見不合時保持彈性。得分較低的人可能較挑剔、固執、容易動怒，或較容易記恨。',
@@ -43,7 +43,7 @@ const DIMS = [
     noteEn: 'This differs from Big Five Agreeableness, which focuses more broadly on compassion, trust, cooperation, and concern for others.',
   },
   {
-    key: 'C', zh: '盡責性', en: 'Conscientiousness', color: '#60a5fa',
+    key: 'C', zh: '盡責性', en: 'Conscientiousness', color: '#2A4365',
     defZh: '盡責性描述一個人的組織能力、勤奮、細心程度和自律。',
     defEn: 'Conscientiousness describes organisation, diligence, carefulness, and self-discipline.',
     hlZh: '得分較高的人通常會預先規劃、認真工作，並在面對困難任務時堅持下去。得分較低的人可能較喜歡彈性和隨性，亦可能較缺乏組織。',
@@ -52,7 +52,7 @@ const DIMS = [
     noteEn: 'This dimension is broadly similar to Big Five Conscientiousness.',
   },
   {
-    key: 'O', zh: '開放性', en: 'Openness', color: '#c084fc',
+    key: 'O', zh: '開放性', en: 'Openness', color: '#2A9D8F',
     defZh: '開放性描述一個人的好奇心、創造力、對藝術和美感的欣賞，以及對新穎或非傳統觀念的興趣。',
     defEn: 'Openness describes curiosity, creativity, appreciation of art and beauty, and interest in new or unconventional ideas.',
     hlZh: '得分較高的人通常較喜歡學習、運用想像力和探索不同觀點。得分較低的人可能較偏好熟悉的觀念、實際的活動和傳統的做法。',
