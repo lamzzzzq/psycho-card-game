@@ -2,7 +2,7 @@
 
 // HEXACO-60 答題頁。版式對齊大五「抽取你的人格原型」：題面 + 5 點 Likert + 導航格。
 // 答滿 60 題 → 計分寫入 useHexacoStore → 進 /hexaco/results（雷達圖 + 各維度介紹）。
-// HEXACO 不接遊戲引擎，純「測評 → 報告」，故不需登入 gate / 學號 / 手動填分。
+// 2026-08-07 老闆反饋：對齊大五 —— 撤「查看我的報告」連結，改右上「跳過測評，手動輸入分數」。
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -12,10 +12,12 @@ import { useLocaleStore } from '@/lib/i18n';
 import { useHydrated } from '@/stores/useHydration';
 import { AuthTopBar } from '@/components/shared/AuthTopBar';
 import { HEXACO_QUESTIONS } from '@/data/hexaco-questions';
-import { LikertScore } from '@/data/hexaco-types';
+import { HEXACO_DIMENSIONS, LikertScore, HexacoScores } from '@/data/hexaco-types';
+import { HEXACO_DIMENSION_META } from '@/data/hexaco-dimensions';
 import { useHexacoStore } from '@/stores/useHexacoStore';
 import { useAuthSession } from '@/lib/useAuthSession';
 import { saveHexacoResult, retryPendingHexacoSaves } from '@/lib/hexaco-record';
+import { clamp } from '@/lib/utils';
 
 const LIKERT: LikertScore[] = [1, 2, 3, 4, 5];
 const ACCENT = '#c39a52';
@@ -27,6 +29,11 @@ const L = {
     title: '抽取你的人格原型',
     intro: '每道題都像翻開一張隱喻牌面。請憑第一直覺選擇，你的答案將匯聚成專屬的「HEXACO 六維人格圖譜」，並直接決定接下來的「胡牌目標」。',
     likert: ['非常不同意', '不同意', '中立', '同意', '非常同意'],
+    // 手動填分入口/面板 = 大五 /assessment 逐字同款。
+    skipToManual: '跳過測評，手動輸入分數',
+    backToAssess: '返回測評',
+    manualTitle: '手動錄入人格刻度',
+    manualConfirm: '確認分數，進入遊戲',
     prev: '上一題',
     next: '下一題',
     navTitle: '題目導航',
@@ -41,6 +48,10 @@ const L = {
     title: 'Discover Your Personality Archetype',
     intro: 'Each question reveals a metaphorical card. Follow your first instinct—your choices will shape your unique "HEXACO Personality Portrait," directly determining your "Winning Targets" for the match ahead.',
     likert: ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree'],
+    skipToManual: 'Skip the test, enter scores manually',
+    backToAssess: 'Back to test',
+    manualTitle: 'Manually Enter Personality Scores',
+    manualConfirm: 'Confirm Scores, Enter Game',
     prev: 'Previous',
     next: 'Next',
     navTitle: 'Question map',
@@ -58,9 +69,12 @@ export default function HexacoAssessPage() {
   const locale = hydrated ? localeRaw : 'zh';
   const t = L[locale];
 
-  const { answers, setAnswer, calculateScores, getProgress, scores, setStudentId, retaking } = useHexacoStore();
+  const { answers, setAnswer, calculateScores, getProgress, scores, setStudentId, retaking, setManualScores } = useHexacoStore();
   const { loading: authLoading, userId, studentId: sessionStudentId } = useAuthSession();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualScores, setManualInputScores] = useState<HexacoScores>({ H: 3.0, E: 3.0, X: 3.0, A: 3.0, C: 3.0, O: 3.0 });
+  const [rawInputs, setRawInputs] = useState<Record<string, string>>({ H: '3', E: '3', X: '3', A: '3', C: '3', O: '3' });
 
   const total = HEXACO_QUESTIONS.length;
 
@@ -148,15 +162,79 @@ export default function HexacoAssessPage() {
           <h1 className="psy-serif text-3xl leading-none text-[var(--psy-ink)] md:text-4xl">{t.title}</h1>
           {/* 不限寬，自然分行（同大五 /assessment 的修法）。 */}
           <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">{t.intro}</p>
-          {scores && (
-            <button
-              onClick={() => router.push('/hexaco/results')}
-              className="text-xs text-[var(--psy-accent)] underline-offset-2 hover:underline"
-            >
-              {locale === 'en' ? 'View my HEXACO report →' : '查看我的 HEXACO 報告 →'}
-            </button>
-          )}
         </div>
+
+        {/* 手動填分入口（右對齊），版式同大五 /assessment。 */}
+        <div className="flex flex-col gap-1.5 text-xs text-[var(--psy-muted)] sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+          <button
+            onClick={() => setShowManualInput(!showManualInput)}
+            className="self-start whitespace-nowrap text-[var(--psy-muted)] transition underline decoration-[rgba(150,118,78,0.3)] underline-offset-4 hover:text-[var(--psy-ink-soft)] sm:self-auto"
+          >
+            {showManualInput ? t.backToAssess : t.skipToManual}
+          </button>
+        </div>
+
+        {/* 手動填分面板（同大五，六維） */}
+        {showManualInput ? (
+          <div className="psy-panel psy-etched space-y-5 rounded-[1.7rem] p-6">
+            <h3 className="psy-serif text-lg font-medium text-[var(--psy-ink)]">{t.manualTitle}</h3>
+            <div className="space-y-3">
+              {HEXACO_DIMENSIONS.map((d) => {
+                const meta = HEXACO_DIMENSION_META[d];
+                const metaName = locale === 'en' ? meta.nameEn : meta.name;
+                return (
+                  <div key={d} className="flex items-center gap-3">
+                    <span className="psy-serif w-28 shrink-0 truncate text-sm" style={{ color: meta.colorHex }}>{metaName}</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      lang="en"
+                      value={rawInputs[d]}
+                      onChange={(e) => {
+                        // 只留数字 + 一个小数点（type=number 会吞掉「3.」中间态导致无法输入小数）
+                        const raw = e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                        setRawInputs(prev => ({ ...prev, [d]: raw }));
+                        const val = parseFloat(raw);
+                        if (!isNaN(val)) setManualInputScores({ ...manualScores, [d]: val });
+                      }}
+                      onBlur={() => {
+                        const val = parseFloat(rawInputs[d]);
+                        const clamped = isNaN(val) ? 3 : Math.min(5, Math.max(1, val));
+                        setManualInputScores({ ...manualScores, [d]: clamped });
+                        setRawInputs(prev => ({ ...prev, [d]: String(clamped) }));
+                      }}
+                      className="psy-input w-20 px-3 py-1.5 text-center text-sm"
+                    />
+                    <div className="h-2 flex-1 rounded-full bg-[rgba(150,118,78,0.12)]">
+                      <div
+                        className="h-2 rounded-full transition-all"
+                        style={{ width: `${((manualScores[d] - 1) / 4) * 100}%`, backgroundColor: meta.colorHex }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => {
+                // 提交前统一 clamp 到 [1,5]：防越界值绕过 onBlur（不失焦直接确认）→ 脏分数。
+                const safe: HexacoScores = {
+                  H: clamp(manualScores.H, 1, 5), E: clamp(manualScores.E, 1, 5), X: clamp(manualScores.X, 1, 5),
+                  A: clamp(manualScores.A, 1, 5), C: clamp(manualScores.C, 1, 5), O: clamp(manualScores.O, 1, 5),
+                };
+                setManualScores(safe);
+                // 手動填分也存一行（答案為空，source=manual）
+                const sid = useHexacoStore.getState().studentId;
+                if (sid) void saveHexacoResult(sid, {}, safe, 'manual');
+                router.push('/hexaco/results');
+              }}
+              className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold"
+            >
+              {t.manualConfirm}
+            </button>
+          </div>
+        ) : (
+        <>
 
         {/* 題卡（不顯示維度/題號提示，避免暗示所屬向度） */}
         <AnimatePresence mode="wait">
@@ -243,6 +321,9 @@ export default function HexacoAssessPage() {
             <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded" style={{ backgroundColor: 'rgba(195,154,82,0.25)' }} /> {t.unanswered}</span>
           </div>
         </div>
+
+        </>
+        )}
       </motion.div>
     </main>
   );

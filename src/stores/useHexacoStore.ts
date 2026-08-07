@@ -21,6 +21,7 @@ interface HexacoState {
   setStudentId: (id: string) => void;
   setAnswer: (questionId: number, score: LikertScore) => void;
   calculateScores: () => HexacoScores;
+  setManualScores: (scores: HexacoScores) => void;
   setRestoredScores: (scores: HexacoScores) => void;
   startRetake: () => void;
   cancelRetake: () => void;
@@ -48,6 +49,9 @@ export const useHexacoStore = create<HexacoState>()(
         set({ scores, completedAt: new Date().toISOString(), retaking: false });
         return scores;
       },
+
+      // 手動填分（跳過測評），同大五 setManualScores：直接覆蓋分數並結束重測態。
+      setManualScores: (scores) => set({ scores, completedAt: new Date().toISOString(), retaking: false }),
 
       // 从服务端拉回的分数直接写入（不重算），供 HexacoSync 换设备恢复用。
       setRestoredScores: (scores) => set({ scores, completedAt: new Date().toISOString(), retaking: false }),

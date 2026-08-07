@@ -37,6 +37,8 @@ type PendingHexaco = {
   studentId: string;
   answers: Record<number, LikertScore>;
   scores: HexacoScores;
+  // 'manual' = 跳過測評手動填分；缺省（含歷史緩衝行）視同 'assessment'。
+  source?: 'assessment' | 'manual';
   createdAt: number;
 };
 
@@ -90,7 +92,7 @@ async function insertOnce(item: PendingHexaco): Promise<boolean> {
       user_id: userId,                 // 必须等于 auth.uid()（0016 WITH CHECK）
       device_token: getOrCreateDeviceToken(),
       model: MODEL,                    // 'hexaco'（区分大五）
-      source: 'assessment',
+      source: item.source ?? 'assessment',
       answers: item.answers,           // jsonb：{ "1":4, ..., "60":5 }（HEXACO-60）
       scores: item.scores,             // jsonb：{ H, E, X, A, C, O }
       answered_count: Object.keys(item.answers).length,
@@ -136,11 +138,12 @@ export async function retryPendingHexacoSaves(): Promise<void> {
 export async function saveHexacoResult(
   studentId: string,
   answers: Record<number, LikertScore>,
-  scores: HexacoScores
+  scores: HexacoScores,
+  source: 'assessment' | 'manual' = 'assessment'
 ): Promise<void> {
   const sid = studentId?.trim();
   if (!sid) return;
-  const item: PendingHexaco = { id: genUuid(), studentId: sid, answers, scores, createdAt: Date.now() };
+  const item: PendingHexaco = { id: genUuid(), studentId: sid, answers, scores, source, createdAt: Date.now() };
   buffer(item);
   if (await insertOnce(item)) removePending(item.id);
   else console.warn('[hexaco-record] save failed — kept in localStorage for retry');
