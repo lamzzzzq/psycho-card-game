@@ -961,7 +961,8 @@ export default function GamePage() {
         <GameOverModal
           players={game.players.map((p) => ({
             id: p.id,
-            name: p.name,
+            // 英文版必须用 AI 的英文名（大雄→Brian），否则结算页会中英混排
+            name: playerLabel(p, locale),
             avatar: p.avatar,
             declaredSets: p.declaredSets,
             remainingCards: p.hand.length,
