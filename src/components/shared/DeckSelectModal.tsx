@@ -6,7 +6,7 @@ import { STRINGS, type Locale } from '@/lib/i18n';
 import { renderCjk } from '@/lib/renderCjk';
 
 // 三个人格牌堆入口（与 pvp 建房牌堆选择一致）：目前仅 Big Five 可玩；HEXACO 未开放对局，
-// 但可点开介绍预览页(/hexaco)；CPAI 仍完全锁定「即将上线」。
+// 但可点开介绍预览页(/hexaco)；Dark Tetrad（内部 id 仍沿用 cpai）仍完全锁定「即将上线」。
 const DECKS = [
   { id: 'big-five', name: 'Big Five', nameKey: null, subKey: 'deckBigFiveSub', locked: false, previewHref: null },
   { id: 'hexaco', name: null, nameKey: 'deckHexacoName', subKey: 'deckHexacoSub', locked: true, previewHref: '/hexaco' },

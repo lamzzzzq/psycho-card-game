@@ -43,7 +43,7 @@ export default function Home() {
   // 各模型：是否已做出（有测评+报告页）+ 该用户是否已完成 + 展示名。
   // 目前仅 Big Five 真实存在；HEXACO/CPAI 尚未上线 → 未完成时提示框 CTA 置灰。
   // 检测源当前用本地 bigFiveScores；后续可换成登入时从 Supabase 拉取的「已完成模型」。
-  const MODEL_NAME: Record<'big-five' | 'hexaco' | 'cpai', string> = { 'big-five': 'Big Five', hexaco: 'HEXACO', cpai: 'CPAI-2' };
+  const MODEL_NAME: Record<'big-five' | 'hexaco' | 'cpai', string> = { 'big-five': 'Big Five', hexaco: 'HEXACO', cpai: 'Dark Tetrad' };
   // Big Five 与 HEXACO 均已上线；CPAI 仍未开放。
   const modelAvailable = (m: 'big-five' | 'hexaco' | 'cpai') => m === 'big-five' || m === 'hexaco';
   // ⚠️「已完成」必须以登入为前提：登出后 localStorage 仍留着上次的分数，
