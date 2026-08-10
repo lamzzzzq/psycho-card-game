@@ -2,7 +2,7 @@
 
 import { Player } from '@/types';
 import { getRankings } from '@/lib/game-logic';
-import { STRINGS, type Locale } from '@/lib/i18n';
+import { STRINGS, playerLabel, type Locale } from '@/lib/i18n';
 
 interface ScoreBoardProps {
   players: Player[];
@@ -31,7 +31,7 @@ export function ScoreBoard({ players, currentRound, totalRounds, locale = 'zh' }
               <span className="w-4 text-xs text-[var(--psy-muted)]">#{i + 1}</span>
               <span>{player.avatar}</span>
               <span className={player.isHuman ? 'font-medium text-[var(--psy-accent)]' : 'text-[var(--psy-ink-soft)]'}>
-                {player.name}
+                {playerLabel(player, locale)}
               </span>
             </div>
             <span className="font-mono text-[var(--psy-ink)] tabular-nums">
