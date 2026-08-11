@@ -111,7 +111,10 @@ export default function Home() {
   return (
     // 移动端：内容从顶部流动 + 充足底部留白，保证页脚能滚动到固定 CTA 栏上方完整显示
     // （iOS Safari 动态地址栏会吃掉底部空间，留白不足时页脚会被卡在栏后滑不上来）；桌面：垂直居中。
-    <div className="flex flex-1 flex-col items-center px-5 pt-20 pb-56 sm:px-6 sm:pt-24 lg:justify-center lg:pb-10 lg:pt-10">
+    // 桌面居中改用「pt/pb 安全边距 + 内容 my-auto」而非 justify-center：
+    // 原来 lg:pt-10 + justify-center 在矮而宽的视口（iPad 横屏）上会把标题压进 fixed 顶栏，
+    // 语言切换器盖住 logo；my-auto 在空间富余时照样居中，空间不足时退回从 pt-24 起排（且不裁顶）。
+    <div className="flex flex-1 flex-col items-center px-5 pt-20 pb-56 sm:px-6 sm:pt-24 lg:pb-24 lg:pt-24">
       {/* 顶栏：左语言切换 + 右账号/教學。单行 flex items-center 保证两侧垂直居中对齐
           （原来左右各自 fixed top-4，高度不同 → 只对齐顶边、中心错位）。
           透明外栏 pointer-events-none，子元素 auto，避免中间空白挡住下方点击。 */}
@@ -147,7 +150,7 @@ export default function Home() {
       <motion.div
         initial={false}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-5xl space-y-8 lg:space-y-10"
+        className="w-full max-w-5xl space-y-8 lg:my-auto lg:space-y-10"
       >
         <div className="space-y-5 sm:space-y-6">
           <div className="space-y-3">
