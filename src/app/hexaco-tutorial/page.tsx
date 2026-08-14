@@ -64,8 +64,10 @@ const SANDBOX_HAND: GameCard[] = [
   DC(109, '特質理論', 'Trait Theory', '認為人格是由穩定且可測量的特質所組成。', 'Views personality as a configuration of stable, measurable traits.'),
 ];
 const SANDBOX_DRAWN: PersonalityCard = PC(110, 'E', '看到別人難過，我也會跟着難過', 'When others are sad, I feel sad too', 23);
-// 「查看 2 張」教學指定可看的兩張：104 盡責性 + 110 剛抽到的神經質。玩家手動點選它們揭開。
-const VIEW_IDS = [104, 110];
+// 「查看 2 張」教學指定可看的兩張：107 開放性 + 110 剛抽到的情緒性。玩家手動點選它們揭開。
+// 選 107 是因為 Openness 是六維裏英文名最短的——卡面維度角標字號按名字長度縮檔，
+// 長名（Conscientiousness）會縮到最小檔看不清（老板 0814 反饋）。
+const VIEW_IDS = [107, 110];
 // 對手棄牌（截胡碰用）：維度在 open-claim 時按手裏現存的對子動態選定。插畫與手牌錯開。
 const CLAIM_CARDS: Record<Dimension, PersonalityCard> = {
   H: PC(111, 'H', '我不會為了好處去奉承別人', 'I would not flatter someone for personal gain', 6),
