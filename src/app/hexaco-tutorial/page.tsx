@@ -44,14 +44,16 @@ const locCard = <T extends GameCard>(c: T, loc: Locale): T =>
   loc === 'en' && c.textEn ? ({ ...c, text: c.textEn } as T) : c;
 
 // 沙盒目標板：刻意讓只有情緒性(4)剛好夠碰，其餘維度手牌都不足 → 教學聚焦在情緒性。
-// O 有 1<2、C 有 2<3、H 有 0<2、X 有 0<2、A 有 2<3、E 有 4=4。（A=3 也讓後面截胡碰 2+1=3 成立）
-const SANDBOX_TARGETS: Record<Dimension, number> = { H: 2, E: 4, X: 2, A: 3, C: 3, O: 2 };
+// O 有 2<3、C 有 1<3、H 有 0<2、X 有 0<2、A 有 2<3、E 有 4=4。
+// （O=3 讓後面截胡碰 2+1=3 成立；A 對子做後備，同樣 2+1=3）
+const SANDBOX_TARGETS: Record<Dimension, number> = { H: 2, E: 4, X: 2, A: 3, C: 3, O: 3 };
 // 開場彈窗的目標板：還沒開局，一個都沒歸檔。模塊級常量，免得每次渲染新建 Set
 // 讓 FilingProgressCard 白白重繪。
 const EMPTY_DIMS: Set<Dimension> = new Set();
 
-// 歸檔 4 張情緒性後，手裏留兩對（盡責性 104/108、宜人性 105/106）+ 一張單張 +
+// 歸檔 4 張情緒性後，手裏留兩對（開放性 107/108、宜人性 105/106）+ 一張單張 +
 // 知識牌 → 棄 1 張後仍至少剩一對可用於「截胡碰」演示。每卡用不同插畫 id。
+// 對子刻意不用盡責性——Conscientiousness(17 字母)的卡面角標縮到最小檔看不清（老板 0814 反饋）。
 const SANDBOX_HAND: GameCard[] = [
   PC(101, 'E', '我經常為一些小事感到憂慮', 'I often worry about little things', 5),
   PC(102, 'E', '我容易情緒起伏', 'My feelings rise and fall easily', 11),
@@ -60,7 +62,7 @@ const SANDBOX_HAND: GameCard[] = [
   PC(105, 'A', '我願意體諒別人的感受', 'I am willing to consider others\' feelings', 3),
   PC(106, 'A', '我會主動幫助遇到困難的人', 'I take the initiative to help people in trouble', 9),
   PC(107, 'O', '我對抽象的哲學問題很感興趣', 'I am interested in abstract, philosophical questions', 1),
-  PC(108, 'C', '我做事情之前總會制定計劃', 'I always make a plan before doing things', 8),
+  PC(108, 'O', '我喜歡從事藝術創作', 'I would enjoy creating a work of art', 13),
   DC(109, '特質理論', 'Trait Theory', '認為人格是由穩定且可測量的特質所組成。', 'Views personality as a configuration of stable, measurable traits.'),
 ];
 const SANDBOX_DRAWN: PersonalityCard = PC(110, 'E', '看到別人難過，我也會跟着難過', 'When others are sad, I feel sad too', 23);
@@ -248,7 +250,10 @@ function createReducer(s: TutStrings, dimName: DimName) {
       for (const c of state.hand) {
         if (!c.isDummy && 'dimension' in c) counts[c.dimension] = (counts[c.dimension] ?? 0) + 1;
       }
-      const claimDim = (DIMENSIONS.find((d) => (counts[d] ?? 0) >= 2) ?? 'C') as Dimension;
+      // 按英文名短→長優先（卡面維度角標字號按名長縮檔，短名更清晰——老板 0814 反饋）。
+      // 正常劇本選開放性(107/108)；玩家若把 O 對子棄掉一張，退回宜人性(105/106)。
+      const CLAIM_DIM_PRIORITY: Dimension[] = ['O', 'E', 'X', 'A', 'H', 'C'];
+      const claimDim = (CLAIM_DIM_PRIORITY.find((d) => (counts[d] ?? 0) >= 2) ?? 'O') as Dimension;
       // 教學步：先選維度再選牌（與自摸碰第一步同構）。真實對局中碰的維度
       // 隱含於棄牌本身，這裏顯式選一次是爲了讓流程肌肉記憶一致。
       return { ...state, scene: 'claim-dimension', selectedIds: [], claimDim, feedback: { tone: 'info', text: s.fbOpenClaimDim(dimName(claimDim)) } };
@@ -337,18 +342,19 @@ function InteractiveSandbox({
 
   const op = opOf(state.scene);
   // 沙盒的「已歸檔維度」——餵給 FilingProgressCard。與上方公開歸檔區同一套判據：
-  // 食胡步用固定的 HU_DECLARED（那一步是擺好的殘局），其餘看兩個歸檔標誌。
+  // 食胡步用固定的 HU_DECLARED（那一步是擺好的殘局；食胡成功後補上 E → 6/6 全實心），
+  // 其餘看兩個歸檔標誌。
   const sandboxDeclaredDims = useMemo(
     () =>
       new Set<Dimension>(
         op === 'hu'
-          ? HU_DECLARED
+          ? (state.scene === 'hu-success' ? [...HU_DECLARED, 'E' as Dimension] : HU_DECLARED)
           : [
               ...(state.declared && state.chosenDim ? [state.chosenDim] : []),
               ...(state.claimDeclared && state.claimDim ? [state.claimDim] : []),
             ]
       ),
-    [op, state.declared, state.chosenDim, state.claimDeclared, state.claimDim]
+    [op, state.scene, state.declared, state.chosenDim, state.claimDeclared, state.claimDim]
   );
   const pongNeed = state.chosenDim ? SANDBOX_TARGETS[state.chosenDim] : 4;
   const successToast =
@@ -542,10 +548,19 @@ function InteractiveSandbox({
                   </span>
                 );
               })}
-              <span className="rounded-full border border-dashed px-2 py-0.5 text-[10px] font-semibold"
-                style={{ color: N.colorHex, borderColor: N.colorHex + '88' }}>
-                {s.huGapSuffix(dimName('E'))}
-              </span>
+              {state.scene === 'hu-success' ? (
+                // 食胡成功：E 從虛線「缺口」變成與其他維度一致的實心歸檔 chip
+                <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                  style={{ color: N.colorHex, backgroundColor: N.colorHex + '20', border: `1px solid ${N.colorHex}55` }}>
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: N.colorHex }} />
+                  {s.archiveSetSuffix(dimName('E'), SANDBOX_TARGETS.E)}
+                </span>
+              ) : (
+                <span className="rounded-full border border-dashed px-2 py-0.5 text-[10px] font-semibold"
+                  style={{ color: N.colorHex, borderColor: N.colorHex + '88' }}>
+                  {s.huGapSuffix(dimName('E'))}
+                </span>
+              )}
             </>
           ) : (
             <>
