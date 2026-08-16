@@ -108,6 +108,17 @@ export default function Home() {
     }
   }, [hydrated]);
 
+  // 顶栏底衬只在滚动后启用（0816）：静止时不存在，标题一点不被压暗；一滚动就淡入盖满，
+  // 滑上来的内容彻底吃掉。两个需求（不压标题 / 不透残影）本来被同一层的高度互相卡死，
+  // 拆成两态才都满足。阈值 8px 避免 iOS 回弹时闪烁。
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
     // 移动端：内容从顶部流动 + 充足底部留白，保证页脚能滚动到固定 CTA 栏上方完整显示
     // （iOS Safari 动态地址栏会吃掉底部空间，留白不足时页脚会被卡在栏后滑不上来）；桌面：垂直居中。
@@ -115,6 +126,24 @@ export default function Home() {
     // 原来 lg:pt-10 + justify-center 在矮而宽的视口（iPad 横屏）上会把标题压进 fixed 顶栏，
     // 语言切换器盖住 logo；my-auto 在空间富余时照样居中，空间不足时退回从 pt-24 起排（且不裁顶）。
     <div className="flex flex-1 flex-col items-center px-5 pt-20 pb-56 sm:px-6 sm:pt-24 lg:pb-24 lg:pt-24">
+      {/* 顶栏底衬（0816）：顶栏是 fixed 的，页面一滚，标题/正文就滑到语言切换和 Tutorial
+          胶囊底下糊成一团（各断点都有，不止移动端）。这层垫在内容之上、顶栏之下，把滑上来的
+          内容吃掉。取色 = --psy-page-bg 顶端 #f4edd9；配 backdrop blur 抹掉与背景渐变的色差，
+          mask 让底衬连同 blur 一起向下渐隐，不在页面中间切出硬边。
+          实心段占 85%（移动端 95px、sm 109px），盖过顶栏控件底边（16+40 / 32+40）还有余量，
+          正文不会从胶囊边缘透出来。只在 scrolled 时淡入——停在顶部时它整层不可见，
+          所以高度可以做到大于内容 pt 而不压暗标题。 */}
+      <div
+        aria-hidden
+        className={`pointer-events-none fixed inset-x-0 top-0 z-30 h-28 [transform:translateZ(0)] backdrop-blur-[14px] backdrop-saturate-[1.15] transition-opacity duration-200 sm:h-32 ${
+          scrolled ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          background: 'linear-gradient(180deg, rgba(244,237,217,0.92) 0%, rgba(244,237,217,0.88) 85%, rgba(244,237,217,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(180deg, #000 0%, #000 85%, transparent 100%)',
+          maskImage: 'linear-gradient(180deg, #000 0%, #000 85%, transparent 100%)',
+        }}
+      />
       {/* 顶栏：左语言切换 + 右账号/教學。单行 flex items-center 保证两侧垂直居中对齐
           （原来左右各自 fixed top-4，高度不同 → 只对齐顶边、中心错位）。
           透明外栏 pointer-events-none，子元素 auto，避免中间空白挡住下方点击。 */}
