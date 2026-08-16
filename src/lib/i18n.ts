@@ -39,6 +39,7 @@ export const STRINGS = {
   zh: {
     common: {
       tutorial: '玩法教學',
+      dimensionSummaries: '維度速查',
       footer: {
         line1: '© 2026 香港理工大學應用社會科學系 · 本網站僅供教學與研究用途',
         leader: '項目負責人：許沛鴻教授',
@@ -450,6 +451,7 @@ export const STRINGS = {
   en: {
     common: {
       tutorial: 'Tutorial',
+      dimensionSummaries: 'Dimensions',
       footer: {
         line1: '© 2026 Department of Applied Social Sciences, The Hong Kong Polytechnic University · For educational and research use only',
         leader: 'Project Leader: Prof. Bryant Hui',

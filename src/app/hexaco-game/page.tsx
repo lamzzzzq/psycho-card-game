@@ -36,6 +36,7 @@ import { MobileGameSheet } from '@/components/game/MobileGameSheet';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
 import { BgmToggleButton } from '@/components/shared/BgmToggleButton';
 import { HexacoHowToPlayButton } from '@/components/hexaco-game/HexacoHowToPlayButton';
+import { HexacoDimensionSummaryButton } from '@/components/hexaco-game/HexacoDimensionSummaryButton';
 
 interface FlyingAnim {
   id: number;
@@ -495,6 +496,7 @@ export default function GamePage() {
         </button>
         <div className="flex items-center gap-2">
           <BgmToggleButton locale={locale} />
+          <HexacoDimensionSummaryButton locale={locale} />
           <HexacoHowToPlayButton locale={locale} />
         </div>
       </div>

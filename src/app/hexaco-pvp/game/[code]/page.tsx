@@ -22,6 +22,7 @@ import {
 import { FlyingCard } from '@/components/hexaco-game/FlyingCard';
 import { BgmToggleButton } from '@/components/shared/BgmToggleButton';
 import { HexacoHowToPlayButton } from '@/components/hexaco-game/HexacoHowToPlayButton';
+import { HexacoDimensionSummaryButton } from '@/components/hexaco-game/HexacoDimensionSummaryButton';
 import { supabase } from '@/lib/supabase';
 import { leaveRoom, leaveAllRooms, updateRoomStatus } from '@/lib/hexaco-game/room-api';
 import { retryPendingSaves, removePendingInterrupted } from '@/lib/hexaco-game/game-record';
@@ -755,6 +756,7 @@ export default function PvpGamePage() {
             {t.leaveGame}
           </button>
           <BgmToggleButton locale={locale} />
+          <HexacoDimensionSummaryButton locale={locale} />
           <HexacoHowToPlayButton locale={locale} />
         </div>
         <span className="psy-serif text-[10px] uppercase tracking-[0.32em] text-[var(--psy-muted)] sm:text-[11px]">

@@ -35,6 +35,7 @@ import { FilingProgressCard } from '@/components/game/FilingProgressCard';
 import { MobileGameSheet } from '@/components/game/MobileGameSheet';
 import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
 import { HowToPlayButton } from '@/components/game/HowToPlayButton';
+import { DimensionSummaryButton } from '@/components/game/DimensionSummaryButton';
 import { BgmToggleButton } from '@/components/shared/BgmToggleButton';
 
 interface FlyingAnim {
@@ -494,6 +495,7 @@ export default function GamePage() {
         </button>
         <div className="flex items-center gap-2">
           <BgmToggleButton locale={locale} />
+          <DimensionSummaryButton locale={locale} />
           <HowToPlayButton locale={locale} />
         </div>
       </div>
