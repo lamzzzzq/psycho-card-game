@@ -10,11 +10,12 @@ import { QUESTIONS } from '@/data/questions';
 import { KNOWLEDGE_CARDS } from '@/data/dummy-cards';
 import { DIMENSIONS, Dimension } from '@/types';
 import { HEXACO_QUESTIONS } from '@/data/hexaco-questions';
+import { PrintEditionSpec } from '@/components/card-lab/PrintEditionSpec';
 
 // 每个维度取一题做样本（中英对照）
 const SAMPLES = DIMENSIONS.map((d) => QUESTIONS.find((q) => q.dimension === d)!).filter(Boolean);
 
-type LabDeck = 'big-five' | 'hexaco';
+type LabDeck = 'big-five' | 'hexaco' | 'print';
 
 function DeckTabs({ deck }: { deck: LabDeck }) {
   const setDeck = (nextDeck: LabDeck) => {
@@ -26,6 +27,7 @@ function DeckTabs({ deck }: { deck: LabDeck }) {
       {([
         ['big-five', 'Big Five · 50 張'],
         ['hexaco', 'HEXACO · 60 張'],
+        ['print', '🖨 印刷版方案'],
       ] as const).map(([id, label]) => (
         <button
           key={id}
@@ -60,7 +62,8 @@ function HexacoGallery({ locale }: { locale: 'zh' | 'en' }) {
 
 function CardLabContent() {
   const searchParams = useSearchParams();
-  const deck: LabDeck = searchParams.get('deck') === 'hexaco' ? 'hexaco' : 'big-five';
+  const deckParam = searchParams.get('deck');
+  const deck: LabDeck = deckParam === 'hexaco' ? 'hexaco' : deckParam === 'print' ? 'print' : 'big-five';
   const [locale, setLocale] = useState<'zh' | 'en'>('zh');
   const [width, setWidth] = useState(200);
 
@@ -69,11 +72,11 @@ function CardLabContent() {
       <div className="mx-auto max-w-6xl space-y-10">
         <header className="space-y-2">
           <p className="psy-serif text-xs uppercase tracking-[0.4em] text-[var(--psy-ink-soft)]">Card Lab · 沙盒</p>
-          <h1 className="psy-serif text-3xl text-[var(--psy-ink)]">{deck === 'hexaco' ? 'HEXACO 卡面設計預覽' : 'Big Five 卡面設計預覽'}</h1>
-          <p className="text-sm text-[var(--psy-ink-soft)]">CSS 金色雙線框 + 拱形圖窗 + 單語文字（跟隨使用者語言）。兩套牌以獨立目錄與網址分開，此頁不影響遊戲。</p>
+          <h1 className="psy-serif text-3xl text-[var(--psy-ink)]">{deck === 'print' ? '實體卡牌印刷方案' : deck === 'hexaco' ? 'HEXACO 卡面設計預覽' : 'Big Five 卡面設計預覽'}</h1>
+          <p className="text-sm text-[var(--psy-ink-soft)]">{deck === 'print' ? '要印多少張、2／3／4 人各怎麼配牌、以及實體版的完整規則（洗牌發牌判定全部靠人手，規則必須寫死）。' : 'CSS 金色雙線框 + 拱形圖窗 + 單語文字（跟隨使用者語言）。兩套牌以獨立目錄與網址分開，此頁不影響遊戲。'}</p>
           <div className="flex flex-wrap items-center gap-4 pt-2 text-sm">
             <DeckTabs deck={deck} />
-            <span className="flex items-center gap-1 rounded-full border border-[var(--psy-border)] p-1">
+            <span className={`flex items-center gap-1 rounded-full border border-[var(--psy-border)] p-1 ${deck === 'print' ? 'hidden' : ''}`}>
               {(['zh', 'en'] as const).map((l) => (
                 <button
                   key={l}
@@ -84,14 +87,14 @@ function CardLabContent() {
                 </button>
               ))}
             </span>
-            <label className="flex items-center gap-2">
+            <label className={`flex items-center gap-2 ${deck === 'print' ? 'hidden' : ''}`}>
               宽度 {width}px
               <input type="range" min={120} max={260} value={width} onChange={(e) => setWidth(+e.target.value)} />
             </label>
           </div>
         </header>
 
-        {deck === 'hexaco' ? <HexacoGallery locale={locale} /> : <>
+        {deck === 'print' ? <PrintEditionSpec /> : deck === 'hexaco' ? <HexacoGallery locale={locale} /> : <>
 
         {/* 真实插画测试（仅 card-lab，用 _lab-sample.webp，不影响游戏） */}
         <section className="space-y-3">
