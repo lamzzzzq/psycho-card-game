@@ -2,6 +2,7 @@
 // 中文題面 = 繁體中文版（張益慈、詹雨臻、陳學志，2021，測驗學刊）；英文題面 = Paulhus et al. (2021) 原版。
 // 4 維各 7 題，按 xlsx Item Order 排列（馬基維利主義 1–7、自戀 8–14、病態人格 15–21、虐待 22–28）。
 // ⚠️ 全部正向計分，無反向計分（xlsx 明示）。切勿改題序/題面/維度——本檔由腳本自 xlsx 生成，勿手改。
+// 唯一人工修正（2026-08-25 用戶拍板）：#17「同龄」→「同齡」——xlsx 原文夾了簡體字，統一繁體。
 import { Sd4Question } from './sd4-types';
 
 export const SD4_QUESTIONS: Sd4Question[] = [
@@ -21,7 +22,7 @@ export const SD4_QUESTIONS: Sd4Question[] = [
   { id: 14, dimension: 'N', text: '我喜歡時不時地炫耀。', textEn: 'I like to show off every now and then.' },
   { id: 15, dimension: 'P', text: '人們常說我不受控制。', textEn: 'People often say I\'m out of control.' },
   { id: 16, dimension: 'P', text: '我傾向與權威人士以及他們制定的規範抗爭。', textEn: 'I tend to fight against authorities and their rules.' },
-  { id: 17, dimension: 'P', text: '和大多數與我同龄及同性別的人相比，我與他人有更多的紛爭。', textEn: 'I’ve been in more fights than most people of my age and gender.' },
+  { id: 17, dimension: 'P', text: '和大多數與我同齡及同性別的人相比，我與他人有更多的紛爭。', textEn: 'I’ve been in more fights than most people of my age and gender.' },
   { id: 18, dimension: 'P', text: '我傾向先投入眼前的情況，晚一點再來問問題。', textEn: 'I tend to dive in, then ask questions later.' },
   { id: 19, dimension: 'P', text: '我曾涉及與法律相關的麻煩事物。', textEn: 'I\'ve been in trouble with the law.' },
   { id: 20, dimension: 'P', text: '我有時會將自己置身於危險的情況之中。', textEn: 'I sometimes get into dangerous situations.' },
