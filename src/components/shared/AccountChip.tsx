@@ -14,6 +14,7 @@ import { useBgm } from '@/stores/useBgm';
 import { BgmToggleButton } from '@/components/shared/BgmToggleButton';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHexacoStore } from '@/stores/useHexacoStore';
+import { useSd4Store } from '@/stores/useSd4Store';
 import { signOutUser } from '@/lib/auth';
 
 export function AccountChip() {
@@ -156,6 +157,7 @@ export function AccountChip() {
               // 登出即清本地测评分数：避免残留在 localStorage 让下个/同一浏览器误显「Done」或被读到。
               useAssessmentStore.getState().reset();
               useHexacoStore.getState().reset();
+              useSd4Store.getState().reset();
               await signOutUser();
             }}
             className="block w-full px-4 py-3 text-left text-sm text-[var(--psy-ink)] transition hover:bg-[var(--psy-surface-strong)]"

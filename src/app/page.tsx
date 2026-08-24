@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAssessmentStore } from '@/stores/useAssessmentStore';
 import { useHexacoStore } from '@/stores/useHexacoStore';
+import { useSd4Store } from '@/stores/useSd4Store';
 import { useHydrated } from '@/stores/useHydration';
 import { useLocaleStore, STRINGS } from '@/lib/i18n';
 import { QUESTIONS } from '@/data/questions';
@@ -20,6 +21,7 @@ export default function Home() {
   const hydrated = useHydrated();
   const { bigFiveScores, getProgress } = useAssessmentStore();
   const hexacoScores = useHexacoStore((s) => s.scores);
+  const sd4Scores = useSd4Store((s) => s.scores);
   const progress = getProgress();
   // 需登录 + 有测评结果才露出「聯機/單機/報告」三入口。
   // 修 bug：登出后 localStorage 还留着 bigFiveScores → 曾以为 hasResults 就放行，
@@ -39,60 +41,63 @@ export default function Home() {
   const [deckModalFor, setDeckModalFor] = useState<'tutorial' | 'assessment' | 'report' | 'pvp' | 'solo' | null>(null);
   // 「查看報告」按模型分流：选了尚未完成的模型 → 弹「未完成」提示框（记录选的哪个模型）
   const [reportPrompt, setReportPrompt] = useState<'big-five' | 'hexaco' | 'cpai' | null>(null);
+  // 单机/联机/教学里选了「测评已上线但对局未上线」的模型（目前只有 Dark Tetrad/SD4）→ 弹对局规划中提示框
+  const [gameSoonPrompt, setGameSoonPrompt] = useState(false);
 
   // 各模型：是否已做出（有测评+报告页）+ 该用户是否已完成 + 展示名。
-  // 目前仅 Big Five 真实存在；HEXACO/CPAI 尚未上线 → 未完成时提示框 CTA 置灰。
-  // 检测源当前用本地 bigFiveScores；后续可换成登入时从 Supabase 拉取的「已完成模型」。
+  // 三个模型测评均已上线（Dark Tetrad = SD4，2026-08-24；内部 id 仍沿用 cpai）；
+  // Dark Tetrad 的对局仍未开放（只有测评→报告）。
+  // 检测源当前用本地 scores；后续可换成登入时从 Supabase 拉取的「已完成模型」。
   const MODEL_NAME: Record<'big-five' | 'hexaco' | 'cpai', string> = { 'big-five': 'Big Five', hexaco: 'HEXACO', cpai: 'Dark Tetrad' };
-  // Big Five 与 HEXACO 均已上线；CPAI 仍未开放。
-  const modelAvailable = (m: 'big-five' | 'hexaco' | 'cpai') => m === 'big-five' || m === 'hexaco';
   // ⚠️「已完成」必须以登入为前提：登出后 localStorage 仍留着上次的分数，
   // 若不判 isLoggedIn，模型选择框会对未登入用户误显「Done」（且点进去被 gate 弹回登录，自相矛盾）。
   const modelDone = (m: 'big-five' | 'hexaco' | 'cpai') =>
-    !isLoggedIn ? false : m === 'big-five' ? bigFiveScores !== null : m === 'hexaco' ? hexacoScores !== null : false;
+    !isLoggedIn ? false : m === 'big-five' ? bigFiveScores !== null : m === 'hexaco' ? hexacoScores !== null : sd4Scores !== null;
 
-  // 各模型的答题页 / 报告页路由（HEXACO 独立于大五流程）。
-  const ASSESS_ROUTE: Record<'big-five' | 'hexaco', string> = { 'big-five': '/assessment', hexaco: '/hexaco/assess' };
-  const REPORT_ROUTE: Record<'big-five' | 'hexaco', string> = { 'big-five': '/results', hexaco: '/hexaco/results' };
+  // 各模型的答题页 / 报告页路由（HEXACO/SD4 独立于大五流程）。
+  const ASSESS_ROUTE: Record<'big-five' | 'hexaco' | 'cpai', string> = { 'big-five': '/assessment', hexaco: '/hexaco/assess', cpai: '/sd4/assess' };
+  const REPORT_ROUTE: Record<'big-five' | 'hexaco' | 'cpai', string> = { 'big-five': '/results', hexaco: '/hexaco/results', cpai: '/sd4/results' };
 
   // 模型在选择框里的状态：已完成 done / 已上线未做 todo / 未上线 soon（用于卡片徽标）。
+  // 测评/报告流程：三模型都已上线 → 按完成度。对局类流程（单机/联机/教学）：Dark Tetrad 无对局 → 恒 soon。
   const modelState = (m: 'big-five' | 'hexaco' | 'cpai'): 'done' | 'todo' | 'soon' =>
-    m === 'cpai' ? 'soon' : modelDone(m) ? 'done' : 'todo';
+    modelDone(m) ? 'done' : 'todo';
+  const gameModelState = (m: 'big-five' | 'hexaco' | 'cpai'): 'done' | 'todo' | 'soon' =>
+    m === 'cpai' ? 'soon' : modelState(m);
 
-  // 「查看報告」：已完成 → 进该模型报告；未完成（含未上线）→ 弹提示框「你還沒做，要現在做嗎？」。
-  // 老板流程：报告入口不该把没测过的人直接丢进 60 题，先明确告知未完成再引导去测。
+  // 「查看報告」：已完成 → 进该模型报告；未完成 → 弹提示框「你還沒做，要現在做嗎？」。
+  // 老板流程：报告入口不该把没测过的人直接丢进题目，先明确告知未完成再引导去测。
   function handleReportPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
     setDeckModalFor(null);
-    if (deckId !== 'cpai' && modelDone(deckId)) { router.push(REPORT_ROUTE[deckId]); return; }
+    if (modelDone(deckId)) { router.push(REPORT_ROUTE[deckId]); return; }
     setReportPrompt(deckId);
   }
 
-  // 「開始測評」：已上线 → 直接进该模型答题（已完成则进报告）；未上线(CPAI) → 弹「即将上线」提示框。
+  // 「開始測評」：直接进该模型答题（已完成则进报告）。
   function handleAssessPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
     setDeckModalFor(null);
-    if (deckId === 'cpai') { setReportPrompt(deckId); return; }
     router.push(modelDone(deckId) ? REPORT_ROUTE[deckId] : ASSESS_ROUTE[deckId]);
   }
 
   // 「單機遊戲」按模型分流：Big Five → /lobby、HEXACO → /hexaco-lobby（两个大厅
-  // 各自带「未测评」门禁，没做该模型测评会被引去对应答题页）；CPAI 未上线 → 弹规划中提示框。
+  // 各自带「未测评」门禁，没做该模型测评会被引去对应答题页）；Dark Tetrad 无对局 → 弹对局规划中提示框。
   function handleSoloPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
     setDeckModalFor(null);
-    if (deckId === 'cpai') { setReportPrompt(deckId); return; }
+    if (deckId === 'cpai') { setGameSoonPrompt(true); return; }
     router.push(deckId === 'hexaco' ? '/hexaco-lobby' : '/lobby');
   }
 
   // 「聯機對戰」按模型分流（2026-08-06 HEXACO 联机上线）：各自的建房/加房大厅。
   function handlePvpPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
     setDeckModalFor(null);
-    if (deckId === 'cpai') { setReportPrompt(deckId); return; }
+    if (deckId === 'cpai') { setGameSoonPrompt(true); return; }
     router.push(deckId === 'hexaco' ? '/hexaco-pvp' : '/pvp');
   }
 
   // 「玩法教學」按模型分流（2026-08-06 HEXACO 教学上线）：各自的教学页。
   function handleTutorialPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
     setDeckModalFor(null);
-    if (deckId === 'cpai') { setReportPrompt(deckId); return; }
+    if (deckId === 'cpai') { setGameSoonPrompt(true); return; }
     router.push(deckId === 'hexaco' ? '/hexaco-tutorial' : '/tutorial');
   }
 
@@ -279,12 +284,44 @@ export default function Home() {
           : '/assessment'
         )}
         onPickDeck={deckModalFor === 'report' ? handleReportPick : deckModalFor === 'assessment' ? handleAssessPick : deckModalFor === 'solo' ? handleSoloPick : deckModalFor === 'pvp' ? handlePvpPick : deckModalFor === 'tutorial' ? handleTutorialPick : undefined}
-        modelState={deckModalFor === 'report' || deckModalFor === 'assessment' || deckModalFor === 'solo' || deckModalFor === 'pvp' || deckModalFor === 'tutorial' ? modelState : undefined}
+        modelState={deckModalFor === 'report' || deckModalFor === 'assessment' ? modelState : deckModalFor === 'solo' || deckModalFor === 'pvp' || deckModalFor === 'tutorial' ? gameModelState : undefined}
         loc={loc}
       />
 
-      {/* 「查看報告」选了尚未完成的模型 → 未完成提示框（老板流程：已做进报告 / 未做问要不要现在做）。
-          该模型尚未上线时「開始測評」置灰不可点，等测评做好再启用。 */}
+      {/* 单机/联机/教学里选了 Dark Tetrad → 对局规划中提示框（测评已上线，对局还没有）。 */}
+      {gameSoonPrompt && (
+        <div
+          onClick={() => setGameSoonPrompt(false)}
+          className="fixed inset-0 z-[95] flex items-center justify-center bg-[rgba(58,48,32,0.5)] px-5 backdrop-blur-sm"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="psy-panel psy-etched w-full max-w-sm space-y-4 rounded-[1.6rem] p-6 text-center"
+          >
+            <h2 className="psy-serif text-xl text-[var(--psy-ink)]">{MODEL_NAME.cpai}</h2>
+            <p className="text-sm leading-6 text-[var(--psy-ink-soft)]">{t.deckGameSoonBody}</p>
+            <div className="space-y-2 pt-1">
+              <button
+                onClick={() => {
+                  setGameSoonPrompt(false);
+                  router.push(modelDone('cpai') ? REPORT_ROUTE.cpai : ASSESS_ROUTE.cpai);
+                }}
+                className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold"
+              >
+                {modelDone('cpai') ? t.report : t.reportStartNow}
+              </button>
+              <button
+                onClick={() => setGameSoonPrompt(false)}
+                className="psy-btn psy-btn-ghost psy-serif w-full py-2.5 text-sm font-medium"
+              >
+                {t.reportBack}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 「查看報告」选了尚未完成的模型 → 未完成提示框（老板流程：已做进报告 / 未做问要不要现在做）。 */}
       {reportPrompt && (
         <div
           onClick={() => setReportPrompt(null)}
@@ -296,18 +333,14 @@ export default function Home() {
           >
             <h2 className="psy-serif text-xl text-[var(--psy-ink)]">{MODEL_NAME[reportPrompt]}</h2>
             <p className="text-sm leading-6 text-[var(--psy-ink-soft)]">{t.reportNotDoneBody}</p>
-            {!modelAvailable(reportPrompt) && (
-              <p className="text-xs text-[var(--psy-muted)]">🔒 {t.reportComingSoonNote}</p>
-            )}
             <div className="space-y-2 pt-1">
               <button
-                disabled={!modelAvailable(reportPrompt)}
                 onClick={() => {
                   const m = reportPrompt;
                   setReportPrompt(null);
-                  if (m && m !== 'cpai' && modelAvailable(m)) router.push(ASSESS_ROUTE[m]); // 去该模型答题
+                  if (m) router.push(ASSESS_ROUTE[m]); // 去该模型答题
                 }}
-                className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+                className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold"
               >
                 {t.reportStartNow}
               </button>

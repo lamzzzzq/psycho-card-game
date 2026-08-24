@@ -69,13 +69,14 @@ export const STRINGS = {
       reassess: '重新測評',
       report: '我的報告',
       deckModalTitle: '選擇人格模型',
-      deckModalSub: '目前提供 Big Five 與 HEXACO，Dark Tetrad 規劃中',
+      deckModalSub: '三個模型的測評均已開放；Dark Tetrad 對局規劃中',
       deckModalClose: '關閉',
       // 「查看報告」选了尚未完成的模型时的提示框
       reportNotDoneBody: '你還沒做過這個測評，要現在做嗎？',
-      reportComingSoonNote: '此測評尚在規劃中',
       reportStartNow: '開始測評',
       reportBack: '返回',
+      // 单机/联机/教学里选了「测评已上线但对局未上线」的模型（目前只有 Dark Tetrad）
+      deckGameSoonBody: '此模型的對局尚在規劃中，目前可先完成測評並查看報告。',
     },
     assessment: {
       eyebrow: 'Persona Reading',
@@ -481,13 +482,14 @@ export const STRINGS = {
       reassess: 'Retake Assessment',
       report: 'My Profile',
       deckModalTitle: 'Select Personality Model',
-      deckModalSub: 'Big Five and HEXACO available; Dark Tetrad planned.',
+      deckModalSub: 'All three assessments are live; Dark Tetrad match mode is planned.',
       deckModalClose: 'Close',
       // Prompt shown when picking a not-yet-taken model from "View Report"
       reportNotDoneBody: "You haven't taken this assessment yet. Do it now?",
-      reportComingSoonNote: 'This assessment is planned',
       reportStartNow: 'Start Assessment',
       reportBack: 'Back',
+      // Shown when picking a model whose assessment is live but match mode is not (currently Dark Tetrad only)
+      deckGameSoonBody: 'The match mode for this model is still in planning. You can take the assessment and view your report for now.',
     },
     assessment: {
       eyebrow: 'Persona Reading',
