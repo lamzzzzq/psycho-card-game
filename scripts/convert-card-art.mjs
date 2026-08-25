@@ -1,7 +1,8 @@
 // 卡牌插画转换：
-//   HEXACO ：card-art-src/hexaco/{id}.png → public/cards/hexaco/{id}.webp
-//   Big Five：card-art-src/{id}.png       → public/cards/{id}.webp
-// 两套牌分别输出，题号相同也绝不互相覆盖。
+//   SD4     ：card-art-src/sd4/{id}.png    → public/cards/sd4/{id}.webp
+//   HEXACO  ：card-art-src/hexaco/{id}.png → public/cards/hexaco/{id}.webp
+//   Big Five：card-art-src/{id}.png        → public/cards/{id}.webp
+// 三套牌分别输出，题号相同也绝不互相覆盖。
 //
 // ⚠️ 默认只转 HEXACO。Big Five 的 50 张已定稿（奇数=女主角 / 偶数=男主角 交叉配比，
 //    见 card-art-src/README.md），2026-07 曾因为顺带重转而被整批换成男主角、配比全毁，
@@ -9,8 +10,9 @@
 //
 // 用法：
 //   node scripts/convert-card-art.mjs                    只转 HEXACO（默认）
+//   node scripts/convert-card-art.mjs --deck=sd4         只转 Dark Tetrad / SD4
 //   node scripts/convert-card-art.mjs --deck=big-five    只转 Big Five
-//   node scripts/convert-card-art.mjs --all              两套都转
+//   node scripts/convert-card-art.mjs --all              三套都转
 import { readdir, mkdir } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +20,7 @@ import sharp from 'sharp';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DECKS = {
+  sd4: { name: 'Dark Tetrad / SD4', source: 'card-art-src/sd4', output: 'public/cards/sd4', publicPath: 'cards/sd4' },
   hexaco: { name: 'HEXACO', source: 'card-art-src/hexaco', output: 'public/cards/hexaco', publicPath: 'cards/hexaco' },
   'big-five': { name: 'Big Five', source: 'card-art-src', output: 'public/cards', publicPath: 'cards' },
 };

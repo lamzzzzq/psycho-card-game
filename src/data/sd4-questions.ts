@@ -22,7 +22,7 @@ export const SD4_QUESTIONS: Sd4Question[] = [
   { id: 14, dimension: 'N', text: '我喜歡時不時地炫耀。', textEn: 'I like to show off every now and then.' },
   { id: 15, dimension: 'P', text: '人們常說我不受控制。', textEn: 'People often say I\'m out of control.' },
   { id: 16, dimension: 'P', text: '我傾向與權威人士以及他們制定的規範抗爭。', textEn: 'I tend to fight against authorities and their rules.' },
-  { id: 17, dimension: 'P', text: '和大多數與我同齡及同性別的人相比，我與他人有更多的紛爭。', textEn: 'I’ve been in more fights than most people of my age and gender.' },
+  { id: 17, dimension: 'P', text: '和大多數與我同齡及同性別的人相比，我與他人有更多的紛爭。', textEn: "I've been in more fights than most people of my age and gender." },
   { id: 18, dimension: 'P', text: '我傾向先投入眼前的情況，晚一點再來問問題。', textEn: 'I tend to dive in, then ask questions later.' },
   { id: 19, dimension: 'P', text: '我曾涉及與法律相關的麻煩事物。', textEn: 'I\'ve been in trouble with the law.' },
   { id: 20, dimension: 'P', text: '我有時會將自己置身於危險的情況之中。', textEn: 'I sometimes get into dangerous situations.' },
@@ -32,6 +32,6 @@ export const SD4_QUESTIONS: Sd4Question[] = [
   { id: 24, dimension: 'S', text: '看傻瓜跌得一敗塗地很有趣。', textEn: 'It\'s funny when idiots fall flat on their face.' },
   { id: 25, dimension: 'S', text: '我很享受觀看暴力運動。', textEn: 'I enjoy watching violent sports.' },
   { id: 26, dimension: 'S', text: '有些人應該受苦。', textEn: 'Some people deserve to suffer.' },
-  { id: 27, dimension: 'S', text: '我曾在社交媒體上說過惡毒的話只為了提高點閱率。', textEn: 'Just for kicks, I’ve said mean things on social media.' },
+  { id: 27, dimension: 'S', text: '我曾在社交媒體上說過惡毒的話只為了提高點閱率。', textEn: "Just for kicks, I've said mean things on social media." },
   { id: 28, dimension: 'S', text: '我知道如何單憑文字就能傷人。', textEn: 'I know how to hurt someone with words alone.' },
 ];
