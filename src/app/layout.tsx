@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Noto_Serif_TC, Noto_Sans_TC } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Serif_HK, Noto_Sans_HK } from "next/font/google";
 import "./globals.css";
 import { LocaleSync } from "@/components/shared/LocaleSync";
 import { SessionGuard } from "@/components/shared/SessionGuard";
@@ -18,17 +18,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// ⚠️ 用繁體 TC 字型（Noto Serif/Sans TC），非簡體 SC：
-// UI 文字是繁體，若用 SC 字型檔渲染，標點（，。、）會沉到左下角（簡體排版規範），
-// 港台使用者一眼看出「簡轉繁」廉價感。TC 字型的標點嚴格居中，符合港台規範。
-const notoSerifTc = Noto_Serif_TC({
+// ⚠️ 用繁體 HK 字型（Noto Serif/Sans HK），非簡體 SC、也非台標 TC：
+// UI 文字是繁體，若用 SC 字型檔渲染，標點（，。、）會沉到左下角（簡體排版規範）；
+// TC 遵台灣教育部字形（如「片」末筆帶鉤），與港澳慣用寫法不同，曾被用戶指出「片」顯示異常。
+// HK 字型標點居中且字形符合香港《常用字字形表》。
+const notoSerifTc = Noto_Serif_HK({
   variable: "--font-serif-cn",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
 // 非衬线中文（原型用：card-lab/palette 字体探索）。仅暴露 CSS 变量，不改现状。
-const notoSansTc = Noto_Sans_TC({
+const notoSansTc = Noto_Sans_HK({
   variable: "--font-sans-cn",
   subsets: ["latin"],
   weight: ["400", "500", "700", "900"],
