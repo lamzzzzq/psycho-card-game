@@ -3,7 +3,7 @@
 // SD4-28 答題頁。版式對齊 HEXACO /hexaco/assess：題面 + 5 點 Likert + 導航格。
 // 答滿 28 題 → 計分寫入 useSd4Store → 進 /sd4/results（雷達圖 + 各維度介紹）。
 // SD4 不接遊戲引擎、無對局門禁 → 不設「跳過測評，手動輸入分數」入口（那是 HEXACO/大五 進遊戲用的）。
-// 標題/引導語為暫擬文案（老闆如有定稿再逐字替換）。
+// 標題+引導語逐字照 HEXACO /hexaco/assess 定稿（含「胡牌目標」半句，0826 用戶拍板：與 HEXACO 完全一致，僅圖譜名換成 Dark Tetrad）。
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -24,8 +24,8 @@ const ACCENT = '#c39a52';
 const L = {
   zh: {
     back: '返回主頁',
-    title: '描繪你的暗黑四特質',
-    intro: '共 28 題，請憑第一直覺選擇最符合你的描述。你的答案將匯聚成專屬的「Dark Tetrad 暗黑四特質圖譜」。',
+    title: '抽取你的人格原型',
+    intro: '每道題都像翻開一張隱喻牌面。請憑第一直覺選擇，你的答案將匯聚成專屬的「Dark Tetrad 暗黑四特質圖譜」，並直接決定接下來的「胡牌目標」。',
     // Likert 選項文字照 SD4_20260804.xlsx（1 非常不同意 → 5 非常同意）。
     likert: ['非常不同意', '不同意', '中立', '同意', '非常同意'],
     prev: '上一題',
@@ -38,8 +38,8 @@ const L = {
   },
   en: {
     back: 'Back to Home',
-    title: 'Map Your Dark Tetrad',
-    intro: '28 items. Answer with your first instinct — your responses will form your personal "Dark Tetrad Profile".',
+    title: 'Discover Your Personality Archetype',
+    intro: 'Each question reveals a metaphorical card. Follow your first instinct—your choices will shape your unique "Dark Tetrad Profile," directly determining your "Winning Targets" for the match ahead.',
     likert: ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree'],
     prev: 'Previous',
     next: 'Next',
