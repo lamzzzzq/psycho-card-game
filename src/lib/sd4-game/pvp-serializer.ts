@@ -1,0 +1,102 @@
+// SD4 PVP 序列化（src/lib/pvp-serializer.ts 的物理隔離副本，僅類型/字段四維化）。
+import { SerializedGameState, SerializedPlayer } from '@/types/sd4-pvp';
+import { GameCard } from '@/types/sd4-game';
+
+interface RawGameState {
+  phase: string;
+  players: any[];
+  drawPile: GameCard[];
+  discardPile: GameCard[];
+  currentPlayerIndex: number;
+  currentRound: number;
+  actionLog: any[];
+  drawnCard: GameCard | null;
+  pendingDiscard: GameCard | null;
+  discardedByIndex: number;
+  winner: string | null;
+  claimResponses?: string[];
+  settings?: { totalRounds: number; [key: string]: any };
+}
+
+/**
+ * Serialize game state for broadcast.
+ * viewerPlayerId = null → hide all hands (for generic broadcast)
+ * viewerPlayerId = specific id → reveal that player's hand
+ */
+export function serializeGameState(state: RawGameState, viewerPlayerId: string | null): SerializedGameState {
+  const serializedPlayers: SerializedPlayer[] = state.players.map(p => {
+    const isViewer = viewerPlayerId !== null && p.id === viewerPlayerId;
+    const base: SerializedPlayer = {
+      id: p.id,
+      name: p.name,
+      avatar: p.avatar,
+      handCount: p.hand?.length ?? 0,
+      sd4Scores: p.sd4Scores,
+      declaredSets: p.declaredSets ?? [],
+      skipNextTurn: p.skipNextTurn ?? false,
+      revealedHand: p.revealedHand ?? false,
+    };
+
+    if (isViewer || viewerPlayerId === '__all__') {
+      base.hand = p.hand;
+    }
+
+    if (p.revealedHand) {
+      base.revealedCards = p.hand;
+    }
+    if (p.revealedSelectedCards && p.revealedSelectedCards.length > 0) {
+      base.revealedSelectedCards = p.revealedSelectedCards;
+    }
+    if (p.frozenUntilOwnDiscard) {
+      base.frozenUntilOwnDiscard = true;
+    }
+    if (p.extraSkipQueued) {
+      base.extraSkipQueued = true;
+    }
+    if (p.hasLeft) {
+      base.hasLeft = true;
+    }
+    if (p.selfPongUsedThisTurn) {
+      base.selfPongUsedThisTurn = true;
+    }
+    // 欠罰棄牌：客戶端要靠這個才知道「我雖然被罰停，但這一張還是得我自己點出來」。
+    if (p.owesPenaltyDiscard) {
+      base.owesPenaltyDiscard = true;
+    }
+
+    return base;
+  });
+
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const isCurrentViewer = viewerPlayerId !== null && currentPlayer?.id === viewerPlayerId;
+  // Broadcast mode (__all__) ships drawnCard to every client; each UI then
+  // filters by isMyTurn so opponents don't see it. This matches how hands
+  // are already handled (broadcast everything, client-side visibility gate).
+  const includeDrawnCard = viewerPlayerId === '__all__' || isCurrentViewer;
+
+  // draw action 的 card = 抽到的牌内容，只有本人可见。UI 本就不显示
+  // （GameLog「Draw never exposes card contents」），但 payload 原样广播
+  // 等于把对手的手牌增量发给全桌 —— devtools 里能逐张还原。按 viewer 抹掉。
+  const actionLog = (state.actionLog ?? []).map((a) =>
+    a.type === 'draw' && a.card && viewerPlayerId !== '__all__' && a.playerId !== viewerPlayerId
+      ? { ...a, card: undefined }
+      : a
+  );
+
+  return {
+    phase: state.phase,
+    players: serializedPlayers,
+    drawPileCount: state.drawPile?.length ?? 0,
+    discardPile: state.discardPile ?? [],
+    currentPlayerIndex: state.currentPlayerIndex,
+    currentRound: state.currentRound,
+    actionLog,
+    drawnCard: includeDrawnCard ? state.drawnCard : null,
+    pendingDiscard: state.pendingDiscard,
+    discardedByIndex: state.discardedByIndex,
+    claimResponses: state.claimResponses ?? [],
+    winner: state.winner,
+    totalRounds: state.settings?.totalRounds ?? 0,
+    revealDifficulty: state.settings?.revealDifficulty ?? 'hidden',
+  };
+}

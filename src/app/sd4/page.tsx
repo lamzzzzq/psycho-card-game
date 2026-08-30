@@ -1,7 +1,7 @@
 'use client';
 
 // SD4（Dark Tetrad）模型科普页（独立可查看），对齐 /hexaco 介绍页。
-// SD4 只做「测评→报告」，不接游戏引擎 → 顶部放测评入口（不是对局入口）。
+// 2026-08-31 SD4 对局上线：顶部对齐 /hexaco 改放对局入口（大厅里有同款 needAssess 门禁）。
 
 import Link from 'next/link';
 import { useLocaleStore } from '@/lib/i18n';
@@ -25,23 +25,24 @@ export default function Sd4Page() {
           {locale === 'en' ? '← Back to Home' : '← 返回首頁'}
         </Link>
 
-        {/* SD4 測評入口：28 題 → 四維報告。 */}
+        {/* SD4 對局入口（Beta）：四維牌局走物理隔離的 /sd4-lobby → /sd4-game，
+            需先完成 SD4 測評（大廳裏有同款 needAssess 門禁）。 */}
         <div className="psy-panel psy-etched flex flex-col items-start gap-3 rounded-[1.6rem] p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <p className="psy-serif text-lg text-[var(--psy-ink)]">
-              {locale === 'en' ? 'Dark Tetrad Assessment (SD4)' : 'Dark Tetrad 測評（SD4）'}
+              {locale === 'en' ? 'Dark Tetrad Card Game (Beta)' : 'Dark Tetrad 人格對局（Beta）'}
             </p>
             <p className="text-sm leading-6 text-[var(--psy-muted)]">
               {locale === 'en'
-                ? '28 items, four dimensions — see your Dark Tetrad profile.'
-                : '28 題、四個維度——看看你的暗黑四特質圖譜。'}
+                ? 'Four dimensions, same rules — file all 4 to win. Requires the SD4 assessment (28 items).'
+                : '四個維度、同一套規則——歸檔全部 4 維即獲勝。需先完成 SD4 測評（28 題）。'}
             </p>
           </div>
           <Link
-            href="/sd4/assess"
+            href="/sd4-lobby"
             className="psy-btn psy-btn-accent shrink-0 px-6 py-2.5 text-sm font-semibold"
           >
-            {locale === 'en' ? 'Start Assessment' : '開始測評'}
+            {locale === 'en' ? 'Play Solo' : '進入單機對局'}
           </Link>
         </div>
 

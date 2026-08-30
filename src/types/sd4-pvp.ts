@@ -1,0 +1,135 @@
+// SD4 PVP 類型（src/types/hexaco-pvp.ts 的四維物理隔離副本）。字段差異：
+// PlayerInfo.sd4 / RoomPlayer.sd4（對應 players.sd4 列）、
+// SerializedPlayer.sd4Scores、消息 'sd4-updated'。rooms 基礎設施類型共用結構。
+import { Sd4Scores, Dimension, GameCard, GameAction, RevealDifficulty } from './sd4-game';
+
+// Player identity (persisted to localStorage + Supabase)
+export interface PlayerInfo {
+  id: string; // student ID (學號) as unique identifier
+  studentId: string;
+  sd4: Sd4Scores | null;
+  avatar?: string; // 玩家选的 emoji 头像（占位符），随 player-joined 广播流转
+}
+
+// Room status
+//   waiting  — 房間開放：房主在場，可加入、可開局
+//   playing  — 對局進行中
+//   finished — 一局剛打完，房主【還沒表態】要不要再來一局。組員此時點「再來
+//              一局」只看到輕量等待態，不是完整房間（2026-08-03 老闆定）。
+//              房主點「再來一局」進房後才置回 waiting。
+//   ended    — 已解散（房主主動退出 / 房主失聯超時）。
+export type RoomStatus = 'waiting' | 'playing' | 'finished' | 'ended';
+
+// Personality deck identifier.（'cpai' 是 SD4/Dark Tetrad 的歷史 key，沿用主頁約定）
+export type DeckId = 'big-five' | 'hexaco' | 'sd4' | 'cpai';
+
+// Room settings
+export interface RoomSettings {
+  totalRounds: number; // 0 = unlimited
+  maxPlayers: number; // 3-4
+  deck?: DeckId; // optional for backward-compat with existing rooms (= 'big-five')
+  difficulty?: RevealDifficulty; // 看牌難度；缺省 = 'hidden'（現狀）
+}
+
+// Room data from DB
+export interface Room {
+  id: string;
+  code: string;
+  host_id: string;
+  status: RoomStatus;
+  settings: RoomSettings;
+  created_at: string;
+}
+
+// Room player (join table)
+export interface RoomPlayer {
+  room_id: string;
+  player_id: string;
+  seat_index: number;
+  // Joined from players table
+  student_id?: string;
+  sd4?: Sd4Scores | null;
+  avatar?: string; // emoji 头像（来自 broadcast / 本地自补，players 表不存）
+}
+
+// Realtime message types
+export type RealtimeMessage =
+  | { type: 'player-joined'; player: PlayerInfo; seatIndex: number }
+  | { type: 'player-left'; playerId: string }
+  | { type: 'player-kicked'; playerId: string }
+  | { type: 'room-dissolved' }
+  // 房主回到房間、把上一局結束後的 'finished' 置回 'waiting' —— 組員的輕量
+  // 等待態收到後切換成完整房間。DB 的 status 也會變，但 postgres_changes 訂閱
+  // 只在 room 已載入後才建立；廣播是即時的那條路，兩條都留着互為兜底。
+  // Tentative offline: presence dropped but within grace period.
+  | { type: 'player-offline'; playerId: string }
+  | { type: 'player-online'; playerId: string }
+  | { type: 'settings-changed'; settings: RoomSettings }
+  // toPlayerId, when set, means this payload was tailored for a single
+  // recipient — clients with a different myPlayerId MUST ignore it. Used
+  // to keep hand cards private per-recipient instead of broadcasting
+  // every hand to every viewer.
+  | { type: 'game-start'; gameState: SerializedGameState; toPlayerId?: string }
+  | { type: 'game-state-update'; gameState: SerializedGameState; toPlayerId?: string }
+  | { type: 'action-request'; fromPlayerId: string; action: PvpAction }
+  | { type: 'game-over'; winnerId: string }
+  | { type: 'sd4-updated'; playerId: string; sd4: Sd4Scores }
+  | { type: 'state-request'; fromPlayerId: string };
+
+// Actions that clients can request
+export type PvpAction =
+  | { type: 'draw' }
+  | { type: 'discard'; cardId: number }
+  | { type: 'hu' }
+  | { type: 'pong'; dimension: Dimension; handCardIds: number[] }
+  | { type: 'self-pong'; dimension: Dimension; cardIds: number[] }
+  | { type: 'skip-pong' }
+  | { type: 'leave' };
+
+// Serialized game state for broadcast (same shape as GameState)
+export interface SerializedGameState {
+  phase: string;
+  players: SerializedPlayer[];
+  drawPileCount: number; // Don't send actual cards to non-host
+  discardPile: GameCard[];
+  currentPlayerIndex: number;
+  currentRound: number;
+  actionLog: GameAction[];
+  drawnCard: GameCard | null; // Broadcast to all; clients filter by isMyTurn
+  pendingDiscard: GameCard | null;
+  discardedByIndex: number;
+  claimResponses: string[];
+  winner: string | null;
+  totalRounds: number;
+  revealDifficulty?: RevealDifficulty; // 看牌難度，廣播給所有客戶端一致渲染 tag
+}
+
+export interface SerializedPlayer {
+  id: string;
+  name: string;
+  avatar: string;
+  handCount: number; // Don't reveal hand to other players
+  hand?: GameCard[]; // Only sent to the player themselves
+  sd4Scores: Sd4Scores;
+  declaredSets: any[];
+  skipNextTurn: boolean;
+  revealedHand: boolean;
+  revealedCards?: GameCard[];          // full hand, sent when revealedHand is true (hu-fail)
+  revealedSelectedCards?: GameCard[];  // subset, sent after pong-fail
+  // [DEPRECATED] kept for backwards-compatibility on stale broadcasts.
+  frozenUntilDiscarderIndex?: number;
+  // Penalty freeze, mirrored from host. Released by the offender's own
+  // next clean discard. UI gates claim/pong/hu panels on this.
+  frozenUntilOwnDiscard?: boolean;
+  // 加重罰停標誌：skipPenalizedPlayers 跳過該玩家一次後，若 true 則重新激活
+  // skipNextTurn 讓下一圈再跳一次。pong-fail/hu-fail/self-pong-fail 時設。
+  extraSkipQueued?: boolean;
+  // Player quit the room — their seat is permanently skipped by the
+  // engine; UI shows "已退出".
+  hasLeft?: boolean;
+  // Once-per-turn self-pong gate, mirrored for UI to disable the button.
+  selfPongUsedThisTurn?: boolean;
+  // 欠一張罰棄牌（食胡失敗 / 自摸碰失敗後仍要棄一張），mirrored for UI：
+  // 被罰玩家雖然 frozen，這一張還是得由他自己點出來。見 types/sd4-game.ts。
+  owesPenaltyDiscard?: boolean;
+}

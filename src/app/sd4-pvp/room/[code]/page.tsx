@@ -1,0 +1,460 @@
+'use client';
+
+// SD4 聯機房間等待頁（src/app/hexaco-pvp/room/[code]/page.tsx 的四維物理隔離副本）。
+// 差異：sd4 store/api、分數字段 sd4、牌組守衛（其他牌組的房 → 重定向回自家房頁）。
+
+import { useEffect, useState, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { useSd4PlayerStore } from '@/stores/useSd4PlayerStore';
+import { useSd4Store } from '@/stores/useSd4Store';
+import { useSd4PvpStore } from '@/stores/useSd4PvpStore';
+import { supabase } from '@/lib/supabase';
+import { getRoomPlayers, kickPlayer, dissolveRoom, leaveRoom, updateRoomStatus } from '@/lib/sd4-game/room-api';
+import { Room, RoomSettings } from '@/types/sd4-pvp';
+import { useLocaleStore, STRINGS } from '@/lib/i18n';
+import { useHydrated } from '@/stores/useHydration';
+import { useRequireLogin } from '@/lib/useRequireLogin';
+import { useWakeLock } from '@/stores/useWakeLock';
+
+export default function RoomWaitPage() {
+  useWakeLock(); // 屏幕常亮：房主/玩家在房间等待时别自动锁屏掉线
+  const params = useParams();
+  const router = useRouter();
+  const code = params.code as string;
+  const hydrated = useHydrated();
+  const { ready: authReady } = useRequireLogin(); // 未登入 → 跳 /login
+  const localeRaw = useLocaleStore((s) => s.locale);
+  const locale = hydrated ? localeRaw : 'zh';
+  const t = STRINGS[locale].pvpRoom;
+
+  const { player } = useSd4PlayerStore();
+  const sd4Scores = useSd4Store((st) => st.scores);
+  const {
+    room, players, isHost, offlinePlayerIds, roomClosed,
+    setRoom, setMyPlayerId, setPlayers,
+    subscribeRoom, sendMessage, startGame, unsubscribeRoom,
+  } = useSd4PvpStore();
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [starting, setStarting] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [settings, setSettings] = useState<RoomSettings>({ maxPlayers: 4, totalRounds: 10 });
+  // 送回首頁前那句 toast，顯示約 2 秒。硬跳轉會重載頁面，所以只能先顯示再跳。
+  const [closedToast, setClosedToast] = useState(false);
+
+  const handleCopyCode = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch { /* 剪贴板不可用时静默：用户仍可手动读码 */ }
+  }, [code]);
+
+  useEffect(() => {
+    if (!player) { router.replace('/sd4-pvp'); return; }
+    // 不在這裏無條件清 gameState — 否則當 status 已經是 'playing'（玩家
+    // 通過 navigation 短暫經過 room page 再跳 game page）時會清掉持久化
+    // 的遊戲狀態，導致 game page 看到 gameState=null → 4 秒後誤判
+    // 「房主似乎不在線」。改到 status === 'waiting' 分支下才清（再來
+    // 一局的真實場景）。
+
+    async function loadRoom() {
+      try {
+        const { data: roomData, error: roomErr } = await supabase
+          .from('rooms')
+          .select('*')
+          .eq('code', code)
+          .single();
+
+        if (roomErr || !roomData) { setError(t.roomNotExist); setLoading(false); return; }
+
+        // 牌組守衛：其他牌組的房 → 交還給對應房間頁（三向守衛，各側同款）。
+        const roomDeck = (roomData.settings as RoomSettings)?.deck ?? 'big-five';
+        if (roomDeck !== 'sd4') {
+          router.replace(roomDeck === 'hexaco' ? `/hexaco-pvp/room/${code}` : `/pvp/room/${code}`);
+          return;
+        }
+
+        if (roomData.status === 'playing') {
+          // 遊戲進行中：保留 gameState（持久化的舊快照），讓 game page
+          // 渲染時有兜底數據；之後 host 會通過 state-request 推最新狀態。
+          router.replace(`/sd4-pvp/game/${code}`);
+          return;
+        }
+
+        const amHostEarly = roomData.host_id === player!.id;
+
+        // 已解散（房主主動退出 / 組員那邊失聯倒數到點都會置 'ended'）。說清楚是
+        // 「房主走了」而不是含糊的「房間不存在」——後者會讓人以為房號輸錯了。
+        // 房主自己晚回來（超過 30 秒）也會撞到這裏，對他不能說「房主已離開」。
+        if (roomData.status === 'ended') {
+          setError(amHostEarly ? t.roomClosedPlain : t.roomClosedToast);
+          setLoading(false);
+          return;
+        }
+
+        // status === 'finished'：上一局剛打完（見 types/pvp.ts RoomStatus）。
+        // 2026-08-05 老闆簡化：再來一局是房主專屬 —— 房主到了就把房間重開
+        // （'waiting'），組員不再有「等房主回來」的等待態，撞到 finished 一律
+        // 回 PVP 大廳，等房主重開後憑房號再加入。
+        if (roomData.status === 'finished') {
+          if (amHostEarly) {
+            void updateRoomStatus(roomData.id, 'waiting');
+            roomData.status = 'waiting';
+          } else {
+            router.replace('/sd4-pvp');
+            return;
+          }
+        }
+
+        // 到這裏只剩 waiting / finished(組員等待態) —— 兩者都是「新一局的準備
+        // 期」，可以安全清掉上一局的 gameState。
+        useSd4PvpStore.setState({ gameState: null, rawGameState: null });
+
+        const roomObj = roomData as Room;
+        setRoom(roomObj);
+        setSettings(roomObj.settings);
+        setMyPlayerId(player!.id);
+
+        const playerList = await getRoomPlayers(roomObj.id);
+        // players 表的 SELECT 已被 RLS 锁（隐私）→ getRoomPlayers 的 join 拿不到
+        // 自己这一行的 student_id/sd4（恒为 null），自己又收不到自己的 broadcast
+        // (self:false)。用本地已知信息补上自己这一行，否则 host 开局会用 null/随机分数
+        // 建局并存档（污染数据）。其他玩家信息靠 broadcast(player-joined/sd4-updated) 收齐。
+        const patchedList = playerList.map((p) =>
+          p.player_id === player!.id
+            ? {
+                ...p,
+                student_id: player!.studentId,
+                sd4: player!.sd4 ?? sd4Scores ?? null,
+                avatar: player!.avatar,
+              }
+            : p
+        );
+        setPlayers(patchedList);
+
+        const amHost = roomObj.host_id === player!.id;
+        useSd4PvpStore.setState({ isHost: amHost });
+
+        subscribeRoom(code, player!.id);
+
+        if (!amHost) {
+          setTimeout(() => {
+            const myPlayer = playerList.find(p => p.player_id === player!.id);
+            useSd4PvpStore.getState().sendMessage({
+              type: 'player-joined',
+              player: {
+                id: player!.id,
+                studentId: player!.studentId,
+                sd4: player!.sd4,
+                avatar: player!.avatar,
+              },
+              seatIndex: myPlayer?.seat_index ?? playerList.length - 1,
+            });
+          }, 300);
+        }
+      } catch (e: any) {
+        setError(e.message ?? t.loadFailed);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadRoom();
+  }, [code, player]);
+
+  useEffect(() => {
+    if (!sd4Scores || !player) return;
+    sendMessage({ type: 'sd4-updated', playerId: player.id, sd4: sd4Scores });
+  }, [sd4Scores]);
+
+  useEffect(() => {
+    let prev = useSd4PvpStore.getState().gameState;
+    return useSd4PvpStore.subscribe(state => {
+      if (state.gameState && !prev) {
+        router.replace(`/sd4-pvp/game/${code}`);
+      }
+      prev = state.gameState;
+    });
+  }, [code]);
+
+  useEffect(() => {
+    if (!room) return;
+    const sub = supabase
+      .channel(`room-status-${room.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'rooms',
+        filter: `id=eq.${room.id}`,
+      }, (payload: any) => {
+        const next = payload.new?.status;
+        if (next === 'playing') {
+          router.replace(`/sd4-pvp/game/${code}`);
+        } else if (next === 'ended') {
+          // 房間被關了（房主主動退 / 別的客戶端倒數到點收的屍）。
+          useSd4PvpStore.setState({ roomClosed: true });
+        }
+      })
+      .subscribe();
+
+    return () => { sub.unsubscribe(); };
+  }, [room?.id]);
+
+  // 房間已關閉（房主主動退出的廣播）→ 先讓那句 toast 露個面，
+  // 約 2 秒後再送回首頁。老闆：別讓人莫名其妙被扔出去。
+  useEffect(() => {
+    if (!roomClosed) return;
+    setClosedToast(true);
+    const timer = setTimeout(() => {
+      unsubscribeRoom();
+      router.replace('/');
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [roomClosed]);
+
+  const handleKick = useCallback(async (playerId: string) => {
+    if (!room) return;
+    await kickPlayer(room.id, playerId);
+    sendMessage({ type: 'player-kicked', playerId });
+    setPlayers(players.filter(p => p.player_id !== playerId));
+  }, [room, players]);
+
+  const handleDissolve = useCallback(async () => {
+    if (!room) return;
+    sendMessage({ type: 'room-dissolved' });
+    await dissolveRoom(room.id);
+    unsubscribeRoom();
+    router.replace('/sd4-pvp');
+  }, [room]);
+
+  const handleLeave = useCallback(async () => {
+    if (!player || !room) return;
+    sendMessage({ type: 'player-left', playerId: player.id });
+    try {
+      await leaveRoom(room.id, player.id);
+    } catch {
+      // Even if DB delete fails, exit locally to avoid getting stuck.
+    }
+    unsubscribeRoom();
+    router.replace('/sd4-pvp');
+  }, [player, room]);
+
+  const handleStart = useCallback(async () => {
+    if (!room || players.length < 2) return;
+    setStarting(true);
+    try {
+      startGame();
+      router.replace(`/sd4-pvp/game/${code}`);
+    } finally {
+      setStarting(false);
+    }
+  }, [room, players, code]);
+
+  // 登录闸：未登入（含登出后）不渲染房间，正跳转 /login。
+  if (!authReady) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">{t.loadingRoom}</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="psy-serif animate-pulse text-[var(--psy-muted)]">{t.loadingRoom}</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4">
+        <p className="text-[var(--psy-danger)]">{error}</p>
+        <button onClick={() => router.replace('/sd4-pvp')} className="psy-btn psy-btn-ghost px-6 py-2 text-sm">
+          {t.backLobby}
+        </button>
+      </div>
+    );
+  }
+
+  // 房間被關掉時那句 toast。
+  const closedToastNode = closedToast ? (
+    <motion.div
+      initial={{ opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="psy-serif fixed left-1/2 top-6 z-[95] -translate-x-1/2 rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-5 py-2.5 text-sm text-[var(--psy-accent-strong)] shadow-lg"
+    >
+      {t.roomClosedToast}
+    </motion.div>
+  ) : null;
+
+  const maxPlayers = settings.maxPlayers;
+  const canStart = isHost && players.length >= 2;
+
+  return (
+    <div className="flex flex-1 flex-col items-center px-6 py-10">
+      {closedToastNode}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-2xl space-y-8"
+      >
+        <div className="psy-panel psy-etched relative space-y-3 rounded-[2rem] px-4 py-10 text-center sm:px-8">
+          <p className="psy-eyebrow">{t.codeLabel}</p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="psy-serif min-w-0 text-6xl font-medium tracking-[0.2em] text-[var(--psy-accent)] tabular-nums sm:text-8xl sm:tracking-[0.32em]">
+              {code}
+            </div>
+            <button
+              onClick={handleCopyCode}
+              aria-label={t.copyCode}
+              title={copied ? t.copiedCode : t.copyCode}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgba(154,116,72,0.28)] bg-[var(--psy-card-content)] text-[var(--psy-accent)] shadow-[0_8px_18px_rgba(96,72,38,0.1)] transition hover:border-[var(--psy-accent)] hover:bg-[var(--psy-accent-soft)]"
+            >
+              {copied ? (
+                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg>
+              )}
+            </button>
+          </div>
+          <p className="text-sm text-[var(--psy-muted)]">{copied ? t.copiedCode : t.shareHint}</p>
+          <div className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(200,155,93,0.18),transparent_68%)]" />
+        </div>
+
+        <section className="psy-panel psy-etched space-y-4 rounded-[1.6rem] p-6">
+          <div className="flex items-center justify-between">
+            <p className="psy-eyebrow text-[10px]">{t.playersLabel} · {players.length} / {maxPlayers}</p>
+            {!isHost && (
+              <button
+                onClick={handleLeave}
+                className="text-xs text-[var(--psy-danger)] underline decoration-[rgba(220,106,79,0.32)] underline-offset-4 transition hover:opacity-80"
+              >
+                {t.leaveRoom}
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            {Array.from({ length: maxPlayers }).map((_, i) => {
+              const p = players.find((pl) => pl.seat_index === i);
+              const isMe = p?.player_id === player?.id;
+              const isRoomHost = p?.player_id === room?.host_id;
+              const occupied = !!p;
+
+              return (
+                <motion.div
+                  key={i}
+                  layout
+                  className="flex items-center gap-3 rounded-[1.2rem] border p-3"
+                  style={{
+                    borderColor: occupied
+                      ? isMe
+                        ? 'var(--psy-border-strong)'
+                        : 'rgba(200,155,93,0.16)'
+                      : 'rgba(200,155,93,0.10)',
+                    background: occupied
+                      ? isMe
+                        ? 'var(--psy-accent-soft)'
+                        : 'rgba(255,255,255,0.025)'
+                      : 'transparent',
+                    borderStyle: occupied ? 'solid' : 'dashed',
+                  }}
+                >
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-lg leading-none"
+                    style={{
+                      borderColor: 'rgba(200,155,93,0.22)',
+                      background: 'rgba(200,155,93,0.08)',
+                      color: 'var(--psy-ink-soft)',
+                    }}
+                  >
+                    {p ? (p.avatar ?? '🧑') : i + 1}
+                  </div>
+                  {p ? (
+                    <>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="psy-serif truncate text-sm text-[var(--psy-ink)]">
+                            {p.student_id ?? p.player_id ?? t.unknownPlayer}
+                          </span>
+                          {isRoomHost && (
+                            <span className="rounded-full border border-[rgba(200,155,93,0.32)] bg-[var(--psy-accent-soft)] px-2 py-0.5 text-[10px] text-[var(--psy-accent)]">
+                              {t.host}
+                            </span>
+                          )}
+                          {isMe && (
+                            <span className="rounded-full border border-[rgba(200,155,93,0.32)] bg-[var(--psy-accent-soft)] px-2 py-0.5 text-[10px] text-[var(--psy-accent)]">
+                              {t.me}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-[var(--psy-muted)]">
+                          {p.sd4 ? t.assessedTrue : t.assessedFalse}
+                        </div>
+                      </div>
+                      {isHost && !isMe && (
+                        <button
+                          onClick={() => handleKick(p.player_id)}
+                          className="text-xs text-[var(--psy-danger)] underline decoration-[rgba(220,106,79,0.32)] underline-offset-4 transition hover:opacity-80"
+                        >
+                          {t.kick}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-sm text-[var(--psy-muted)]">{t.waitingJoin}</span>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* 房间设置在创建时已确定，等待室仅只读展示（不可再改），所有玩家可见。 */}
+        <section className="psy-panel psy-etched space-y-4 rounded-[1.6rem] p-6">
+          <p className="psy-eyebrow text-[10px]">{t.roomSettings}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-[1.2rem] border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-4 py-3 text-center">
+              <p className="text-[11px] text-[var(--psy-muted)]">{t.maxPlayers}</p>
+              <p className="psy-serif mt-1 text-lg text-[var(--psy-ink)] tabular-nums">{settings.maxPlayers}{t.playerUnit}</p>
+            </div>
+            <div className="rounded-[1.2rem] border border-[rgba(154,116,72,0.16)] bg-[var(--psy-card-content)] px-4 py-3 text-center">
+              <p className="text-[11px] text-[var(--psy-muted)]">{t.rounds}</p>
+              <p className="psy-serif mt-1 text-lg text-[var(--psy-ink)] tabular-nums">{settings.totalRounds === 0 ? '∞' : settings.totalRounds}</p>
+            </div>
+          </div>
+        </section>
+
+        <div className="space-y-3">
+          {isHost ? (
+            <button
+              onClick={handleStart}
+              disabled={!canStart || starting}
+              className="psy-btn psy-btn-accent psy-serif w-full py-4 text-lg font-semibold"
+            >
+              {starting ? t.starting : canStart ? t.startGame : `${t.waitingPlayersPrefix}${players.length}/${maxPlayers}${t.waitingPlayersSuffix}`}
+            </button>
+          ) : (
+            <div className="psy-serif animate-pulse rounded-[1.4rem] border border-dashed border-[rgba(200,155,93,0.18)] bg-[rgba(255,255,255,0.02)] py-4 text-center text-sm text-[var(--psy-muted)]">
+              {t.waitingHost}
+            </div>
+          )}
+
+          {isHost && (
+            <button
+              onClick={handleDissolve}
+              className="psy-btn psy-btn-danger w-full py-2.5 text-sm"
+            >
+              {t.dissolveRoom}
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+}

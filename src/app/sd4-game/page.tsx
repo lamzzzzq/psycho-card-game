@@ -1,0 +1,993 @@
+'use client';
+
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { useSd4GameStore } from '@/stores/useSd4GameStore';
+import {
+  useGameFeedback,
+  FeedbackOverlays,
+  useYourTurnNotifier,
+  YourTurnBanner,
+  TurnNoticeToast,
+  turnNudge,
+} from '@/components/sd4-game/FeedbackLayer';
+import { useSd4Store } from '@/stores/useSd4Store';
+import { useHydrated } from '@/stores/useHydration';
+import { useRequireLogin } from '@/lib/useRequireLogin';
+import { useWakeLock } from '@/stores/useWakeLock';
+import { useLocaleStore, STRINGS, playerLabel } from '@/lib/i18n';
+import { SD4_GAME_META } from '@/data/sd4-game-dimensions';
+import { DIMENSIONS, Dimension, GameCard } from '@/types/sd4-game';
+import { getTargetCounts } from '@/lib/sd4-game/scoring';
+import { getDeclaredDimensions, getRankings } from '@/lib/sd4-game/game-logic';
+import { PlayerHand } from '@/components/sd4-game/PlayerHand';
+import { DiscardControls } from '@/components/game/DiscardControls';
+import { OpponentHand } from '@/components/sd4-game/OpponentHand';
+import { DrawPile } from '@/components/game/DrawPile';
+import { DiscardPile } from '@/components/sd4-game/DiscardPile';
+import { GameLog } from '@/components/sd4-game/GameLog';
+import { GameOverModal } from '@/components/sd4-game/GameOverModal';
+import { FlyingCard } from '@/components/sd4-game/FlyingCard';
+import { PongPanel } from '@/components/sd4-game/PongPanel';
+import { DeclaredArea } from '@/components/sd4-game/DeclaredArea';
+import { FilingProgressCard } from '@/components/sd4-game/FilingProgressCard';
+import { MobileGameSheet } from '@/components/game/MobileGameSheet';
+import { PsyOverlayPanel } from '@/components/shared/PsyOverlayPanel';
+import { BgmToggleButton } from '@/components/shared/BgmToggleButton';
+import { Sd4HowToPlayButton } from '@/components/sd4-game/Sd4HowToPlayButton';
+import { Sd4DimensionSummaryButton } from '@/components/sd4-game/Sd4DimensionSummaryButton';
+
+interface FlyingAnim {
+  id: number;
+  cardId: number;
+  card: GameCard;
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+}
+
+export default function GamePage() {
+  useWakeLock(); // 屏幕常亮：单机牌桌也别自动锁屏
+  const router = useRouter();
+  const {
+    game,
+    playerDraw,
+    playerDiscard,
+    playerHu,
+    playerPong,
+    playerSelfPong,
+    playerSkipPong,
+    resolvePongWindow,
+    executeAITurn,
+    initGame,
+    resetGame,
+  } = useSd4GameStore();
+  // SD4 遊戲用 SD4 測評的分數（useSd4Store），不是大五/HEXACO 測評。
+  const sd4Scores = useSd4Store((s) => s.scores);
+  const hydrated = useHydrated();
+  const { ready: authReady } = useRequireLogin(); // 未登入 → 跳 /login，防登出后靠本地存档直接进对局
+  const localeRaw = useLocaleStore((s) => s.locale);
+  const locale = hydrated ? localeRaw : 'zh';
+  const tg = STRINGS[locale].game;
+  const dimName = useCallback((d: Dimension) => (locale === 'en' ? SD4_GAME_META[d].nameEn : SD4_GAME_META[d].name), [locale]);
+  // 看牌難度（對應聯機版）：open=全公開 / half=每回合看 4 張且保留 / hidden=每回合看 2 張（預設）
+  const revealDifficulty = game?.settings?.revealDifficulty ?? 'hidden';
+  const viewCap = revealDifficulty === 'half' ? 4 : 2;
+  const [aiRunning, setAiRunning] = useState(false);
+
+  // Card selection state (for pong)
+  const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
+  const [mobileSheet, setMobileSheet] = useState<'log' | 'declared' | 'persona' | null>(null);
+  // "View N cards" feature (N=viewCap: half=4 / hidden=2): 1 use per own turn. Resets when active player changes (half 保留跨回合).
+  const [viewMode, setViewMode] = useState(false);
+  const [pickedViewIds, setPickedViewIds] = useState<number[]>([]);
+  const [viewedCardIds, setViewedCardIds] = useState<number[]>([]);
+  const [viewUsedThisTurn, setViewUsedThisTurn] = useState(false);
+  const [discardPickId, setDiscardPickId] = useState<number | null>(null);
+
+  // Exit-confirmation modal
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+  // Pong intent — when user clicks the main-area 「碰」 button, this opens
+  // a card-selection flow. type='self' for 自摸碰 (own turn), 'other' for
+  // claiming an opponent's discard.
+  const [pongIntent, setPongIntent] = useState<{
+    type: 'self' | 'other';
+    dimension: Dimension;
+  } | null>(null);
+  const [selfPongDimensionChosen, setSelfPongDimensionChosen] = useState(false);
+
+  // Arrow state — 存「取点函数」而非静态坐标，ArrowOverlay 每帧重算 → 跟随滚动。
+  type Pt = { x: number; y: number };
+  const [arrowFrom, setArrowFrom] = useState<(() => Pt | null) | null>(null);
+  const [arrowTo, setArrowTo] = useState<(() => Pt | null) | null>(null);
+  const [arrowColor, setArrowColor] = useState('#a855f7');
+
+  // 单人 idle 提醒：本回合超过一定时间未行动时，弹「輪到你」toast + 屏幕震动。
+  const [idleReminderVisible, setIdleReminderVisible] = useState(false);
+
+  // Flying card animations
+  const [flyingCards, setFlyingCards] = useState<FlyingAnim[]>([]);
+  const flyIdRef = useRef(0);
+  const discardPileRef = useRef<HTMLDivElement>(null);
+  const drawPileRef = useRef<HTMLDivElement>(null);
+  const handAreaRef = useRef<HTMLDivElement>(null);
+
+  // Timer for human turn
+  const isHumanActive = game?.currentPlayerIndex === 0 && (game?.phase === 'drawing' || game?.phase === 'discarding');
+  const isHumanDiscardPhase =
+    game?.currentPlayerIndex === 0 &&
+    game?.phase === 'discarding' &&
+    // 欠罰棄牌的玩家雖然帶着 skipNextTurn，但這一張仍要他自己棄（見下方 isDiscarding）
+    (!game.players[0]?.skipNextTurn || !!game.players[0]?.owesPenaltyDiscard);
+
+  useEffect(() => {
+    if (isHumanDiscardPhase) return;
+    setDiscardPickId(null);
+  }, [isHumanDiscardPhase]);
+
+  const { shakeControls, flashControls, pops } = useGameFeedback(
+    game?.actionLog ?? [],
+    game?.players ?? [],
+    locale
+  );
+
+  // Your-turn banner: fires each time the turn becomes the human's (index 0)
+  const yourTurnKey = useYourTurnNotifier(
+    game?.currentPlayerIndex,
+    game?.currentPlayerIndex === 0 && (game?.phase === 'drawing' || game?.phase === 'discarding')
+  );
+
+  // Clear selection when phase changes
+  useEffect(() => {
+    if (game?.phase !== 'claim-window') {
+      setSelectedCardIds([]);
+    }
+  }, [game?.phase]);
+
+  // Clear pong intent when turn/phase context changes — keeps the modal
+  // invariant honest.
+  useEffect(() => {
+    setPongIntent(null);
+    setSelectedCardIds([]);
+    setSelfPongDimensionChosen(false);
+  }, [game?.currentPlayerIndex, game?.phase]);
+
+  // Reset view-cards state on turn change. half 模式：已看的牌保留（不清 viewedCardIds）。
+  useEffect(() => {
+    setViewMode(false);
+    setPickedViewIds([]);
+    if (revealDifficulty !== 'half') setViewedCardIds([]);
+    setViewUsedThisTurn(false);
+  }, [game?.currentPlayerIndex, game?.currentRound, revealDifficulty]);
+
+  // Solo play never advances automatically. The reminder repeats every 30s
+  // while the player is deciding; any action resets the interval.
+  useEffect(() => {
+    if (!isHumanActive) {
+      setIdleReminderVisible(false);
+      setArrowFrom(null);
+      setArrowTo(null);
+      return;
+    }
+    let hideTimer: number | null = null;
+    const interval = window.setInterval(() => {
+      turnNudge(shakeControls);
+      setIdleReminderVisible(true);
+      if (hideTimer) window.clearTimeout(hideTimer);
+      hideTimer = window.setTimeout(() => setIdleReminderVisible(false), 2500);
+    }, 60_000);
+    return () => {
+      window.clearInterval(interval);
+      if (hideTimer) window.clearTimeout(hideTimer);
+    };
+  }, [isHumanActive, game?.actionLog.length, shakeControls]);
+
+  // Redirect if no game
+  useEffect(() => {
+    if (!game) {
+      router.push(sd4Scores ? '/sd4-lobby' : '/sd4/assess');
+    }
+  }, [game, sd4Scores, router]);
+
+  // Manual AI turn
+  const runOneAITurn = useCallback(async () => {
+    if (aiRunning) return;
+    setAiRunning(true);
+    try {
+      await executeAITurn();
+    } finally {
+      setAiRunning(false);
+    }
+  }, [executeAITurn, aiRunning]);
+
+  useEffect(() => {
+    if (!game) return;
+    if (aiRunning) return;
+    if (game.phase === 'game-over' || game.phase === 'claim-window') return;
+    if (game.currentPlayerIndex === 0) return;
+
+    // 模拟思考：AI 出牌前随机停顿 5–8 秒，避免节奏过快（原 280ms 几乎瞬发）。
+    const thinkDelay = 5000 + Math.random() * 3000;
+    const timer = window.setTimeout(() => {
+      void runOneAITurn();
+    }, thinkDelay);
+
+    return () => window.clearTimeout(timer);
+  }, [game?.currentPlayerIndex, game?.phase, game?.actionLog.length, aiRunning, runOneAITurn, game]);
+
+  useEffect(() => {
+    if (!game) return;
+    if (aiRunning) return;
+    if (game.phase !== 'claim-window') return;
+    // AI 響應窗口的驅動條件：人類已經「表過態」——
+    //   a) 人類是棄牌者（本來就不參與響應），或
+    //   b) 人類已在 claimResponses 裏（點過按鈕，或被罰停時由
+    //      autoSkipPenalizedClaimers 自動補了跳過）。
+    // 之前只驅動 (a)：人類被罰停時 AI 棄牌開窗 → 人類被引擎自動跳過、
+    // UI 也沒按鈕可點 → 沒有任何路徑去跑 resolvePongWindow → 全桌永久卡死。
+    const humanId = game.players[0]?.id;
+    const humanDone =
+      game.discardedByIndex === 0 ||
+      (humanId != null && game.claimResponses.includes(humanId));
+    if (!humanDone) return;
+
+    const timer = window.setTimeout(async () => {
+      setAiRunning(true);
+      try {
+        await resolvePongWindow();
+      } finally {
+        setAiRunning(false);
+      }
+    }, 320);
+
+    return () => window.clearTimeout(timer);
+  }, [game?.phase, game?.discardedByIndex, game?.pendingDiscard?.id, game?.claimResponses.length, aiRunning, resolvePongWindow, game]);
+
+  // Draw pile hover — 取点函数读 ref.current，每帧实时算，滚动时箭头跟着动。
+  const handleDrawPileHover = useCallback((hovering: boolean) => {
+    if (!drawPileRef.current || !handAreaRef.current) return;
+    if (hovering && game?.phase === 'drawing' && game.currentPlayerIndex === 0) {
+      setArrowFrom(() => () => {
+        const r = drawPileRef.current?.getBoundingClientRect();
+        return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+      });
+      setArrowTo(() => () => {
+        const r = handAreaRef.current?.getBoundingClientRect();
+        return r ? { x: r.left + r.width / 2, y: r.top + Math.min(40, r.height * 0.35) } : null;
+      });
+      setArrowColor('#c89b5d');
+    } else {
+      setArrowFrom(null);
+      setArrowTo(null);
+    }
+  }, [game?.phase, game?.currentPlayerIndex]);
+
+  const handleCardHover = useCallback((cardEl: HTMLElement | null) => {
+    if (!cardEl || !discardPileRef.current) { setArrowFrom(null); setArrowTo(null); return; }
+    setArrowFrom(() => () => {
+      const r = cardEl.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top };
+    });
+    setArrowTo(() => () => {
+      const r = discardPileRef.current?.getBoundingClientRect();
+      return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+    });
+    setArrowColor('#c89b5d');
+  }, []);
+
+  const handleDiscardCard = useCallback((cardId: number) => {
+    const g = useSd4GameStore.getState().game;
+    if (!g) return;
+    const allCards = [...g.players[0].hand, ...(g.drawnCard ? [g.drawnCard] : [])];
+    const card = allCards.find((c) => c.id === cardId);
+
+    if (discardPileRef.current && card) {
+      const cardEls = handAreaRef.current?.querySelectorAll('[data-card-id]');
+      let fromRect: DOMRect | null = null;
+      cardEls?.forEach((el) => {
+        if (el.getAttribute('data-card-id') === String(cardId)) {
+          fromRect = el.getBoundingClientRect();
+        }
+      });
+      const toRect = discardPileRef.current.getBoundingClientRect();
+      if (fromRect) {
+        const fr = fromRect as DOMRect;
+        const id = flyIdRef.current++;
+        setFlyingCards((prev) => [...prev, {
+          id,
+          cardId,
+          card,
+          from: { x: fr.left + fr.width / 2, y: fr.top + fr.height / 2 },
+          to: { x: toRect.left + toRect.width / 2, y: toRect.top + toRect.height / 2 },
+        }]);
+        setArrowFrom(null);
+        setArrowTo(null);
+        return;
+      }
+    }
+    playerDiscard(cardId);
+    setArrowFrom(null);
+    setArrowTo(null);
+  }, [playerDiscard]);
+
+  const removeFlyingCard = useCallback((id: number, cardId: number) => {
+    setFlyingCards((prev) => prev.filter((f) => f.id !== id));
+    playerDiscard(cardId);
+  }, [playerDiscard]);
+
+  const handleToggleSelect = useCallback((cardId: number) => {
+    setSelectedCardIds((prev) =>
+      prev.includes(cardId) ? prev.filter((id) => id !== cardId) : [...prev, cardId]
+    );
+  }, []);
+
+  // Hu (胡) handler
+  const handleHu = useCallback(() => {
+    playerHu();
+  }, [playerHu]);
+
+  // Self-pong (自摸碰) commit handler
+  const handleSelfPongCommit = useCallback(() => {
+    if (!pongIntent || pongIntent.type !== 'self') return;
+    playerSelfPong(pongIntent.dimension, selectedCardIds);
+    setSelectedCardIds([]);
+    setPongIntent(null);
+    setSelfPongDimensionChosen(false);
+  }, [playerSelfPong, pongIntent, selectedCardIds]);
+
+  // Pong (碰) handler
+  const handlePong = useCallback((dimension: Dimension, handCardIds: number[]) => {
+    playerPong(dimension, handCardIds);
+    setSelectedCardIds([]);
+  }, [playerPong]);
+
+  const handleSkipPong = useCallback(async () => {
+    setSelectedCardIds([]);
+    // Register the human's pass first so allClaimersResponded can fire,
+    // then drive the AI responses.
+    const g = useSd4GameStore.getState().game;
+    if (g && g.phase === 'claim-window') {
+      const humanId = g.players[0]?.id;
+      if (humanId && !g.claimResponses.includes(humanId) && g.discardedByIndex !== 0) {
+        playerSkipPong();
+      }
+    }
+    setAiRunning(true);
+    try { await resolvePongWindow(); } finally { setAiRunning(false); }
+  }, [resolvePongWindow, playerSkipPong]);
+
+  // 登录闸：未登入（含登出后）不渲染对局，正跳转 /login。
+  if (!authReady) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="psy-serif text-[var(--psy-muted)]">{tg.loadingShort}</p>
+      </div>
+    );
+  }
+
+  if (!game) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="psy-serif text-[var(--psy-muted)]">{tg.loadingShort}</p>
+      </div>
+    );
+  }
+
+  const humanPlayer = game.players[0];
+  // open 模式：所有手牌（含剛抽到）維度全公開，複用 viewedCardIds 渲染
+  const effectiveViewedIds = revealDifficulty === 'open'
+    ? [...humanPlayer.hand.map((c) => c.id), ...(game.drawnCard ? [game.drawnCard.id] : [])]
+    : viewedCardIds;
+  const opponents = game.players.slice(1);
+  const isHumanTurn = game.currentPlayerIndex === 0;
+  const isPongWindow = game.phase === 'claim-window' && game.pendingDiscard !== null && game.discardedByIndex !== 0;
+  const humanFrozen =
+    humanPlayer.skipNextTurn || !!humanPlayer.frozenUntilOwnDiscard;
+  const humanFrozenLockout =
+    humanPlayer.skipNextTurn ||
+    (!!humanPlayer.frozenUntilOwnDiscard && !isHumanTurn);
+  const humanAwaitingOwnDischarge =
+    !!humanPlayer.frozenUntilOwnDiscard && isHumanTurn && !humanPlayer.skipNextTurn;
+  // canDraw/isDiscarding 加 !skipNextTurn 防禦 — skipPenalizedPlayers 應已跳過該
+  // 玩家；frozenUntilOwnDiscard-only 狀態允許出牌（spec 解凍路徑）。
+  const canDraw = isHumanTurn && game.phase === 'drawing' && !humanPlayer.skipNextTurn;
+  // 欠罰棄牌：食胡失敗 / 自摸碰失敗之後仍要棄一張（老闆定的，防止手牌永久 +1）。
+  // 這時玩家已被標 skipNextTurn，若不特判就會 isDiscarding=false → 點不動任何牌，
+  // 而引擎又停在 discarding 不讓位 = 死鎖。
+  const owesPenaltyDiscard = !!humanPlayer.owesPenaltyDiscard;
+  const isDiscarding =
+    isHumanTurn &&
+    game.phase === 'discarding' &&
+    (!humanPlayer.skipNextTurn || owesPenaltyDiscard);
+  const canHu =
+    game.phase !== 'game-over' &&
+    !humanFrozen &&
+    (
+      (isHumanTurn && game.phase !== 'claim-window') ||
+      (game.phase === 'claim-window' &&
+        game.discardedByIndex !== 0 &&
+        !game.claimResponses.includes(humanPlayer.id))
+    );
+  // 老闆：自己回合【抽牌前】食胡與自摸碰都要顯示，但置灰不可點；抽完牌才亮起。
+  // （麻將裏自摸胡也得先摸一張；截胡走的是 claim-window，不受這條限制。）
+  const preDraw = isHumanTurn && game.phase === 'drawing';
+  // 老闆：抽完牌後動過自摸碰（不管成敗），這回合就只剩「棄一張牌」一條路 ——
+  // 食胡【和】自摸碰兩個鈕都直接隱藏，不留一個灰的在那裏（老闆：多此一舉，
+  // 歸檔成功那格自己會變色，灰鈕沒有任何新信息）。
+  // 只鎖自己回合，截胡不受影響（selfPongUsedThisTurn 要到自己下次抽牌才清）。
+  // engine 側 attemptHu 有同款守衛。
+  const usedSelfPongThisTurn =
+    isHumanTurn && game.phase === 'discarding' && !!humanPlayer.selfPongUsedThisTurn;
+  // 截胡碰（碰別人的棄牌）成功後偷來的這回合：engine 給 phase='discarding' +
+  // drawnCard=null，玩家只欠一張棄牌。老闆 2026-08-01：「After intercept pong,
+  // these two shd not be shown」—— 食胡與自摸碰兩個鈕都撤掉，跟自摸碰後同一條規則。
+  // ⚠️ 這條同時把「碰完即胡」從 UI 上收走了（engine 那邊 attemptHu 仍允許，
+  // 見 game-logic.ts pong-success 裏 selfPongUsedThisTurn 清零的註釋）——老闆決定。
+  // discarding 而 drawnCard===null 只有碰來的回合會出現（正常回合必有 drawnCard）。
+  const postPongDiscard =
+    isHumanTurn && game.phase === 'discarding' && game.drawnCard === null;
+  // 顯示 = 能胡 或 處在「抽牌前」這個置灰態；啟用 = 能胡且已抽牌。
+  const showHuButton = (canHu || preDraw) && !usedSelfPongThisTurn && !postPongDiscard;
+  const huEnabled = canHu && !preDraw && !usedSelfPongThisTurn && !postPongDiscard;
+  const topDiscard = game.discardPile.length > 0 ? game.discardPile[game.discardPile.length - 1] : null;
+  const targets = getTargetCounts(humanPlayer.sd4Scores);
+  const declaredDims = getDeclaredDimensions(humanPlayer);
+
+  // ── Pong candidate computation ────────────────────────────────────────
+  // Self-pong candidate list = ALL undeclared dimensions. Deliberately
+  // does NOT pre-filter by pool>=target — that would leak which dims
+  // the player has enough cards for, basically giving away the puzzle.
+  // The player picks a dim + N cards on their own judgement; the engine
+  // judges correctness on commit (selfPongCard's strict count + dim check).
+  //
+  // Once-per-turn rule: if already used this turn, no candidates.
+  // 已歸檔維度也加入候選（強 trap）：UI 顯示，玩家選卡 + 提交 → engine 判 fail + 罰停。
+  const selfPongCandidates: Dimension[] = [];
+  if (
+    isHumanTurn &&
+    !humanFrozen &&
+    !humanPlayer.selfPongUsedThisTurn &&
+    (game.phase === 'drawing' || game.phase === 'discarding')
+  ) {
+    for (const d of DIMENSIONS) {
+      selfPongCandidates.push(d);
+    }
+  }
+
+  const pongIntentTarget = pongIntent ? targets[pongIntent.dimension] : 0;
+  const pongIntentRequiredSelectCount =
+    pongIntent?.type === 'self'
+      ? pongIntentTarget // pick exactly N from pool (hand + drawnCard)
+      : pongIntent?.type === 'other'
+      ? pongIntentTarget - 1 // pick N-1 from hand; pending card completes it
+      : 0;
+
+  return (
+    <motion.div animate={shakeControls} className="mx-auto flex min-h-[100dvh] w-full max-w-[min(96vw,112rem)] flex-col px-3 py-3 [overflow-anchor:none] sm:px-4 sm:py-4">
+      <FeedbackOverlays flashControls={flashControls} pops={pops} />
+      <YourTurnBanner bannerKey={yourTurnKey} locale={locale} />
+      {/* 引导箭头线已移除（用户反馈：抽/出/弃牌处的虚线都不要） */}
+
+      {/* idle 提醒 toast：本回合久未行动时弹出（配合震动） */}
+      {idleReminderVisible && (
+        <motion.div
+          initial={{ opacity: 0, y: -10, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed left-1/2 top-24 z-[60] w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 sm:top-28"
+        >
+          <TurnNoticeToast title={tg.idleYourTurn} icon="⏰" />
+        </motion.div>
+      )}
+
+
+      {flyingCards.map((f) => (
+        <FlyingCard key={f.id} from={f.from} to={f.to} card={f.card} locale={locale} onComplete={() => removeFlyingCard(f.id, f.cardId)} />
+      ))}
+
+      {/* Top bar: exit button */}
+      <div className="mb-1 flex shrink-0 items-center justify-between sm:mb-2">
+        <button
+          onClick={() => setExitConfirmOpen(true)}
+          className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-1 text-[10px] text-[var(--psy-muted)] shadow-[0_8px_18px_rgba(96,72,38,0.1)] transition hover:border-[rgba(220,80,80,0.4)] hover:text-[var(--psy-danger)] sm:text-[11px]"
+        >
+          {tg.leaveGame}
+        </button>
+        <div className="flex items-center gap-2">
+          <BgmToggleButton locale={locale} />
+          <Sd4DimensionSummaryButton locale={locale} />
+          <Sd4HowToPlayButton locale={locale} />
+        </div>
+      </div>
+
+      {/* Exit confirmation modal */}
+      <PsyOverlayPanel
+        open={exitConfirmOpen}
+        onClose={() => setExitConfirmOpen(false)}
+        title={tg.exitConfirmTitle}
+        variant="centered"
+        closeLabel={tg.close}
+      >
+        <div className="space-y-5 px-1 py-2">
+          <p className="text-sm leading-7 text-[var(--psy-ink-soft)]">
+            {tg.exitConfirmBody1}
+            <br />
+            {tg.exitConfirmBodySingle}
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setExitConfirmOpen(false)}
+              className="psy-btn psy-btn-ghost px-5 py-2 text-sm"
+            >
+              {tg.cancel}
+            </button>
+            <button
+              onClick={() => {
+                setExitConfirmOpen(false);
+                resetGame();
+                router.push('/');
+              }}
+              className="psy-btn psy-btn-danger px-5 py-2 text-sm font-bold"
+            >
+              {tg.confirmExit}
+            </button>
+          </div>
+        </div>
+      </PsyOverlayPanel>
+
+      {/* 對手排 + 牌桌中央：最外層那圈邊框/底色/陰影已去掉（老闆要求）——
+          對手卡與中央那塊各自有自己的邊框，外面再套一圈是重複的。 */}
+      <div className="shrink-0">
+        {/* Opponents */}
+        <div className="grid grid-cols-3 gap-2 sm:h-[6.5rem] sm:gap-3">
+          {opponents.map((opp) => (
+            <OpponentHand
+              key={opp.id}
+              player={opp}
+              isCurrentTurn={game.players[game.currentPlayerIndex].id === opp.id}
+              locale={locale}
+            />
+          ))}
+        </div>
+
+        {/* 桌面輪次原本在這裏補一枚居中 chip；現已合進下方「歸檔進度」橫條左端
+            （與移動端信息行一致），不再重複顯示。 */}
+
+        {/* Center: 抽牌 + 弃牌 + 行动记录 三张竖卡并排，同尺寸同风格；mobile/desktop 一致（用户反馈） */}
+        <div className="mt-3 flex items-start justify-center gap-3 rounded-[1.35rem] border border-[rgba(154,116,72,0.16)] bg-[linear-gradient(180deg,#fdf8f1,#f8f1e4)] p-3 sm:mt-4 sm:gap-6 sm:p-3">
+          <div
+            ref={drawPileRef}
+            onMouseEnter={() => handleDrawPileHover(true)}
+            onMouseLeave={() => handleDrawPileHover(false)}
+          >
+            <DrawPile count={game.drawPile.length} canDraw={canDraw} onDraw={playerDraw} locale={locale} />
+          </div>
+          <div ref={discardPileRef}>
+            <DiscardPile
+              topCard={topDiscard}
+              count={game.discardPile.length}
+              discardPile={game.discardPile}
+              actions={game.actionLog}
+              players={game.players}
+              highlight={isDiscarding}
+              locale={locale}
+            />
+          </div>
+          <GameLog actions={game.actionLog} players={game.players} locale={locale} vertical />
+        </div>
+      </div>
+
+      {/* Human player area — 不加背景/边框：flex-1 撑满视口时下半空区会变成可见的空圆角盒
+          （用户反馈）。用透明容器只做布局，空区回到隐形（页面底色）。 */}
+      <div className="mt-2 flex flex-1 flex-col space-y-2 p-1 sm:mt-3 sm:space-y-3 sm:p-1.5">
+        {/* 罰停橫幅 / 碰窗 / 查看 / 碰意圖面板已全部移入手牌上方的懸浮層
+            （見下方 Hand + Declared 區），不再插進文檔流把手牌往下推。 */}
+        {/* 回合信息 + 5 維歸檔進度：PC 與移動端、單機與 PVP 全部共用 FilingProgressCard。 */}
+        <FilingProgressCard
+          locale={locale}
+          roundText={locale === 'en' ? `${tg.roundUnit} ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''}` : `第 ${game.currentRound}${game.settings.totalRounds > 0 ? `/${game.settings.totalRounds}` : ''} 輪`}
+          info={
+            isHumanTurn && isDiscarding && !viewMode && !pongIntent && discardPickId === null ? (
+              <span className="ml-auto truncate font-medium text-[var(--psy-accent)]">{tg.pickDiscard}</span>
+            ) : (
+              <span className="ml-auto truncate font-medium">{tg.doneLabel} {humanPlayer.declaredSets.length}/4</span>
+            )
+          }
+          targets={targets}
+          declaredDims={declaredDims}
+          onOpenArchive={() => setMobileSheet('declared')}
+          collapsible
+        />
+
+        {/* ── 懸浮操作層 ─────────────────────────────────────────────
+            罰停橫幅 / 碰窗 / 查看 / 碰意圖面板全部懸浮在操作排上方
+            （h-0 錨點 + absolute bottom 錨定；錨點必須在操作排之前——
+            否則面板會蓋住排裏的截胡/查看/AI回合按鈕），蓋住牌桌中央而不佔文檔流
+            —— 手牌位置在任何窗口彈出時都紋絲不動（牌類手游慣例做法）。 */}
+        {/* sm:mb-0：錨點自身 h-0，但 space-y 會給它挂一格 margin-bottom，
+            在桌面上白白撐開牌桌與歸檔進度橫條之間的間距。移動端不動（那格是
+            信息行與操作排之間的正常間距）。 */}
+        <div className="relative z-30 h-0 overflow-visible sm:mb-0">
+          <div className="pointer-events-none absolute inset-x-0 bottom-1 flex flex-col items-center">
+            <div className="pointer-events-auto w-full max-w-xl space-y-2 px-1">
+
+        {/* Penalty banner — lockout 時顯示紅色"罰停"，own-turn 解凍輪顯示提示。
+            欠罰棄牌時換一句：光說「罰停」會讓玩家以為自己什麼都不用做，
+            但這回合他還欠一張棄牌（不棄就卡住）。 */}
+        {(humanFrozenLockout || owesPenaltyDiscard) && (
+          <div className="fixed left-1/2 top-3 z-[78] flex w-[min(54rem,calc(100vw-2rem))] -translate-x-1/2 items-center justify-center gap-2 rounded-xl border border-[rgba(220,106,79,0.5)] bg-[var(--psy-card-content)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-danger)] shadow-[0_14px_30px_rgba(96,72,38,0.2)] sm:text-sm">
+            <span>⛔</span>
+            <span className="hidden sm:inline">{owesPenaltyDiscard ? tg.penaltyMustDiscardFull : tg.penaltyLockoutFull}</span>
+            <span className="sm:hidden">{owesPenaltyDiscard ? tg.penaltyMustDiscardShort : tg.penaltyLockoutShort}</span>
+          </div>
+        )}
+        {humanAwaitingOwnDischarge && (
+          <div className="psy-panel flex items-center justify-center gap-2 rounded-xl border border-[rgba(200,155,93,0.45)] bg-[rgba(200,155,93,0.12)] px-3 py-2 text-[11px] font-semibold leading-snug text-[var(--psy-accent)] sm:text-sm">
+            <span>⏳</span>
+            <span className="hidden sm:inline">{tg.thawFull}</span>
+            <span className="sm:hidden">{tg.thawShort}</span>
+          </div>
+        )}
+
+        {/* Pong panel — first-come-first-served: any non-discarder may
+            attempt pong (race resolves naturally). Hidden when the human
+            is pong-fail frozen so the panel never offers an action that
+            would be rejected by the engine guard. */}
+        {isPongWindow && game.pendingDiscard && !humanFrozen &&
+          !game.claimResponses.includes(humanPlayer.id) && (
+            <PongPanel
+              pendingCard={game.pendingDiscard}
+              player={humanPlayer}
+              discardedByName={(() => { const p = game.players[game.discardedByIndex]; return p ? playerLabel(p, locale) : ''; })()}
+              selectedCardIds={selectedCardIds}
+              onClaim={handlePong}
+              onSkip={handleSkipPong}
+              revealPendingDimension={revealDifficulty === 'open'}
+              locale={locale}
+            />
+          )}
+
+        {viewMode && (
+          <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
+            <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
+              🔍 {tg.viewPickPrompt}（{pickedViewIds.length}/{viewCap}）
+            </p>
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={() => { setViewMode(false); setPickedViewIds([]); }}
+                className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
+              >
+                {tg.cancel}
+              </button>
+              <button
+                onClick={() => {
+                  if (pickedViewIds.length === 0) return;
+                  // half 累加保留；hidden 每回合已清空，累加等同替换
+                  setViewedCardIds((prev) => [...new Set([...prev, ...pickedViewIds])]);
+                  setViewMode(false);
+                  setPickedViewIds([]);
+                  setViewUsedThisTurn(true);
+                }}
+                disabled={pickedViewIds.length === 0}
+                className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:opacity-40"
+              >
+                {tg.view}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Pong intent — card selection prompt */}
+        {pongIntent && (
+          <div className="psy-panel space-y-2 rounded-[1.35rem] border p-3">
+            <p className="psy-serif text-center text-sm text-[var(--psy-accent)]">
+              {pongIntent.type === 'self' && !selfPongDimensionChosen ? (
+                // 自摸碰还没选维度：不要默认显示「開放性」，改为提示先选一个人格线索
+                <>{tg.pongIntentSelf} · {tg.pongChooseDimPrompt}</>
+              ) : (
+                <>
+                  {pongIntent.type === 'self' ? tg.pongIntentSelf : tg.pongIntentOther} ·{' '}
+                  <span className="text-[var(--psy-accent)]">
+                    {dimName(pongIntent.dimension)}
+                  </span>{' '}
+                  · {tg.pongSelectPrompt}{' '}
+                  <span className="font-bold text-[var(--psy-accent-strong)]">{pongIntentRequiredSelectCount}</span> {tg.cardsUnit}
+                  {pongIntent.type === 'self' ? tg.pongSelectSelfSuffix : tg.pongSelectOtherPrefixA + pongIntentTarget + tg.pongSelectOtherPrefixB}
+                  {locale === 'en' ? ' (' : '（'}{tg.selectedPrefix} <span className="font-bold text-[var(--psy-accent-strong)]">{selectedCardIds.length}</span>{locale === 'en' ? ')' : '）'}
+                </>
+              )}
+            </p>
+            {/* Self-pong dimension switcher (only when there are multiple candidates) */}
+            {pongIntent.type === 'self' && selfPongCandidates.length > 1 && (
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {selfPongCandidates.map((d) => {
+                  const isDeclared = declaredDims.has(d);
+                  return (
+                  <button
+                    key={d}
+                    disabled={isDeclared}
+                    onClick={() => {
+                      setPongIntent({ type: 'self', dimension: d });
+                      setSelectedCardIds([]);
+                      setSelfPongDimensionChosen(true);
+                    }}
+                    className="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition disabled:cursor-not-allowed"
+                    style={{
+                      borderColor: isDeclared
+                        ? 'rgba(154,116,72,0.12)'
+                        : selfPongDimensionChosen && pongIntent.dimension === d
+                        ? '#c39a52'
+                        : 'rgba(200,155,93,0.18)',
+                      backgroundColor: isDeclared
+                        ? 'rgba(154,116,72,0.06)'
+                        : selfPongDimensionChosen && pongIntent.dimension === d
+                        ? '#c39a52'
+                        : '#fdf8f1',
+                      color: isDeclared
+                        ? 'rgba(96,72,38,0.34)'
+                        : selfPongDimensionChosen && pongIntent.dimension === d
+                        ? '#fff7ea'
+                        : 'var(--psy-ink-soft)',
+                      opacity: isDeclared ? 0.6 : 1,
+                      textDecoration: isDeclared ? 'line-through' : undefined,
+                    }}
+                  >
+                    {dimName(d)}
+                  </button>
+                  );
+                })}
+              </div>
+            )}
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={() => { setPongIntent(null); setSelectedCardIds([]); setSelfPongDimensionChosen(false); }}
+                className="psy-btn psy-btn-ghost px-4 py-1.5 text-xs"
+              >
+                {tg.cancel}
+              </button>
+              <button
+                onClick={() => {
+                  if (pongIntent.type === 'self') {
+                    handleSelfPongCommit();
+                  } else {
+                    handlePong(pongIntent.dimension, selectedCardIds);
+                    setPongIntent(null);
+                  }
+                }}
+                    disabled={(pongIntent.type === 'self' && !selfPongDimensionChosen) || selectedCardIds.length !== pongIntentRequiredSelectCount}
+                className="psy-btn psy-btn-accent px-4 py-1.5 text-xs font-bold disabled:opacity-40"
+              >
+                {pongIntent.type === 'self' ? tg.selfArchive : tg.archiveJudge}
+              </button>
+            </div>
+          </div>
+        )}
+
+            </div>
+          </div>
+        </div>
+
+        {/* Action buttons — 恆佔一行高度（min-h）：按鈕隨回合出現/消失時
+            手牌不再上下跳。面板打開時內容隱藏但行高保留。 */}
+        <div className="flex min-h-[46px] shrink-0 flex-wrap items-center justify-center gap-2 sm:flex-nowrap sm:gap-3">
+          {!viewMode && !pongIntent && (
+          <>
+            {/* 這裏原本有一句「碰牌成功 — 請直接出一張手牌」（pongDoneDiscard，
+                2026-04-17 加）。2026-08-02 老闆定：所有碰的情況都不再顯示 ——
+                碰成功本來就有 toast，下一步該做什麼上方回合行的「先點擊一張要
+                捨棄的牌」已經說了，不做也只是停在原地，這句是第三遍重複。
+                （順帶修掉一個老 bug：它的顯示條件是 !drawnCard，本意只認截胡碰，
+                但自摸碰若把剛摸那張用進歸檔也會命中 → 老闆看到的「有時出現有時
+                不出現」。整句刪掉後不存在了。）*/}
+
+            {/* Hu button — visible on own turn, or during an opponent's
+                claim-window ("跳着胡"). Hidden when the human has already
+                responded to this claim window. */}
+            {showHuButton && (
+              <button
+                onClick={huEnabled ? handleHu : undefined}
+                disabled={!huEnabled}
+                title={preDraw ? tg.needDrawFirst : !canHu ? tg.selfPongFrozen : undefined}
+                className="psy-btn psy-btn-danger px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35 sm:px-5 sm:text-sm"
+              >
+                {tg.win}
+              </button>
+            )}
+
+            {/* Self-pong button — drawing 阶段也【显示】但置灰（老板：抽牌前两个按钮
+                都在，只是暗的），真正可点仍只有 discarding：drawing 阶段自摸会漏抽一次
+                牌导致掉牌（见 selfPongCard 守卫）。本回合已经用过（成功归档 或 判定
+                失败）→ 整个按钮撤掉，不留灰的（老板：多此一举）。claim-window 的碰由
+                浮层 PongPanel 处理。按钮是否启用不泄露"你能碰维度X"——玩家决定、引擎判。
+                !owesPenaltyDiscard：食胡失败 / 自摸碰失败之后那次罚弃牌，只剩「弃一张」
+                一条路，按钮撤掉不留灰的（老板 2026-08-01：「After wrong Win or wrong
+                Pong, only the discard box shd be shown」）。跟上面查看键同一条规则。
+                自摸碰失败本来就被 usedSelfPongThisTurn 挡掉了，这条主要管食胡失败。*/}
+            {isHumanTurn && (game.phase === 'drawing' || game.phase === 'discarding') && !usedSelfPongThisTurn && !owesPenaltyDiscard && !postPongDiscard && (
+              <button
+                onClick={() => {
+                  if (preDraw) return;
+                  if (humanPlayer.selfPongUsedThisTurn || humanFrozen) return;
+                  if (selfPongCandidates.length === 0) return;
+                  // 默認選第一個未歸檔維度，防止誤觸 trap
+                  const defaultDim =
+                    selfPongCandidates.find((d) => !declaredDims.has(d)) ??
+                    selfPongCandidates[0];
+                  setPongIntent({ type: 'self', dimension: defaultDim });
+                  setSelectedCardIds([]);
+                  setSelfPongDimensionChosen(selfPongCandidates.length === 1);
+                }}
+                disabled={
+                  preDraw ||
+                  humanFrozen ||
+                  !!humanPlayer.selfPongUsedThisTurn ||
+                  selfPongCandidates.length === 0
+                }
+                className="psy-btn psy-btn-accent px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35 sm:px-5 sm:text-sm"
+                title={
+                  preDraw
+                    ? tg.needDrawFirst
+                    : humanFrozen
+                    ? tg.selfPongFrozen
+                    : humanPlayer.selfPongUsedThisTurn
+                    ? tg.selfPongUsed
+                    : tg.selfPongHint
+                }
+              >
+                {tg.selfPong}
+              </button>
+            )}
+
+            {/* 罰棄牌回合不給查看：這回合只剩「棄一張」一條路（老闆）。isDiscarding
+                現在對欠罰棄牌的玩家也是 true，不排除的話等於白送他一次查看。 */}
+            {isHumanTurn && isDiscarding && !owesPenaltyDiscard && !viewUsedThisTurn && revealDifficulty !== 'open' && (
+              <button
+                onClick={() => { setViewMode(true); setPickedViewIds([]); }}
+                className="psy-btn psy-btn-ghost px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm"
+                title={tg.viewCardsTitle}
+              >
+                🔍 {locale === 'en' ? `View ${viewCap}` : `查看 ${viewCap} 張`}
+              </button>
+            )}
+            {isHumanTurn && isDiscarding && !owesPenaltyDiscard && viewUsedThisTurn && revealDifficulty !== 'open' && (
+              <span className="rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-3 py-2 text-xs text-[var(--psy-muted)]">{tg.viewUsed}</span>
+            )}
+
+            {/* 出牌階段一進來就把這條胶囊擺出來、只是置灰，圈定要棄的牌之後才亮起
+                （老闆 2026-08-01）。只在出牌階段出現：查看/碰牌意圖進行中都不算。
+                組件與 PVP 共用（DiscardControls）——兩邊必須一模一樣。 */}
+            {isHumanTurn && isDiscarding && !viewMode && !pongIntent && (
+              <DiscardControls
+                locale={locale}
+                discardPickId={discardPickId}
+                onCancel={() => setDiscardPickId(null)}
+                onSubmit={handleDiscardCard}
+              />
+            )}
+
+            {/* AI 回合：自动执行（8-15s 思考延迟已在 effect 内），此处仅弱提示「思考中…」。
+                仍保留 onClick 作为万一自动流程卡死时的隐藏兜底，但不再显示「點擊執行」。 */}
+            {!isHumanTurn && game.phase !== 'game-over' && game.phase !== 'claim-window' && (
+              <button
+                onClick={runOneAITurn}
+                disabled={aiRunning}
+                className="flex items-center gap-1.5 rounded-full border border-[rgba(154,116,72,0.18)] bg-[var(--psy-card-content)] px-4 py-2 text-sm text-[var(--psy-muted)]"
+              >
+                <span>{game.players[game.currentPlayerIndex].avatar}</span>
+                <span className="psy-serif text-[var(--psy-ink-soft)]">{playerLabel(game.players[game.currentPlayerIndex], locale)}{tg.turnOf}</span>
+                <span className="animate-pulse">{locale === 'en' ? 'thinking…' : '思考中…'}</span>
+              </button>
+            )}
+          </>
+          )}
+          </div>
+
+        {/* Hand + Declared cards */}
+        <div className="flex flex-1 items-start justify-center gap-3 sm:gap-4">
+          <div ref={handAreaRef} className="flex-1 min-w-0 overflow-visible">
+            <PlayerHand
+              cards={humanPlayer.hand}
+              drawnCard={isHumanTurn ? game.drawnCard : null}
+              isDiscarding={isDiscarding && !viewMode && !pongIntent}
+              isDeclaring={isPongWindow || pongIntent !== null}
+              isMyTurn={isHumanTurn}
+              selectedCardIds={selectedCardIds}
+              viewedCardIds={effectiveViewedIds}
+              discardPickId={discardPickId}
+              onDiscardPickChange={setDiscardPickId}
+              flyingCardId={flyingCards[0]?.cardId ?? null}
+              viewMode={viewMode}
+              pickedViewIds={pickedViewIds}
+              onTogglePickView={(cardId) =>
+                setPickedViewIds((prev) =>
+                  prev.includes(cardId)
+                    ? prev.filter((id) => id !== cardId)
+                    : prev.length >= viewCap ? prev : [...prev, cardId]
+                )
+              }
+              onToggleSelect={handleToggleSelect}
+              onCardHover={handleCardHover}
+              locale={locale}
+            />
+          </div>
+        </div>
+
+        {/* 這裏原本是一條桌面專屬提示行：「點擊牌堆抽一張牌」（已刪，牌堆自帶手指
+            動畫）+ 碰完那句 pongDoneDiscard（2026-08-02 整句刪掉，見上方操作排的
+            註釋）—— 整條桌面專屬行不再需要。 */}
+      </div>
+
+      <MobileGameSheet
+        title={tg.sheetPersonaTitle}
+        open={mobileSheet === 'persona'}
+        onClose={() => setMobileSheet(null)}
+        locale={locale}
+      >
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {DIMENSIONS.map((d) => {
+              const isDone = declaredDims.has(d);
+              return (
+                <div key={d} className="rounded-xl border px-3 py-2" style={{ borderColor: isDone ? 'rgba(154,116,72,0.45)' : 'rgba(154,116,72,0.2)', backgroundColor: isDone ? 'rgba(195,154,82,0.14)' : '#fdf8f1' }}>
+                  <div className="psy-serif text-sm text-[var(--psy-accent)]">{dimName(d)}</div>
+                  <div className="mt-1 text-xs text-[var(--psy-ink-soft)]">{isDone ? tg.doneLabel : (locale === 'en' ? `${tg.targetPrefix} ${targets[d]} ${tg.cardsUnit}` : `目標 ${targets[d]} 張`)}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </MobileGameSheet>
+      {/* 歸檔詳情：直接用 PsyOverlayPanel（不走 MobileGameSheet）——後者帶
+          hideAbove="sm"，桌面上點 5 維 pill 會什麼都不彈。現在 PC 也用這排
+          pill 做入口，所以這個彈窗必須全端可見。 */}
+      <PsyOverlayPanel
+        title={tg.sheetDeclaredTitle}
+        open={mobileSheet === 'declared'}
+        onClose={() => setMobileSheet(null)}
+        locale={locale}
+        variant="centered"
+      >
+        {humanPlayer.declaredSets.length > 0 ? <DeclaredArea declaredSets={humanPlayer.declaredSets} locale={locale} overlayZIndex={98} expanded /> : <p className="text-sm text-[var(--psy-muted)]">{tg.noArchiveYet}</p>}
+      </PsyOverlayPanel>
+      <MobileGameSheet
+        title={tg.sheetLogTitle}
+        open={mobileSheet === 'log'}
+        onClose={() => setMobileSheet(null)}
+        locale={locale}
+      >
+        <GameLog actions={game.actionLog} players={game.players} locale={locale} overlayZIndex={96} inline />
+      </MobileGameSheet>
+
+      {/* Game Over */}
+      {game.phase === 'game-over' && (
+        <GameOverModal
+          players={game.players.map((p) => ({
+            id: p.id,
+            // 英文版必须用 AI 的英文名（大雄→Brian），否则结算页会中英混排
+            name: playerLabel(p, locale),
+            avatar: p.avatar,
+            declaredSets: p.declaredSets,
+            remainingCards: p.hand.length,
+            isYou: p.isHuman,
+          }))}
+          winnerId={game.winner ?? getRankings(game.players)[0]?.id ?? null}
+          onPlayAgain={() => {
+            // 原地重開局：手動清本地查看狀態，避免 half 檔把上一局看過的牌 id 帶進新局
+            // （turn-reset effect 在「新局 round/玩家 index 未變」時可能不觸發，兜不住）。
+            setViewMode(false);
+            setPickedViewIds([]);
+            setViewedCardIds([]);
+            setViewUsedThisTurn(false);
+            if (sd4Scores) initGame(sd4Scores, game.settings);
+          }}
+          onBackToLobby={() => {
+            resetGame();
+            router.push('/');
+          }}
+          locale={locale}
+        />
+      )}
+    </motion.div>
+  );
+}

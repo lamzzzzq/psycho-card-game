@@ -26,6 +26,8 @@ const L = {
     notDone: '你還沒完成 Dark Tetrad 測評。',
     startAssess: '開始測評',
     retake: '重新測評',
+    pvp: '聯機對戰',
+    solo: '單機對戰',
     loading: '加載中…',
   },
   en: {
@@ -35,6 +37,8 @@ const L = {
     notDone: "You haven't completed the Dark Tetrad assessment yet.",
     startAssess: 'Start assessment',
     retake: 'Retake',
+    pvp: 'Multiplayer',
+    solo: 'Play Solo',
     loading: 'Loading…',
   },
 };
@@ -113,8 +117,21 @@ export default function Sd4ResultsPage() {
         {/* Dark Tetrad 模型介紹，對稱大五/HEXACO 結果頁底部 Intro。 */}
         <Sd4Intro locale={locale} />
 
-        {/* 底部入口：只有重新測評（SD4 無對局）。 */}
-        <div className="mx-auto w-full max-w-md pt-2">
+        {/* 底部入口菜單：與大五/HEXACO /results 完全一致的三鍵（沿老闆 2026-08-06 拍板的版式）——
+            聯機對戰(主色) / 單機對戰 / 重新測評。 */}
+        <div className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-2 pt-2 lg:grid-cols-3 lg:gap-3">
+          <button
+            onClick={() => router.push('/sd4-pvp')}
+            className="psy-btn psy-btn-accent psy-serif col-span-2 w-full px-6 py-3.5 text-base font-semibold lg:col-span-1"
+          >
+            {t.pvp}
+          </button>
+          <button
+            onClick={() => router.push('/sd4-lobby')}
+            className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
+          >
+            {t.solo}
+          </button>
           <button
             onClick={() => { startRetake(); router.push('/sd4/assess'); }}
             className="psy-btn psy-btn-ghost w-full px-6 py-3 font-medium sm:py-3.5"
