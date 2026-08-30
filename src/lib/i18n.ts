@@ -76,7 +76,6 @@ export const STRINGS = {
       reportStartNow: '開始測評',
       reportBack: '返回',
       // 单机/联机/教学里选了「测评已上线但对局未上线」的模型（目前只有 Dark Tetrad）
-      deckGameSoonBody: '此模型的對局尚在規劃中，目前可先完成測評並查看報告。',
     },
     assessment: {
       eyebrow: 'Persona Reading',
@@ -489,7 +488,6 @@ export const STRINGS = {
       reportStartNow: 'Start Assessment',
       reportBack: 'Back',
       // Shown when picking a model whose assessment is live but match mode is not (currently Dark Tetrad only)
-      deckGameSoonBody: 'The match mode for this model is still in planning. You can take the assessment and view your report for now.',
     },
     assessment: {
       eyebrow: 'Persona Reading',

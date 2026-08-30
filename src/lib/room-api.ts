@@ -72,11 +72,14 @@ export async function joinRoom(roomCode: string, playerId: string, avatar?: stri
 
   if (roomError || !room) throw new Error('房間不存在或已開始遊戲');
 
-  // 牌組守衛（2026-08-06，與 hexaco-game/room-api 對稱）：這裏只收 Big Five 房。
-  // 不擋的話大五玩家會先入座 HEXACO 房再被頁面重定向彈走，留下幽靈座位佔名額，
+  // 牌組守衛（2026-08-06 加，2026-08-31 SD4 上線後改三值判斷）：這裏只收 Big Five 房。
+  // 不擋的話大五玩家會先入座別家的房再被頁面重定向彈走，留下幽靈座位佔名額，
   // 且 getPlayerActiveRoom 會拿這間房把他反覆彈出大五大廳（自鎖）。
-  if (((room.settings as RoomSettings)?.deck ?? 'big-five') === 'hexaco') {
-    throw new Error('這是 HEXACO 房間，請從「聯機對戰 · HEXACO」加入');
+  const roomDeck = (room.settings as RoomSettings)?.deck ?? 'big-five';
+  if (roomDeck !== 'big-five') {
+    throw new Error(roomDeck === 'hexaco'
+      ? '這是 HEXACO 房間，請從「聯機對戰 · HEXACO」加入'
+      : '這是 Dark Tetrad 房間，請從「聯機對戰 · Dark Tetrad」加入');
   }
 
   const maxPlayers = (room.settings as RoomSettings)?.maxPlayers ?? 4;

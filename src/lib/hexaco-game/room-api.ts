@@ -75,9 +75,12 @@ export async function joinRoom(roomCode: string, playerId: string, avatar?: stri
 
   if (roomError || !room) throw new Error('房間不存在或已開始遊戲');
 
-  // 牌組守衛：這裏只收 HEXACO 房。輸了大五房號 → 明確告知去聯機大廳（Big Five）加入。
-  if (((room.settings as RoomSettings)?.deck ?? 'big-five') !== 'hexaco') {
-    throw new Error('這是 Big Five 房間，請從「聯機對戰 · Big Five」加入');
+  // 牌組守衛：這裏只收 HEXACO 房。輸了別家的房號 → 明確告知去對應聯機大廳加入。
+  const roomDeck = (room.settings as RoomSettings)?.deck ?? 'big-five';
+  if (roomDeck !== 'hexaco') {
+    throw new Error(roomDeck === 'sd4'
+      ? '這是 Dark Tetrad 房間，請從「聯機對戰 · Dark Tetrad」加入'
+      : '這是 Big Five 房間，請從「聯機對戰 · Big Five」加入');
   }
 
   const maxPlayers = (room.settings as RoomSettings)?.maxPlayers ?? 4;

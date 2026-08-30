@@ -205,9 +205,11 @@ export default function PvpGamePage() {
       if (cancelled) return;
       // 查失败 ≠ 僵尸房：网络抖动就 reset 会把 host 的 rawGameState 清掉、全桌不可恢复。
       if (error) return;
-      // 牌組守衛（2026-08-06）：HEXACO 房的對局頁在 /hexaco-pvp/game/。
-      if (data && ((data.settings as { deck?: string } | null)?.deck ?? 'big-five') === 'hexaco') {
-        router.replace(`/hexaco-pvp/game/${code}`);
+      // 牌組守衛（2026-08-06 HEXACO / 2026-08-31 SD4）：其他牌組的對局頁各在自家路由。
+      const gameDeck = (data?.settings as { deck?: string } | null)?.deck ?? 'big-five';
+      // 只對已知的另兩家 redirect；未知 deck 值落在大五頁兜底（防互踢循環，同房間頁）。
+      if (data && (gameDeck === 'hexaco' || gameDeck === 'sd4')) {
+        router.replace(gameDeck === 'hexaco' ? `/hexaco-pvp/game/${code}` : `/sd4-pvp/game/${code}`);
         return;
       }
       if (!data || data.status !== 'playing') {

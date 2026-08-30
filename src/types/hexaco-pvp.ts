@@ -23,7 +23,7 @@ export type RoomStatus = 'waiting' | 'playing' | 'finished' | 'ended';
 
 // Personality deck identifier. Only 'big-five' is implemented for MVP;
 // the others appear in the create-room UI as locked previews.
-export type DeckId = 'big-five' | 'hexaco' | 'cpai';
+export type DeckId = 'big-five' | 'hexaco' | 'cpai' | 'sd4'; // 'sd4' = Dark Tetrad 房間的 settings.deck 實值（主頁槽位 key 歷史上叫 cpai）
 
 // Room settings
 export interface RoomSettings {

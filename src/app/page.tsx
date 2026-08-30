@@ -41,12 +41,9 @@ export default function Home() {
   const [deckModalFor, setDeckModalFor] = useState<'tutorial' | 'assessment' | 'report' | 'pvp' | 'solo' | null>(null);
   // 「查看報告」按模型分流：选了尚未完成的模型 → 弹「未完成」提示框（记录选的哪个模型）
   const [reportPrompt, setReportPrompt] = useState<'big-five' | 'hexaco' | 'cpai' | null>(null);
-  // 单机/联机/教学里选了「测评已上线但对局未上线」的模型（目前只有 Dark Tetrad/SD4）→ 弹对局规划中提示框
-  const [gameSoonPrompt, setGameSoonPrompt] = useState(false);
-
   // 各模型：是否已做出（有测评+报告页）+ 该用户是否已完成 + 展示名。
   // 三个模型测评均已上线（Dark Tetrad = SD4，2026-08-24；内部 id 仍沿用 cpai）；
-  // Dark Tetrad 的对局仍未开放（只有测评→报告）。
+  // 三套对局也均已上线（Dark Tetrad 对局 2026-08-31）。
   // 检测源当前用本地 scores；后续可换成登入时从 Supabase 拉取的「已完成模型」。
   const MODEL_NAME: Record<'big-five' | 'hexaco' | 'cpai', string> = { 'big-five': 'Big Five', hexaco: 'HEXACO', cpai: 'Dark Tetrad' };
   // ⚠️「已完成」必须以登入为前提：登出后 localStorage 仍留着上次的分数，
@@ -59,11 +56,10 @@ export default function Home() {
   const REPORT_ROUTE: Record<'big-five' | 'hexaco' | 'cpai', string> = { 'big-five': '/results', hexaco: '/hexaco/results', cpai: '/sd4/results' };
 
   // 模型在选择框里的状态：已完成 done / 已上线未做 todo / 未上线 soon（用于卡片徽标）。
-  // 测评/报告流程：三模型都已上线 → 按完成度。对局类流程（单机/联机/教学）：Dark Tetrad 无对局 → 恒 soon。
+  // 测评/报告与对局类流程（单机/联机/教学）：三模型都已上线 → 一律按完成度。
   const modelState = (m: 'big-five' | 'hexaco' | 'cpai'): 'done' | 'todo' | 'soon' =>
     modelDone(m) ? 'done' : 'todo';
-  const gameModelState = (m: 'big-five' | 'hexaco' | 'cpai'): 'done' | 'todo' | 'soon' =>
-    m === 'cpai' ? 'soon' : modelState(m);
+  const gameModelState = modelState; // SD4 对局 2026-08-31 上线后与测评侧一致，保留别名以示语义
 
   // 「查看報告」：已完成 → 进该模型报告；未完成 → 弹提示框「你還沒做，要現在做嗎？」。
   // 老板流程：报告入口不该把没测过的人直接丢进题目，先明确告知未完成再引导去测。
@@ -79,26 +75,23 @@ export default function Home() {
     router.push(modelDone(deckId) ? REPORT_ROUTE[deckId] : ASSESS_ROUTE[deckId]);
   }
 
-  // 「單機遊戲」按模型分流：Big Five → /lobby、HEXACO → /hexaco-lobby（两个大厅
-  // 各自带「未测评」门禁，没做该模型测评会被引去对应答题页）；Dark Tetrad 无对局 → 弹对局规划中提示框。
+  // 「單機遊戲」按模型分流：Big Five → /lobby、HEXACO → /hexaco-lobby、Dark Tetrad → /sd4-lobby
+  // （三个大厅各自带「未测评」门禁，没做该模型测评会被引去对应答题页）。
   function handleSoloPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
     setDeckModalFor(null);
-    if (deckId === 'cpai') { setGameSoonPrompt(true); return; }
-    router.push(deckId === 'hexaco' ? '/hexaco-lobby' : '/lobby');
+    router.push(deckId === 'hexaco' ? '/hexaco-lobby' : deckId === 'cpai' ? '/sd4-lobby' : '/lobby');
   }
 
-  // 「聯機對戰」按模型分流（2026-08-06 HEXACO 联机上线）：各自的建房/加房大厅。
+  // 「聯機對戰」按模型分流（2026-08-06 HEXACO 联机上线、2026-08-31 SD4 联机上线）：各自的建房/加房大厅。
   function handlePvpPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
     setDeckModalFor(null);
-    if (deckId === 'cpai') { setGameSoonPrompt(true); return; }
-    router.push(deckId === 'hexaco' ? '/hexaco-pvp' : '/pvp');
+    router.push(deckId === 'hexaco' ? '/hexaco-pvp' : deckId === 'cpai' ? '/sd4-pvp' : '/pvp');
   }
 
-  // 「玩法教學」按模型分流（2026-08-06 HEXACO 教学上线）：各自的教学页。
+  // 「玩法教學」按模型分流（2026-08-06 HEXACO 教学上线、2026-08-31 SD4 教学上线）：各自的教学页。
   function handleTutorialPick(deckId: 'big-five' | 'hexaco' | 'cpai') {
     setDeckModalFor(null);
-    if (deckId === 'cpai') { setGameSoonPrompt(true); return; }
-    router.push(deckId === 'hexaco' ? '/hexaco-tutorial' : '/tutorial');
+    router.push(deckId === 'hexaco' ? '/hexaco-tutorial' : deckId === 'cpai' ? '/sd4-tutorial' : '/tutorial');
   }
 
   // 自愈：已完成报告却残留半截答案 = 放弃的重测（unmount 清理可能没触发）。
@@ -287,39 +280,6 @@ export default function Home() {
         modelState={deckModalFor === 'report' || deckModalFor === 'assessment' ? modelState : deckModalFor === 'solo' || deckModalFor === 'pvp' || deckModalFor === 'tutorial' ? gameModelState : undefined}
         loc={loc}
       />
-
-      {/* 单机/联机/教学里选了 Dark Tetrad → 对局规划中提示框（测评已上线，对局还没有）。 */}
-      {gameSoonPrompt && (
-        <div
-          onClick={() => setGameSoonPrompt(false)}
-          className="fixed inset-0 z-[95] flex items-center justify-center bg-[rgba(58,48,32,0.5)] px-5 backdrop-blur-sm"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="psy-panel psy-etched w-full max-w-sm space-y-4 rounded-[1.6rem] p-6 text-center"
-          >
-            <h2 className="psy-serif text-xl text-[var(--psy-ink)]">{MODEL_NAME.cpai}</h2>
-            <p className="text-sm leading-6 text-[var(--psy-ink-soft)]">{t.deckGameSoonBody}</p>
-            <div className="space-y-2 pt-1">
-              <button
-                onClick={() => {
-                  setGameSoonPrompt(false);
-                  router.push(modelDone('cpai') ? REPORT_ROUTE.cpai : ASSESS_ROUTE.cpai);
-                }}
-                className="psy-btn psy-btn-accent psy-serif w-full py-3 font-semibold"
-              >
-                {modelDone('cpai') ? t.report : t.reportStartNow}
-              </button>
-              <button
-                onClick={() => setGameSoonPrompt(false)}
-                className="psy-btn psy-btn-ghost psy-serif w-full py-2.5 text-sm font-medium"
-              >
-                {t.reportBack}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 「查看報告」选了尚未完成的模型 → 未完成提示框（老板流程：已做进报告 / 未做问要不要现在做）。 */}
       {reportPrompt && (

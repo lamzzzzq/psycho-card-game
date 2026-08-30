@@ -209,9 +209,10 @@ export default function PvpGamePage() {
       if (cancelled) return;
       // 查失败 ≠ 僵尸房：网络抖动就 reset 会把 host 的 rawGameState 清掉、全桌不可恢复。
       if (error) return;
-      // 牌組守衛：大五房的對局頁在 /pvp/game/。
-      if (data && ((data.settings as { deck?: string } | null)?.deck ?? 'big-five') !== 'hexaco') {
-        router.replace(`/pvp/game/${code}`);
+      // 牌組守衛：其他牌組的對局頁各在自家路由（三向守衛，各側同款）。
+      const gameDeck = (data?.settings as { deck?: string } | null)?.deck ?? 'big-five';
+      if (data && gameDeck !== 'hexaco') {
+        router.replace(gameDeck === 'sd4' ? `/sd4-pvp/game/${code}` : `/pvp/game/${code}`);
         return;
       }
       if (!data || data.status !== 'playing') {

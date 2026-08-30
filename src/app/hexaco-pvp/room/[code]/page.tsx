@@ -70,9 +70,10 @@ export default function RoomWaitPage() {
 
         if (roomErr || !roomData) { setError(t.roomNotExist); setLoading(false); return; }
 
-        // 牌組守衛：這是大五房 → 交還給大五的房間頁（雙向守衛，另一側同款）。
-        if (((roomData.settings as RoomSettings)?.deck ?? 'big-five') !== 'hexaco') {
-          router.replace(`/pvp/room/${code}`);
+        // 牌組守衛：其他牌組的房 → 交還給對應房間頁（三向守衛，各側同款）。
+        const roomDeck = (roomData.settings as RoomSettings)?.deck ?? 'big-five';
+        if (roomDeck !== 'hexaco') {
+          router.replace(roomDeck === 'sd4' ? `/sd4-pvp/room/${code}` : `/pvp/room/${code}`);
           return;
         }
 

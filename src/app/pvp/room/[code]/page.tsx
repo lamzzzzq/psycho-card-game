@@ -67,9 +67,12 @@ export default function RoomWaitPage() {
 
         if (roomErr || !roomData) { setError(t.roomNotExist); setLoading(false); return; }
 
-        // 牌組守衛（2026-08-06 HEXACO 联机上线）：這是 HEXACO 房 → 交還給 HEXACO 房間頁。
-        if (((roomData.settings as RoomSettings)?.deck ?? 'big-five') === 'hexaco') {
-          router.replace(`/hexaco-pvp/room/${code}`);
+        // 牌組守衛（2026-08-06 HEXACO 联机、2026-08-31 SD4 联机）：其他牌組的房 → 交還給對應房間頁。
+        const roomDeck = (roomData.settings as RoomSettings)?.deck ?? 'big-five';
+        // 只對已知的另兩家 redirect；未知 deck 值落在大五頁兜底（另兩家的守衛都往 /pvp 送，
+        // 這裏再往外踢會形成互踢循環）。
+        if (roomDeck === 'hexaco' || roomDeck === 'sd4') {
+          router.replace(roomDeck === 'hexaco' ? `/hexaco-pvp/room/${code}` : `/sd4-pvp/room/${code}`);
           return;
         }
 
