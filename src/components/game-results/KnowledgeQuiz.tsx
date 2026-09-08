@@ -15,7 +15,7 @@ import type { Locale } from '@/lib/i18n';
 // ⚠️ 出题不要放进 useMemo——React 不保证 memo 缓存不被丢弃，一旦重算就会在答题途中
 // 换成一整套新题目，而 idx / score 还停在旧进度上。改为点「开始」时算一次存 state。
 
-export function KnowledgeQuiz({ locale, model = 'bigfive' }: { locale: Locale; model?: QuizModel }) {
+export function KnowledgeQuiz({ locale, model = 'big-five' }: { locale: Locale; model?: QuizModel }) {
   const en = locale === 'en';
   const [started, setStarted] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);

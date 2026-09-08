@@ -4,11 +4,11 @@ import { describe, it, expect } from 'vitest';
 import { buildQuestions, CARD_QUESTION_COUNT } from '@/lib/quiz-questions';
 import { DIMENSION_QUIZ_QUESTIONS, type QuizModel } from '@/data/quiz-dimension-questions';
 
-const MODELS: QuizModel[] = ['bigfive', 'hexaco', 'sd4'];
+const MODELS: QuizModel[] = ['big-five', 'hexaco', 'sd4'];
 
 // 逐題核對 xlsx F 欄「Correct Answer」，防止日後改動把正解索引改歪。
 const EXPECTED_ANSWERS: Record<QuizModel, string[]> = {
-  bigfive: ['Conscientiousness', 'Neuroticism', 'Extraversion', 'Agreeableness'],
+  'big-five': ['Conscientiousness', 'Neuroticism', 'Extraversion', 'Agreeableness'],
   hexaco: ['Honesty–Humility', 'Emotionality', 'Agreeableness', 'Openness to Experience'],
   sd4: ['Psychopathy', 'Machiavellianism', 'Narcissism', 'Sadism'],
 };

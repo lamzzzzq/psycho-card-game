@@ -12,7 +12,7 @@
 //
 // xlsx 另有 Source Text / Reference / Remarks(MY) 三欄（出處與改寫說明），本檔只留 reference 備查，UI 不顯示。
 
-export type QuizModel = 'bigfive' | 'hexaco' | 'sd4';
+export type QuizModel = 'big-five' | 'hexaco' | 'sd4';
 
 export interface DimensionQuizQuestion {
   /** 題幹提問句（顯示在小字提示位，取代「這是哪個概念的描述？」）。 */
@@ -38,7 +38,7 @@ const SD4_LEAD = 'Which SD4 subscale is described below?';
 const SD4_LEAD_ZH = '以下描述的是哪一個 SD4 分量表？';
 
 export const DIMENSION_QUIZ_QUESTIONS: Record<QuizModel, DimensionQuizQuestion[]> = {
-  bigfive: [
+  'big-five': [
     {
       lead: BIG_FIVE_LEAD,
       leadZh: BIG_FIVE_LEAD_ZH,
