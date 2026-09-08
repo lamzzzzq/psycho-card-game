@@ -129,7 +129,7 @@ export function GameOverModal({
         </div>
 
         {/* #8 局末概念小测（可选，激励读知识卡） */}
-        <KnowledgeQuiz locale={locale} />
+        <KnowledgeQuiz locale={locale} model="bigfive" />
 
         <div className="mx-auto flex w-full max-w-lg gap-3">
           {onPlayAgain && (

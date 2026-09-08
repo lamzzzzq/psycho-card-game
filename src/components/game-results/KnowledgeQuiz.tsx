@@ -1,39 +1,21 @@
 'use client';
 
 // #8 局末概念小测（方向 A）：结算页可选的心理学知识卡小测，激励学生真去读知识卡。
-// MVP：从全部知识卡随机出 4 题「看定义→选术语」的选择题，即时对错反馈 + 得分 + 鼓励语。
+// 出题结构（2026-09-09 起）：4 题 = 前 3 题从知识卡池随机（看定义→选术语）
+//   + 第 4 题固定为「维度题」，从 quiz-dimension-questions.ts 里当前人格模型的 4 题中随机抽 1。
+//   → 维度题题库来源＝老板的 Knowledge questions_20260901.xlsx（三个 sheet 对应三套游戏）。
+// 三套游戏（大五 / HEXACO / SD4）共用本组件，靠 model 参数选维度题库；其余行为完全一致。
 // 自包含（不需玩家数据），中英双语内联。2026-07-24。
-// 后续可改为「只出这局出现过的知识卡」——需从对局状态把 seen dummy 卡传进来。
 
 import { useState } from 'react';
-import { KNOWLEDGE_CARDS, type KnowledgeCard } from '@/data/dummy-cards';
+import { buildQuestions, type Choice, type Question } from '@/lib/quiz-questions';
+import type { QuizModel } from '@/data/quiz-dimension-questions';
 import type { Locale } from '@/lib/i18n';
 
-const QUESTION_COUNT = 4;
-
-type Question = { card: KnowledgeCard; options: KnowledgeCard[] };
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-// 抽题：全卡池随机 4 张，每题配 3 个干扰项。
-// ⚠️ 不要放进 useMemo——React 不保证 memo 缓存不被丢弃，一旦重算就会在答题途中
+// ⚠️ 出题不要放进 useMemo——React 不保证 memo 缓存不被丢弃，一旦重算就会在答题途中
 // 换成一整套新题目，而 idx / score 还停在旧进度上。改为点「开始」时算一次存 state。
-function buildQuestions(): Question[] {
-  const pool = shuffle(KNOWLEDGE_CARDS);
-  return pool.slice(0, QUESTION_COUNT).map((card) => {
-    const distractors = shuffle(pool.filter((c) => c !== card)).slice(0, 3);
-    return { card, options: shuffle([card, ...distractors]) };
-  });
-}
 
-export function KnowledgeQuiz({ locale }: { locale: Locale }) {
+export function KnowledgeQuiz({ locale, model = 'bigfive' }: { locale: Locale; model?: QuizModel }) {
   const en = locale === 'en';
   const [started, setStarted] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -41,11 +23,10 @@ export function KnowledgeQuiz({ locale }: { locale: Locale }) {
   const [score, setScore] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
 
-  const term = (c: KnowledgeCard) => (en ? c.term : c.termZh);
-  const def = (c: KnowledgeCard) => (en ? c.definition : c.definitionZh);
+  const say = (c: Choice) => (en ? c.en : c.zh);
 
   const start = () => {
-    setQuestions(buildQuestions());
+    setQuestions(buildQuestions(model));
     setIdx(0);
     setScore(0);
     setPicked(null);
@@ -82,7 +63,9 @@ export function KnowledgeQuiz({ locale }: { locale: Locale }) {
           {en ? 'Psychology Knowledge Quiz' : '心理學知識卡小測'}
         </p>
         <p className="relative mx-auto mt-2 max-w-md text-xs leading-5 text-[var(--psy-ink-soft)]">
-          {en ? 'Four questions drawn at random from the knowledge cards — see how much you remembered.' : '從知識卡裏隨機抽 4 題，看看你記住多少。'}
+          {en
+            ? 'Four random questions — three from the knowledge cards, one on the personality dimensions.'
+            : '隨機抽 4 題——3 題出自知識卡，1 題考人格維度。'}
         </p>
 
         {/* 4 題小圓點提示 */}
@@ -158,7 +141,6 @@ export function KnowledgeQuiz({ locale }: { locale: Locale }) {
   // 答题态
   const q = questions[idx];
   const answered = picked !== null;
-  const answerIndex = q.options.findIndex((o) => o === q.card);
 
   return (
     <div className="space-y-4 rounded-[1.35rem] border border-[rgba(200,155,93,0.24)] bg-[var(--psy-card-content)] p-5 shadow-[0_16px_30px_rgba(96,72,38,0.1)]">
@@ -177,13 +159,13 @@ export function KnowledgeQuiz({ locale }: { locale: Locale }) {
       </div>
 
       <div>
-        <p className="text-xs text-[var(--psy-muted)]">{en ? 'Which concept does this describe?' : '這是哪個概念的描述？'}</p>
-        <p className="mt-1 text-[15px] leading-7 text-[var(--psy-ink)]">{def(q.card)}</p>
+        <p className="text-xs text-[var(--psy-muted)]">{say(q.lead)}</p>
+        <p className="mt-1 text-[15px] leading-7 text-[var(--psy-ink)]">{say(q.body)}</p>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2">
         {q.options.map((opt, oi) => {
-          const isAnswer = oi === answerIndex;
+          const isAnswer = oi === q.answerIndex;
           const isPicked = oi === picked;
           let cls = 'border-[rgba(154,116,72,0.2)] bg-[var(--psy-surface)] text-[var(--psy-ink)] hover:border-[var(--psy-accent)]';
           if (answered) {
@@ -201,7 +183,7 @@ export function KnowledgeQuiz({ locale }: { locale: Locale }) {
               }}
               className={`rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition disabled:cursor-default ${cls}`}
             >
-              {term(opt)}
+              {say(opt)}
             </button>
           );
         })}
