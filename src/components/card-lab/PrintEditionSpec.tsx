@@ -110,6 +110,10 @@ export function PrintEditionSpec() {
   const persona23p = dimCount * 12;
   const know4p = 12;
   const know23p = 8;
+  // 知識牌全部印齊，一局只從中選 12／8 張進牌庫（見 §1、§3）
+  const knowPrint = KNOWLEDGE_CARDS.length;
+  const bigFiveTotal = BIG_FIVE_DIMS.length * 16 + knowPrint;
+  const hexacoTotal = HEXACO_DIMS.length * 16 + knowPrint;
   const label = kind === 'hexaco' ? 'HEXACO（六維）' : 'Big Five（五維）';
   const maxHand = dimCount * 5 - 1;
   const minHand = dimCount * 1 - 1;
@@ -137,21 +141,101 @@ export function PrintEditionSpec() {
         </div>
       </header>
 
+      <Section n="§0" title="一頁下單清單（拿這張去下單）">
+        <p>
+          以下是<strong>{label} 一盒</strong>的完整用量，含標準版與明牌入門版兩副牌。
+          A 表交印廠、B 表可同一家印廠做、C 表買現成的不必定制。每項為什麼是這個數，
+          往下各節都有推導。
+        </p>
+
+        <p className="pt-1 font-medium text-[var(--psy-ink)]">A · 卡牌（找印廠定制）</p>
+        <Table
+          head={['品項', '一盒張數', '不同版面', '規格']}
+          rows={[
+            ['標準版人格牌', persona4p, `${dimCount * 10} 種`, `其中 ${dimCount * 6} 張是重印，不算新版面`],
+            ['標準版知識牌', knowPrint, `${knowPrint} 種`, '與標準版人格牌同一種卡背'],
+            ['明牌入門版人格牌', persona4p, `${dimCount * 10} 種（另做）`, '正面加維度色帶與維度名，見 §11'],
+            ['明牌入門版知識牌', knowPrint, '0（正面沿用標準版）', '只換卡背，正面同版重印'],
+          ]}
+          foot={['合計', persona4p * 2 + knowPrint * 2, `${dimCount * 10 * 2 + knowPrint} 種正面 + 2 種卡背`, '63 × 88 mm，藍芯不透光，亞光覆膜']}
+        />
+        <Note tone="warn">
+          <strong>兩副牌的卡背必須不同</strong>，否則背面朝下混在一起就分不出來。
+          預算只夠一副的話<strong>一定是印標準版</strong>：標準版配上維度卡就能打明牌檔
+          （只是要翻表查），明牌版卻沒辦法反過來打半公開／隱藏。
+          明牌入門版是課堂第一次玩的加速器，不是入口。
+        </Note>
+
+        <p className="pt-1 font-medium text-[var(--psy-ink)]">B · 紙板與印刷配件（可同一家做）</p>
+        <Table
+          head={['品項', '數量', '規格']}
+          rows={[
+            ['個人目標板', '4 張', `${dimCount} 行維度 × 1–5 刻度，卡紙即可`],
+            ['歸檔區墊板', '4 張', '放得下 5 張橫排卡牌的長條墊板'],
+            ['維度卡', `${dimCount} 張`, '雙面：正＝該維 10 個題號（升序），背＝該維定義與高／低分；卡緣印維度色'],
+            ['輪次計數卡', '1 張', '印 12 格（10 輪局打到第 10 格）'],
+            ['規則書', '1 本', '本頁 §5–§9 的內容 + 明牌版說明'],
+            ['盒子', '1 個', `裝得下 ${persona4p * 2 + knowPrint * 2} 張牌 + 全部配件 + ${4} 個牌架`],
+          ]}
+        />
+
+        <p className="pt-1 font-medium text-[var(--psy-ink)]">C · 買現成的（不必定制）</p>
+        <Table
+          head={['品項', '數量', '買什麼']}
+          rows={[
+            ['維度色標', `${dimCount * 5 * 4} 枚`, `${dimCount} 色小色標片／夾子，每人每色 5 枚——半公開難度整局累積不回收`],
+            ['目標數字標記', `${dimCount * 4} 枚`, `素色圓片，每人 ${dimCount} 枚（每維 1 枚，壓在目標板的 1–5 刻度上）`],
+            ['查閱代幣', '16 枚', '素色籌碼，每人 4 枚，每回合發、用完不留'],
+            ['牌架', '4 個', `至少放得下 ${maxHand} 張牌——這是必需品不是配件`],
+            ['罰停標記', '4 枚', '醒目紅色，一眼看得出誰被罰停'],
+            ['莊家標記', '1 枚', '任何一枚顯眼的標記物'],
+            ['沙漏', '1 個', '約 10 秒，搶牌計時用'],
+          ]}
+        />
+
+        <p className="pt-1 font-medium text-[var(--psy-ink)]">D · 要交給印廠的檔案</p>
+        <ul className="ml-4 list-disc space-y-1.5">
+          <li>標準版人格牌正面 <strong>{dimCount * 10} 版</strong>（題面文字 + 插畫，<strong>不含</strong>維度標籤）</li>
+          <li>明牌入門版人格牌正面 <strong>{dimCount * 10} 版</strong>（同上，另加維度色帶 + 維度名）</li>
+          <li>知識牌正面 <strong>{knowPrint} 版</strong>（兩副共用）</li>
+          <li>卡背 <strong>2 版</strong>（標準版／明牌版各一）</li>
+          <li>B 表六項紙板配件的版面</li>
+        </ul>
+        <Note tone="warn">
+          <strong>打樣回來先確認三件事：</strong>① 拿一張人格牌對著燈看，
+          背面透不透得出插畫顏色（透了就等於明牌，整個標準版作廢）；
+          ② 明牌版的維度色帶與 §11 的色號一致；
+          ③ 牌架真的放得下 {maxHand} 張牌。
+        </Note>
+      </Section>
+
       <Section n="§1" title="一副要印多少張">
         <p>
           印<strong>一副滿配（4 人用）</strong>即可，2 人／3 人局是它的子集——開盒時按人數取出多餘的牌，
           不必印三種盒子。{label} 滿配總張數：
         </p>
         <Table
-          head={['牌種', '張數', '說明']}
+          head={['牌種', '印量', '說明']}
           rows={[
             ['人格牌', persona4p, `${dimCount} 維 × 16 張`],
-            ['知識牌', know4p, `從 ${KNOWLEDGE_CARDS.length} 個心理學術語中選 12 個，每個 1 張`],
+            ['知識牌', knowPrint, `${knowPrint} 個心理學術語各 1 張，全部印齊`],
           ]}
-          foot={['合計', persona4p + know4p, '一副牌的印刷總量']}
+          foot={['合計', persona4p + knowPrint, '一副牌的印刷總量']}
         />
         <Note tone="tip">
-          兩套都做的話：Big Five 92 張 + HEXACO 108 張 = <strong>200 張</strong>。兩套卡背必須不同
+          <strong>印量不等於一局的牌庫。</strong>知識牌 {knowPrint} 個術語全部印出來，但一局只放
+          <strong> {know4p} 張</strong>（4 人）／<strong>{know23p} 張</strong>（2–3 人）進牌庫，
+          由這桌人自己挑——想扣課程進度就挑剛教過的術語，沒想法就隨機抽。所以 4 人局實際牌庫是
+          {persona4p + know4p} 張、2／3 人局 {persona23p + know23p} 張，見 §3。
+        </Note>
+        <Note tone="diff">
+          為什麼不挑定 12 個直接印：知識牌<strong>沒有維度、不參與歸檔</strong>，彼此完全等價，
+          放哪幾張對平衡零影響。全印只多 {knowPrint - know4p} 張成本，換來每堂課能配不同的術語，
+          也省掉「該選哪 12 個」這個一定會有人不同意的決定。
+        </Note>
+        <Note tone="tip">
+          兩套都做的話：Big Five {bigFiveTotal} 張 + HEXACO {hexacoTotal} 張 =
+          <strong> {bigFiveTotal + hexacoTotal} 張</strong>。兩套卡背必須不同
           （或分盒），混在一起會直接破壞牌庫張數。
         </Note>
       </Section>
@@ -186,14 +270,15 @@ export function PrintEditionSpec() {
       <Section n="§3" title="2 人／3 人／4 人：各用多少張">
         <p>
           人數少牌就要少，否則一局打不完（電子版同理，見 <code>deckConfigFor()</code>）。
-          做法：從滿配裏<strong>取出每維 4 張複製牌 + 4 張知識牌</strong>，收回盒子。
+          做法：知識牌<strong>每局都要先挑</strong>（{knowPrint} 張裏選 {know4p}／{know23p} 張），
+          2／3 人局再<strong>額外取出每維 4 張複製牌</strong>，其餘收回盒子。
         </p>
         <Table
-          head={['人數', '每維人格牌', '人格牌小計', '知識牌', '總牌庫', '開盒時取出']}
+          head={['人數', '每維人格牌', '人格牌小計', '知識牌', '總牌庫', '開盒時怎麼取']}
           rows={[
-            ['2 人', '12 張（10 真題 + 2 複製）', persona23p, know23p, persona23p + know23p, `每維 4 張複製 + 4 張知識牌，共 ${dimCount * 4 + 4} 張`],
-            ['3 人', '12 張（10 真題 + 2 複製）', persona23p, know23p, persona23p + know23p, `同上，共 ${dimCount * 4 + 4} 張`],
-            ['4 人', '16 張（10 真題 + 6 複製）', persona4p, know4p, persona4p + know4p, '不取出，全副使用'],
+            ['2 人', '12 張（10 真題 + 2 複製）', persona23p, `${know23p} 張（${knowPrint} 選 ${know23p}）`, persona23p + know23p, `每維收回 4 張複製 + 收回 ${knowPrint - know23p} 張知識牌`],
+            ['3 人', '12 張（10 真題 + 2 複製）', persona23p, `${know23p} 張（${knowPrint} 選 ${know23p}）`, persona23p + know23p, '同上'],
+            ['4 人', '16 張（10 真題 + 6 複製）', persona4p, `${know4p} 張（${knowPrint} 選 ${know4p}）`, persona4p + know4p, `複製牌全用，收回 ${knowPrint - know4p} 張知識牌`],
           ]}
         />
         <p className="pt-1">2／3 人局<strong>保留</strong>的複製牌題號（每維前 2 道），其餘複製牌收回盒子：</p>
@@ -206,8 +291,9 @@ export function PrintEditionSpec() {
           ])}
         />
         <Note tone="tip">
-          知識牌收回哪 4 張都可以（知識牌沒有維度、不參與歸檔，彼此完全等價），
-          建議固定收編號最大的 4 張，方便下次清點。
+          <strong>知識牌挑哪幾張都可以</strong>——它沒有維度、不參與歸檔，彼此完全等價，
+          怎麼選都不影響平衡。課堂上建議挑剛教過的章節術語，讓遊戲順帶複習；
+          沒特別想法就把 {knowPrint} 張洗勻，隨機抽 {know4p}／{know23p} 張。
         </Note>
       </Section>
 
@@ -219,16 +305,26 @@ export function PrintEditionSpec() {
             ['個人目標板', '4 張', `寫下自己 ${dimCount} 個維度的目標張數（1–5），整局擺在面前`, '歸檔進度卡上的維度格'],
             ['目標數字標記', `每人 ${dimCount} 枚（1–5 可調）`, '壓在目標板各維度格上表示目標張數', '同上'],
             ['歸檔區墊板', '4 張', '碰成功的牌正面朝上壓在這裏，代表「公開歸檔」', '玩家面前的已歸檔區'],
-            ['查閱代幣', '每人 4 枚', '半公開／隱藏難度下，每回合可查維度的次數', '「查看 N 張」按鈕'],
-            ['維度對照表', '2 份', '按卡牌編號查該牌維度，判定碰／食胡對錯用', '系統自動判定'],
-            ['維度速查卡', '2 份', `${dimCount} 個維度的定義與高／低分說明，判斷牌面歸屬用`, '對局內「維度速查」按鈕'],
+            ['查閱代幣', `每人 4 枚（共 ${4 * 4} 枚）`, '半公開／隱藏難度下，每回合可查維度的次數', '「查看 N 張」按鈕'],
+            ['維度卡', `${dimCount} 張（每維 1 張）`, `正面＝該維 10 個題號（判定碰／食胡對錯用）；背面＝該維定義與高／低分說明`, '系統自動判定 ＋「維度速查」按鈕'],
+            ['維度色標', `每人 ${dimCount} 色 × 5 枚（共 ${dimCount * 5 * 4} 枚）`, '半公開難度下，查到維度就插在牌架該牌位，之後一直看得到', '半公開的「保留標籤」'],
             ['罰停標記', '4 枚', '被罰停的人放在自己面前，一目了然', '頭像上的「⛔ 罰停中」'],
-            ['輪次計數卡', '1 張', '每完成一輪推進一格，打滿約定輪數結算', '回合行的「第 n 輪」'],
+            ['輪次計數卡', '1 張（印 12 格）', '每完成一輪推進一格，打滿約定輪數（10 或 12）結算', '回合行的「第 n 輪」'],
             ['莊家標記', '1 枚', '標示本局起手玩家，逆時針輪轉', '系統決定的行動順序'],
             ['沙漏（約 10 秒）', '1 個', '別人棄牌後的搶牌時間', '判讀窗口倒數'],
             ['牌架', '4 個', `手牌最多可達 ${maxHand} 張，拿不住`, '手牌區可橫向滑動'],
           ]}
         />
+        <Note tone="tip">
+          <strong>維度卡做成每維一張、不做一張大表</strong>：{dimCount} 張攤開排在桌沿，
+          {dimCount} 個人可以同時查不同維度，不用互相等；卡緣印該維顏色（見 §11），
+          與牌架上的維度色標同一套配色。查一張牌時掃一排卡片的題號即可，
+          每張卡的題號都<strong>升序排列</strong>，方便掃。
+        </Note>
+        <Note tone="warn">
+          <strong>維度色標的數量別省</strong>：半公開難度下色標整局累積、不回收，
+          每維目標上限 5 張，所以每人每色備 5 枚。隱藏難度不發色標（全靠腦記，見 §6）。
+        </Note>
         <Note tone="warn">
           牌架是<strong>必需品不是配件</strong>：手牌張數 = 各維目標之和 − 1，
           {label}的理論上限是 {dimCount} × 5 − 1 = <strong>{maxHand} 張</strong>（下限 {minHand} 張）。
@@ -293,7 +389,7 @@ export function PrintEditionSpec() {
         <Table
           head={['難度', '每回合可查', '查到的資訊', '實體做法']}
           rows={[
-            ['明牌（入門）', '不限', '全場公開', '對照表攤在桌上隨時查'],
+            ['明牌（入門）', '不限', '全場公開', '維度卡攤在桌上隨時查；若用明牌入門版牌（§11），維度直接印在卡面，連查都不用'],
             [
               '半公開（進階）',
               '4 次',
@@ -369,7 +465,13 @@ export function PrintEditionSpec() {
             所以正常情況下<strong>永遠不會缺牌</strong>。若抽牌堆和棄牌堆同時見底，本局立即結算。
           </li>
           <li><strong>一輪 = 每人各打一個回合。</strong>莊家再次行動時，輪次計數推進一格。</li>
-          <li><strong>建議輪數：10 輪</strong>（電子版預設值；4 人局約 96% 會在 10 輪內出現食胡）。休息時間短可打 5 輪，會有一半左右打不完。</li>
+          <li>
+            <strong>輪數：標準 10 輪、加長 12 輪，開局全桌約定一種——不必二選一印死。</strong>
+            輪次計數卡就印滿 12 格，打 10 輪的局到第 10 格結束，兩種輪數共用同一張卡、不多一分成本。
+            10 輪是電子版預設值（4 人局約 96% 會在 10 輪內出現食胡）；
+            {kind === 'hexaco' ? 'HEXACO 多一個維度要湊，10 輪完成率低於大五，課堂上建議直接打 12 輪。' : '想讓慢熱的人也打得完就用 12 輪。'}
+            休息時間短可打 5 輪，會有一半左右打不完。
+          </li>
           <li>
             <strong>打滿約定輪數仍無人食胡：</strong>依序比較——
             ① <strong>已歸檔維度數，多者勝</strong>；② 相同則<strong>剩餘手牌張數，少者勝</strong>。
@@ -396,14 +498,47 @@ export function PrintEditionSpec() {
         />
       </Section>
 
-      <Section n="§11" title="給印廠的規格">
+      <Section n="§11" title="明牌入門版（課堂第一次玩）">
+        <p>
+          標準版之外，另出一套<strong>維度直接印在卡面</strong>的入門版：卡面加一條維度色帶 + 維度名，
+          不必查維度卡、不必發查閱代幣、不必發色標。課堂第一次玩用它，規則只剩「湊目標張數」，
+          十分鐘就能開打；熟了再換標準版，難度一路從明牌走到隱藏。
+        </p>
+        <Table
+          head={['項目', '明牌入門版', '與標準版的關係']}
+          rows={[
+            ['人格牌', `${persona4p} 張（${dimCount * 10} 種版面）`, '題面、插畫、編號完全相同，只多印維度色帶與維度名'],
+            ['知識牌', `${knowPrint} 張`, '正面同版重印，只換卡背'],
+            ['卡背', '必須與標準版不同', '正面看得出來、背面看不出來，混一盒就分不開'],
+            ['配件', '不需查閱代幣、不需維度色標', '維度卡仍建議附上（背面的維度定義還是要查）'],
+            ['難度', '只有「明牌」一檔', '半公開／隱藏兩檔必須用標準版'],
+          ]}
+        />
+        <p className="pt-1">維度色帶直接用電子版的維度配色，玩家從電子版轉實體不用重新記顏色：</p>
+        <div className="flex flex-wrap gap-2 pt-1">
+          {groups.map((g) => (
+            <span key={g.key} className="inline-flex items-center gap-2 rounded-full border border-[var(--psy-border)] bg-white/60 px-3 py-1 text-[12.5px] text-[var(--psy-ink)]">
+              <span className="h-3.5 w-3.5 rounded-full" style={{ background: g.color }} />
+              {g.zh} {g.key}
+              <code className="text-[11px] text-[var(--psy-muted)]">{g.color}</code>
+            </span>
+          ))}
+        </div>
+        <Note tone="diff">
+          明牌版<strong>不是另一個遊戲</strong>：牌庫張數、目標張數、碰／食胡、罰停、輪數全部與標準版一致，
+          唯一差別是「維度要不要自己推斷」。所以規則書一本共用，只在看牌難度那節註明
+          「用明牌版時跳過本節」。
+        </Note>
+      </Section>
+
+      <Section n="§12" title="給印廠的規格">
         <Table
           head={['項目', '規格', '備註']}
           rows={[
-            ['總印量', `${persona4p + know4p} 張／副（${label}）`, '兩套都做 = 200 張'],
-            ['不同版面數', `${dimCount * 10} 種人格牌 + 12 種知識牌 = ${dimCount * 10 + 12} 版`, `其中 ${dimCount * 6} 張為重印，不算新版面`],
-            ['卡面內容', '題面文字 + 插畫，不含維度標籤', '插畫已有全套（大五 50 張 / HEXACO 60 張）'],
-            ['卡背', '兩套必須不同圖案', '混副會破壞牌庫張數'],
+            ['總印量', `${persona4p + knowPrint} 張／副（${label}）`, `標準版 + 明牌版一盒 = ${(persona4p + knowPrint) * 2} 張；Big Five 與 HEXACO 兩種模型都做再翻倍`],
+            ['不同版面數', `${dimCount * 10} 種人格牌 + ${knowPrint} 種知識牌 = ${dimCount * 10 + knowPrint} 版（標準版）`, `明牌版另加 ${dimCount * 10} 版人格牌；其中 ${dimCount * 6} 張為重印，不算新版面`],
+            ['卡面內容', '標準版：題面文字 + 插畫，不含維度標籤；明牌版：另加維度色帶與維度名', '插畫已有全套（大五 50 張 / HEXACO 60 張）'],
+            ['卡背', '每一副都要不同圖案', '標準版／明牌版／兩種模型，各一種卡背；混副會破壞牌庫張數'],
             ['語言', '中英雙語或分版', '電子版兩種語言都已定稿'],
             ['建議尺寸', '63 × 88 mm（標準撲克）', '手牌可達 20 張以上，別做大卡'],
             ['建議工藝', '亞光覆膜 + 藍芯', '要頻繁洗牌，且不能透光看出維度'],
@@ -412,17 +547,10 @@ export function PrintEditionSpec() {
         <Note tone="warn">
           <strong>藍芯／不透光是硬要求。</strong>維度既然不印在卡面，靠的就是題面本身；
           但插畫有維度配色傾向，透光或薄卡會讓對手從背面看出端倪。
+          （明牌入門版沒有這個顧慮，但建議同工藝，兩副手感一致。）
         </Note>
       </Section>
 
-      <Section n="§12" title="待拍板">
-        <ul className="ml-4 list-disc space-y-1.5">
-          <li><strong>輪數 10 還是 12：</strong>電子版正在討論同一件事（HEXACO 4 人局 10 輪完成率 82%，低於大五 94%）。印刷前要定，因為要印在規則書上。</li>
-          <li><strong>知識牌選哪 12 個術語：</strong>現有 {KNOWLEDGE_CARDS.length} 個，需要挑 12 個。建議按課程覆蓋面挑，我可以出一版候選。</li>
-          <li><strong>維度對照表的形式：</strong>做成一張大卡（{dimCount * 10} 行），還是每維一張小卡？前者好查，後者可以讓不同玩家同時查。</li>
-          <li><strong>要不要出「明牌專用版」卡面：</strong>即維度標籤直接印在卡面的入門版。多一套版面成本，但課堂第一次玩會順很多。</li>
-        </ul>
-      </Section>
     </div>
   );
 }
