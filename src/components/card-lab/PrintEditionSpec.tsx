@@ -673,12 +673,27 @@ export function PrintEditionSpec() {
         </Note>
 
         <p className="pt-1 font-medium text-[var(--psy-ink)]">卡背</p>
-        <p>
-          用品牌 logo（蜂巢 Ψ）鋪在 <code>#F6F0E1</code> 底色上。底色直接取自 logo 原圖背景，
-          貼上去零接縫；純色底 + 置中圖案對裁切公差最寬容，偏個 1 mm 也看不出來。
-          檔案已生成在 <code>print-assets/</code>，RGB 與 CMYK 各一份，
-          951 × 1295 px（含 3 mm 出血）＠350 dpi。
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/card-back-preview.webp"
+            alt="標準版卡背：蜂巢 Ψ logo 一正一倒，米白底"
+            width={168}
+            height={234}
+            className="w-[168px] shrink-0 rounded-lg border border-[var(--psy-border)] shadow-sm"
+          />
+          <div className="space-y-3">
+            <p>
+              用品牌 logo（蜂巢 Ψ）鋪在 <code>#F6F0E1</code> 底色上。底色直接取自 logo 原圖背景，
+              貼上去零接縫；純色底 + 置中圖案對裁切公差最寬容，偏個 1 mm 也看不出來。
+              左圖是<strong>成品範圍</strong>（已裁掉出血）的預覽。
+            </p>
+            <p>
+              送印檔在 <code>print-assets/</code>，RGB（校稿看）與 CMYK（送印）各一份，
+              951 × 1295 px＝69 × 94 mm 含 3 mm 出血 ＠350 dpi。
+            </p>
+          </div>
+        </div>
         <Note tone="warn">
           <strong>卡背必須「點對稱」——旋轉 180° 要和原來完全一樣，這是規則問題不是美術問題。</strong>
           卡背若有方向性，隱藏難度下玩家只要把查過的牌<strong>倒插進牌架</strong>，
