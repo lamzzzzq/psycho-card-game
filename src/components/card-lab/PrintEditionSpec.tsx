@@ -214,8 +214,16 @@ export function PrintEditionSpec() {
         <ul className="ml-4 list-disc space-y-1.5">
           <li className="text-[var(--psy-ink)]"><strong>打樣這一副只要交前三項：</strong></li>
           <li>標準版中文人格牌正面 <strong>{dimCount * 10} 版</strong>（題面文字 + 插畫 + 題號，<strong>不含</strong>維度標籤）</li>
-          <li>中文知識牌正面 <strong>{knowPrint} 版</strong>（無插畫，純文字排版）</li>
-          <li>卡背 <strong>1 版</strong> + B 表配件版面</li>
+          <li>
+            中文知識牌正面 <strong>{knowPrint} 版</strong> ——
+            <strong className="text-[var(--psy-accent-strong)]">已完成</strong>，
+            <code>print-assets/knowledge-cards_zh_63x88_bleed3.pdf</code>（20 頁，文字為向量）
+          </li>
+          <li>
+            卡背 <strong>1 版</strong> ——
+            <strong className="text-[var(--psy-accent-strong)]">已完成</strong>，
+            <code>print-assets/card-back_*</code>；另加 B 表配件版面
+          </li>
           <li className="pt-1 text-[var(--psy-ink)]"><strong>量產四副時再加：</strong></li>
           <li>英文人格牌 {dimCount * 10} 版、英文知識牌 {knowPrint} 版</li>
           <li>明牌版人格牌中英各 {dimCount * 10} 版（＝標準版加維度色帶與維度名）</li>
@@ -642,6 +650,26 @@ export function PrintEditionSpec() {
           這組值是用通用 CMYK profile 算的<strong>基準線</strong>，不是最終值。
           正式送印要拿印廠指定的 ICC（多半是 Coated FOGRA39 或 Japan Color）重轉一次，
           打樣回來對著實物再微調 E 的橘色。
+        </Note>
+
+        <p className="pt-1 font-medium text-[var(--psy-ink)]">知識牌卡面（{knowPrint} 張，已完成）</p>
+        <p>
+          知識牌沒有插畫，是純文字卡：術語標題 + 金線 ◆ + 定義，右下角編號 K01–K
+          {String(knowPrint).padStart(2, '0')}，
+          版式沿用電子版的知識牌（同一套金框、星點、底色漸變），與人格牌成套。
+          檔案：<code>print-assets/knowledge-cards_zh_63x88_bleed3.pdf</code>（繁中）與
+          <code>…_en_…</code>（英文），各 20 頁。
+        </p>
+        <Note tone="diff">
+          <strong>卡面是用瀏覽器列印出來的，不是生圖腳本畫的</strong>
+          （版式在 <code>src/app/print/knowledge/page.tsx</code>）。
+          理由：文字必須是<strong>向量</strong>——350 dpi 點陣圖在 10pt 這種字級下邊緣會糊；
+          走瀏覽器列印，文字自動保持向量，字體也和電子版同一套（Noto Sans HK），不必另外嵌字。
+          題庫改了這頁會自己跟著改，重印一次即可。
+        </Note>
+        <Note tone="warn">
+          <strong>知識牌的卡背必須跟人格牌一模一樣。</strong>知識牌若有自己的卡背，
+          對手看你牌架上的背面就能數出你手上有幾張廢牌——那是白送的情報。
         </Note>
 
         <p className="pt-1 font-medium text-[var(--psy-ink)]">卡背</p>
