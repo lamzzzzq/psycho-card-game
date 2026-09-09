@@ -25,5 +25,6 @@
 | `tools/measure.py` | 量 50 題題面與 20 張知識牌的文字長度，換算行數、判斷會不會溢出 |
 | `tools/cmyk.py` | 50 張插畫走 sRGB→CMYK→sRGB 往返，量掉色；並算維度色的 CMYK 指定值 |
 | `tools/make_back_sym.py` | 生成卡背（含出血），並逐像素驗證點對稱 |
+| `tools/export_cards.py` | 把 50 張插畫轉成送印用 CMYK TIFF（約 165 MB，輸出目錄已 gitignore） |
 
 跑法：在專案根目錄 `python3 print-assets/tools/<檔名>`（需要 Pillow）。
