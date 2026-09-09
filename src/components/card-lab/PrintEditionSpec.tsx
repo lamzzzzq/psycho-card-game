@@ -573,6 +573,92 @@ export function PrintEditionSpec() {
         </Note>
       </Section>
 
+      <Section n="§13" title="出圖規格與印前檢查">
+        <p>
+          下面的數字不是估的，是拿題庫和插畫實測出來的
+          （量測腳本見 <code>print-assets/</code>，牌庫或題面一改要重跑）。
+        </p>
+
+        <p className="pt-1 font-medium text-[var(--psy-ink)]">版面參數</p>
+        <Table
+          head={['項目', '數值', '說明']}
+          rows={[
+            ['成品尺寸', '63 × 88 mm', '標準撲克，刀模與牌架都走現成規格'],
+            ['出血', '每邊 3 mm → 69 × 94 mm', '底色要鋪滿到出血線'],
+            ['安全邊', '距成品邊 4 mm', '文字、題號、色帶一律不得越線'],
+            ['圖窗', '55 × 55 mm 正方，置中，上距成品邊 5 mm', '插畫 1024 × 1024 正好填滿，473 dpi，零裁切'],
+            ['文字區', '55 × 22 mm', '圖窗下方，題面 + 題號'],
+            ['解析度 / 色彩', '350 dpi，CMYK', '格式 TIFF（LZW）或 PDF/X-1a'],
+          ]}
+        />
+
+        <p className="pt-1 font-medium text-[var(--psy-ink)]">文字會不會溢出（50 題 + 20 張知識牌全量實測）</p>
+        <Table
+          head={['內容', '建議字級', '最長的一條佔幾行', '版面容量', '結論']}
+          rows={[
+            ['人格牌 · 繁中題面', '12–14 pt', '2 行（#31 在聚會中我會跟許多不同的人說話）', '4 行', '✓ 餘量一倍'],
+            ['人格牌 · 英文題面', '11–12 pt', '3 行（#28 I often forget to put things back…）', '4 行', '✓ 通過'],
+            ['知識牌 · 術語標題', '13 pt', "2 行（Erikson's Psychosocial Stages of Development）", '2 行', '△ 剛好，別再放大'],
+            ['知識牌 · 定義', '10 pt', '4 行（#20 投射測驗 英文版）', '7 行', '✓ 通過'],
+            ['明牌版 · 色帶維度名', '8 pt', 'Conscientiousness 佔 24 mm', '色帶可用 45 mm', '✓ 通過'],
+          ]}
+        />
+        <Note tone="tip">
+          <strong>50 題與 20 張知識牌全部通過，一條都沒溢出</strong>，而且中文題面餘量有一倍
+          ——字級可以比原設想再放大一號，課堂圍桌看得更清楚。
+          唯一貼邊的是英文術語 <strong>Erikson&apos;s Psychosocial Stages of Development</strong>（44 字元，
+          標題區兩行剛好塞滿），這一張排版時要單獨看一眼。
+        </Note>
+        <Note tone="diff">
+          量測用全形／半形 em 寬估算，實際字體的字重與字距會有些微差異；但通過的項目餘量都在 40% 以上，
+          結論不會被這點誤差翻盤。真正要盯的只有上面標△的那一條。
+        </Note>
+
+        <p className="pt-1 font-medium text-[var(--psy-ink)]">插畫轉 CMYK 會不會掉色</p>
+        <p>
+          50 張插畫走 sRGB → CMYK → sRGB 往返實測：整體平均偏差 <strong>3.3</strong>（0–255 尺度），
+          沒有一張平均偏差超過 12。掉最兇的是暗部褐色（<code>25.webp</code> 最大偏差 31，
+          rgb(114,40,1) → rgb(111,53,32)），發生在陰影裏，肉眼幾乎看不出。
+          <strong>插畫這關安全，不必重畫、不必調色。</strong>
+        </p>
+        <Note tone="warn">
+          <strong>但維度色要指定 CMYK 數值，不能讓印廠自動轉。</strong>
+          五個維度色裏，<strong>外向性 E 的橘色 #D97706 轉 CMYK 後偏差達 41</strong>
+          （rgb(217,119,6) → rgb(217,126,47)，橘色泛黃變淺），明牌版的色帶和維度卡卡緣都會用到它。
+          照下表把 CMYK 值直接給印廠：
+        </Note>
+        <Table
+          head={['維度', 'HEX', 'CMYK 指定值']}
+          rows={[
+            ['O 開放性', '#2A9D8F', 'C76 M9 Y43 K4'],
+            ['C 盡責性', '#2A4365', 'C89 M67 Y22 K24'],
+            ['E 外向性', '#D97706', 'C2 M55 Y98 K5'],
+            ['A 宜人性', '#E07A5F', 'C4 M59 Y61 K1'],
+            ['N 神經質', '#7E6C8F', 'C52 M57 Y16 K2'],
+            ['卡背底色', '#F6F0E1', 'C3 M4 Y9 K0'],
+          ]}
+        />
+        <Note tone="diff">
+          這組值是用通用 CMYK profile 算的<strong>基準線</strong>，不是最終值。
+          正式送印要拿印廠指定的 ICC（多半是 Coated FOGRA39 或 Japan Color）重轉一次，
+          打樣回來對著實物再微調 E 的橘色。
+        </Note>
+
+        <p className="pt-1 font-medium text-[var(--psy-ink)]">卡背</p>
+        <p>
+          用品牌 logo（蜂巢 Ψ）鋪在 <code>#F6F0E1</code> 底色上。底色直接取自 logo 原圖背景，
+          貼上去零接縫；純色底 + 置中圖案對裁切公差最寬容，偏個 1 mm 也看不出來。
+          檔案已生成在 <code>print-assets/</code>，RGB 與 CMYK 各一份，
+          951 × 1295 px（含 3 mm 出血）＠350 dpi。
+        </p>
+        <Note tone="warn">
+          <strong>卡背必須「點對稱」——旋轉 180° 要和原來完全一樣，這是規則問題不是美術問題。</strong>
+          卡背若有方向性，隱藏難度下玩家只要把查過的牌<strong>倒插進牌架</strong>，
+          就等於做了個永久標記——而隱藏檔的整個設計（§6）就是「不准做任何標記，全靠腦記」。
+          所以 logo 做成一正一倒兩枚上下對置，已逐像素驗證旋轉 180° 後完全相同。
+        </Note>
+      </Section>
+
     </div>
   );
 }
