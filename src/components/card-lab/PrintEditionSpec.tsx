@@ -114,6 +114,9 @@ export function PrintEditionSpec() {
   const knowPrint = KNOWLEDGE_CARDS.length;
   const bigFiveTotal = BIG_FIVE_DIMS.length * 16 + knowPrint;
   const hexacoTotal = HEXACO_DIMS.length * 16 + knowPrint;
+  // 一副 = 一種語言 × 一種版本。中英分版 × 標準／明牌兩版 = 四副
+  const deckOne = persona4p + knowPrint;
+  const deckAll = deckOne * 4;
   const label = kind === 'hexaco' ? 'HEXACO（六維）' : 'Big Five（五維）';
   const maxHand = dimCount * 5 - 1;
   const minHand = dimCount * 1 - 1;
@@ -149,36 +152,49 @@ export function PrintEditionSpec() {
         </p>
 
         <p className="pt-1 font-medium text-[var(--psy-ink)]">A · 卡牌（找印廠定制）</p>
+        <p>
+          卡面<strong>中英分版</strong>、版本分<strong>標準／明牌入門</strong>兩種，
+          交叉出<strong>四副</strong>。每副自成一盒牌、各 {deckOne} 張：
+        </p>
         <Table
-          head={['品項', '一盒張數', '不同版面', '規格']}
+          head={['副', '人格牌', '知識牌', '一副張數', '新增正面版面']}
           rows={[
-            ['標準版人格牌', persona4p, `${dimCount * 10} 種`, `其中 ${dimCount * 6} 張是重印，不算新版面`],
-            ['標準版知識牌', knowPrint, `${knowPrint} 種`, '與標準版人格牌同一種卡背'],
-            ['明牌入門版人格牌', persona4p, `${dimCount * 10} 種（另做）`, '正面加維度色帶與維度名，見 §11'],
-            ['明牌入門版知識牌', knowPrint, '0（正面沿用標準版）', '只換卡背，正面同版重印'],
+            ['標準版 · 中文', persona4p, knowPrint, deckOne, `${dimCount * 10} 人格 + ${knowPrint} 知識`],
+            ['標準版 · 英文', persona4p, knowPrint, deckOne, `${dimCount * 10} 人格 + ${knowPrint} 知識`],
+            ['明牌版 · 中文', persona4p, knowPrint, deckOne, `${dimCount * 10} 人格（知識牌沿用中文版）`],
+            ['明牌版 · 英文', persona4p, knowPrint, deckOne, `${dimCount * 10} 人格（知識牌沿用英文版）`],
           ]}
-          foot={['合計', persona4p * 2 + knowPrint * 2, `${dimCount * 10 * 2 + knowPrint} 種正面 + 2 種卡背`, '63 × 88 mm，藍芯不透光，亞光覆膜']}
+          foot={['合計', persona4p * 4, knowPrint * 4, deckAll, `${dimCount * 10 * 4 + knowPrint * 2} 種正面 + 4 種卡背`]}
         />
         <Note tone="warn">
-          <strong>兩副牌的卡背必須不同</strong>，否則背面朝下混在一起就分不出來。
-          預算只夠一副的話<strong>一定是印標準版</strong>：標準版配上維度卡就能打明牌檔
-          （只是要翻表查），明牌版卻沒辦法反過來打半公開／隱藏。
-          明牌入門版是課堂第一次玩的加速器，不是入口。
+          <strong>四副的卡背必須四種都不同</strong>（哪怕只差角上一個「EN」「明」小標）——
+          背面朝下時分不出是哪一副，混一次就得整盒重數。
+        </Note>
+        <Note tone="tip">
+          <strong>但這次先打 1 副樣：標準版 · 中文 {deckOne} 張 + 全套配件。</strong>
+          理由：① 它本身就能完整開打（標準版配維度卡連明牌檔都能打，明牌版反過來打不了半公開／隱藏）；
+          ② 尺寸、藍芯、顏色、牌架這些要驗的東西，一副就驗完了；
+          ③ 萬一尺寸或工藝要改，只廢一副的版，不是四副。<strong>樣品通過再開另外三副的版。</strong>
         </Note>
 
         <p className="pt-1 font-medium text-[var(--psy-ink)]">B · 紙板與印刷配件（可同一家做）</p>
         <Table
           head={['品項', '數量', '規格']}
           rows={[
-            ['個人目標板', '4 張', `${dimCount} 行維度 × 1–5 刻度，卡紙即可`],
-            ['歸檔區墊板', '4 張', '放得下 5 張橫排卡牌的長條墊板'],
-            ['維度卡', `${dimCount} 張`, '雙面：正＝該維 10 個題號（升序），背＝該維定義與高／低分；卡緣印維度色'],
+            ['個人目標板', '4 張', `${dimCount} 行維度 × 1–5 刻度，卡紙即可；維度名印中英雙語，兩種語言共用`],
+            ['歸檔區墊板', '4 張', '放得下 5 張橫排卡牌的長條墊板，無文字'],
+            ['維度卡', `${dimCount} 張／語言`, '雙面：正＝該維 10 個題號（升序），背＝該維定義與高／低分；卡緣印維度色。文字量大，中英各印一套'],
             ['輪次計數卡', '1 張', '印 10 格，一局固定打 10 輪'],
             ['測評 QR 卡', '1 張', `開局第一步每人要掃碼做 ${kind === 'hexaco' ? 'HEXACO-60' : 'IPIP-50'}（見 §5），盒裏得有張碼`],
-            ['規則書', '1 本', '本頁 §5–§9 的內容 + 明牌版說明'],
+            ['規則書', '1 本／語言', '本頁 §5–§9 的內容 + 明牌版說明'],
             ['盒子', '1 個', `裝得下 ${persona4p * 2 + knowPrint * 2} 張牌 + 全部配件 + ${4} 個牌架`],
           ]}
         />
+
+        <Note tone="tip">
+          <strong>只有維度卡和規則書分中英</strong>（文字量大、擠不進一張）。目標板、墊板、
+          輪次卡這些字少或沒字，一律做雙語共用，不必跟著分版。
+        </Note>
 
         <p className="pt-1 font-medium text-[var(--psy-ink)]">C · 買現成的（不必定制）</p>
         <Table
@@ -196,11 +212,14 @@ export function PrintEditionSpec() {
 
         <p className="pt-1 font-medium text-[var(--psy-ink)]">D · 要交給印廠的檔案</p>
         <ul className="ml-4 list-disc space-y-1.5">
-          <li>標準版人格牌正面 <strong>{dimCount * 10} 版</strong>（題面文字 + 插畫，<strong>不含</strong>維度標籤）</li>
-          <li>明牌入門版人格牌正面 <strong>{dimCount * 10} 版</strong>（同上，另加維度色帶 + 維度名）</li>
-          <li>知識牌正面 <strong>{knowPrint} 版</strong>（兩副共用）</li>
-          <li>卡背 <strong>2 版</strong>（標準版／明牌版各一）</li>
-          <li>B 表六項紙板配件的版面</li>
+          <li className="text-[var(--psy-ink)]"><strong>打樣這一副只要交前三項：</strong></li>
+          <li>標準版中文人格牌正面 <strong>{dimCount * 10} 版</strong>（題面文字 + 插畫 + 題號，<strong>不含</strong>維度標籤）</li>
+          <li>中文知識牌正面 <strong>{knowPrint} 版</strong>（無插畫，純文字排版）</li>
+          <li>卡背 <strong>1 版</strong> + B 表配件版面</li>
+          <li className="pt-1 text-[var(--psy-ink)]"><strong>量產四副時再加：</strong></li>
+          <li>英文人格牌 {dimCount * 10} 版、英文知識牌 {knowPrint} 版</li>
+          <li>明牌版人格牌中英各 {dimCount * 10} 版（＝標準版加維度色帶與維度名）</li>
+          <li>卡背另 <strong>3 版</strong>，四副各一</li>
         </ul>
         <Note tone="warn">
           <strong>打樣回來先確認三件事：</strong>① 拿一張人格牌對著燈看，
@@ -536,13 +555,14 @@ export function PrintEditionSpec() {
         <Table
           head={['項目', '規格', '備註']}
           rows={[
-            ['總印量', `${persona4p + knowPrint} 張／副（${label}）`, `標準版 + 明牌版一盒 = ${(persona4p + knowPrint) * 2} 張；Big Five 與 HEXACO 兩種模型都做再翻倍`],
-            ['不同版面數', `${dimCount * 10} 種人格牌 + ${knowPrint} 種知識牌 = ${dimCount * 10 + knowPrint} 版（標準版）`, `明牌版另加 ${dimCount * 10} 版人格牌；其中 ${dimCount * 6} 張為重印，不算新版面`],
+            ['總印量', `${deckOne} 張／副，四副共 ${deckAll} 張（${label}）`, '四副＝中／英 × 標準／明牌；本次先打標準版中文 1 副'],
+            ['不同版面數', `${dimCount * 10 * 4 + knowPrint * 2} 種正面 + 4 種卡背`, `每副 ${dimCount * 6} 張為重印，不算新版面`],
             ['卡面內容', '標準版：題面文字 + 插畫 + 題號，不含維度標籤；明牌版：另加維度色帶與維度名', '插畫已有全套（大五 50 張 / HEXACO 60 張）'],
             ['題號', `印在卡面一角，1–${dimCount * 10}；複製牌加「·2」`, '電子版卡面沒有題號，實體版靠它查維度卡（§4），必須新增'],
             ['卡背', '每一副都要不同圖案', '標準版／明牌版／兩種模型，各一種卡背；混副會破壞牌庫張數'],
-            ['語言', '中英雙語或分版', '電子版兩種語言都已定稿'],
-            ['建議尺寸', '63 × 88 mm（標準撲克）', '手牌可達 20 張以上，別做大卡'],
+            ['語言', '中英分版，各印一副', '電子版兩種語言都已定稿，卡面不混排'],
+            ['尺寸', '63 × 88 mm（標準撲克）', `已定。手牌可達 ${maxHand} 張，牌架與刀模都走現成規格`],
+            ['圖窗', '58 × 58 mm 正方，置中', `插畫 1024 × 1024 正好填滿，${Math.round(1024 / (58 / 25.4))} dpi，零裁切`],
             ['建議工藝', '亞光覆膜 + 藍芯', '要頻繁洗牌，且不能透光看出維度'],
           ]}
         />
