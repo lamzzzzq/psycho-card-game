@@ -1,5 +1,6 @@
 // 局末概念小測出題規則（2026-09-09）：4 題 = 3 題知識卡 + 第 4 題維度題。
-// 題庫真相源＝老闆的 Knowledge questions_20260901.xlsx（Big five / HEXACO / SD4 三個 sheet）。
+// 題庫真相源＝老闆的 docs/Knowledge questions_20260910.xlsx（英文 3 個 sheet + 繁中 3 個 _C sheet）。
+// 本檔管出題規則；題目文字與 xlsx 的逐字核對在 quiz-dimension-xlsx.test.ts。
 import { describe, it, expect } from 'vitest';
 import { buildQuestions, CARD_QUESTION_COUNT } from '@/lib/quiz-questions';
 import { DIMENSION_QUIZ_QUESTIONS, type QuizModel } from '@/data/quiz-dimension-questions';
