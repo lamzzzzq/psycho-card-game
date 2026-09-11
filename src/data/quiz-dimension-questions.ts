@@ -32,7 +32,8 @@ export interface DimensionQuizQuestion {
 }
 
 const BIG_FIVE_LEAD = 'Which Big Five trait is described below?';
-const BIG_FIVE_LEAD_ZH = '以下描述的是哪一項大五人格特質？';
+// 2026-09-11 老闆更正：「大五」→「五大」（xlsx 未重發，測試檔 ZH_LEAD_CORRECTIONS 有對應記錄）。
+const BIG_FIVE_LEAD_ZH = '以下描述的是哪一項五大人格特質？';
 const HEXACO_LEAD = 'Which HEXACO dimension is described below?';
 const HEXACO_LEAD_ZH = '以下描述的是哪一項 HEXACO 人格向度？';
 const SD4_LEAD = 'Which SD4 subscale is described below?';

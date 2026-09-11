@@ -56,6 +56,12 @@ function readSheets(): Map<string, string[][]> {
   return out;
 }
 
+// ── xlsx 之後老闆另行更正、但未重發 xlsx 的提問句（sheet → [xlsx 原文, 更正後]）──
+// 2026-09-11 老闆微信：Big five_C 提問句統一用「五大人格」，不是「大五」。
+const ZH_LEAD_CORRECTIONS: Record<string, [string, string]> = {
+  'Big five_C': ['以下描述的是哪一項大五人格特質？', '以下描述的是哪一項五大人格特質？'],
+};
+
 // ── 三種允許的機械處理 ──
 const stripOption = (s: string) => s.trim().replace(/^[A-D]\.\s*/, '');
 const stripQuotes = (s: string) => s.trim().replace(/^[“"「]+/, '').replace(/[”"」]+$/, '').trim();
@@ -86,7 +92,9 @@ describe('維度題 ↔ docs/Knowledge questions_20260910.xlsx 逐字一致', ()
         data.forEach((row, i) => {
           const at = `${sheet} 第 ${i + 2} 行`;
           const q = bank[i];
-          const { lead, body } = splitQuestion(row[0]);
+          const { lead: rawLead, body } = splitQuestion(row[0]);
+          const fix = lang === 'zh' ? ZH_LEAD_CORRECTIONS[sheet] : undefined;
+          const lead = fix && rawLead === fix[0] ? fix[1] : rawLead;
           const options = row.slice(1, 5).map(stripOption);
           const answer = stripOption(row[5]);
           const got = lang === 'en'
