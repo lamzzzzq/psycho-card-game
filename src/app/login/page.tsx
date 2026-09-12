@@ -34,6 +34,16 @@ export default function LoginPage() {
     if (p.get('kicked') === '1') setKicked(true);
   }, []);
 
+  // 本地会话其实还在、只是换 token 一直被限流（useAuthSession 等满 5 分钟才送来这里）：
+  // 后台自动续期一旦成功就回首页，不必重新输密码。只认 TOKEN_REFRESHED ——
+  // 本页自己登录产生的是 SIGNED_IN，要走下面的单会话冲突检查，不能在这里被截走。
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'TOKEN_REFRESHED') router.replace('/');
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [router]);
+
   const idOk = normalizeStudentId(studentId).length === STUDENT_ID_LENGTH;
   const canSubmit = idOk && password.length > 0 && !busy;
 

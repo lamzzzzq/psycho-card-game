@@ -58,13 +58,49 @@ export function useAuthSession(): AuthSession {
       });
     }
 
-    supabase.auth.getSession().then(({ data }) => load(data.session?.user.id ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 换 token 暂时失败（被限流、断网）时 getSession 返回空会话 + AuthRetryableFetchError，
+    // 但本地会话还在。此时判「未登入」会被 useRequireLogin 送去 /login —— 登录页不会自己
+    // 跳回来，重新登录又撞同一个限流（2026-09-11 压测：500 人同 IP 打开网站集体掉线）。
+    // 改为保持 loading，等 auth-js 自带的 30s 自动续期成功（TOKEN_REFRESHED）直接接上。
+    // 不自己轮询 getSession：每次 getSession 都会再起一条 ~25s 的退避重试链，
+    // 几百个客户端一起轮询只会更挤限流。等满 GIVE_UP_MS（= 限流的 5 分钟窗口）才按未登入处理。
+    const GIVE_UP_MS = 300_000;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    async function check(final = false) {
+      retryTimer = null;
+      let session: { user: { id: string } } | null = null;
+      let retryable = false;
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        session = data.session;
+        retryable = (error as { name?: string } | null)?.name === 'AuthRetryableFetchError';
+      } catch {
+        retryable = true; // 非 AuthError 的异常（锁被抢等）：同样当暂时失败，别卡死在 loading
+      }
+      if (!active) return;
+      if (!session && retryable && !final) {
+        retryTimer = setTimeout(() => void check(true), GIVE_UP_MS);
+        return;
+      }
+      load(session?.user.id ?? null);
+    }
+    void check();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      // INITIAL_SESSION 与上面的 getSession 重复，且换 token 失败时 auth-js 会推 null
+      // （_emitInitialSession 的 catch 分支），不能拿它判登出。
+      if (event === 'INITIAL_SESSION') return;
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
+      }
       load(session?.user.id ?? null);
     });
 
     return () => {
       active = false;
+      if (retryTimer) clearTimeout(retryTimer);
       sub.subscription.unsubscribe();
     };
   }, []);
