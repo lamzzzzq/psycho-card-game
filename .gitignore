@@ -46,3 +46,6 @@ brand/generated/
 public/brand/generated/
 
 print-assets/illustrations/
+
+# 压测报告/日志（本地产物）
+/scripts/loadtest/out/

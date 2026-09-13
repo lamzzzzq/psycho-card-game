@@ -1,0 +1,60 @@
+name: PVP Load Test
+
+# 500 人五大 PVP 冒烟压测（scripts/loadtest/）。本机走代理跑不出干净的 DB 层数据，放到云端跑。
+# 只能在 Actions 页手动触发：建临时压测账号 → 全员登录 → 开局打完 → 无论成败都清理。
+# 需要仓库 secret SUPABASE_ACCESS_TOKEN（Supabase 管理 token：Database 读写 + API Keys 读）。
+# URL / anon key 是公开的（已内嵌前端 bundle），直接内联。
+
+on:
+  workflow_dispatch:
+    inputs:
+      bots:
+        description: 机器人数量
+        default: '500'
+      extra:
+        description: pvp-smoke.ts 额外参数
+        default: '--login-first --login-retries 60'
+
+concurrency: loadtest
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      NEXT_PUBLIC_SUPABASE_URL: https://msyrowizejzgxedmnjne.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zeXJvd2l6ZWp6Z3hlZG1uam5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjIyMzksImV4cCI6MjA5MDU5ODIzOX0.UAnLihvsMbQpZNH8Y23dlg5dKqNAFMR369-2vLw1RJw
+      BOTS: ${{ inputs.bots }}
+      EXTRA: ${{ inputs.extra }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: 临时密码（每次随机，不用脚本里的默认值）
+        run: |
+          PW=$(openssl rand -hex 16)
+          echo "::add-mask::$PW"
+          echo "PW=$PW" >> "$GITHUB_ENV"
+
+      - name: 建压测账号
+        run: npx -y tsx scripts/loadtest/accounts.ts create --bots "$BOTS" --password "$PW"
+
+      - name: 压测
+        # 云端没有代理，不需要本机那套 --http-conc 64 的并发限制
+        run: npx -y tsx scripts/loadtest/pvp-smoke.ts run --bots "$BOTS" --auth --password "$PW" --http-conc 1000 $EXTRA
+
+      - name: 清理压测数据
+        if: always()
+        run: npx -y tsx scripts/loadtest/accounts.ts cleanup
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: loadtest-report
+          path: scripts/loadtest/out/
+          if-no-files-found: ignore
