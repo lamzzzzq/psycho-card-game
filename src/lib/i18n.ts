@@ -462,7 +462,7 @@ export const STRINGS = {
     home: {
       eyebrow: 'Personalities Mahjong',
       title: 'Personalities Mahjong',
-      intro: 'Blending psychological assessment with Mahjong strategy. Know yourself first, then read through your opponents at the table!',
+      intro: 'Blending psychological assessment with Mahjong strategy. Understand yourself first, then see right through your opponents at the table!',
       features: [
         { glyph: '✦', title: 'Unlock Your Personality', note: 'Complete a quick assessment to claim your unique personality profile!' },
         { glyph: '◈', title: 'Draw & Build Your Hand', note: 'Collect trait cards from the same personality dimension and get ready to win!' },
