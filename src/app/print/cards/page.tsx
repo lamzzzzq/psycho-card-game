@@ -29,7 +29,9 @@ const TH = 88; // 成品高
 const GOLD = '#9a7448';
 const GOLD_SOFT = '#b9904f';
 const GOLD_BRIGHT = '#c39a52';
-const GOLD_DIM = 'rgba(154,116,72,0.42)';
+// 印刷檔一律實色：半透明在 PDF 會被拆成透明群組，印廠 RIP 扁平化時可能出灰塊。
+// 下列色值＝原半透明色疊在牌面底色上的結果。
+const GOLD_DIM = '#c4ac88';
 const INK = '#2a241b';
 const INK_SOFT = '#5c5142';
 const KNOW_GREY = '#9a8c74';
@@ -94,8 +96,8 @@ function Frame({ uid, card }: { uid: string; card: Card }) {
           <stop offset="0" stopColor="#eadfc8" /><stop offset="0.58" stopColor="#e1d1b2" /><stop offset="1" stopColor="#d5be95" />
         </linearGradient>
         <radialGradient id={`g${uid}`} cx="50%" cy="18%" r="60%">
-          <stop offset="0" stopColor="#fffaf0" stopOpacity="0.85" />
-          <stop offset="1" stopColor="#f3e6c6" stopOpacity="0.2" />
+          <stop offset="0" stopColor="#fffaf0" />
+          <stop offset="1" stopColor="#f9f1e0" />
         </radialGradient>
       </defs>
 
@@ -111,23 +113,23 @@ function Frame({ uid, card }: { uid: string; card: Card }) {
             <rect x={AL} y={ATOP} width={AR - AL} height={ABOT - ATOP} fill="#fdf8f1" />
             <rect x={AL} y={ATOP} width={AR - AL} height={ABOT - ATOP} fill={`url(#g${uid})`} />
             {[14, 22, 30, 38].map((r) => (
-              <circle key={r} cx={TW / 2} cy={ATOP - 2} r={r} fill="none" stroke={GOLD} strokeWidth="0.12" opacity="0.35" />
+              <circle key={r} cx={TW / 2} cy={ATOP - 2} r={r} fill="none" stroke="#dacab6" strokeWidth="0.12" />
             ))}
           </>
         )}
       </g>
       <path d={ARCH} fill="none" stroke={GOLD} strokeWidth="0.42" />
-      <path d={ARCH_IN} fill="none" stroke={GOLD_SOFT} strokeWidth="0.16" opacity="0.85" />
+      <path d={ARCH_IN} fill="none" stroke={GOLD_SOFT} strokeWidth="0.16" />
 
       {/* 外框（離裁切線 3mm，裁偏 1mm 也不會切到線） */}
       <rect x="3" y="3" width={TW - 6} height={TH - 6} rx="3" fill="none" stroke={GOLD} strokeWidth="0.4" />
-      <rect x="3.9" y="3.9" width={TW - 7.8} height={TH - 7.8} rx="2.3" fill="none" stroke={GOLD_SOFT} strokeWidth="0.15" opacity="0.8" />
+      <rect x="3.9" y="3.9" width={TW - 7.8} height={TH - 7.8} rx="2.3" fill="none" stroke={GOLD_SOFT} strokeWidth="0.15" />
 
       {/* 頂部紋章 + 右上星 */}
       <path d={spark(TW / 2, 3, 1.3)} fill={GOLD_BRIGHT} />
       <path d={spark(TW - 8.5, 8.5, 1.2)} fill={GOLD_BRIGHT} />
-      <path d={spark(8.5, TH - 6.8, 1.0)} fill={GOLD_BRIGHT} opacity="0.8" />
-      <path d={spark(TW - 8.5, TH - 6.8, 1.0)} fill={GOLD_BRIGHT} opacity="0.8" />
+      <path d={spark(8.5, TH - 6.8, 1.0)} fill={GOLD_BRIGHT} />
+      <path d={spark(TW - 8.5, TH - 6.8, 1.0)} fill={GOLD_BRIGHT} />
 
       {/* 左上角維度圓標 */}
       <circle cx={IDX.cx} cy={IDX.cy} r={IDX.r + 0.45} fill="#fdf8f1" stroke={GOLD_SOFT} strokeWidth="0.15" />
@@ -136,7 +138,7 @@ function Frame({ uid, card }: { uid: string; card: Card }) {
         fontFamily="-apple-system, 'Helvetica Neue', Arial, sans-serif">{letter}</text>
 
       {/* 底部文字框 */}
-      <rect x={AL} y={BOX_T} width={AR - AL} height={BOX_B - BOX_T} rx="1.4" fill="#fdf8f1" opacity="0.93" stroke={GOLD_SOFT} strokeWidth="0.26" />
+      <rect x={AL} y={BOX_T} width={AR - AL} height={BOX_B - BOX_T} rx="1.4" fill="#fcf7ee" stroke={GOLD_SOFT} strokeWidth="0.26" />
       <path d={`M${AL + 1.7},${BOX_T + 2.8} v-1.4 a0.7,0.7 0 0 1 0.7,-0.7 h1.4`} fill="none" stroke={GOLD} strokeWidth="0.25" />
       <path d={`M${AR - 1.7},${BOX_T + 2.8} v-1.4 a0.7,0.7 0 0 0 -0.7,-0.7 h-1.4`} fill="none" stroke={GOLD} strokeWidth="0.25" />
       <path d={`M${AL + 1.7},${BOX_B - 2.8} v1.4 a0.7,0.7 0 0 0 0.7,0.7 h1.4`} fill="none" stroke={GOLD} strokeWidth="0.25" />
@@ -250,12 +252,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
       position: absolute; left: 50%; top: ${B + ABOT + 2.5}mm; transform: translate(-50%, -50%);
       display: flex; align-items: baseline; gap: 1.3mm; white-space: nowrap;
       padding: 0.9mm 2.8mm 1mm; border-radius: 99px; color: #fff;
-      border: 0.25mm solid rgba(154,116,72,0.5); box-shadow: 0 0.3mm 0.8mm rgba(96,72,38,0.25);
+      /* 印刷品不用投影／半透明：Chrome 會把 box-shadow 轉成半透明點陣，閱讀器或印廠 RIP 會顯示成灰色方塊 */
+      border: 0.25mm solid #b59a70;
       font-family: var(--font-sans-cn), "PingFang HK", system-ui, sans-serif; line-height: 1;
     }
     .band b { font-size: 8pt; font-weight: 800; }
     .band span { font-size: 7.5pt; font-weight: 700; letter-spacing: 0.04em; }
-    .band i { font-style: normal; font-size: 6.5pt; font-weight: 600; opacity: 0.92; letter-spacing: 0.02em; }
+    .band i { font-style: normal; font-size: 6.5pt; font-weight: 600; letter-spacing: 0.02em; }
 
     .txt {
       position: absolute; left: ${B + AL + 2}mm; right: ${B + (TW - AR) + 2}mm;
@@ -280,10 +283,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
 
     .no {
       position: absolute; left: 0; right: 0; bottom: ${B + 5.6}mm; text-align: center;
-      font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; font-size: 5.6pt; color: rgba(122,90,50,0.85);
+      font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; font-size: 5.6pt; color: #886a42;
       letter-spacing: 0.03em; line-height: 1;
     }
-    .p4 { margin-left: 1.2mm; padding: 0.2mm 0.8mm; border: 0.18mm solid rgba(122,90,50,0.7); border-radius: 0.6mm; font-weight: 700; font-size: 5pt; }
+    .p4 { margin-left: 1.2mm; padding: 0.2mm 0.8mm; border: 0.18mm solid #8f7048; border-radius: 0.6mm; font-weight: 700; font-size: 5pt; }
 
     /* A4 拼版 */
     .page { width: 210mm; height: 297mm; position: relative; background: #fff; break-after: page; overflow: hidden; }
