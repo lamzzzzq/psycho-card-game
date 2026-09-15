@@ -244,17 +244,21 @@ function Side({ lang }: { lang: 'zh' | 'en' }) {
           <p className="meta">{s.meta}</p>
         </div>
         <div className="qr">
-          <QRCodeSVG value={GAME_URL} size={70} level="M" fgColor="#2a241b" bgColor="#fbf8f1" />
+          <QRCodeSVG value={GAME_URL} size={54} level="M" fgColor="#2a241b" bgColor="#fbf8f1" />
           <div className="cap">{s.scan}<br />{DISPLAY_URL}</div>
         </div>
       </div>
       <div className="cols">
         {s.secs.map((sec, i) => (
           <section key={i} className="rsec">
-            <h2>{sec.title}</h2>
+            {/* 輪次格塞進第七節標題右側，省下一整行（獨立一行時英文面會壓到頁框線） */}
+            {sec.fig === 'rounds' ? (
+              <h2 className="h2-row"><span>{sec.title}</span>{fig('rounds')}</h2>
+            ) : (
+              <h2>{sec.title}</h2>
+            )}
             {sec.fig === 'goal' || sec.fig === 'cards' ? fig(sec.fig) : null}
             {sec.blocks.map(renderBlock)}
-            {sec.fig === 'rounds' ? fig('rounds') : null}
           </section>
         ))}
       </div>
@@ -278,14 +282,15 @@ export function RulesCard({ cols = 1 }: { cols?: 1 | 2 }) {
         }
         .a4::before { content: ''; position: absolute; inset: 5mm; border: 0.5mm solid rgba(200,155,93,0.55); border-radius: 4mm; pointer-events: none; }
         .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
-          border-bottom: 2px solid #c89b5d; padding-bottom: 3mm; margin-bottom: 3mm; }
+          border-bottom: 2px solid #c89b5d; padding-bottom: 2mm; margin-bottom: 2.5mm; align-items: center; }
         h1 { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px;
           font-family: ui-serif, Georgia, "Songti TC", serif; }
         .t1 { font-size: 27px; letter-spacing: 1.5px; color: #1c1812; }
         .t2 { font-size: 17px; color: #6b5d44; }
         .meta { margin: 4px 0 0; font-size: 11.5px; color: #6b5d44; }
-        .qr { display: flex; flex-direction: column; align-items: flex-end; flex: none; }
-        .qr .cap { font-size: 9px; color: #6b5d44; text-align: right; margin-top: 2px; line-height: 1.3; }
+        /* QR 說明放在 QR 左邊並排（原本疊在下面，把頁頭撐得太高） */
+        .qr { display: flex; flex-direction: row-reverse; align-items: center; gap: 2mm; flex: none; }
+        .qr .cap { font-size: 9px; color: #6b5d44; text-align: right; line-height: 1.35; }
 
         .c2 .cols { column-count: 2; column-gap: 7mm; }
         .rsec { break-inside: avoid; margin: 0 0 4mm; }
@@ -318,12 +323,20 @@ export function RulesCard({ cols = 1 }: { cols?: 1 | 2 }) {
           display: inline-flex; align-items: flex-start; justify-content: flex-start; padding: 1px 3px;
           font-size: 8px; color: #9a7448; font-weight: 700; }
 
+        .h2-row { display: flex; align-items: center; justify-content: space-between; gap: 3mm; }
+        .h2-row .rounds { margin-top: 0; gap: 2px; }
+        .h2-row > span { white-space: nowrap; }
+        /* 兩欄版欄寬不夠並排：格子掉到標題下一行，標題本身不折 */
+        .c2 .h2-row { flex-wrap: wrap; row-gap: 1.2mm; }
+        .h2-row .rl { font-family: -apple-system, Arial, sans-serif; font-size: 9.5px; }
+        .h2-row .rbox { width: 6.2mm; height: 6.2mm; font-size: 7px; border-radius: 4px; }
+
         /* 一欄版：整行寬，但每個標題／圖示框都獨佔一行，同字級會超出 A4 → 縮一號、收緊段距 */
         .c1 .rsec { margin: 0 0 2.6mm; }
         .c1 h2 { font-size: 14px; margin-bottom: 1mm; }
-        .c1 .a4 p { margin: 0.8mm 0; font-size: 11.4px; line-height: 1.42; }
+        .c1 .a4 p { margin: 1mm 0; font-size: 12.2px; line-height: 1.45; }
         /* 英文字數比中文多約一成，一欄版要再縮一點才進得了一頁 */
-        .c1 .en.a4 p { font-size: 10px; line-height: 1.34; margin: 0.6mm 0; }
+        .c1 .en.a4 p { font-size: 10.1px; line-height: 1.34; margin: 0.6mm 0; }
         .c1 .en .rsec { margin-bottom: 1.8mm; }
         .c1 .en h2 { font-size: 13px; }
         .c1 .en .fig { padding: 0.8mm; margin: 0.6mm 0; }
