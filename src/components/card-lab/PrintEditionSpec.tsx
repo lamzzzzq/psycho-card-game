@@ -677,7 +677,7 @@ export function PrintEditionSpec() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/brand/card-back-preview.webp"
-            alt="標準版卡背：蜂巢 Ψ logo 一正一倒，米白底"
+            alt="卡背：米白底，置中一枚蜂巢 Ψ logo"
             width={168}
             height={234}
             className="w-[168px] shrink-0 rounded-lg border border-[var(--psy-border)] shadow-sm"
@@ -695,10 +695,10 @@ export function PrintEditionSpec() {
           </div>
         </div>
         <Note tone="warn">
-          <strong>卡背必須「點對稱」——旋轉 180° 要和原來完全一樣，這是規則問題不是美術問題。</strong>
-          卡背若有方向性，隱藏難度下玩家只要把查過的牌<strong>倒插進牌架</strong>，
-          就等於做了個永久標記——而隱藏檔的整個設計（§6）就是「不准做任何標記，全靠腦記」。
-          所以 logo 做成一正一倒兩枚上下對置，已逐像素驗證旋轉 180° 後完全相同。
+          <strong>卡背現在只有一枚 logo（0916 改），所以旋轉 180° 看起來不一樣。</strong>
+          實體版先印的是明牌版（維度印在卡面），沒有這個問題。但若日後要印標準版做隱藏難度（§6），
+          玩家把查過的牌<strong>倒插進牌架</strong>就等於做了永久標記，卡背就要改回旋轉 180° 相同的圖案
+          （例如原本一正一倒兩枚 logo）。
         </Note>
       </Section>
 
