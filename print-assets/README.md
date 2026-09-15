@@ -45,7 +45,7 @@ python3 print-assets/tools/fix_pdf_boxes.py print-assets/knowledge-cards_*.pdf
 | `/print/cards` | Big Five **明牌版**整副 100 張正面（人格 80 + 知識 20），中英雙語，一張一頁 69×94mm |
 | `/print/cards?side=back` | 卡背一頁 |
 | `/print/cards?layout=a4` | A4 3×3 拼版，正面／卡背交替（雙面長邊翻），自己印用 |
-| `/print/rules` | 規則卡 A4 雙面：正面繁中、背面英文 |
+| `/print/rules` | 規則卡 A4 雙面：正面繁中、背面英文。預設一欄版；`?cols=2` 兩欄版（字大一號） |
 
 ```bash
 npm run dev -- -p 3005

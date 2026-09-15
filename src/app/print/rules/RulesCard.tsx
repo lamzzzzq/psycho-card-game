@@ -262,9 +262,9 @@ function Side({ lang }: { lang: 'zh' | 'en' }) {
   );
 }
 
-export function RulesCard() {
+export function RulesCard({ cols = 1 }: { cols?: 1 | 2 }) {
   return (
-    <div className="screen">
+    <div className={`screen c${cols}`}>
       <style>{`
         @page { size: A4; margin: 0; }
         * { -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; }
@@ -287,7 +287,7 @@ export function RulesCard() {
         .qr { display: flex; flex-direction: column; align-items: flex-end; flex: none; }
         .qr .cap { font-size: 9px; color: #6b5d44; text-align: right; margin-top: 2px; line-height: 1.3; }
 
-        .cols { column-count: 2; column-gap: 7mm; }
+        .c2 .cols { column-count: 2; column-gap: 7mm; }
         .rsec { break-inside: avoid; margin: 0 0 4mm; }
         h2 { font-family: ui-serif, Georgia, "Songti TC", serif; font-size: 15.5px; color: #7a4d12; margin: 0 0 1.5mm;
           border-bottom: 1px solid #d8c39a; padding-bottom: 1mm; }
@@ -317,6 +317,18 @@ export function RulesCard() {
         .rbox { width: 8.2mm; height: 8.2mm; border: 1px solid #c9a258; border-radius: 5px; background: #fff;
           display: inline-flex; align-items: flex-start; justify-content: flex-start; padding: 1px 3px;
           font-size: 8px; color: #9a7448; font-weight: 700; }
+
+        /* 一欄版：整行寬，但每個標題／圖示框都獨佔一行，同字級會超出 A4 → 縮一號、收緊段距 */
+        .c1 .rsec { margin: 0 0 2.6mm; }
+        .c1 h2 { font-size: 14px; margin-bottom: 1mm; }
+        .c1 .a4 p { margin: 0.8mm 0; font-size: 11.4px; line-height: 1.42; }
+        /* 英文字數比中文多約一成，一欄版要再縮一點才進得了一頁 */
+        .c1 .en.a4 p { font-size: 10px; line-height: 1.34; margin: 0.6mm 0; }
+        .c1 .en .rsec { margin-bottom: 1.8mm; }
+        .c1 .en h2 { font-size: 13px; }
+        .c1 .en .fig { padding: 0.8mm; margin: 0.6mm 0; }
+        .c1 .fig { padding: 1.2mm; margin: 1mm 0; }
+        .c1 .tip { padding: 1.2mm 2.4mm; }
 
         @media print {
           .screen { background: none; padding: 0; gap: 0; display: block; }
