@@ -14,6 +14,10 @@ on:
       extra:
         description: pvp-smoke.ts 额外参数
         default: '--login-first --login-retries 60'
+      auth:
+        description: 是否真的登录（false = 跳过登录，只测建房/对局/存档）
+        type: boolean
+        default: true
 
 concurrency: loadtest
 
@@ -27,6 +31,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zeXJvd2l6ZWp6Z3hlZG1uam5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjIyMzksImV4cCI6MjA5MDU5ODIzOX0.UAnLihvsMbQpZNH8Y23dlg5dKqNAFMR369-2vLw1RJw
       BOTS: ${{ inputs.bots }}
       EXTRA: ${{ inputs.extra }}
+      AUTH_FLAG: ${{ inputs.auth && '--auth' || '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,7 +51,7 @@ jobs:
 
       - name: 压测
         # 云端没有代理，不需要本机那套 --http-conc 64 的并发限制
-        run: npx -y tsx scripts/loadtest/pvp-smoke.ts run --bots "$BOTS" --auth --password "$PW" --http-conc 1000 $EXTRA
+        run: npx -y tsx scripts/loadtest/pvp-smoke.ts run --bots "$BOTS" $AUTH_FLAG --password "$PW" --http-conc 1000 $EXTRA
 
       - name: 清理压测数据
         if: always()
