@@ -75,7 +75,9 @@ export default function RegisterPage() {
       return setError(t.err[res.error] ?? t.err.unknown);
     }
     setSuccess(true);
-    const login = await signInWithStudentId(studentId, password);
+    // 账号已建成，这一步失败不致命（下面会带去登录页），所以只试 2 次，
+    // 不让学生对着「處理中…」干等一分多钟以为卡死而去刷新页面。
+    const login = await signInWithStudentId(studentId, password, { maxRetries: 2 });
     if (login.ok) {
       setBusy(false);
       router.push('/');

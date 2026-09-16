@@ -10,6 +10,8 @@ export const AUTH_T = {
     show: '顯示',
     hide: '隱藏',
     processing: '處理中…',
+    // 全班同時登入時伺服器會忙不過來，前端自動重試，學生不必重新輸入
+    busyRetry: '伺服器忙碌，正在自動重試，請不要重複點擊…',
 
     // ── 註冊 ──
     registerTitle: '註冊帳號',
@@ -114,6 +116,8 @@ export const AUTH_T = {
       student_id_taken: '這個學號已經註冊過了，請直接登入或找回密碼。',
       account_exists: '這個學號已經註冊過了，請直接登入或找回密碼。',
       invalid_credentials: '學號或密碼錯誤。',
+      server_busy: '伺服器忙碌中，請稍候再按一次登入。你的學號與密碼沒有問題。',
+      login_too_many: '登入嘗試太頻繁，請等一兩分鐘再試。',
       request_failed: '請求失敗，請檢查網路後重試。',
       unknown: '出了點問題，請稍後重試。',
       // 验证码
@@ -137,6 +141,7 @@ export const AUTH_T = {
     show: 'Show',
     hide: 'Hide',
     processing: 'Processing…',
+    busyRetry: 'The server is busy — retrying automatically. No need to tap again…',
 
     // ── register ──
     registerTitle: 'Create Account',
@@ -241,6 +246,8 @@ export const AUTH_T = {
       student_id_taken: 'This student ID is already registered. Please log in or reset your password.',
       account_exists: 'This student ID is already registered. Please log in or reset your password.',
       invalid_credentials: 'Wrong student ID or password.',
+      server_busy: 'The server is busy. Please wait a moment and tap Log In again — your student ID and password are fine.',
+      login_too_many: 'Too many login attempts. Please wait a minute or two and try again.',
       request_failed: 'Request failed. Check your connection and try again.',
       unknown: 'Something went wrong. Please try again later.',
       // verification code

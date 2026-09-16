@@ -66,17 +66,53 @@ export async function registerStudent(input: {
   return { ok: false, error: (data as { error?: string })?.error ?? 'unknown' };
 }
 
-// 登录：学号 → 合成邮箱 → 密码登录
+// 登录失败要分两类（2026-09-15 压测）：密码真错 vs 服务器忙不过来。
+// 上课全班同时登录会把 Auth 服务打满，Supabase 回 504/429（300 人实测 162 次）。
+// 这类错误原先一律报「學號或密碼錯誤」，学生会以为自己密码错，反复改密码、举手叫老师。
+// 改为：密码错立刻返回；服务器忙则自动退避重试，页面显示「伺服器忙碌」。
+const SIGN_IN_BACKOFF_MS = [3000, 5000, 8000, 12000, 15000, 20000, 20000, 20000];
+export const SIGN_IN_MAX_RETRIES = SIGN_IN_BACKOFF_MS.length;
+
+// 错误分三类，别再「任何失败都说密码错」：
+//   busy      服务器忙 —— 值得重试。auth-js 把 502/503/504 包成 AuthRetryableFetchError；
+//             其余 5xx / 网关 HTML 错误页解析失败会变成 status 为 undefined 的 AuthUnknownError。
+//   ratelimit 被限流(429) —— 窗口是 5 分钟，退避重试打不穿，重试只会把全班的配额挤得更死。
+//   wrong     学号或密码真的错了（400/401 + code invalid_credentials）。
+type SignInFailure = 'busy' | 'ratelimit' | 'wrong' | 'unknown';
+function classifySignInError(error: unknown): SignInFailure {
+  const e = error as { status?: number; name?: string; code?: string } | null;
+  if (!e) return 'unknown';
+  if (e.status === 429) return 'ratelimit';
+  if (e.name === 'AuthRetryableFetchError' || e.name === 'AuthUnknownError') return 'busy';
+  const s = e.status ?? 0;
+  if (s === 408 || s >= 500) return 'busy';
+  if (s === 400 || s === 401 || e.code === 'invalid_credentials') return 'wrong';
+  return 'unknown';
+}
+
+// 登录：学号 → 合成邮箱 → 密码登录。
+// onBusy 每次进入重试等待时回调（第几次 / 共几次）；maxRetries 可调小（注册后自动登录只试 2 次）。
 export async function signInWithStudentId(
   studentId: string,
   password: string,
+  opts?: { onBusy?: (attempt: number, total: number) => void; maxRetries?: number },
 ): Promise<AuthResult> {
-  const { error } = await supabase.auth.signInWithPassword({
-    email: syntheticEmail(studentId),
-    password,
-  });
-  if (error) return { ok: false, error: 'invalid_credentials' };
-  return { ok: true };
+  const max = Math.min(opts?.maxRetries ?? SIGN_IN_MAX_RETRIES, SIGN_IN_MAX_RETRIES);
+  for (let i = 0; ; i++) {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: syntheticEmail(studentId),
+      password,
+    });
+    if (!error) return { ok: true };
+    const kind = classifySignInError(error);
+    if (kind === 'wrong') return { ok: false, error: 'invalid_credentials' };
+    if (kind === 'ratelimit') return { ok: false, error: 'login_too_many' };
+    if (kind === 'unknown') return { ok: false, error: 'unknown' };
+    if (i >= max) return { ok: false, error: 'server_busy' };
+    opts?.onBusy?.(i + 1, max);
+    // 加随机抖动，避免全班的重试再次撞在同一秒
+    await new Promise((r) => setTimeout(r, SIGN_IN_BACKOFF_MS[i] + Math.random() * 2000));
+  }
 }
 
 export async function signOutUser(): Promise<void> {

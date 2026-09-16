@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -9,7 +9,7 @@ import { useHydrated } from '@/stores/useHydration';
 import { AUTH_T } from '@/lib/i18n/auth';
 import { AuthTopBar } from '@/components/shared/AuthTopBar';
 import { PasswordInput } from '@/components/shared/PasswordInput';
-import { signInWithStudentId, isSessionActiveElsewhere, claimSession, signOutUser, currentUserId } from '@/lib/auth';
+import { signInWithStudentId, isSessionActiveElsewhere, claimSession, signOutUser, currentUserId, SIGN_IN_MAX_RETRIES } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { normalizeStudentId, STUDENT_ID_LENGTH } from '@/lib/utils';
 
@@ -24,6 +24,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // 伺服器忙碌時的自動重試次數（0 = 沒在重試），只在登入按鈕下方顯示進度
+  const [retry, setRetry] = useState(0);
+  // 重试最长会跑一分多钟，期间用户可能已经离开本页（點註冊 / 返回首頁）：
+  // 迟到的结果不能再 setState，更不能把人从别的页面强行拉回首页。
+  const alive = useRef(true);
+  useEffect(() => () => { alive.current = false; }, []);
   // 单会话：其它设备已登入 → 弹确认「继续会顶掉对方」
   const [conflict, setConflict] = useState(false);
   const [pendingUid, setPendingUid] = useState<string | null>(null);
@@ -52,18 +58,26 @@ export default function LoginPage() {
     setError('');
     setKicked(false);
     setBusy(true);
-    const res = await signInWithStudentId(studentId, password);
+    setRetry(0);
+    const res = await signInWithStudentId(studentId, password, {
+      onBusy: (n) => { if (alive.current) setRetry(n); },
+    });
+    if (!alive.current) return;
+    setRetry(0);
     if (!res.ok) {
       setBusy(false);
       return setError(t.err[res.error] ?? t.err.unknown);
     }
     const uid = await currentUserId();
+    if (!alive.current) return;
     if (!uid) {
       setBusy(false);
       return setError(t.err.unknown);
     }
     // 其它设备近期活跃 → 先弹确认，不导航
-    if (await isSessionActiveElsewhere(uid)) {
+    const elsewhere = await isSessionActiveElsewhere(uid);
+    if (!alive.current) return;
+    if (elsewhere) {
       setBusy(false);
       setPendingUid(uid);
       setConflict(true);
@@ -157,6 +171,12 @@ export default function LoginPage() {
           >
             {busy ? t.processing : t.loginBtn}
           </button>
+
+          {retry > 0 && (
+            <p role="status" className="text-xs leading-5 text-[var(--psy-muted)]">
+              {t.busyRetry}（{retry}/{SIGN_IN_MAX_RETRIES}）
+            </p>
+          )}
         </form>
 
         <div className="mt-10 space-y-3 text-center text-sm text-[var(--psy-muted)]">

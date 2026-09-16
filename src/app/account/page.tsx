@@ -119,10 +119,13 @@ export default function AccountPage() {
     if (!studentId) return setPwdMsg(t.err.unknown);
     setPwdBusy(true);
     // 先验目前密码：防共用电脑上被人直接改密接管账号
-    const check = await signInWithStudentId(studentId, curPwd);
+    // 只试 2 次：这里是单人操作，不像上课时全班同时登入，没必要等满一分多钟。
+    // 服务器忙 / 被限流要照实说，不能一律报「目前密碼錯誤」——否则学生会以为自己记错密码。
+    const check = await signInWithStudentId(studentId, curPwd, { maxRetries: 2 });
     if (!check.ok) {
       setPwdBusy(false);
-      return setPwdMsg(t.err.wrong_current_password);
+      if (check.error === 'invalid_credentials') return setPwdMsg(t.err.wrong_current_password);
+      return setPwdMsg(t.err[check.error] ?? t.err.unknown);
     }
     const { error } = await supabase.auth.updateUser({ password: pwd });
     if (error) {
