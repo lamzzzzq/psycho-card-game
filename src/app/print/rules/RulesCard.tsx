@@ -43,7 +43,7 @@ const T = {
         title: '🧰 二、開局',
         blocks: [
           { t: 'ol', text: '每人掃右上角 QR code 做測評，記下 5 個目標張數；你的起手張數＝5 個目標張數之和 − 1。' },
-          { t: 'ol', text: '備牌：人格牌每題 2 張。先把全桌的起手張數加總，再照人數拿走不用的牌：\n· 4 人局：題號 31–50 各拿走 1 張（用 80 張）；合計超過 84 張就不拿（100 張全用）。知識牌放 12 張。\n· 2–3 人局：題號 11–50 各拿走 1 張（用 60 張）；3 人合計超過 63 張，只拿走 31–50（用 80 張）。知識牌放 8 張。' },
+          { t: 'ol', text: '備牌：人格牌每題 2 張，照人數取用，其餘收回盒子：\n· 4 人局：人格牌 80 張（題號 1–30 各 2 張、31–50 各 1 張）＋知識牌隨機 12 張。全桌起手張數合計超過 84 張時，人格牌改用全部 100 張。\n· 2–3 人局：人格牌 60 張（題號 1–10 各 2 張、11–50 各 1 張）＋知識牌隨機 8 張。3 人合計超過 63 張時，人格牌改用 4 人局的 80 張。' },
           { t: 'ol', text: '洗勻、背面朝上當抽牌堆，每人照起手張數發牌。手上知識牌超過 1 張的，把多的洗回牌堆再補摸。' },
           { t: 'ol', text: '任選一人先手，之後逆時針輪流。' },
         ],
@@ -102,7 +102,7 @@ const T = {
         title: '🧰 2. Setup',
         blocks: [
           { t: 'ol', text: 'Everyone scans the QR code (top right), takes the assessment, and notes their 5 target counts. Your starting hand = the sum of your 5 targets − 1.' },
-          { t: 'ol', text: 'Build the deck: there are 2 of each Personality card. Add up everyone\'s starting hands, then remove the cards you don\'t need:\n· 4 players: remove one copy of Nos. 31–50 (use 80); if the total is over 84, remove none (use all 100). Use 12 Knowledge cards.\n· 2–3 players: remove one copy of Nos. 11–50 (use 60); with 3 players and a total over 63, remove only Nos. 31–50 (use 80). Use 8 Knowledge cards.' },
+          { t: 'ol', text: 'Build the deck: there are 2 of each Personality card. Use the cards below for your player count and put the rest back in the box:\n· 4 players: 80 Personality cards (2 each of Nos. 1–30, 1 each of Nos. 31–50) + 12 random Knowledge cards. If everyone\'s starting hands add up to more than 84, use all 100 Personality cards.\n· 2–3 players: 60 Personality cards (2 each of Nos. 1–10, 1 each of Nos. 11–50) + 8 random Knowledge cards. With 3 players and a total over 63, use the 80 Personality cards from the 4-player set.' },
           { t: 'ol', text: 'Shuffle into a face-down draw pile and deal each player their starting hand. Anyone holding more than 1 Knowledge card shuffles the extras back and draws again.' },
           { t: 'ol', text: 'Pick a first player; play then passes counter-clockwise.' },
         ],
