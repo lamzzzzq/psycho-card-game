@@ -42,10 +42,10 @@ const T = {
       {
         title: '🧰 二、開局',
         blocks: [
-          { t: 'ol', text: '每人掃右上角 QR code 做測評，記下 5 個目標張數。' },
-          { t: 'ol', text: '備牌：人格牌每題 2 張。先把題號 31–50 各拿 1 張放一旁當「備用池」。4 人局用其餘 80 張 + 知識牌 12 張；2–3 人局再拿走題號 11–30 各 1 張，知識牌 8 張。洗勻，背面朝上當抽牌堆。' },
-          { t: 'ol', text: '發牌：每人張數＝5 個目標張數之和 − 1。若全桌合計超過 84 張（4 人）或 63 張（3 人），先把備用池／題號 11–30 洗回牌堆再發。' },
-          { t: 'ol', text: '手上知識牌超過 1 張的，把多的洗回牌堆再補摸。任選一人先手，逆時針輪流。' },
+          { t: 'ol', text: '每人掃右上角 QR code 做測評，記下 5 個目標張數；你的起手張數＝5 個目標張數之和 − 1。' },
+          { t: 'ol', text: '備牌：人格牌每題 2 張。先把全桌的起手張數加總，再照人數拿走不用的牌：\n· 4 人局：題號 31–50 各拿走 1 張（用 80 張）；合計超過 84 張就不拿（100 張全用）。知識牌放 12 張。\n· 2–3 人局：題號 11–50 各拿走 1 張（用 60 張）；3 人合計超過 63 張，只拿走 31–50（用 80 張）。知識牌放 8 張。' },
+          { t: 'ol', text: '洗勻、背面朝上當抽牌堆，每人照起手張數發牌。手上知識牌超過 1 張的，把多的洗回牌堆再補摸。' },
+          { t: 'ol', text: '任選一人先手，之後逆時針輪流。' },
         ],
       },
       {
@@ -101,10 +101,10 @@ const T = {
       {
         title: '🧰 2. Setup',
         blocks: [
-          { t: 'ol', text: 'Everyone scans the QR code (top right), takes the assessment, and notes their 5 target counts.' },
-          { t: 'ol', text: 'Build the deck: there are 2 of each Personality card. Set aside one copy of Nos. 31–50 as the "reserve". 4 players use the other 80 + 12 Knowledge cards; 2–3 players also set aside one copy of Nos. 11–30 and use 8 Knowledge cards. Shuffle into a face-down draw pile.' },
-          { t: 'ol', text: 'Deal: each hand = the sum of your 5 targets − 1. If the table\'s total is over 84 (4 players) or 63 (3 players), shuffle the reserve / Nos. 11–30 back in before dealing.' },
-          { t: 'ol', text: 'Anyone holding more than 1 Knowledge card shuffles the extras back and draws again. Pick a first player; play passes counter-clockwise.' },
+          { t: 'ol', text: 'Everyone scans the QR code (top right), takes the assessment, and notes their 5 target counts. Your starting hand = the sum of your 5 targets − 1.' },
+          { t: 'ol', text: 'Build the deck: there are 2 of each Personality card. Add up everyone\'s starting hands, then remove the cards you don\'t need:\n· 4 players: remove one copy of Nos. 31–50 (use 80); if the total is over 84, remove none (use all 100). Use 12 Knowledge cards.\n· 2–3 players: remove one copy of Nos. 11–50 (use 60); with 3 players and a total over 63, remove only Nos. 31–50 (use 80). Use 8 Knowledge cards.' },
+          { t: 'ol', text: 'Shuffle into a face-down draw pile and deal each player their starting hand. Anyone holding more than 1 Knowledge card shuffles the extras back and draws again.' },
+          { t: 'ol', text: 'Pick a first player; play then passes counter-clockwise.' },
         ],
       },
       {
@@ -268,7 +268,7 @@ export function RulesCard({ cols = 1 }: { cols?: 1 | 2 }) {
           border-bottom: 1px solid #d8c39a; padding-bottom: 1mm; }
         .a4 p { margin: 1.5mm 0; font-size: 12.6px; }
         .en.a4 p { font-size: 10.8px; line-height: 1.42; }
-        .rli { display: flex; gap: 4px; }
+        .rli { display: flex; gap: 4px; white-space: pre-line; }
         .dot { color: #c89b5d; flex: none; }
         .num { flex: none; width: 15px; height: 15px; border-radius: 99px; background: #c89b5d; color: #fff;
           font-size: 9.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 2px; }
@@ -307,7 +307,7 @@ export function RulesCard({ cols = 1 }: { cols?: 1 | 2 }) {
         .c1 .a4 p { margin: 1.4mm 0; font-size: 14.6px; line-height: 1.6; }
         /* 英文字數比中文多約一成，一欄版要再縮一點才進得了一頁 */
         .c1 .en.a4 p { font-size: 12.9px; line-height: 1.46; margin: 1.2mm 0; }
-        .c1 .en .rsec { margin-bottom: 3.4mm; }
+        .c1 .en .rsec { margin-bottom: 2.6mm; }
         .c1 .en h2 { font-size: 16.5px; }
         .c1 .en .fig { padding: 0.8mm; margin: 0.6mm 0; }
         .c1 .fig { padding: 1.2mm; margin: 1mm 0; }
