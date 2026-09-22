@@ -44,8 +44,8 @@ const T = {
         title: '🧰 二、開局準備',
         blocks: [
           { t: 'ol', text: '每人掃右上角 QR code 完成測評，記下自己 5 個維度的目標張數。' },
-          { t: 'ol', text: '備牌：4 人局用全部人格牌 + 隨機 12 張知識牌；2–3 人局先抽走角落印有「4P」的 20 張人格牌，知識牌只放 8 張。洗勻，正面朝下疊成抽牌堆。' },
-          { t: 'ol', text: '發牌：每人手牌張數 = 5 個目標張數之和 − 1（每人不同是正常的）。少的那 1 張，要靠「碰」或「食胡」來補齊。' },
+          { t: 'ol', text: '備牌：人格牌每題 2 張（共 100 張），先把題號 31–50 各拿出 1 張當「備用池」放一旁。4 人局用其餘 80 張 + 隨機 12 張知識牌；2–3 人局再把題號 11–30 各拿出 1 張，知識牌只放 8 張。洗勻，正面朝下疊成抽牌堆。' },
+          { t: 'ol', text: '發牌：每人手牌張數 = 5 個目標張數之和 − 1（每人不同是正常的）。少的那 1 張，要靠「碰」或「食胡」來補齊。發牌前先把全桌起手張數加總：4 人局超過 84 張，把備用池 20 張洗進去；3 人局超過 63 張，把拿出的題號 11–30 加回去。' },
           { t: 'ol', text: '手上超過 1 張知識牌的人，把多的亮出來洗回抽牌堆，再補摸等量的牌。' },
           { t: 'ol', text: '任選一人先手，之後逆時針輪流。' },
         ],
@@ -118,8 +118,8 @@ const T = {
         title: '🧰 2. Setup',
         blocks: [
           { t: 'ol', text: 'Everyone scans the QR code (top right), completes the assessment, and notes their 5 target counts.' },
-          { t: 'ol', text: 'Build the deck: 4 players use all Personality cards + 12 random Knowledge cards. For 2–3 players, first remove the 20 Personality cards marked "4P" in the corner, and use only 8 Knowledge cards. Shuffle and stack face down as the draw pile.' },
-          { t: 'ol', text: 'Deal: each player\'s hand size = the sum of their 5 targets − 1 (hand sizes differ — that\'s normal). That 1 missing card must be completed through a "Pong" or your final "Win".' },
+          { t: 'ol', text: 'Build the deck: there are 2 of each Personality card (100 in total). First set aside one copy of Nos. 31–50 as the "reserve". 4 players use the remaining 80 + 12 random Knowledge cards; for 2–3 players, also set aside one copy of Nos. 11–30 and use only 8 Knowledge cards. Shuffle and stack face down as the draw pile.' },
+          { t: 'ol', text: 'Deal: each player\'s hand size = the sum of their 5 targets − 1 (hand sizes differ — that\'s normal). That 1 missing card must be completed through a "Pong" or your final "Win". Before dealing, add up everyone\'s hand sizes: with 4 players, if the total is over 84, shuffle the 20 reserve cards in; with 3 players, if it is over 63, put Nos. 11–30 back in.' },
           { t: 'ol', text: 'Anyone holding more than 1 Knowledge card shows the extras, shuffles them back into the draw pile, and draws the same number again.' },
           { t: 'ol', text: 'Pick a first player; play then passes counter-clockwise.' },
         ],

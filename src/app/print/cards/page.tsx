@@ -69,12 +69,11 @@ function buildDeck(): Card[] {
   return [...persona, ...dups, ...reserve, ...know];
 }
 
-/** 送印檔名（印廠要求張數寫在檔名裏）：序號_種類_維度_題號_張數。 */
-function fileName(c: Card, i: number) {
-  const n = String(i + 1).padStart(3, '0');
-  if (c.kind === 'know') return `${n}_知識牌_K${String(c.no).padStart(2, '0')}_1張`;
-  const kind = c.reserve ? '備用牌' : c.only4p ? '人格牌4P' : '人格牌';
-  return `${n}_${kind}_${c.dim}_${c.id}${c.dup ? '-2' : ''}_1張`;
+/** 送印檔名（印廠要求張數寫在檔名裏）。角標已拿掉，同題兩張完全相同 → 只給原題一個檔、寫 2 張；複製牌不出檔。 */
+function fileName(c: Card, i: number): string | undefined {
+  if (c.kind === 'know') return `${String(50 + c.no).padStart(2, '0')}_知識牌_K${String(c.no).padStart(2, '0')}_1張`;
+  if (c.dup) return undefined;
+  return `${String(i + 1).padStart(2, '0')}_人格牌_${c.dim}_題${c.id}_2張`;
 }
 
 const strip = (s: string) => s.replace(/[。．.\s]+$/, '');
@@ -179,9 +178,7 @@ function CardFace({ card, uid }: { card: Card; uid: string }) {
           <p className="en">{strip(card.en)}</p>
         </div>
         <div className="no">
-          {card.id}{card.dup ? '·2' : ''}
-          {card.only4p && <span className="p4">4P</span>}
-          {card.reserve && <span className="p4">備</span>}
+          {card.id}
         </div>
       </div>
     );
