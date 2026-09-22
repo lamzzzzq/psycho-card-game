@@ -39,7 +39,7 @@ const KNOW_GREY = '#9a8c74';
 const DUP_4P = 6; // 4 人局每維複製牌
 const DUP_23P = 2; // 2–3 人局保留的複製牌
 
-type PersonaCard = { kind: 'persona'; id: number; dim: Dimension; zh: string; en: string; dup: boolean; only4p: boolean };
+type PersonaCard = { kind: 'persona'; id: number; dim: Dimension; zh: string; en: string; dup: boolean; only4p: boolean; reserve?: boolean };
 type KnowCard = { kind: 'know'; no: number; termZh: string; termEn: string; defZh: string; defEn: string };
 type Card = PersonaCard | KnowCard;
 
@@ -48,18 +48,33 @@ function buildDeck(): Card[] {
     kind: 'persona', id: q.id, dim: q.dimension as Dimension, zh: q.text, en: q.textEn ?? '', dup: false, only4p: false,
   }));
   const dups: PersonaCard[] = [];
+  // 備用池：每維沒被複製的後 4 題各再印一張 → 50 題每題剛好 2 張。
+  // 平時收在盒裏，起手合計超過上限（4 人 84 張）才洗進牌堆，全員滿分也發得下。
+  const reserve: PersonaCard[] = [];
   for (const d of ['O', 'C', 'E', 'A', 'N'] as Dimension[]) {
     const ids = persona.filter((c) => c.dim === d).map((c) => c.id).sort((a, b) => a - b);
     ids.slice(0, DUP_4P).forEach((id, i) => {
       const src = persona.find((c) => c.id === id)!;
       dups.push({ ...src, dup: true, only4p: i >= DUP_23P });
     });
+    ids.slice(DUP_4P).forEach((id) => {
+      reserve.push({ ...persona.find((c) => c.id === id)!, dup: true, only4p: false, reserve: true });
+    });
   }
   dups.sort((a, b) => a.id - b.id);
+  reserve.sort((a, b) => a.id - b.id);
   const know: KnowCard[] = KNOWLEDGE_CARDS.map((k, i) => ({
     kind: 'know', no: i + 1, termZh: k.termZh, termEn: k.term, defZh: k.definitionZh, defEn: k.definition,
   }));
-  return [...persona, ...dups, ...know];
+  return [...persona, ...dups, ...reserve, ...know];
+}
+
+/** 送印檔名（印廠要求張數寫在檔名裏）：序號_種類_維度_題號_張數。 */
+function fileName(c: Card, i: number) {
+  const n = String(i + 1).padStart(3, '0');
+  if (c.kind === 'know') return `${n}_知識牌_K${String(c.no).padStart(2, '0')}_1張`;
+  const kind = c.reserve ? '備用牌' : c.only4p ? '人格牌4P' : '人格牌';
+  return `${n}_${kind}_${c.dim}_${c.id}${c.dup ? '-2' : ''}_1張`;
 }
 
 const strip = (s: string) => s.replace(/[。．.\s]+$/, '');
@@ -166,6 +181,7 @@ function CardFace({ card, uid }: { card: Card; uid: string }) {
         <div className="no">
           {card.id}{card.dup ? '·2' : ''}
           {card.only4p && <span className="p4">4P</span>}
+          {card.reserve && <span className="p4">備</span>}
         </div>
       </div>
     );
@@ -365,7 +381,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
           <div style={{ position: 'relative' }}><CardBack /></div>
         ) : (
           deck.map((c, i) => (
-            <div key={i} style={{ position: 'relative' }}>
+            <div key={i} style={{ position: 'relative' }} data-file={fileName(c, i)}>
               <CardFace card={c} uid={`s${i}`} />
               <div className="trim" />
             </div>
