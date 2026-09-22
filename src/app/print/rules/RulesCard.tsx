@@ -28,73 +28,58 @@ const T = {
   zh: {
     title: '人格麻將',
     sub: 'Big Five 實體版規則',
-    meta: '2–4 人 · 每副 100 張（人格牌 80 + 知識牌 20）',
+    meta: '2–4 人 · 每副 120 張（人格牌 100 + 知識牌 20）',
     scan: '掃碼做測評',
     round: '輪次',
     secs: [
       {
-        title: '🎯 一、終極目標：5 維度「公開歸檔」！',
+        title: '🎯 一、目標',
         fig: 'goal',
         blocks: [
-          { t: 'p', text: '你的目標是將五大人格的 5 個維度（OCEAN）湊齊並「公開歸檔」，最快完成的人獲勝！' },
-          { t: 'p', text: '每個維度的目標張數取決於你的測評分數：分數四捨五入就是目標張數（最少 1 張）。例：O 3.4 分 → 3 張、A 4.6 分 → 5 張。' },
+          { t: 'p', text: '湊齊五大人格 5 個維度（OCEAN）並公開「歸檔」，最先完成的人獲勝。每個維度的目標張數＝你的測評分數四捨五入（例：O 3.4 分 → 3 張、A 4.6 分 → 5 張）。' },
         ],
       },
       {
-        title: '🧰 二、開局準備',
+        title: '🧰 二、開局',
         blocks: [
-          { t: 'ol', text: '每人掃右上角 QR code 完成測評，記下自己 5 個維度的目標張數。' },
-          { t: 'ol', text: '備牌：人格牌每題 2 張（共 100 張），先把題號 31–50 各拿出 1 張當「備用池」放一旁。4 人局用其餘 80 張 + 隨機 12 張知識牌；2–3 人局再把題號 11–30 各拿出 1 張，知識牌只放 8 張。洗勻，正面朝下疊成抽牌堆。' },
-          { t: 'ol', text: '發牌：每人手牌張數 = 5 個目標張數之和 − 1（每人不同是正常的）。少的那 1 張，要靠「碰」或「食胡」來補齊。發牌前先把全桌起手張數加總：4 人局超過 84 張，把備用池 20 張洗進去；3 人局超過 63 張，把拿出的題號 11–30 加回去。' },
-          { t: 'ol', text: '手上超過 1 張知識牌的人，把多的亮出來洗回抽牌堆，再補摸等量的牌。' },
-          { t: 'ol', text: '任選一人先手，之後逆時針輪流。' },
+          { t: 'ol', text: '每人掃右上角 QR code 做測評，記下 5 個目標張數。' },
+          { t: 'ol', text: '備牌：人格牌每題 2 張。先把題號 31–50 各拿 1 張放一旁當「備用池」。4 人局用其餘 80 張 + 知識牌 12 張；2–3 人局再拿走題號 11–30 各 1 張，知識牌 8 張。洗勻，背面朝上當抽牌堆。' },
+          { t: 'ol', text: '發牌：每人張數＝5 個目標張數之和 − 1。若全桌合計超過 84 張（4 人）或 63 張（3 人），先把備用池／題號 11–30 洗回牌堆再發。' },
+          { t: 'ol', text: '手上知識牌超過 1 張的，把多的洗回牌堆再補摸。任選一人先手，逆時針輪流。' },
         ],
       },
       {
-        title: '🃏 三、認識卡牌',
+        title: '🃏 三、卡牌',
         fig: 'cards',
         blocks: [
-          { t: 'li', text: '人格描述牌（有顏色）：左上角圓標與中間色帶就是它的人格維度，是你用來歸檔（湊張數）的核心牌。' },
-          { t: 'li', text: '知識牌（灰色，角標 K）：印有心理學術語與定義。它們沒有維度屬性，不能用來歸檔。' },
-          { t: 'tip', text: '策略提示：抽到就打掉，安全不穿幫；還能順便觀察對手打出知識牌的時機，試探他們的出牌風格！' },
+          { t: 'li', text: '人格牌：左上角圓標＝維度，用來歸檔。知識牌（K）：沒有維度、不能歸檔，摸到可以直接打掉。' },
         ],
       },
       {
-        title: '🔄 四、每回合運作：摸牌 ➔ 出牌',
+        title: '🔄 四、每回合',
         blocks: [
-          { t: 'ol', text: '摸牌：從抽牌堆頂摸 1 張。' },
-          { t: 'ol', text: '（可選）自摸碰：見下一節。' },
-          { t: 'ol', text: '出牌：從手裏選 1 張，正面朝上丟到中間的「棄牌堆」。其他玩家可以搶這張牌來「碰」或「食胡」。' },
-          { t: 'p', text: '抽牌堆摸完時，把棄牌堆（最上面一張留著）洗勻，翻面當新的抽牌堆。' },
+          { t: 'p', text: '摸 1 張 →（可選）自摸碰 → 出 1 張到棄牌堆。抽牌堆摸完時，把棄牌堆（留下最上面一張）洗勻再用。' },
         ],
       },
       {
-        title: '⚡ 五、兩大核心動作：碰 與 食胡',
+        title: '⚡ 五、碰與食胡',
         blocks: [
-          { t: 'sub', text: '🀄 碰（公開歸檔）：湊齊某一維度的目標張數，把這幾張正面朝上擺在自己面前。張數要與目標一致。' },
-          { t: 'li', text: '自摸碰：在自己的回合，從「手牌 + 剛摸的牌」中，挑出符合維度目標張數的牌。（每回合限 1 次）' },
-          { t: 'li', text: '截胡碰：別人出牌後、下家摸牌前，如果你手牌只差 1 張就達維度目標張數，喊「碰」拿走那張棄牌，湊齊歸檔。之後你不摸牌，直接出 1 張，由你的下家繼續。' },
-          { t: 'sub', text: '🏆 食胡（宣告勝利）：歸檔完 5 個維度的最後一張——自己摸到（自摸食胡）或別人打出（截胡食胡）。把牌全部攤開給全桌核對。' },
-          { t: 'li', text: '同一張棄牌多人要搶：食胡優先於碰；同樣是碰（或食胡）時，逆時針方向離出牌者最近的人優先。' },
-          { t: 'warn', text: '⚠️ 沒有人會提示你！你必須自己計算哪個維度可達到目標張數。一旦選錯、放錯牌，就會被「罰停」一回合！' },
+          { t: 'li', text: '碰：把某個維度剛好「目標張數」的牌正面擺在面前（歸檔），張數必須一致。自摸碰＝自己回合用手牌＋剛摸的牌（每回合 1 次）；截胡碰＝差 1 張時，在下家摸牌前喊「碰」拿走棄牌，之後不摸牌、直接出 1 張。' },
+          { t: 'li', text: '食胡：歸檔完 5 個維度的最後一張（自己摸到或別人打出），攤牌給全桌核對。' },
+          { t: 'li', text: '多人搶同一張：食胡優先於碰；同樣動作時，逆時針離出牌者最近的人優先。' },
         ],
       },
       {
-        title: '🚫 六、懲罰機制：罰停',
+        title: '🚫 六、罰停',
         blocks: [
-          { t: 'p', text: '如果「碰失敗 / 自摸碰失敗 / 食胡失敗」，你會被罰停一回合：' },
-          { t: 'li', text: '在自己回合失敗（自摸碰 / 自摸食胡），仍要出 1 張牌才結束回合。' },
-          { t: 'li', text: '下一次輪到你時直接跳過（不得摸牌或出牌），也不能碰或食胡別人的棄牌。' },
-          { t: 'li', text: '碰失敗的牌、或食胡失敗時的「整副手牌」，正面朝上攤在面前給全場看——這就是你的罰停標記，解凍後收回手上。' },
+          { t: 'p', text: '碰或食胡失敗（張數或維度不對）：失敗的牌（食胡失敗則整副手牌）攤在面前，下一回合跳過、也不能碰或食胡，之後收回手上。在自己回合失敗仍要出 1 張。' },
         ],
       },
       {
         title: '🏁 七、勝負',
         fig: 'rounds',
         blocks: [
-          { t: 'li', text: '有人食胡，立即獲勝。' },
-          { t: 'li', text: '一局打 10 輪（每人各打一回合 = 1 輪）。先手玩家每次輪到自己時，把硬幣等小物往下一格推。' },
-          { t: 'li', text: '打滿 10 輪仍無人食胡：已歸檔維度數（多者勝）→ 剩餘手牌張數（少者勝）。' },
+          { t: 'p', text: '有人食胡立即獲勝。一局 10 輪（每人各打一回合＝1 輪，先手每輪把硬幣推一格）；打滿仍無人食胡時，歸檔維度多者勝，同數則手牌少者勝。' },
         ],
       },
     ] as Sec[],
@@ -102,73 +87,58 @@ const T = {
   en: {
     title: 'Personalities Mahjong',
     sub: 'Big Five · Tabletop Rules',
-    meta: '2–4 players · 100 cards per deck (80 Personality + 20 Knowledge)',
+    meta: '2–4 players · 120 cards per deck (100 Personality + 20 Knowledge)',
     scan: 'Scan for the assessment',
     round: 'Round',
     secs: [
       {
-        title: '🎯 1. Ultimate Goal: Publicly File All 5 Dimensions!',
+        title: '🎯 1. Goal',
         fig: 'goal',
         blocks: [
-          { t: 'p', text: 'Your goal is to collect and "publicly file" all 5 Big Five dimensions (OCEAN). The first to finish wins!' },
-          { t: 'p', text: 'The target count for each dimension depends on your assessment score: round the score to get the target count (minimum 1). Example: O 3.4 → 3 cards, A 4.6 → 5 cards.' },
+          { t: 'p', text: 'Collect and publicly "file" all 5 Big Five dimensions (OCEAN). The first to finish wins. Each dimension\'s target count = your assessment score, rounded (e.g. O 3.4 → 3 cards, A 4.6 → 5 cards).' },
         ],
       },
       {
         title: '🧰 2. Setup',
         blocks: [
-          { t: 'ol', text: 'Everyone scans the QR code (top right), completes the assessment, and notes their 5 target counts.' },
-          { t: 'ol', text: 'Build the deck: there are 2 of each Personality card (100 in total). First set aside one copy of Nos. 31–50 as the "reserve". 4 players use the remaining 80 + 12 random Knowledge cards; for 2–3 players, also set aside one copy of Nos. 11–30 and use only 8 Knowledge cards. Shuffle and stack face down as the draw pile.' },
-          { t: 'ol', text: 'Deal: each player\'s hand size = the sum of their 5 targets − 1 (hand sizes differ — that\'s normal). That 1 missing card must be completed through a "Pong" or your final "Win". Before dealing, add up everyone\'s hand sizes: with 4 players, if the total is over 84, shuffle the 20 reserve cards in; with 3 players, if it is over 63, put Nos. 11–30 back in.' },
-          { t: 'ol', text: 'Anyone holding more than 1 Knowledge card shows the extras, shuffles them back into the draw pile, and draws the same number again.' },
-          { t: 'ol', text: 'Pick a first player; play then passes counter-clockwise.' },
+          { t: 'ol', text: 'Everyone scans the QR code (top right), takes the assessment, and notes their 5 target counts.' },
+          { t: 'ol', text: 'Build the deck: there are 2 of each Personality card. Set aside one copy of Nos. 31–50 as the "reserve". 4 players use the other 80 + 12 Knowledge cards; 2–3 players also set aside one copy of Nos. 11–30 and use 8 Knowledge cards. Shuffle into a face-down draw pile.' },
+          { t: 'ol', text: 'Deal: each hand = the sum of your 5 targets − 1. If the table\'s total is over 84 (4 players) or 63 (3 players), shuffle the reserve / Nos. 11–30 back in before dealing.' },
+          { t: 'ol', text: 'Anyone holding more than 1 Knowledge card shuffles the extras back and draws again. Pick a first player; play passes counter-clockwise.' },
         ],
       },
       {
-        title: '🃏 3. Know the Cards',
+        title: '🃏 3. Cards',
         fig: 'cards',
         blocks: [
-          { t: 'li', text: 'Personality cards (colored): the corner badge and the color band show the card\'s dimension — these are your core cards for filing and reaching your target counts.' },
-          { t: 'li', text: 'Knowledge cards (grey, marked K): printed with psychology terms and definitions. They have no dimension and cannot be filed.' },
-          { t: 'tip', text: 'Strategy tip: discard Knowledge cards as soon as you draw them to stay safe without giving away your strategy. You can also watch when opponents discard theirs to read their playing style!' },
+          { t: 'li', text: 'Personality cards: the corner badge shows the dimension — use them to file. Knowledge cards (K): no dimension, cannot be filed; discard them freely.' },
         ],
       },
       {
-        title: '🔄 4. Each Turn: Draw ➔ Discard',
+        title: '🔄 4. Each Turn',
         blocks: [
-          { t: 'ol', text: 'Draw 1 card from the top of the draw pile.' },
-          { t: 'ol', text: '(Optional) Self-draw Pong — see next section.' },
-          { t: 'ol', text: 'Discard 1 card face up into the central "discard". Other players can seize it for a "Pong" or a "Win".' },
-          { t: 'p', text: 'When the draw pile runs out, shuffle the discard (keep its top card out) and turn it over as the new draw pile.' },
+          { t: 'p', text: 'Draw 1 → (optional) Self-draw Pong → discard 1 face up. When the draw pile runs out, shuffle the discards (keep the top one out) into a new draw pile.' },
         ],
       },
       {
-        title: '⚡ 5. Two Core Actions: Pong & Win',
+        title: '⚡ 5. Pong & Win',
         blocks: [
-          { t: 'sub', text: '🀄 Pong (public file): when you reach a dimension\'s target count, lay those cards face up in front of you. The count must match the target exactly.' },
-          { t: 'li', text: 'Self-draw Pong: on your own turn, pick cards from your "hand + the just-drawn card" that meet the dimension\'s target count. (Once per turn)' },
-          { t: 'li', text: 'Intercept Pong: after someone discards and before the next player draws, if your hand is just 1 card short of a dimension\'s target count, call "Pong" and take that discard to complete your file. You then skip drawing, discard 1 card, and play continues with the player after you.' },
-          { t: 'sub', text: '🏆 Win (declare victory): the final card that completes all 5 dimensions — drawn yourself (Self-draw Win) or discarded by an opponent (Intercept Win). Reveal all your cards so the table can check.' },
-          { t: 'li', text: 'If several players want the same discard: a Win beats a Pong; between equal calls, the player nearest the discarder counter-clockwise goes first.' },
-          { t: 'warn', text: '⚠️ No one will prompt you! You must work out yourself which dimension can reach its target count. Choose wrong or misplace a card, and you\'ll be "Frozen" for one turn!' },
+          { t: 'li', text: 'Pong: lay exactly a dimension\'s target count face up in front of you (file it). Self-draw Pong = on your turn, from your hand + the card just drawn (once per turn). Intercept Pong = when 1 card short, call "Pong" before the next player draws and take the discard; then skip drawing and discard 1.' },
+          { t: 'li', text: 'Win: the final card that completes all 5 dimensions (drawn or discarded). Reveal your cards for the table to check.' },
+          { t: 'li', text: 'Same discard wanted by several players: Win beats Pong; for equal calls, the player nearest the discarder counter-clockwise goes first.' },
         ],
       },
       {
-        title: '🚫 6. Penalty: Frozen',
+        title: '🚫 6. Frozen',
         blocks: [
-          { t: 'p', text: 'If you fail a "Pong / Self-draw Pong / Win", you\'re Frozen for one turn:' },
-          { t: 'li', text: 'If you failed on your own turn (Self-draw Pong / Self-draw Win), you must still discard 1 card to end the turn.' },
-          { t: 'li', text: 'Your next turn is skipped (no drawing or discarding), and you can\'t Pong or Win others\' discards.' },
-          { t: 'li', text: 'The failed Pong cards, or your "entire hand" if you failed a Win, stay face up in front of you for everyone to see — that\'s your Frozen marker. Take them back when you unfreeze.' },
+          { t: 'p', text: 'A failed Pong or Win (wrong count or dimension): lay the failed cards (your whole hand for a failed Win) face up in front of you; skip your next turn and no Pong/Win until then, then take them back. If you fail on your own turn, still discard 1.' },
         ],
       },
       {
         title: '🏁 7. Results',
         fig: 'rounds',
         blocks: [
-          { t: 'li', text: 'The first player to Win wins immediately.' },
-          { t: 'li', text: 'A game is 10 rounds (every player takes one turn = 1 round). Each time the first player\'s turn comes around, move a coin (or any small object) one space along.' },
-          { t: 'li', text: 'If 10 rounds pass with no Win: most filed dimensions wins ➔ if tied, fewer remaining hand cards wins.' },
+          { t: 'p', text: 'A Win ends the game at once. A game lasts 10 rounds (everyone plays once = 1 round; the first player moves a coin each round). If no one wins: most dimensions filed wins, then fewest cards in hand.' },
         ],
       },
     ] as Sec[],
@@ -332,13 +302,13 @@ export function RulesCard({ cols = 1 }: { cols?: 1 | 2 }) {
         .h2-row .rbox { width: 6.2mm; height: 6.2mm; font-size: 7px; border-radius: 4px; }
 
         /* 一欄版：整行寬，但每個標題／圖示框都獨佔一行，同字級會超出 A4 → 縮一號、收緊段距 */
-        .c1 .rsec { margin: 0 0 2.6mm; }
-        .c1 h2 { font-size: 14px; margin-bottom: 1mm; }
-        .c1 .a4 p { margin: 1mm 0; font-size: 12.2px; line-height: 1.45; }
+        .c1 .rsec { margin: 0 0 4.2mm; }
+        .c1 h2 { font-size: 17px; margin-bottom: 1.4mm; }
+        .c1 .a4 p { margin: 1.4mm 0; font-size: 14.6px; line-height: 1.6; }
         /* 英文字數比中文多約一成，一欄版要再縮一點才進得了一頁 */
-        .c1 .en.a4 p { font-size: 10.1px; line-height: 1.34; margin: 0.6mm 0; }
-        .c1 .en .rsec { margin-bottom: 1.8mm; }
-        .c1 .en h2 { font-size: 13px; }
+        .c1 .en.a4 p { font-size: 12.9px; line-height: 1.46; margin: 1.2mm 0; }
+        .c1 .en .rsec { margin-bottom: 3.4mm; }
+        .c1 .en h2 { font-size: 16.5px; }
         .c1 .en .fig { padding: 0.8mm; margin: 0.6mm 0; }
         .c1 .fig { padding: 1.2mm; margin: 1mm 0; }
         .c1 .tip { padding: 1.2mm 2.4mm; }
