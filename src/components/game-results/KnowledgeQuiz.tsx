@@ -7,10 +7,12 @@
 // 三套游戏（大五 / HEXACO / SD4）共用本组件，靠 model 参数选维度题库；其余行为完全一致。
 // 自包含（不需玩家数据），中英双语内联。2026-07-24。
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { buildQuestions, type Choice, type Question } from '@/lib/quiz-questions';
 import type { QuizModel } from '@/data/quiz-dimension-questions';
 import type { Locale } from '@/lib/i18n';
+import { quizContextFromPath, retryPendingQuizSaves, saveQuizResult, type QuizItem } from '@/lib/quiz-record';
 
 // ⚠️ 出题不要放进 useMemo——React 不保证 memo 缓存不被丢弃，一旦重算就会在答题途中
 // 换成一整套新题目，而 idx / score 还停在旧进度上。改为点「开始」时算一次存 state。
@@ -22,11 +24,21 @@ export function KnowledgeQuiz({ locale, model = 'big-five' }: { locale: Locale; 
   const [idx, setIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
+  // 课堂数据：每题作答记录 + 本结算页第几次作答。答完一轮（点「看結果」）落库，中途離開不记。
+  const itemsRef = useRef<QuizItem[]>([]);
+  const attemptRef = useRef(0);
+  const pathname = usePathname();
+
+  // 结算页打开时顺手补传上次没写进去的小测。
+  useEffect(() => {
+    void retryPendingQuizSaves();
+  }, []);
 
   const say = (c: Choice) => (en ? c.en : c.zh);
 
   const start = () => {
     setQuestions(buildQuestions(model));
+    itemsRef.current = [];
     setIdx(0);
     setScore(0);
     setPicked(null);
@@ -180,6 +192,13 @@ export function KnowledgeQuiz({ locale, model = 'big-five' }: { locale: Locale; 
               onClick={() => {
                 setPicked(oi);
                 if (isAnswer) setScore((s) => s + 1);
+                itemsRef.current[idx] = {
+                  source: q.source,
+                  question: q.body.en,
+                  picked: opt.en,
+                  answer: q.options[q.answerIndex].en,
+                  correct: isAnswer,
+                };
               }}
               className={`rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition disabled:cursor-default ${cls}`}
             >
@@ -193,6 +212,18 @@ export function KnowledgeQuiz({ locale, model = 'big-five' }: { locale: Locale; 
         <div className="flex justify-end">
           <button
             onClick={() => {
+              if (idx + 1 >= questions.length) {
+                attemptRef.current += 1;
+                const { mode, roomCode } = quizContextFromPath(pathname);
+                void saveQuizResult({
+                  model,
+                  mode,
+                  roomCode,
+                  attempt: attemptRef.current,
+                  items: itemsRef.current.slice(0, questions.length),
+                  locale,
+                });
+              }
               setIdx((i) => i + 1);
               setPicked(null);
             }}

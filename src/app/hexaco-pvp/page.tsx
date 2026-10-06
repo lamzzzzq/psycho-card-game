@@ -13,6 +13,7 @@ import { useHydrated } from '@/stores/useHydration';
 import { useHexacoPvpStore } from '@/stores/useHexacoPvpStore';
 import { upsertPlayer, createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerActiveRoom, STALE_ROOM_MS } from '@/lib/hexaco-game/room-api';
 import { retryPendingSaves } from '@/lib/hexaco-game/game-record';
+import { retryPendingQuizSaves } from '@/lib/quiz-record';
 import { retryPendingHexacoSaves } from '@/lib/hexaco-record';
 import { AUTH_T } from '@/lib/i18n/auth';
 import { signOutUser } from '@/lib/auth';
@@ -65,6 +66,7 @@ export default function PvpLobbyPage() {
   // 補傳上局未成功保存的對局數據（host 崩潰 / 網絡斷 / Supabase 超時遺留）
   useEffect(() => {
     void retryPendingSaves();
+    void retryPendingQuizSaves(); // 局末小測補傳（未登錄時內部直接跳過）
   }, []);
 
   // 補傳上次沒寫進去的 HEXACO 測評行（落在 localStorage 的緩衝；需登錄態）
