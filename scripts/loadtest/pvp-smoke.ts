@@ -9,7 +9,7 @@
  * 出牌决策复用 ai-engine（medium），另有小概率故意乱胡，覆盖罚停路径。
  *
  * 用法（在仓库根目录）：
- *   npx tsx scripts/loadtest/pvp-smoke.ts run --bots 500 --auth
+ *   npx tsx scripts/loadtest/pvp-smoke.ts run --bots 500 --auth [--model big-five|hexaco|sd4]
  *   选项：--bots N  --prefix ZSMK  --password xxx  --auth  --think 2000-6000
  *        --claim 600-2500  --table-rate 2(桌/秒)  --rounds 10  --timeout-min 30
  *
@@ -18,15 +18,18 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
-import { initializePvpGame, applyPvpAction } from '@/lib/pvp-game-logic';
-import { serializeGameState } from '@/lib/pvp-serializer';
-import { getPlayerScore, getRankings } from '@/lib/game-logic';
-import {
-  makeAIDecision,
-  makeAIHuDecision,
-  makeAIPongDecision,
-  makeAISelfPongDecision,
-} from '@/lib/ai-engine';
+import * as bfPvp from '@/lib/pvp-game-logic';
+import * as bfSer from '@/lib/pvp-serializer';
+import * as bfLogic from '@/lib/game-logic';
+import * as bfAi from '@/lib/ai-engine';
+import * as hxPvp from '@/lib/hexaco-game/pvp-game-logic';
+import * as hxSer from '@/lib/hexaco-game/pvp-serializer';
+import * as hxLogic from '@/lib/hexaco-game/game-logic';
+import * as hxAi from '@/lib/hexaco-game/ai-engine';
+import * as sdPvp from '@/lib/sd4-game/pvp-game-logic';
+import * as sdSer from '@/lib/sd4-game/pvp-serializer';
+import * as sdLogic from '@/lib/sd4-game/game-logic';
+import * as sdAi from '@/lib/sd4-game/ai-engine';
 import type { GameState, Player, PlayerId, BigFiveScores, GameCard } from '@/types';
 import type {
   Room,
@@ -46,6 +49,33 @@ function opt(name: string, dflt: string): string {
   return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : dflt;
 }
 const flag = (name: string) => argv.includes(`--${name}`);
+
+// ── 模型选择（--model big-five|hexaco|sd4）：三套联机是物理隔离副本，各走各的引擎/表/频道 ──
+// 下面的变量名沿用大五（big_five/bigFive），值按模型换成对应的列名/字段名。
+const MODEL = (() => {
+  const i = argv.indexOf('--model');
+  return (i >= 0 ? argv[i + 1] : 'big-five') as 'big-five' | 'hexaco' | 'sd4';
+})();
+const MODELS = {
+  'big-five': { pvp: bfPvp, ser: bfSer, logic: bfLogic, ai: bfAi, col: 'big_five', payload: 'bigFive', stateKey: 'bigFiveScores',
+    channel: 'pvp-', sessions: 'game_sessions', participants: 'game_participants', snapshots: 'big_five_snapshots', snapFk: 'big_five_snapshot_id', dims: ['O', 'C', 'E', 'A', 'N'] },
+  hexaco: { pvp: hxPvp, ser: hxSer, logic: hxLogic, ai: hxAi, col: 'hexaco', payload: 'hexaco', stateKey: 'hexacoScores',
+    channel: 'hxpvp-', sessions: 'hexaco_game_sessions', participants: 'hexaco_game_participants', snapshots: 'hexaco_snapshots', snapFk: 'hexaco_snapshot_id', dims: ['H', 'E', 'X', 'A', 'C', 'O'] },
+  sd4: { pvp: sdPvp, ser: sdSer, logic: sdLogic, ai: sdAi, col: 'sd4', payload: 'sd4', stateKey: 'sd4Scores',
+    channel: 'sdpvp-', sessions: 'sd4_game_sessions', participants: 'sd4_game_participants', snapshots: 'sd4_snapshots', snapFk: 'sd4_snapshot_id', dims: ['M', 'N', 'P', 'S'] },
+} as const;
+const M = MODELS[MODEL];
+if (!M) throw new Error(`--model 只能是 big-five|hexaco|sd4，收到 ${MODEL}`);
+// 引擎函数统一按大五签名调用（三套结构一致，只是分数字段名不同）
+const initializePvpGame = M.pvp.initializePvpGame as unknown as typeof bfPvp.initializePvpGame;
+const applyPvpAction = M.pvp.applyPvpAction as unknown as typeof bfPvp.applyPvpAction;
+const serializeGameState = M.ser.serializeGameState as unknown as typeof bfSer.serializeGameState;
+const getPlayerScore = M.logic.getPlayerScore as unknown as typeof bfLogic.getPlayerScore;
+const getRankings = M.logic.getRankings as unknown as typeof bfLogic.getRankings;
+const makeAIDecision = M.ai.makeAIDecision as unknown as typeof bfAi.makeAIDecision;
+const makeAIHuDecision = M.ai.makeAIHuDecision as unknown as typeof bfAi.makeAIHuDecision;
+const makeAIPongDecision = M.ai.makeAIPongDecision as unknown as typeof bfAi.makeAIPongDecision;
+const makeAISelfPongDecision = M.ai.makeAISelfPongDecision as unknown as typeof bfAi.makeAISelfPongDecision;
 const range = (s: string): [number, number] => {
   const [a, b] = s.split('-').map(Number);
   return [a, b ?? a];
@@ -153,7 +183,7 @@ const rand = ([a, b]: [number, number]) => a + Math.random() * (b - a);
 
 function randomBigFive(): BigFiveScores {
   const r = () => +(Math.random() * 4 + 1).toFixed(2);
-  return { O: r(), C: r(), E: r(), A: r(), N: r() };
+  return Object.fromEntries(M.dims.map((d) => [d, r()])) as unknown as BigFiveScores;
 }
 
 // ── 桌 ────────────────────────────────────────────────────────────────────────
@@ -283,12 +313,12 @@ class Bot {
   // ── 同 room-api.upsertPlayer ──
   async upsertPlayer() {
     const { error } = await timed('db.players.insert', () =>
-      this.sb.from('players').insert({ id: this.id, student_id: this.id, big_five: this.bigFive })
+      this.sb.from('players').insert({ id: this.id, student_id: this.id, [M.col]: this.bigFive })
     );
     if (!error) return;
     if (error.code === '23505') {
       const { error: e2 } = await timed('db.players.update', () =>
-        this.sb.from('players').update({ student_id: this.id, big_five: this.bigFive }).eq('id', this.id)
+        this.sb.from('players').update({ student_id: this.id, [M.col]: this.bigFive }).eq('id', this.id)
       );
       if (e2) throw e2;
       return;
@@ -378,7 +408,7 @@ class Bot {
     const { data: rp, error: e2 } = await timed('db.room_players.withPlayers', () =>
       this.sb
         .from('room_players')
-        .select('room_id, player_id, seat_index, avatar, players (student_id, big_five)')
+        .select(`room_id, player_id, seat_index, avatar, players (student_id, ${M.col})`)
         .eq('room_id', data.id)
         .order('seat_index')
     );
@@ -389,7 +419,7 @@ class Bot {
       seat_index: r.seat_index,
       avatar: r.avatar ?? undefined,
       student_id: r.player_id === this.id ? this.id : r.players?.student_id,
-      big_five: r.player_id === this.id ? this.bigFive : r.players?.big_five ?? null,
+      big_five: r.player_id === this.id ? this.bigFive : r.players?.[M.col] ?? null,
     }));
     return data as Room;
   }
@@ -412,7 +442,7 @@ class Bot {
     return new Promise((resolve) => {
       const started = Date.now();
       let resolved = false;
-      const ch = this.sb.channel(`pvp-${code}`, { config: { broadcast: { self: false } } });
+      const ch = this.sb.channel(`${M.channel}${code}`, { config: { broadcast: { self: false } } });
       this.channel = ch;
       ch.on('broadcast', { event: 'msg' }, ({ payload }: { payload: RealtimeMessage }) => {
         try {
@@ -477,7 +507,7 @@ class Bot {
           this.roster[idx] = {
             ...ex,
             student_id: ex.student_id ?? payload.player.studentId,
-            big_five: ex.big_five ?? payload.player.bigFive,
+            big_five: ex.big_five ?? (payload.player as any)[M.payload],
             avatar: ex.avatar ?? payload.player.avatar,
           };
         } else {
@@ -486,7 +516,7 @@ class Bot {
             player_id: payload.player.id,
             seat_index: payload.seatIndex,
             student_id: payload.player.studentId,
-            big_five: payload.player.bigFive,
+            big_five: (payload.player as any)[M.payload],
             avatar: payload.player.avatar,
           });
         }
@@ -494,7 +524,7 @@ class Bot {
           for (const p of this.roster.filter((p) => p.player_id !== payload.player.id)) {
             this.send({
               type: 'player-joined',
-              player: { id: p.player_id, studentId: p.student_id ?? p.player_id, bigFive: p.big_five ?? null, avatar: p.avatar },
+              player: { id: p.player_id, studentId: p.student_id ?? p.player_id, [M.payload]: p.big_five ?? null, avatar: p.avatar } as any,
               seatIndex: p.seat_index,
             });
           }
@@ -646,7 +676,7 @@ class Bot {
       this.table.result.rounds = roundsPlayed;
       const startedAt = (finalState as GameState & { gameStartedAt?: number }).gameStartedAt ?? Date.now();
       const { error: sErr } = await timed('db.game_sessions.insert', () =>
-        this.sb.from('game_sessions').insert({
+        this.sb.from(M.sessions).insert({
           id: sessionId,
           mode: 'pvp',
           room_id: room.id,
@@ -663,11 +693,11 @@ class Bot {
       for (const p of finalState.players) {
         const id = crypto.randomUUID();
         const { error } = await timed('db.snapshots.insert', () =>
-          this.sb.from('big_five_snapshots').insert({
+          this.sb.from(M.snapshots).insert({
             id,
             player_id: p.id as unknown as string,
             student_id: p.id as unknown as string,
-            scores: p.bigFiveScores,
+            scores: (p as any)[M.stateKey],
             source: 'game-start',
           })
         );
@@ -693,7 +723,7 @@ class Bot {
           student_id: pid,
           seat_index: idx,
           is_ai: false,
-          big_five_snapshot_id: snap.get(pid) ?? null,
+          [M.snapFk]: snap.get(pid) ?? null,
           declared_count: p.declaredSets.length,
           remaining_cards: p.hand.length,
           final_score: getPlayerScore(p),
@@ -705,7 +735,7 @@ class Bot {
           pong_fail_count: c.pF,
         };
       });
-      const { error: pErr } = await timed('db.participants.insert', () => this.sb.from('game_participants').insert(rows));
+      const { error: pErr } = await timed('db.participants.insert', () => this.sb.from(M.participants).insert(rows));
       if (pErr) throw pErr;
       rec('save.total', Date.now() - started);
       // 真实 saveGameSession 5s 超时即判失败、落 localStorage 等下次启动补传
@@ -766,7 +796,8 @@ class Bot {
       avatar: sp.avatar,
       hand: sp.hand ?? [],
       isHuman: true,
-      bigFiveScores: sp.bigFiveScores,
+      bigFiveScores: (sp as any)[M.stateKey],
+      [M.stateKey]: (sp as any)[M.stateKey],
       declaredSets: sp.declaredSets ?? [],
       skipNextTurn: sp.skipNextTurn,
       revealedHand: sp.revealedHand,
@@ -840,7 +871,7 @@ class Bot {
 // ── 一桌的完整流程 ────────────────────────────────────────────────────────────
 async function runTable(table: Table) {
   const [host, ...guests] = table.bots;
-  const settings: RoomSettings = { maxPlayers: 4, totalRounds: ROUNDS, deck: 'big-five', difficulty: 'open' };
+  const settings: RoomSettings = { maxPlayers: 4, totalRounds: ROUNDS, deck: MODEL, difficulty: 'open' } as RoomSettings;
   try {
     // 全桌同时登录（课堂：大家一起开电脑）
     const logins = await Promise.all(table.bots.map((b) => b.login()));
@@ -867,7 +898,7 @@ async function runTable(table: Table) {
         await g.loadRoomPage(room.code);
         await g.subscribe(room.code, room);
         await sleep(300); // room 页 setTimeout(300) 后广播 player-joined
-        g.send({ type: 'player-joined', player: { id: g.id, studentId: g.id, bigFive: g.bigFive, avatar: g.avatar }, seatIndex });
+        g.send({ type: 'player-joined', player: { id: g.id, studentId: g.id, [M.payload]: g.bigFive, avatar: g.avatar } as any, seatIndex });
       })
     );
 

@@ -14,6 +14,11 @@ on:
       extra:
         description: pvp-smoke.ts 额外参数
         default: '--login-first --login-retries 60'
+      model:
+        description: 人格模型（三套联机是独立代码副本，各自要测）
+        type: choice
+        options: [big-five, hexaco, sd4]
+        default: big-five
       auth:
         description: 是否真的登录（false = 跳过登录，只测建房/对局/存档）
         type: boolean
@@ -32,6 +37,7 @@ jobs:
       BOTS: ${{ inputs.bots }}
       EXTRA: ${{ inputs.extra }}
       AUTH_FLAG: ${{ inputs.auth && '--auth' || '' }}
+      MODEL: ${{ inputs.model }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -51,7 +57,7 @@ jobs:
 
       - name: 压测
         # 云端没有代理，不需要本机那套 --http-conc 64 的并发限制
-        run: npx -y tsx scripts/loadtest/pvp-smoke.ts run --bots "$BOTS" $AUTH_FLAG --password "$PW" --http-conc 1000 $EXTRA
+        run: npx -y tsx scripts/loadtest/pvp-smoke.ts run --bots "$BOTS" $AUTH_FLAG --password "$PW" --http-conc 1000 --model "$MODEL" $EXTRA
 
       - name: 清理压测数据
         if: always()

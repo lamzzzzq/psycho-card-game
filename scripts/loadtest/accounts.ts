@@ -61,6 +61,13 @@ const emailRe = `'^${PREFIX.toLowerCase()}[0-9]{5}@${EMAIL_DOMAIN.replace(/\./g,
 // auth.users 只认本脚本建的号（user_metadata.loadtest = true）
 const authOurs = `email ~ ${emailRe} and raw_user_meta_data->>'loadtest' = 'true'`;
 
+// 三套联机各自一组平行表（大五 / HEXACO / SD4），压测数据可能落在任何一组
+const GAME_TABLES = [
+  { tag: '', sessions: 'game_sessions', participants: 'game_participants', snapshots: 'big_five_snapshots' },
+  { tag: 'hx_', sessions: 'hexaco_game_sessions', participants: 'hexaco_game_participants', snapshots: 'hexaco_snapshots' },
+  { tag: 'sd4_', sessions: 'sd4_game_sessions', participants: 'sd4_game_participants', snapshots: 'sd4_snapshots' },
+];
+
 async function count() {
   const r = await sql(`
     select
@@ -69,11 +76,11 @@ async function count() {
       (select count(*) from profiles where student_id ~ ${re}) as profiles,
       (select count(*) from players where id ~ ${re}) as players,
       (select count(*) from rooms where host_id ~ ${re}) as rooms,
-      (select count(*) from room_players where player_id ~ ${re}) as room_players,
-      (select count(*) from game_sessions where id in (select session_id from game_participants where student_id ~ ${re})
-         or room_id in (select id from rooms where host_id ~ ${re})) as sessions,
-      (select count(*) from game_participants where student_id ~ ${re}) as participants,
-      (select count(*) from big_five_snapshots where student_id ~ ${re}) as snapshots;`);
+      (select count(*) from room_players where player_id ~ ${re}) as room_players${GAME_TABLES.map((t) => `,
+      (select count(*) from ${t.sessions} where id in (select session_id from ${t.participants} where student_id ~ ${re})
+         or room_id in (select id from rooms where host_id ~ ${re})) as ${t.tag}sessions,
+      (select count(*) from ${t.participants} where student_id ~ ${re}) as ${t.tag}participants,
+      (select count(*) from ${t.snapshots} where student_id ~ ${re}) as ${t.tag}snapshots`).join('')};`);
   console.log(`[${PREFIX}]`, r[0]);
   return r[0];
 }
@@ -132,23 +139,25 @@ async function cleanup() {
     begin;
     create temp table t_rooms on commit drop as
       select id from rooms where host_id ~ ${re};
-    create temp table t_sess on commit drop as
-      select distinct session_id as id from game_participants where student_id ~ ${re}
+${GAME_TABLES.map((t) => `
+    create temp table t_${t.tag}sess on commit drop as
+      select distinct session_id as id from ${t.participants} where student_id ~ ${re}
       union
-      select id from game_sessions where room_id in (select id from t_rooms);
-    do $$ begin
-      if exists (select 1 from game_participants where session_id in (select id from t_sess)
+      select id from ${t.sessions} where room_id in (select id from t_rooms);`).join('')}
+    do $$ begin${GAME_TABLES.map((t) => `
+      if exists (select 1 from ${t.participants} where session_id in (select id from t_${t.tag}sess)
                  and (student_id is null or student_id !~ ${re})) then
-        raise exception 'cleanup aborted: test sessions contain non-test participants';
-      end if;
+        raise exception 'cleanup aborted: test sessions contain non-test participants (${t.sessions})';
+      end if;`).join('')}
       if exists (select 1 from room_players where room_id in (select id from t_rooms)
                  and player_id !~ ${re}) then
         raise exception 'cleanup aborted: test rooms contain non-test players';
       end if;
     end $$;
-    delete from game_participants where session_id in (select id from t_sess);
-    delete from big_five_snapshots where student_id ~ ${re};
-    delete from game_sessions where id in (select id from t_sess);
+${GAME_TABLES.map((t) => `
+    delete from ${t.participants} where session_id in (select id from t_${t.tag}sess);
+    delete from ${t.snapshots} where student_id ~ ${re};
+    delete from ${t.sessions} where id in (select id from t_${t.tag}sess);`).join('')}
     delete from room_players where player_id ~ ${re} or room_id in (select id from t_rooms);
     delete from rooms where id in (select id from t_rooms);
     delete from players where id ~ ${re};
