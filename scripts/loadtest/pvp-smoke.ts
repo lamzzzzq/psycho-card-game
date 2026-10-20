@@ -467,8 +467,12 @@ class Bot {
             } catch (te) {
               err('rt.track', te);
             }
-            // 非房主：重连后要状态（同 store）
-            if (!this.isHost && this.view) this.send({ type: 'state-request', fromPlayerId: this.id });
+            // 非房主：每次（重）连上都向房主要一次状态（同 store.subscribe：不看手上有没有状态）。
+            // 以前只在已有 view 时才要 → 首连失败、漏收 game-start 的机器人永远不会补要、整桌卡死，
+            // 而真实页面会补要恢复（SD4 1020 压测 1 桌 stalled 即此）。
+            if (!this.isHost) {
+              this.send({ type: 'state-request', fromPlayerId: this.id });
+            }
             if (!resolved) {
               resolved = true;
               resolve();
@@ -534,6 +538,8 @@ class Bot {
       case 'game-start':
       case 'game-state-update': {
         if (payload.toPlayerId && payload.toPlayerId !== this.id) break;
+        // 漏收 game-start、靠 state-request 补回来的那一刻（验证恢复路径真的生效）
+        if (!this.view && payload.type === 'game-state-update') inc('rt.recoveredMissedStart');
         if (this.pendingSendAt) {
           // 只在「自己这一步已生效」的那条状态到达时记往返，别人的动作不算
           const gs = payload.gameState;
