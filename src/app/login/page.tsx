@@ -26,6 +26,9 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   // 伺服器忙碌時的自動重試次數（0 = 沒在重試），只在登入按鈕下方顯示進度
   const [retry, setRetry] = useState(0);
+  const [retryTotal, setRetryTotal] = useState(SIGN_IN_MAX_RETRIES);
+  // 重试原因：busy=伺服器忙；queue=同時登入人多被限流，在排隊
+  const [retryReason, setRetryReason] = useState<'busy' | 'queue'>('busy');
   // 重试最长会跑一分多钟，期间用户可能已经离开本页（點註冊 / 返回首頁）：
   // 迟到的结果不能再 setState，更不能把人从别的页面强行拉回首页。
   const alive = useRef(true);
@@ -60,7 +63,12 @@ export default function LoginPage() {
     setBusy(true);
     setRetry(0);
     const res = await signInWithStudentId(studentId, password, {
-      onBusy: (n) => { if (alive.current) setRetry(n); },
+      onBusy: (n, total, reason) => {
+        if (!alive.current) return;
+        setRetry(n);
+        setRetryTotal(total);
+        setRetryReason(reason);
+      },
     });
     if (!alive.current) return;
     setRetry(0);
@@ -174,7 +182,7 @@ export default function LoginPage() {
 
           {retry > 0 && (
             <p role="status" className="text-xs leading-5 text-[var(--psy-muted)]">
-              {t.busyRetry}（{retry}/{SIGN_IN_MAX_RETRIES}）
+              {retryReason === 'queue' ? t.queueRetry : t.busyRetry}（{retry}/{retryTotal}）
             </p>
           )}
         </form>

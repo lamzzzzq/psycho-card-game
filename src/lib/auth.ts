@@ -72,11 +72,16 @@ export async function registerStudent(input: {
 // 改为：密码错立刻返回；服务器忙则自动退避重试，页面显示「伺服器忙碌」。
 const SIGN_IN_BACKOFF_MS = [3000, 5000, 8000, 12000, 15000, 20000, 20000, 20000];
 export const SIGN_IN_MAX_RETRIES = SIGN_IN_BACKOFF_MS.length;
+// 被限流(429)时的排队重试（2026-10-26 400 人压测）：Supabase 登录是令牌桶，约每秒放行 10 个，
+// 不是「5 分钟窗口」。400 人 5 秒内同时点登录 → 只有 83 人首次成功，其余过几秒重试即可，
+// 42 秒内全部登上。所以 429 也自动重试（短间隔＋随机抖动错开），总计约 1.5 分钟上限。
+const RATE_LIMIT_BACKOFF_MS = [2000, 3000, 4000, 5000, 5000, 6000, 6000, 7000, 7000, 8000, 8000, 8000];
+export const SIGN_IN_MAX_RATE_LIMIT_RETRIES = RATE_LIMIT_BACKOFF_MS.length;
 
 // 错误分三类，别再「任何失败都说密码错」：
 //   busy      服务器忙 —— 值得重试。auth-js 把 502/503/504 包成 AuthRetryableFetchError；
 //             其余 5xx / 网关 HTML 错误页解析失败会变成 status 为 undefined 的 AuthUnknownError。
-//   ratelimit 被限流(429) —— 窗口是 5 分钟，退避重试打不穿，重试只会把全班的配额挤得更死。
+//   ratelimit 被限流(429) —— 令牌桶约 10 个/秒，几秒后重试就能进 → 排队重试（见 RATE_LIMIT_BACKOFF_MS）。
 //   wrong     学号或密码真的错了（400/401 + code invalid_credentials）。
 type SignInFailure = 'busy' | 'ratelimit' | 'wrong' | 'unknown';
 function classifySignInError(error: unknown): SignInFailure {
@@ -91,14 +96,18 @@ function classifySignInError(error: unknown): SignInFailure {
 }
 
 // 登录：学号 → 合成邮箱 → 密码登录。
-// onBusy 每次进入重试等待时回调（第几次 / 共几次）；maxRetries 可调小（注册后自动登录只试 2 次）。
+// onBusy 每次进入重试等待时回调（第几次 / 共几次 / 原因：服务器忙 or 排队限流）；
+// maxRetries 可调小（注册后自动登录只试 2 次），两类重试各自计数、各自封顶。
 export async function signInWithStudentId(
   studentId: string,
   password: string,
-  opts?: { onBusy?: (attempt: number, total: number) => void; maxRetries?: number },
+  opts?: { onBusy?: (attempt: number, total: number, reason: 'busy' | 'queue') => void; maxRetries?: number },
 ): Promise<AuthResult> {
-  const max = Math.min(opts?.maxRetries ?? SIGN_IN_MAX_RETRIES, SIGN_IN_MAX_RETRIES);
-  for (let i = 0; ; i++) {
+  const maxBusy = Math.min(opts?.maxRetries ?? SIGN_IN_MAX_RETRIES, SIGN_IN_MAX_RETRIES);
+  const maxQueue = Math.min(opts?.maxRetries ?? SIGN_IN_MAX_RATE_LIMIT_RETRIES, SIGN_IN_MAX_RATE_LIMIT_RETRIES);
+  let busyTries = 0;
+  let queueTries = 0;
+  for (;;) {
     const { error } = await supabase.auth.signInWithPassword({
       email: syntheticEmail(studentId),
       password,
@@ -106,12 +115,22 @@ export async function signInWithStudentId(
     if (!error) return { ok: true };
     const kind = classifySignInError(error);
     if (kind === 'wrong') return { ok: false, error: 'invalid_credentials' };
-    if (kind === 'ratelimit') return { ok: false, error: 'login_too_many' };
     if (kind === 'unknown') return { ok: false, error: 'unknown' };
-    if (i >= max) return { ok: false, error: 'server_busy' };
-    opts?.onBusy?.(i + 1, max);
-    // 加随机抖动，避免全班的重试再次撞在同一秒
-    await new Promise((r) => setTimeout(r, SIGN_IN_BACKOFF_MS[i] + Math.random() * 2000));
+    let wait: number;
+    if (kind === 'ratelimit') {
+      if (queueTries >= maxQueue) return { ok: false, error: 'login_too_many' };
+      opts?.onBusy?.(queueTries + 1, maxQueue, 'queue');
+      // 抖动比服务器忙时更大：大家是同一秒被挡回来的，必须打散，不然下一秒又一起撞
+      wait = RATE_LIMIT_BACKOFF_MS[queueTries] + Math.random() * 3000;
+      queueTries++;
+    } else {
+      if (busyTries >= maxBusy) return { ok: false, error: 'server_busy' };
+      opts?.onBusy?.(busyTries + 1, maxBusy, 'busy');
+      // 加随机抖动，避免全班的重试再次撞在同一秒
+      wait = SIGN_IN_BACKOFF_MS[busyTries] + Math.random() * 2000;
+      busyTries++;
+    }
+    await new Promise((r) => setTimeout(r, wait));
   }
 }
 
