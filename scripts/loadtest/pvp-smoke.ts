@@ -50,11 +50,13 @@ function opt(name: string, dflt: string): string {
 }
 const flag = (name: string) => argv.includes(`--${name}`);
 
-// ── 模型选择（--model big-five|hexaco|sd4）：三套联机是物理隔离副本，各走各的引擎/表/频道 ──
-// 下面的变量名沿用大五（big_five/bigFive），值按模型换成对应的列名/字段名。
-const MODEL = (() => {
+// ── 模型选择（--model big-five|hexaco|sd4|mixed）：三套联机是物理隔离副本，各走各的引擎/表/频道 ──
+// mixed = 每桌随机一个模型（同一堂课三个模型混着开房）。下面的变量名沿用大五（big_five/bigFive），
+// 值按该桌模型换成对应的列名/字段名。
+type ModelKey = 'big-five' | 'hexaco' | 'sd4';
+const MODEL_ARG = (() => {
   const i = argv.indexOf('--model');
-  return (i >= 0 ? argv[i + 1] : 'big-five') as 'big-five' | 'hexaco' | 'sd4';
+  return (i >= 0 ? argv[i + 1] : 'big-five') as ModelKey | 'mixed';
 })();
 const MODELS = {
   'big-five': { pvp: bfPvp, ser: bfSer, logic: bfLogic, ai: bfAi, col: 'big_five', payload: 'bigFive', stateKey: 'bigFiveScores',
@@ -64,18 +66,27 @@ const MODELS = {
   sd4: { pvp: sdPvp, ser: sdSer, logic: sdLogic, ai: sdAi, col: 'sd4', payload: 'sd4', stateKey: 'sd4Scores',
     channel: 'sdpvp-', sessions: 'sd4_game_sessions', participants: 'sd4_game_participants', snapshots: 'sd4_snapshots', snapFk: 'sd4_snapshot_id', dims: ['M', 'N', 'P', 'S'] },
 } as const;
-const M = MODELS[MODEL];
-if (!M) throw new Error(`--model 只能是 big-five|hexaco|sd4，收到 ${MODEL}`);
+if (MODEL_ARG !== 'mixed' && !MODELS[MODEL_ARG]) throw new Error(`--model 只能是 big-five|hexaco|sd4|mixed，收到 ${MODEL_ARG}`);
+const MODEL_KEYS = Object.keys(MODELS) as ModelKey[];
+const pickModel = (): ModelKey => (MODEL_ARG === 'mixed' ? MODEL_KEYS[Math.floor(Math.random() * MODEL_KEYS.length)] : MODEL_ARG);
 // 引擎函数统一按大五签名调用（三套结构一致，只是分数字段名不同）
-const initializePvpGame = M.pvp.initializePvpGame as unknown as typeof bfPvp.initializePvpGame;
-const applyPvpAction = M.pvp.applyPvpAction as unknown as typeof bfPvp.applyPvpAction;
-const serializeGameState = M.ser.serializeGameState as unknown as typeof bfSer.serializeGameState;
-const getPlayerScore = M.logic.getPlayerScore as unknown as typeof bfLogic.getPlayerScore;
-const getRankings = M.logic.getRankings as unknown as typeof bfLogic.getRankings;
-const makeAIDecision = M.ai.makeAIDecision as unknown as typeof bfAi.makeAIDecision;
-const makeAIHuDecision = M.ai.makeAIHuDecision as unknown as typeof bfAi.makeAIHuDecision;
-const makeAIPongDecision = M.ai.makeAIPongDecision as unknown as typeof bfAi.makeAIPongDecision;
-const makeAISelfPongDecision = M.ai.makeAISelfPongDecision as unknown as typeof bfAi.makeAISelfPongDecision;
+type Engine = {
+  initializePvpGame: typeof bfPvp.initializePvpGame;
+  applyPvpAction: typeof bfPvp.applyPvpAction;
+  serializeGameState: typeof bfSer.serializeGameState;
+  getPlayerScore: typeof bfLogic.getPlayerScore;
+  getRankings: typeof bfLogic.getRankings;
+  makeAIDecision: typeof bfAi.makeAIDecision;
+  makeAIHuDecision: typeof bfAi.makeAIHuDecision;
+  makeAIPongDecision: typeof bfAi.makeAIPongDecision;
+  makeAISelfPongDecision: typeof bfAi.makeAISelfPongDecision;
+};
+const ENGINES = Object.fromEntries(
+  MODEL_KEYS.map((k) => {
+    const m = MODELS[k];
+    return [k, { ...m.pvp, ...m.ser, ...m.logic, ...m.ai } as unknown as Engine];
+  })
+) as Record<ModelKey, Engine>;
 const range = (s: string): [number, number] => {
   const [a, b] = s.split('-').map(Number);
   return [a, b ?? a];
@@ -181,9 +192,9 @@ function pct(a: number[], p: number) {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const rand = ([a, b]: [number, number]) => a + Math.random() * (b - a);
 
-function randomBigFive(): BigFiveScores {
+function randomScores(dims: readonly string[]): BigFiveScores {
   const r = () => +(Math.random() * 4 + 1).toFixed(2);
-  return Object.fromEntries(M.dims.map((d) => [d, r()])) as unknown as BigFiveScores;
+  return Object.fromEntries(dims.map((d) => [d, r()])) as unknown as BigFiveScores;
 }
 
 // ── 桌 ────────────────────────────────────────────────────────────────────────
@@ -199,6 +210,14 @@ type TableResult = {
   saved?: boolean;
   sessionId?: string;
   rosterFromBroadcast?: number;
+  model?: ModelKey;
+  players?: string[];                 // 座位顺序的学号
+  final?: FinalStanding[];            // 房主终局状态里的逐人结果（核对 DB 用）
+  diagnosis?: Record<string, unknown>; // 没打完时的现场（谁该动、谁掉线、最后几步）
+};
+type FinalStanding = {
+  id: string; seat: number; declared: number; remaining: number; rank: number; isWinner: boolean;
+  huS: number; huF: number; pS: number; pF: number;
 };
 
 class Table {
@@ -208,8 +227,12 @@ class Table {
   lastProgress = Date.now();
   done!: Promise<void>;
   private resolveDone!: () => void;
+  model: ModelKey = pickModel();
+  get m() {
+    return MODELS[this.model];
+  }
   constructor(public index: number) {
-    this.result = { table: index, outcome: 'timeout', actions: 0 };
+    this.result = { table: index, outcome: 'timeout', actions: 0, model: this.model };
     this.done = new Promise((r) => (this.resolveDone = r));
   }
   finish(outcome: TableResult['outcome'], detail?: string) {
@@ -229,7 +252,7 @@ class Table {
 class Bot {
   sb: SupabaseClient;
   id: string;
-  bigFive = randomBigFive();
+  bigFive: BigFiveScores;
   avatar = ['🦊', '🐼', '🐯', '🐸', '🐙', '🦉'][Math.floor(Math.random() * 6)];
   deviceToken = crypto.randomUUID();
   userId?: string;
@@ -254,7 +277,26 @@ class Bot {
     void this.statusChannel?.unsubscribe();
   }
 
+  get m() {
+    return this.table.m;
+  }
+  get E() {
+    return ENGINES[this.table.model];
+  }
+  // ── 每个用户自己的记录 ──
+  rec: {
+    loginOk?: boolean; loginAttempts?: number; loginMs?: number;
+    subscribeOk?: boolean; resubscribes: number; gotGameStart?: boolean; recoveredMissedStart?: boolean;
+    actionsSent: number; lastRecvAt?: number; lastSentAt?: number; errors: { t: number; where: string; msg: string }[];
+  } = { resubscribes: 0, actionsSent: 0, errors: [] };
+  err(where: string, e: unknown) {
+    err(where, e);
+    const msg = e instanceof Error ? e.message : typeof e === 'string' ? e : JSON.stringify(e);
+    if (this.rec.errors.length < 50) this.rec.errors.push({ t: Date.now() - T0, where, msg: msg?.slice(0, 300) });
+  }
+
   constructor(public index: number, public table: Table) {
+    this.bigFive = randomScores(table.m.dims);
     this.id = studentIdOf(index);
     this.sb = createClient(URL, ANON, {
       auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false },
@@ -273,13 +315,15 @@ class Bot {
       );
       if (!error && data.session) {
         this.userId = data.session.user.id;
+        Object.assign(this.rec, { loginOk: true, loginAttempts: attempt, loginMs: Date.now() - firstTry });
         rec('auth.timeToLoggedIn', Date.now() - firstTry);
         rec('auth.attemptsNeeded', attempt);
         break;
       }
-      err('auth.signIn', `${error?.status ?? ''} ${error?.message ?? 'no session'}`);
+      this.err('auth.signIn', `${error?.status ?? ''} ${error?.message ?? 'no session'}`);
       if (attempt >= LOGIN_RETRIES) {
         inc('auth:gaveUp');
+        Object.assign(this.rec, { loginOk: false, loginAttempts: attempt, loginMs: Date.now() - firstTry });
         return false;
       }
       await sleep(rand(LOGIN_BACKOFF));
@@ -291,13 +335,13 @@ class Bot {
         .update({ active_device: this.deviceToken, active_at: new Date().toISOString() })
         .eq('id', this.userId!)
     );
-    if (e2) err('db.profiles.claim', e2);
+    if (e2) this.err('db.profiles.claim', e2);
     // 同 heartbeatSession：60s 一次 select + update
     this.heartbeat = setInterval(async () => {
       const r1 = await timed('db.profiles.hbSelect', () =>
         this.sb.from('profiles').select('active_device').eq('id', this.userId!).maybeSingle()
       );
-      if (r1.error) err('db.profiles.hbSelect', r1.error);
+      if (r1.error) this.err('db.profiles.hbSelect', r1.error);
       else if (r1.data?.active_device && r1.data.active_device !== this.deviceToken) inc('session:takenOver');
       const r2 = await timed('db.profiles.hbUpdate', () =>
         this.sb
@@ -305,7 +349,7 @@ class Bot {
           .update({ active_device: this.deviceToken, active_at: new Date().toISOString() })
           .eq('id', this.userId!)
       );
-      if (r2.error) err('db.profiles.hbUpdate', r2.error);
+      if (r2.error) this.err('db.profiles.hbUpdate', r2.error);
     }, HEARTBEAT_MS);
     return true;
   }
@@ -313,12 +357,12 @@ class Bot {
   // ── 同 room-api.upsertPlayer ──
   async upsertPlayer() {
     const { error } = await timed('db.players.insert', () =>
-      this.sb.from('players').insert({ id: this.id, student_id: this.id, [M.col]: this.bigFive })
+      this.sb.from('players').insert({ id: this.id, student_id: this.id, [this.m.col]: this.bigFive })
     );
     if (!error) return;
     if (error.code === '23505') {
       const { error: e2 } = await timed('db.players.update', () =>
-        this.sb.from('players').update({ student_id: this.id, [M.col]: this.bigFive }).eq('id', this.id)
+        this.sb.from('players').update({ student_id: this.id, [this.m.col]: this.bigFive }).eq('id', this.id)
       );
       if (e2) throw e2;
       return;
@@ -330,7 +374,7 @@ class Bot {
     const { error } = await timed('db.room_players.leaveAll', () =>
       this.sb.from('room_players').delete().eq('player_id', this.id)
     );
-    if (error) err('db.room_players.leaveAll', error);
+    if (error) this.err('db.room_players.leaveAll', error);
   }
 
   // 大厅 collisionCheck（getPlayerActiveRoom 同款查询）
@@ -346,7 +390,7 @@ class Bot {
         .limit(1)
         .maybeSingle()
     );
-    if (error) err('db.activeRoom', error);
+    if (error) this.err('db.activeRoom', error);
   }
 
   // ── 同 room-api.createRoom ──
@@ -408,18 +452,18 @@ class Bot {
     const { data: rp, error: e2 } = await timed('db.room_players.withPlayers', () =>
       this.sb
         .from('room_players')
-        .select(`room_id, player_id, seat_index, avatar, players (student_id, ${M.col})`)
+        .select(`room_id, player_id, seat_index, avatar, players (student_id, ${this.m.col})`)
         .eq('room_id', data.id)
         .order('seat_index')
     );
-    if (e2) err('db.room_players.withPlayers', e2);
+    if (e2) this.err('db.room_players.withPlayers', e2);
     this.roster = (rp ?? []).map((r: any) => ({
       room_id: r.room_id,
       player_id: r.player_id,
       seat_index: r.seat_index,
       avatar: r.avatar ?? undefined,
       student_id: r.player_id === this.id ? this.id : r.players?.student_id,
-      big_five: r.player_id === this.id ? this.bigFive : r.players?.[M.col] ?? null,
+      big_five: r.player_id === this.id ? this.bigFive : r.players?.[this.m.col] ?? null,
     }));
     return data as Room;
   }
@@ -427,14 +471,15 @@ class Bot {
   send(msg: RealtimeMessage) {
     if (!this.channel) return;
     inc('rt.send');
+    this.rec.lastSentAt = Date.now() - T0;
     const s = Date.now();
     this.channel
       .send({ type: 'broadcast', event: 'msg', payload: msg })
       .then((r) => {
         rec('rt.sendAck', Date.now() - s);
-        if (r !== 'ok') err('rt.send', `send result=${r} type=${msg.type}`);
+        if (r !== 'ok') this.err('rt.send', `send result=${r} type=${msg.type}`);
       })
-      .catch((e) => err('rt.send', e));
+      .catch((e) => this.err('rt.send', e));
   }
 
   // ── 频道订阅（同 usePvpStore.subscribeRoom 的消息面）──
@@ -442,13 +487,13 @@ class Bot {
     return new Promise((resolve) => {
       const started = Date.now();
       let resolved = false;
-      const ch = this.sb.channel(`${M.channel}${code}`, { config: { broadcast: { self: false } } });
+      const ch = this.sb.channel(`${this.m.channel}${code}`, { config: { broadcast: { self: false } } });
       this.channel = ch;
       ch.on('broadcast', { event: 'msg' }, ({ payload }: { payload: RealtimeMessage }) => {
         try {
           this.onMessage(payload, room);
         } catch (e) {
-          err('bot.onMessage', e);
+          this.err('bot.onMessage', e);
         }
       })
         .on('presence', { event: 'sync' }, () => inc('rt.presenceSync'))
@@ -459,13 +504,17 @@ class Bot {
         .subscribe(async (status, e) => {
           if (status === 'SUBSCRIBED') {
             if (!this.subscribed) rec('rt.subscribe', Date.now() - started);
-            else inc('rt.resubscribe');
+            else {
+              inc('rt.resubscribe');
+              this.rec.resubscribes++;
+            }
+            this.rec.subscribeOk = true;
             this.subscribed = true;
             try {
               const r = await ch.track({ player_id: this.id, t: Date.now() });
-              if (r !== 'ok') err('rt.track', `track=${r}`);
+              if (r !== 'ok') this.err('rt.track', `track=${r}`);
             } catch (te) {
-              err('rt.track', te);
+              this.err('rt.track', te);
             }
             // 非房主：每次（重）连上都向房主要一次状态（同 store.subscribe：不看手上有没有状态）。
             // 以前只在已有 view 时才要 → 首连失败、漏收 game-start 的机器人永远不会补要、整桌卡死，
@@ -480,7 +529,7 @@ class Bot {
           } else {
             // 收尾 removeAllChannels 也会回调 CLOSED，那不是故障
             if (status === 'CLOSED' && this.table.finished) return;
-            err(`rt.status.${status}`, e?.message ?? status);
+            this.err(`rt.status.${status}`, e?.message ?? status);
             if (!resolved && (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT')) {
               resolved = true;
               resolve();
@@ -496,13 +545,14 @@ class Bot {
         .subscribe((status, e) => {
           // 开局后主动退订 / 收尾也会回调 CLOSED，那不是故障
           if (status === 'SUBSCRIBED' || (status === 'CLOSED' && (this.table.finished || this.statusClosing))) return;
-          err(`rt.pg.${status}`, e?.message ?? status);
+          this.err(`rt.pg.${status}`, e?.message ?? status);
         });
     });
   }
 
   onMessage(payload: RealtimeMessage, room: Room) {
     inc('rt.recv');
+    this.rec.lastRecvAt = Date.now() - T0;
     switch (payload.type) {
       case 'player-joined': {
         const idx = this.roster.findIndex((p) => p.player_id === payload.player.id);
@@ -511,7 +561,7 @@ class Bot {
           this.roster[idx] = {
             ...ex,
             student_id: ex.student_id ?? payload.player.studentId,
-            big_five: ex.big_five ?? (payload.player as any)[M.payload],
+            big_five: ex.big_five ?? (payload.player as any)[this.m.payload],
             avatar: ex.avatar ?? payload.player.avatar,
           };
         } else {
@@ -520,7 +570,7 @@ class Bot {
             player_id: payload.player.id,
             seat_index: payload.seatIndex,
             student_id: payload.player.studentId,
-            big_five: (payload.player as any)[M.payload],
+            big_five: (payload.player as any)[this.m.payload],
             avatar: payload.player.avatar,
           });
         }
@@ -528,7 +578,7 @@ class Bot {
           for (const p of this.roster.filter((p) => p.player_id !== payload.player.id)) {
             this.send({
               type: 'player-joined',
-              player: { id: p.player_id, studentId: p.student_id ?? p.player_id, [M.payload]: p.big_five ?? null, avatar: p.avatar } as any,
+              player: { id: p.player_id, studentId: p.student_id ?? p.player_id, [this.m.payload]: p.big_five ?? null, avatar: p.avatar } as any,
               seatIndex: p.seat_index,
             });
           }
@@ -539,7 +589,10 @@ class Bot {
       case 'game-state-update': {
         if (payload.toPlayerId && payload.toPlayerId !== this.id) break;
         // 漏收 game-start、靠 state-request 补回来的那一刻（验证恢复路径真的生效）
-        if (!this.view && payload.type === 'game-state-update') inc('rt.recoveredMissedStart');
+        if (!this.view && payload.type === 'game-state-update') {
+          inc('rt.recoveredMissedStart');
+          this.rec.recoveredMissedStart = true;
+        }
         if (this.pendingSendAt) {
           // 只在「自己这一步已生效」的那条状态到达时记往返，别人的动作不算
           const gs = payload.gameState;
@@ -553,6 +606,7 @@ class Bot {
         }
         if (payload.type === 'game-start') {
           inc('game:startReceived');
+          this.rec.gotGameStart = true;
           this.closeStatusChannel(); // 真实 app 离开 room 页即退订
         }
         this.view = payload.gameState;
@@ -569,7 +623,7 @@ class Bot {
           this.channel?.send({
             type: 'broadcast',
             event: 'msg',
-            payload: { type: 'game-state-update', gameState: serializeGameState(this.raw, payload.fromPlayerId), toPlayerId: payload.fromPlayerId },
+            payload: { type: 'game-state-update', gameState: this.E.serializeGameState(this.raw, payload.fromPlayerId), toPlayerId: payload.fromPlayerId },
           });
         }
         break;
@@ -587,15 +641,17 @@ class Bot {
     const ordered = [...this.roster].sort((a, b) => a.seat_index - b.seat_index).slice(0, room.settings.maxPlayers ?? 4);
     const missingBf = ordered.filter((p) => !bigFiveMap[p.player_id]).length;
     if (missingBf) inc('game:startedWithMissingBigFive', missingBf);
-    const rawState = initializePvpGame(ordered, bigFiveMap, room.settings);
+    const rawState = this.E.initializePvpGame(ordered, bigFiveMap, room.settings);
     (rawState as GameState & { gameStartedAt?: number }).gameStartedAt = Date.now();
     this.raw = rawState;
     void this.updateRoomStatus(room.id, 'playing'); // 真实 store 不 await
     for (const op of ordered) {
-      this.send({ type: 'game-start', gameState: serializeGameState(rawState, op.player_id), toPlayerId: op.player_id });
+      this.send({ type: 'game-start', gameState: this.E.serializeGameState(rawState, op.player_id), toPlayerId: op.player_id });
     }
     this.closeStatusChannel();
-    this.view = serializeGameState(rawState, this.id);
+    this.view = this.E.serializeGameState(rawState, this.id);
+    this.rec.gotGameStart = true; // 房主自己开局
+    this.table.result.players = ordered.map((p) => p.player_id);
     this.table.result.startedAt = Date.now() - T0;
     this.table.lastProgress = Date.now();
     inc('game:started');
@@ -605,9 +661,9 @@ class Bot {
   async updateRoomStatus(roomId: string, status: string) {
     const { error } = await timed('db.rooms.updateStatus', () => this.sb.from('rooms').update({ status }).eq('id', roomId));
     if (error) {
-      err('db.rooms.updateStatus', error);
+      this.err('db.rooms.updateStatus', error);
       const { error: e2 } = await this.sb.from('rooms').update({ status }).eq('id', roomId);
-      if (e2) err('db.rooms.updateStatus.retry', e2);
+      if (e2) this.err('db.rooms.updateStatus.retry', e2);
     }
   }
 
@@ -622,7 +678,7 @@ class Bot {
       return;
     }
     const s = Date.now();
-    const next = applyPvpAction(raw, from, action);
+    const next = this.E.applyPvpAction(raw, from, action);
     rec('host.applyAction', Date.now() - s);
     if (next === raw) inc(`host:noop:${action.type}`);
     this.raw = next;
@@ -632,9 +688,9 @@ class Bot {
     const ordered = [...this.roster].sort((a, b) => a.seat_index - b.seat_index);
     // 与真实 store 一致：连房主自己那份也发（self:false 收不到，但计入 Realtime 流量）
     for (const op of ordered) {
-      this.send({ type: 'game-state-update', gameState: serializeGameState(next, op.player_id), toPlayerId: op.player_id });
+      this.send({ type: 'game-state-update', gameState: this.E.serializeGameState(next, op.player_id), toPlayerId: op.player_id });
     }
-    this.view = serializeGameState(next, this.id);
+    this.view = this.E.serializeGameState(next, this.id);
     this.table.lastProgress = Date.now();
 
     if (next.phase === 'claim-window') {
@@ -674,15 +730,15 @@ class Bot {
     try {
       const winnerId = finalState.winner;
       const ranked: Player[] = [
-        ...getRankings(finalState.players.filter((p) => !p.hasLeft)),
-        ...getRankings(finalState.players.filter((p) => p.hasLeft)),
+        ...this.E.getRankings(finalState.players.filter((p) => !p.hasLeft)),
+        ...this.E.getRankings(finalState.players.filter((p) => p.hasLeft)),
       ];
       const totalRounds = finalState.settings.totalRounds;
       const roundsPlayed = totalRounds > 0 ? Math.min(finalState.currentRound, totalRounds) : finalState.currentRound;
       this.table.result.rounds = roundsPlayed;
       const startedAt = (finalState as GameState & { gameStartedAt?: number }).gameStartedAt ?? Date.now();
       const { error: sErr } = await timed('db.game_sessions.insert', () =>
-        this.sb.from(M.sessions).insert({
+        this.sb.from(this.m.sessions).insert({
           id: sessionId,
           mode: 'pvp',
           room_id: room.id,
@@ -699,15 +755,15 @@ class Bot {
       for (const p of finalState.players) {
         const id = crypto.randomUUID();
         const { error } = await timed('db.snapshots.insert', () =>
-          this.sb.from(M.snapshots).insert({
+          this.sb.from(this.m.snapshots).insert({
             id,
             player_id: p.id as unknown as string,
             student_id: p.id as unknown as string,
-            scores: (p as any)[M.stateKey],
+            scores: (p as any)[this.m.stateKey],
             source: 'game-start',
           })
         );
-        if (error) err('db.snapshots.insert', error);
+        if (error) this.err('db.snapshots.insert', error);
         else snap.set(p.id as unknown as string, id);
       }
       const counts: Record<string, { huS: number; huF: number; pS: number; pF: number }> = {};
@@ -729,10 +785,10 @@ class Bot {
           student_id: pid,
           seat_index: idx,
           is_ai: false,
-          [M.snapFk]: snap.get(pid) ?? null,
+          [this.m.snapFk]: snap.get(pid) ?? null,
           declared_count: p.declaredSets.length,
           remaining_cards: p.hand.length,
-          final_score: getPlayerScore(p),
+          final_score: this.E.getPlayerScore(p),
           rank: rank > 0 ? rank : idx + 1,
           is_winner: p.id === winnerId,
           hu_success_count: c.huS,
@@ -741,7 +797,13 @@ class Bot {
           pong_fail_count: c.pF,
         };
       });
-      const { error: pErr } = await timed('db.participants.insert', () => this.sb.from(M.participants).insert(rows));
+      // 终局逐人结果先记下（存档失败也有据可查），核对脚本拿它跟 DB 比
+      this.table.result.final = rows.map((r) => ({
+        id: r.student_id, seat: r.seat_index, declared: r.declared_count, remaining: r.remaining_cards,
+        rank: r.rank, isWinner: r.is_winner, huS: r.hu_success_count, huF: r.hu_fail_count,
+        pS: r.pong_success_count, pF: r.pong_fail_count,
+      }));
+      const { error: pErr } = await timed('db.participants.insert', () => this.sb.from(this.m.participants).insert(rows));
       if (pErr) throw pErr;
       rec('save.total', Date.now() - started);
       // 真实 saveGameSession 5s 超时即判失败、落 localStorage 等下次启动补传
@@ -750,7 +812,7 @@ class Bot {
       this.table.result.sessionId = sessionId;
       inc('game:saved');
     } catch (e) {
-      err('save', e);
+      this.err('save', e);
       this.table.result.saved = false;
     }
     await statusDone;
@@ -790,7 +852,7 @@ class Bot {
         this.lastActedKey = key;
         this.dispatch(action);
       } catch (e) {
-        err('bot.decide', e);
+        this.err('bot.decide', e);
       }
     }, wait);
   }
@@ -802,8 +864,8 @@ class Bot {
       avatar: sp.avatar,
       hand: sp.hand ?? [],
       isHuman: true,
-      bigFiveScores: (sp as any)[M.stateKey],
-      [M.stateKey]: (sp as any)[M.stateKey],
+      bigFiveScores: (sp as any)[this.m.stateKey],
+      [this.m.stateKey]: (sp as any)[this.m.stateKey],
       declaredSets: sp.declaredSets ?? [],
       skipNextTurn: sp.skipNextTurn,
       revealedHand: sp.revealedHand,
@@ -812,10 +874,10 @@ class Bot {
 
   pickDiscard(player: Player, drawn: GameCard | null, v: SerializedGameState): number {
     const ctx = { discardPile: v.discardPile, actionLog: v.actionLog, currentRound: v.currentRound, totalRounds: v.totalRounds };
-    if (drawn) return makeAIDecision(player, drawn, 'medium', ctx).cardToDiscard.id;
+    if (drawn) return this.E.makeAIDecision(player, drawn, 'medium', ctx).cardToDiscard.id;
     // 碰后/罚弃：没有 drawnCard → 把最后一张手牌当 "drawn" 传入，AI 在全手牌里挑
     const hand = player.hand;
-    return makeAIDecision({ ...player, hand: hand.slice(0, -1) }, hand[hand.length - 1], 'medium', ctx).cardToDiscard.id;
+    return this.E.makeAIDecision({ ...player, hand: hand.slice(0, -1) }, hand[hand.length - 1], 'medium', ctx).cardToDiscard.id;
   }
 
   decide(v: SerializedGameState, meIdx: number): PvpAction | null {
@@ -826,8 +888,8 @@ class Bot {
     if (v.phase === 'claim-window') {
       const frozen = sp.skipNextTurn || sp.frozenUntilOwnDiscard;
       if (frozen || !v.pendingDiscard) return { type: 'skip-pong' };
-      if (makeAIHuDecision(me, 'medium', v.pendingDiscard).shouldHu) return { type: 'hu' };
-      const pd = makeAIPongDecision(me, v.pendingDiscard, 'medium');
+      if (this.E.makeAIHuDecision(me, 'medium', v.pendingDiscard).shouldHu) return { type: 'hu' };
+      const pd = this.E.makeAIPongDecision(me, v.pendingDiscard, 'medium');
       if (pd.shouldPong && pd.dimension && pd.handCardIds) return { type: 'pong', dimension: pd.dimension, handCardIds: pd.handCardIds };
       return { type: 'skip-pong' };
     }
@@ -837,13 +899,13 @@ class Bot {
       const drawn = v.drawnCard;
       if (sp.owesPenaltyDiscard || !drawn) return { type: 'discard', cardId: this.pickDiscard(me, drawn, v) };
       if (!sp.selfPongUsedThisTurn) {
-        if (makeAIHuDecision(me, 'medium', drawn).shouldHu) return { type: 'hu' };
+        if (this.E.makeAIHuDecision(me, 'medium', drawn).shouldHu) return { type: 'hu' };
         // 学生会乱点：2% 概率故意胡错，走罚停路径
         if (Math.random() < 0.02) {
           inc('bot:bogusHu');
           return { type: 'hu' };
         }
-        const spd = makeAISelfPongDecision(me, drawn, 'medium');
+        const spd = this.E.makeAISelfPongDecision(me, drawn, 'medium');
         if (spd.shouldPong && spd.dimension && spd.cardIds) return { type: 'self-pong', dimension: spd.dimension, cardIds: spd.cardIds };
       }
       return { type: 'discard', cardId: this.pickDiscard(me, drawn, v) };
@@ -853,6 +915,7 @@ class Bot {
 
   dispatch(action: PvpAction) {
     inc('bot:dispatch');
+    this.rec.actionsSent++;
     if (this.isHost) this.handlePlayerAction(this.id, action);
     else {
       this.pendingSendAt = Date.now();
@@ -877,7 +940,7 @@ class Bot {
 // ── 一桌的完整流程 ────────────────────────────────────────────────────────────
 async function runTable(table: Table) {
   const [host, ...guests] = table.bots;
-  const settings: RoomSettings = { maxPlayers: 4, totalRounds: ROUNDS, deck: MODEL, difficulty: 'open' } as RoomSettings;
+  const settings: RoomSettings = { maxPlayers: 4, totalRounds: ROUNDS, deck: table.model, difficulty: 'open' } as RoomSettings;
   try {
     // 全桌同时登录（课堂：大家一起开电脑）
     const logins = await Promise.all(table.bots.map((b) => b.login()));
@@ -904,7 +967,7 @@ async function runTable(table: Table) {
         await g.loadRoomPage(room.code);
         await g.subscribe(room.code, room);
         await sleep(300); // room 页 setTimeout(300) 后广播 player-joined
-        g.send({ type: 'player-joined', player: { id: g.id, studentId: g.id, [M.payload]: g.bigFive, avatar: g.avatar } as any, seatIndex });
+        g.send({ type: 'player-joined', player: { id: g.id, studentId: g.id, [table.m.payload]: g.bigFive, avatar: g.avatar } as any, seatIndex });
       })
     );
 
@@ -935,6 +998,124 @@ async function runTable(table: Table) {
   }
 }
 
+// ── 没打完的桌：把现场记下来（谁该动、他收没收到状态、最后几步）──
+function diagnose(t: Table): Record<string, unknown> {
+  const now = Date.now() - T0;
+  const host = t.bots[0];
+  const v = host?.raw;
+  const cur = v ? (v.players[v.currentPlayerIndex]?.id as unknown as string) : null;
+  // claim-window 里卡住的是「还没表态的人」，否则是当前玩家
+  const waitingOn =
+    v && v.phase === 'claim-window'
+      ? v.players.map((p) => p.id as unknown as string).filter((id, i) => i !== v.discardedByIndex && !(v.claimResponses as unknown as string[]).includes(id))
+      : cur
+        ? [cur]
+        : [];
+  const bots = t.bots.map((b) => ({
+    id: b.id,
+    isHost: b.isHost,
+    loginOk: b.rec.loginOk,
+    subscribeOk: !!b.rec.subscribeOk,
+    resubscribes: b.rec.resubscribes,
+    gotGameStart: !!b.rec.gotGameStart,
+    hasState: !!b.view,
+    statePhase: b.view?.phase,
+    stateRound: b.view?.currentRound,
+    stateCurrentIdx: b.view?.currentPlayerIndex,
+    waitedOn: waitingOn.includes(b.id),
+    msSinceLastRecv: b.rec.lastRecvAt != null ? now - b.rec.lastRecvAt : null,
+    msSinceLastSend: b.rec.lastSentAt != null ? now - b.rec.lastSentAt : null,
+    decidePending: !!b.decideTimer,
+    actionsSent: b.rec.actionsSent,
+    lastErrors: b.rec.errors.slice(-3),
+  }));
+  let likelyCause: string;
+  if (t.result.outcome === 'setup-failed') likelyCause = `开局前失败：${t.result.detail}`;
+  else if (!v) likelyCause = '房主没有对局状态（没开起来）';
+  else {
+    const stuck = bots.filter((b) => b.waitedOn);
+    const s0 = stuck[0];
+    if (!s0) likelyCause = `没有在等任何人，但状态 2 分钟没推进（phase=${v.phase}）`;
+    else if (!s0.subscribeOk) likelyCause = `${s0.id} 实时连接从未连上`;
+    else if (!s0.gotGameStart && !s0.hasState) likelyCause = `${s0.id} 没收到开局消息、也没补要到状态（掉线未恢复）`;
+    else if (s0.statePhase !== v.phase || s0.stateCurrentIdx !== v.currentPlayerIndex)
+      likelyCause = `${s0.id} 手上的状态落后于房主（漏收更新）：他看到 phase=${s0.statePhase} cur=${s0.stateCurrentIdx}，房主是 phase=${v.phase} cur=${v.currentPlayerIndex}`;
+    else if (s0.decidePending) likelyCause = `${s0.id} 正在思考（决策计时器未触发）`;
+    else likelyCause = `${s0.id} 状态是新的但没有出手（机器人决策返回空，需看 lastActions）`;
+  }
+  return {
+    likelyCause,
+    msSinceProgress: Date.now() - t.lastProgress,
+    host: v
+      ? {
+          phase: v.phase,
+          round: v.currentRound,
+          currentPlayer: cur,
+          waitingOn,
+          drawPile: v.drawPile.length,
+          discardPile: v.discardPile.length,
+          claimResponses: v.claimResponses,
+          winner: v.winner,
+          lastActions: v.actionLog.slice(-10).map((a) => ({
+            type: a.type,
+            player: a.playerId,
+            t: (a as { timestamp?: number }).timestamp ? (a as { timestamp: number }).timestamp - T0 : undefined,
+          })),
+        }
+      : null,
+    bots,
+  };
+}
+
+// 每个用户一行：这个人登录/连线/哪桌哪个模型/打了多少步/终局成绩/遇到的错误
+function userRecords(tables: Table[], bots: Bot[]) {
+  return bots.map((b) => {
+    const r = b.table.result;
+    const fin = r.final?.find((f) => f.id === b.id);
+    return {
+      student_id: b.id,
+      table: b.table.index,
+      model: b.table.model,
+      room_code: r.code ?? null,
+      seat: r.players ? r.players.indexOf(b.id) : null,
+      is_host: b.isHost,
+      login_ok: b.rec.loginOk ?? null,
+      login_attempts: b.rec.loginAttempts ?? null,
+      login_ms: b.rec.loginMs ?? null,
+      realtime_ok: !!b.rec.subscribeOk,
+      reconnects: b.rec.resubscribes,
+      got_game_start: !!b.rec.gotGameStart,
+      recovered_missed_start: !!b.rec.recoveredMissedStart,
+      actions_sent: b.rec.actionsSent,
+      got_game_over: b.gotGameOver,
+      table_outcome: r.outcome,
+      table_detail: r.detail ?? null,
+      saved: !!r.saved,
+      session_id: r.sessionId ?? null,
+      declared: fin?.declared ?? null,
+      remaining_cards: fin?.remaining ?? null,
+      rank: fin?.rank ?? null,
+      is_winner: fin?.isWinner ?? null,
+      pong_success: fin?.pS ?? null,
+      pong_fail: fin?.pF ?? null,
+      hu_success: fin?.huS ?? null,
+      hu_fail: fin?.huF ?? null,
+      error_count: b.rec.errors.length,
+      errors: b.rec.errors,
+    };
+  });
+}
+
+function toCsv(rows: Record<string, unknown>[]) {
+  if (!rows.length) return '';
+  const cols = Object.keys(rows[0]);
+  const esc = (v: unknown) => {
+    const t = v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
+    return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+  };
+  return '\uFEFF' + [cols.join(','), ...rows.map((r) => cols.map((c) => esc(r[c])).join(','))].join('\n') + '\n';
+}
+
 let loginPhase: { ok: number; gaveUp: number; allDoneSec: number; errorSample?: string[] } | null = null;
 
 function summarize(tables: Table[], bots: Bot[]) {
@@ -953,7 +1134,13 @@ function summarize(tables: Table[], bots: Bot[]) {
     if (arr.length < 5 && !arr.includes(e.msg)) arr.push(e.msg);
   }
   return {
-    config: { N_BOTS, PREFIX, USE_AUTH, THINK, CLAIM_THINK, TABLE_RATE, ROUNDS, tables: tables.length, LOGIN_FIRST, LOGIN_WINDOW_S, LOGIN_RETRIES },
+    config: { N_BOTS, PREFIX, MODEL: MODEL_ARG, USE_AUTH, THINK, CLAIM_THINK, TABLE_RATE, ROUNDS, tables: tables.length, LOGIN_FIRST, LOGIN_WINDOW_S, LOGIN_RETRIES },
+    byModel: Object.fromEntries(
+      MODEL_KEYS.map((k) => {
+        const rs = results.filter((r) => r.model === k);
+        return [k, { tables: rs.length, finished: rs.filter((r) => r.outcome === 'finished').length, saved: rs.filter((r) => r.saved).length }];
+      })
+    ),
     loginPhase,
     wallClockSec: Math.round((Date.now() - T0) / 1000),
     outcomes: results.reduce<Record<string, number>>((m, r) => ((m[r.outcome] = (m[r.outcome] ?? 0) + 1), m), {}),
@@ -975,10 +1162,16 @@ async function run() {
   console.log(`[smoke] ${N_BOTS} bots, prefix ${PREFIX}, auth=${USE_AUTH}, think=${THINK}, tables @${TABLE_RATE}/s`);
   const tables: Table[] = [];
   const bots: Bot[] = [];
-  for (let i = 0; i < N_BOTS; i++) {
-    const ti = Math.floor(i / 4);
+  // 随机分桌：学号顺序打乱后每 4 人一桌（课堂上谁跟谁一桌是随机的）
+  const order = Array.from({ length: N_BOTS }, (_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  for (let k = 0; k < N_BOTS; k++) {
+    const ti = Math.floor(k / 4);
     tables[ti] ??= new Table(ti);
-    const b = new Bot(i + 1, tables[ti]);
+    const b = new Bot(order[k] + 1, tables[ti]);
     tables[ti].bots.push(b);
     bots.push(b);
   }
@@ -1031,6 +1224,8 @@ async function run() {
       if (!t.finished && t.result.startedAt && now - t.lastProgress > STALL_MS) {
         const v = t.bots[0].raw;
         t.finish('stalled', v ? `phase=${v.phase} cur=${v.currentPlayerIndex} round=${v.currentRound} claims=${v.claimResponses.length}` : 'no raw state');
+        t.result.diagnosis = diagnose(t);
+        console.log(`[stalled] table ${t.index} (${t.model}) ${t.result.code}: ${t.result.diagnosis.likelyCause}`);
       }
     }
     const fin = tables.filter((t) => t.finished).length;
@@ -1049,13 +1244,24 @@ async function run() {
   await Promise.race([Promise.all(tables.map((t) => t.done)), sleep(TIMEOUT_MS)]);
   clearInterval(ticker);
   for (const t of tables) if (!t.finished) t.finish('timeout');
+  for (const t of tables) if (t.result.outcome !== 'finished' && !t.result.diagnosis) t.result.diagnosis = diagnose(t);
   await sleep(3000); // 等最后的存档 / 状态更新落地
   const report = summarize(tables, bots);
   await Promise.all(bots.map((b) => b.teardown()));
 
   mkdirSync(OUT_DIR, { recursive: true });
-  const file = `${OUT_DIR}/report-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const file = `${OUT_DIR}/report-${stamp}.json`;
   writeFileSync(file, JSON.stringify({ ...report, errors }, null, 2));
+  const users = userRecords(tables, bots);
+  writeFileSync(`${OUT_DIR}/users-${stamp}.json`, JSON.stringify(users, null, 2));
+  writeFileSync(`${OUT_DIR}/users-${stamp}.csv`, toCsv(users.map(({ errors: e, ...u }) => ({ ...u, errors: e.map((x) => `${x.where}: ${x.msg}`).join(' | ') }))));
+  console.log(`[smoke] per-user records → ${OUT_DIR}/users-${stamp}.{json,csv}`);
+  const problems = report.problemTables;
+  if (problems.length) {
+    console.log(`[smoke] ⚠️ ${problems.length} table(s) not finished/saved:`);
+    for (const r of problems) console.log(`  table ${r.table} (${r.model}) ${r.code ?? '-'}: ${r.outcome} — ${(r.diagnosis?.likelyCause as string) ?? r.detail ?? ''}`);
+  }
   const { tables: _omit, ...brief } = report;
   console.log(JSON.stringify(brief, null, 2));
   console.log(`[smoke] full report → ${file}`);

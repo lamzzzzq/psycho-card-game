@@ -4,6 +4,7 @@
  *   npx tsx scripts/export-class-data.ts                       # 全部数据
  *   npx tsx scripts/export-class-data.ts --since 2026-10-15    # 只看某天起（明细表过滤；汇总表只留这段时间有活动的学号）
  *   npx tsx scripts/export-class-data.ts --out ~/Desktop/x.xlsx
+ *   npx tsx scripts/export-class-data.ts --prefix ZSMK              # 只导某学号前缀（压测账号核对用，不碰真实学生）
  *
  * 鉴权：Supabase 管理 token（钥匙串 "Supabase CLI"，或环境变量 SUPABASE_ACCESS_TOKEN）。
  * ⚠️ 导出文件含学号↔人格分数，属隐私数据，别外传/别进 git。
@@ -39,10 +40,16 @@ async function sql<T = Record<string, unknown>>(query: string): Promise<T[]> {
 
 const since = arg('since');
 if (since && !/^\d{4}-\d{2}-\d{2}$/.test(since)) throw new Error('--since 格式 YYYY-MM-DD');
+const prefix = arg('prefix');
+if (prefix && !/^[A-Z]{2,8}$/.test(prefix)) throw new Error('--prefix 只允许 2-8 个大写字母');
+const prefixCond = prefix ? `student_id ~ '^${prefix}[0-9]+$'` : '';
 // 按香港时间零点切（::date 会按 UTC，等于 HKT 早上 8 点）
-const sinceWhere = (col: string) => (since ? `WHERE ${col} >= '${since} 00:00+08'::timestamptz` : '');
+const sinceWhere = (col: string) => {
+  const conds = [since ? `${col} >= '${since} 00:00+08'::timestamptz` : '', prefixCond].filter(Boolean);
+  return conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+};
 const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-const out = (arg('out') ?? path.join(os.homedir(), 'Desktop', `人格麻將_課堂數據_${stamp}${since ? `_since${since}` : ''}.xlsx`))
+const out = (arg('out') ?? path.join(os.homedir(), 'Desktop', `人格麻將_課堂數據_${stamp}${since ? `_since${since}` : ''}${prefix ? `_${prefix}` : ''}.xlsx`))
   .replace(/^~/, os.homedir());
 
 // 时间统一转香港时间（老师看的是本地时间）。写成真日期单元格（能按时间排序/筛选）：
@@ -83,7 +90,7 @@ async function main() {
     sql(`SELECT * FROM class_data.games ${sinceWhere('ended_at')} ORDER BY ended_at, session_id, rank`),
     sql(`SELECT * FROM class_data.quizzes ${sinceWhere('submitted_at')} ORDER BY submitted_at`),
     sql(`SELECT * FROM class_data.assessments ${sinceWhere('submitted_at')} ORDER BY model, student_id, submitted_at`),
-    sql(`SELECT * FROM class_data.students ORDER BY student_id`),
+    sql(`SELECT * FROM class_data.students ${prefixCond ? `WHERE ${prefixCond}` : ''} ORDER BY student_id`),
   ]);
 
   // --since：汇总表只留这段时间内有测评/对局/小测的学号（汇总数字本身仍是全期累计，表头已注明）

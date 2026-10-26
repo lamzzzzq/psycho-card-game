@@ -15,9 +15,9 @@ on:
         description: pvp-smoke.ts 额外参数
         default: '--login-first --login-retries 60'
       model:
-        description: 人格模型（三套联机是独立代码副本，各自要测）
+        description: 人格模型（三套联机是独立代码副本；mixed = 每桌随机一个模型）
         type: choice
-        options: [big-five, hexaco, sd4]
+        options: [big-five, hexaco, sd4, mixed]
         default: big-five
       auth:
         description: 是否真的登录（false = 跳过登录，只测建房/对局/存档）
@@ -53,15 +53,42 @@ jobs:
           echo "PW=$PW" >> "$GITHUB_ENV"
 
       - name: 建压测账号
-        run: npx -y tsx scripts/loadtest/accounts.ts create --bots "$BOTS" --password "$PW"
+        run: |
+          mkdir -p scripts/loadtest/out
+          npx -y tsx scripts/loadtest/accounts.ts create --bots "$BOTS" --password "$PW" 2>&1 | tee scripts/loadtest/out/1-create.log
 
       - name: 压测
         # 云端没有代理，不需要本机那套 --http-conc 64 的并发限制
-        run: npx -y tsx scripts/loadtest/pvp-smoke.ts run --bots "$BOTS" $AUTH_FLAG --password "$PW" --http-conc 1000 --model "$MODEL" $EXTRA
+        run: |
+          set -o pipefail
+          npx -y tsx scripts/loadtest/pvp-smoke.ts run --bots "$BOTS" $AUTH_FLAG --password "$PW" --http-conc 1000 --model "$MODEL" $EXTRA 2>&1 | tee scripts/loadtest/out/2-smoke.log
+
+      # 清理前核对：逐桌逐人比对线上 DB 记录（不一致则本步失败，但后面照样导出、清理）
+      - name: 核对对局记录（清理前）
+        if: always() && hashFiles('scripts/loadtest/out/report-*.json') != ''
+        run: |
+          set -o pipefail
+          npx -y tsx scripts/loadtest/verify-records.ts 2>&1 | tee scripts/loadtest/out/3-verify.log
+
+      # 老师那套导出，只导压测学号：每个用户一行的汇总 + 对局明细，证明导出端也对
+      - name: 导出压测账号的课堂数据 Excel
+        if: always()
+        run: npx -y tsx scripts/export-class-data.ts --prefix ZSMK --out scripts/loadtest/out/4-class-data-ZSMK.xlsx 2>&1 | tee scripts/loadtest/out/4-export.log
 
       - name: 清理压测数据
         if: always()
-        run: npx -y tsx scripts/loadtest/accounts.ts cleanup
+        run: npx -y tsx scripts/loadtest/accounts.ts cleanup 2>&1 | tee scripts/loadtest/out/5-cleanup.log
+
+      - name: 结果摘要
+        if: always()
+        run: |
+          {
+            echo "## 压测结果"
+            f=$(ls scripts/loadtest/out/report-*.json 2>/dev/null | head -1)
+            [ -n "$f" ] && jq -r '"- 模型: \(.config.MODEL)  桌数: \(.config.tables)  登录: \(.loginPhase.ok // "-")/\(.config.N_BOTS)\n- 结果: \(.outcomes | tostring)  存档: \(.saved)\n- 分模型: \(.byModel | tostring)\n- 未完成: \(.problemTables | map("table \(.table) \(.model) \(.outcome): \(.diagnosis.likelyCause // .detail // "")") | join("; "))"' "$f"
+            v=$(ls scripts/loadtest/out/verify-*.json 2>/dev/null | head -1)
+            [ -n "$v" ] && jq -r '"- 核对: 桌 \(.summary.tablesRecordOk)/\(.summary.tables) 一致，用户 \(.summary.usersRecordOk)/\(.summary.users) 一致，问题 \(.summary.problems) 处"' "$v"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -69,3 +96,4 @@ jobs:
           name: loadtest-report
           path: scripts/loadtest/out/
           if-no-files-found: ignore
+          retention-days: 14
