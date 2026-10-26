@@ -61,7 +61,7 @@ async function main() {
   const report = JSON.parse(readFileSync(reportPath, 'utf8'));
   const tables: TableResult[] = report.tables;
   const users: Record<string, any>[] = JSON.parse(readFileSync(path.join(path.dirname(reportPath), `users-${stamp}.json`), 'utf8'));
-  const re = `'^${PREFIX}[0-9]{5}$'`;
+  const re = `'^${PREFIX}[0-9]+$'`;
 
   // 一次性把三套表里压测学号的行都拉下来
   const db: Record<ModelKey, { sessions: Record<string, any>[]; parts: Record<string, any>[]; snaps: Record<string, any>[] }> = {} as any;
@@ -97,6 +97,15 @@ async function main() {
         const winner = t.final?.find((f) => f.isWinner)?.id ?? null;
         if ((session.winner_player_id ?? null) !== winner) issues.push(`胜者不符 DB=${session.winner_player_id} 实际=${winner}`);
       }
+      // 与写入逻辑无关的合理性检查：名次是 1..n 的排列、胜者是第 1 名、胜者申报组数不少于任何人
+      const fin = t.final ?? [];
+      const ranks = fin.map((f) => f.rank).sort((x, y) => x - y);
+      if (ranks.some((r, i) => r !== i + 1)) issues.push(`名次不是 1..${fin.length} 的排列：${ranks.join(',')}`);
+      const w = fin.find((f) => f.isWinner);
+      if (fin.length && !w) issues.push('打完的局没有胜者');
+      if (w && w.rank !== 1) issues.push(`胜者 ${w.id} 名次是 ${w.rank} 不是 1`);
+      if (w && fin.some((f) => f.declared > w.declared)) issues.push(`胜者 ${w.id} 申报组数不是最多`);
+      if (fin.filter((f) => f.isWinner).length > 1) issues.push('多于一个胜者');
       const parts = db[t.model].parts.filter((p) => p.session_id === t.sessionId);
       if (parts.length !== (t.final?.length ?? 0)) issues.push(`参与者 ${parts.length} 行，应为 ${t.final?.length}`);
       for (const f of t.final ?? []) {

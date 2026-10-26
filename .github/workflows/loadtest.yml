@@ -30,6 +30,10 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # 显式 bash = 带 pipefail：各步 `cmd | tee log` 时失败不会被 tee 吞掉（清理失败必须变红）
+    defaults:
+      run:
+        shell: bash
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       NEXT_PUBLIC_SUPABASE_URL: https://msyrowizejzgxedmnjne.supabase.co
@@ -85,9 +89,9 @@ jobs:
           {
             echo "## 压测结果"
             f=$(ls scripts/loadtest/out/report-*.json 2>/dev/null | head -1)
-            [ -n "$f" ] && jq -r '"- 模型: \(.config.MODEL)  桌数: \(.config.tables)  登录: \(.loginPhase.ok // "-")/\(.config.N_BOTS)\n- 结果: \(.outcomes | tostring)  存档: \(.saved)\n- 分模型: \(.byModel | tostring)\n- 未完成: \(.problemTables | map("table \(.table) \(.model) \(.outcome): \(.diagnosis.likelyCause // .detail // "")") | join("; "))"' "$f"
+            if [ -n "$f" ]; then jq -r '"- 模型: \(.config.MODEL)  桌数: \(.config.tables)  登录: \(.loginPhase.ok // "-")/\(.config.N_BOTS)\n- 结果: \(.outcomes | tostring)  存档: \(.saved)\n- 分模型: \(.byModel | tostring)\n- 未完成: \(.problemTables | map("table \(.table) \(.model) \(.outcome): \(.diagnosis.likelyCause // .detail // "")") | join("; "))"' "$f"; fi
             v=$(ls scripts/loadtest/out/verify-*.json 2>/dev/null | head -1)
-            [ -n "$v" ] && jq -r '"- 核对: 桌 \(.summary.tablesRecordOk)/\(.summary.tables) 一致，用户 \(.summary.usersRecordOk)/\(.summary.users) 一致，问题 \(.summary.problems) 处"' "$v"
+            if [ -n "$v" ]; then jq -r '"- 核对: 桌 \(.summary.tablesRecordOk)/\(.summary.tables) 一致，用户 \(.summary.usersRecordOk)/\(.summary.users) 一致，问题 \(.summary.problems) 处"' "$v"; else echo "- 核对：未产生结果（看 3-verify.log）"; fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4

@@ -214,6 +214,7 @@ type TableResult = {
   players?: string[];                 // 座位顺序的学号
   final?: FinalStanding[];            // 房主终局状态里的逐人结果（核对 DB 用）
   diagnosis?: Record<string, unknown>; // 没打完时的现场（谁该动、谁掉线、最后几步）
+  saving?: boolean;                    // 存档进行中（出报告前要等它落地，否则核对会误报）
 };
 type FinalStanding = {
   id: string; seat: number; declared: number; remaining: number; rank: number; isWinner: boolean;
@@ -722,6 +723,15 @@ class Bot {
 
   // ── 房主：存档（同 game-record.saveInner）──
   async saveGame(finalState: GameState) {
+    this.table.result.saving = true;
+    try {
+      await this.saveGameInner(finalState);
+    } finally {
+      this.table.result.saving = false;
+    }
+  }
+
+  async saveGameInner(finalState: GameState) {
     const room = this.table.room!;
     const sessionId = crypto.randomUUID();
     const started = Date.now();
@@ -1246,6 +1256,10 @@ async function run() {
   for (const t of tables) if (!t.finished) t.finish('timeout');
   for (const t of tables) if (t.result.outcome !== 'finished' && !t.result.diagnosis) t.result.diagnosis = diagnose(t);
   await sleep(3000); // 等最后的存档 / 状态更新落地
+  // 还有桌在存档就再等（最多 30s），否则报告里 saved 未置位、而 DB 随后落行 → 核对误报
+  for (let i = 0; i < 60 && tables.some((t) => t.result.saving); i++) await sleep(500);
+  const stillSaving = tables.filter((t) => t.result.saving).map((t) => t.index);
+  if (stillSaving.length) err('report.stillSaving', `tables ${stillSaving.join(',')}`);
   const report = summarize(tables, bots);
   await Promise.all(bots.map((b) => b.teardown()));
 
