@@ -80,7 +80,12 @@ AS $$
       SELECT jsonb_agg(jsonb_build_object(
         'code', r2.code, 'deck', COALESCE(r2.settings->>'deck', 'big-five'), 'status', r2.status,
         'total_rounds', r2.settings->>'totalRounds', 'created_at', r2.created_at,
-        'players', (SELECT count(*) FROM public.room_players rp WHERE rp.room_id = r2.id)
+        'players', (SELECT count(*) FROM public.room_players rp WHERE rp.room_id = r2.id),
+        -- 房内最近 5 分钟有在线心跳的人数 + 最后一次有人在线的时间：用来判「已停止 / 空房」
+        'online_players', (SELECT count(*) FROM public.room_players rp JOIN public.profiles p ON p.student_id = rp.player_id
+                           WHERE rp.room_id = r2.id AND p.active_at > now() - interval '5 minutes'),
+        'last_seen', (SELECT max(p.active_at) FROM public.room_players rp JOIN public.profiles p ON p.student_id = rp.player_id
+                      WHERE rp.room_id = r2.id)
       ) ORDER BY r2.status DESC, r2.created_at)
       FROM public.rooms r2
       WHERE r2.created_at > now() - interval '6 hours' AND r2.host_id !~ '^ZSMK' AND r2.status IN ('waiting', 'playing')
