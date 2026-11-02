@@ -85,7 +85,9 @@ AS $$
         'online_players', (SELECT count(*) FROM public.room_players rp JOIN public.profiles p ON p.student_id = rp.player_id
                            WHERE rp.room_id = r2.id AND p.active_at > now() - interval '5 minutes'),
         'last_seen', (SELECT max(p.active_at) FROM public.room_players rp JOIN public.profiles p ON p.student_id = rp.player_id
-                      WHERE rp.room_id = r2.id)
+                      WHERE rp.room_id = r2.id),
+        -- 对局在房主浏览器里跑：房主不在线，其他人在线也推不动
+        'host_online', EXISTS (SELECT 1 FROM public.profiles p WHERE p.student_id = r2.host_id AND p.active_at > now() - interval '5 minutes')
       ) ORDER BY r2.status DESC, r2.created_at)
       FROM public.rooms r2
       WHERE r2.created_at > now() - interval '6 hours' AND r2.host_id !~ '^ZSMK' AND r2.status IN ('waiting', 'playing')
