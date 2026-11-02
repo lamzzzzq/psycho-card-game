@@ -74,7 +74,17 @@ AS $$
     'registered_total', (SELECT count(*) FROM public.profiles WHERE student_id !~ '^ZSMK'),
     'registered_today', (SELECT count(*) FROM public.profiles, today WHERE created_at >= today.t0 AND student_id !~ '^ZSMK'),
     'assessments_today', COALESCE((SELECT jsonb_object_agg(model, n) FROM (SELECT COALESCE(model, 'big-five') model, count(*) n FROM public.assessment_results, today WHERE submitted_at >= today.t0 AND student_id !~ '^ZSMK' GROUP BY 1) x), '{}'::jsonb),
-    'quizzes_today', (SELECT count(*) FROM public.quiz_results, today WHERE submitted_at >= today.t0 AND student_id !~ '^ZSMK')
+    'quizzes_today', (SELECT count(*) FROM public.quiz_results, today WHERE submitted_at >= today.t0 AND student_id !~ '^ZSMK'),
+    -- 进行中的房间明细（2026-11-02 课堂加）：等待中 / 对局中，含人数
+    'open_rooms', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+        'code', r2.code, 'deck', COALESCE(r2.settings->>'deck', 'big-five'), 'status', r2.status,
+        'total_rounds', r2.settings->>'totalRounds', 'created_at', r2.created_at,
+        'players', (SELECT count(*) FROM public.room_players rp WHERE rp.room_id = r2.id)
+      ) ORDER BY r2.status DESC, r2.created_at)
+      FROM public.rooms r2
+      WHERE r2.created_at > now() - interval '6 hours' AND r2.host_id !~ '^ZSMK' AND r2.status IN ('waiting', 'playing')
+    ), '[]'::jsonb)
   );
 $$;
 
